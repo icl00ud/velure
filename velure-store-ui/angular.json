@@ -29,9 +29,7 @@
               "src/favicon.ico",
               "src/assets"
             ],
-            "styles": [
-              "src/styles.less"
-            ],
+            "styles": [],
             "scripts": []
           },
           "configurations": {
@@ -89,9 +87,7 @@
               "src/favicon.ico",
               "src/assets"
             ],
-            "styles": [
-              "src/styles.less"
-            ],
+            "styles": [],
             "scripts": []
           }
         }
