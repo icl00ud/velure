@@ -1,0 +1,18 @@
+<nz-header>
+    <nav class="left-header">
+        <div class="logo"></div>
+        <ul class="" nz-menu nzMode="horizontal">
+            <li nz-menu-item>Home</li>
+            <li nz-menu-item class="products-menu" (mouseenter)="hoverProducts(true)" (mouseleave)="hoverProducts(false)">
+                Produtos 
+                <span class="arrow-icon" nz-icon nzType="down" nzTheme="outline" [ngClass]="{'rotate': hoveringProduct}"></span>
+            </li>
+            <li nz-menu-item>Contato</li>
+        </ul>
+    </nav>
+    <div class="right-header">
+        <span nz-icon nzType="search" nzTheme="outline"></span>
+        <span nz-icon nzType="shopping-cart" nzTheme="outline"></span>
+        <span nz-icon nzType="user" nzTheme="outline"></span>
+    </div>
+</nz-header>
