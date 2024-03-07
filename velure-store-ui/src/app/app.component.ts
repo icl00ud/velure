@@ -13,7 +13,7 @@ import { HeaderComponent } from "./components/header/header.component";
     imports: [
         CommonModule,
         RouterOutlet,
-        HeaderComponent
+        HeaderComponent,
     ]
 })
 export class AppComponent {
