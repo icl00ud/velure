@@ -1,6 +1,6 @@
 <nz-header>
     <nav class="left-header">
-        <div class="logo"></div>
+        <img src="../../../../assets/images/velure-logo-icon.png">
         <ul nz-menu [nzSelectable]="true" nzMode="horizontal">
             <li nz-menu-item>Home</li>
             <li nz-submenu [nzTitle]="nzsubmenuTitle" [nzPlacement]="'bottomCenter'" (nzOpenChange)="hoverProducts($event)">
@@ -18,6 +18,8 @@
 </nz-header>
 
 <ng-template #nzsubmenuTitle>
-    <span title>{{ "GLOBAL.PRODUCTS" | translate }}</span> 
-    <span class="arrow-icon" nz-icon nzType="down" nzTheme="outline" [ngClass]="hoveringProduct ? 'rotate' : ''"></span>
+    <div class="products-submenu">
+        <span title [ngStyle]="{ 'padding-right.px': '5' }">{{ "GLOBAL.PRODUCTS" | translate }}</span> 
+        <span nz-icon nzType="down" nzTheme="outline" class="arrow-icon" [ngClass]="hoveringProduct ? 'rotate' : ''"></span>
+    </div>
 </ng-template>
