@@ -12,7 +12,7 @@ import { NzMenuModule } from 'ng-zorro-antd/menu';
     CommonModule,
     NzLayoutModule,
     NzIconModule,
-    NzMenuModule
+    NzMenuModule,
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.less'
@@ -22,7 +22,7 @@ export class HeaderComponent {
 
   constructor() {}
 
-  hoverProducts(hovering: boolean) {
+  hoverProducts(hovering: any) {
     this.hoveringProduct = hovering;
   }
 }

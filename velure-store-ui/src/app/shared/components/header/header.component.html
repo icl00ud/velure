@@ -1,11 +1,11 @@
 <nz-header>
     <nav class="left-header">
         <div class="logo"></div>
-        <ul class="" nz-menu nzMode="horizontal">
+        <ul nz-menu nzMode="horizontal">
             <li nz-menu-item>Home</li>
-            <li nz-menu-item class="products-menu" (mouseenter)="hoverProducts(true)" (mouseleave)="hoverProducts(false)">
-                Produtos 
-                <span class="arrow-icon" nz-icon nzType="down" nzTheme="outline" [ngClass]="{'rotate': hoveringProduct}"></span>
+            <li nz-submenu [nzTitle]="nzsubmenuTitle" [nzPlacement]="'bottomCenter'">
+                <span nz-menu-item>teste 1</span>
+                <span nz-menu-item>teste 2</span>
             </li>
             <li nz-menu-item>Contato</li>
         </ul>
@@ -16,3 +16,8 @@
         <span nz-icon nzType="user" nzTheme="outline"></span>
     </div>
 </nz-header>
+
+<ng-template #nzsubmenuTitle>
+    <span title>Produtos</span> 
+    <span class="arrow-icon" nz-icon nzType="down" nzTheme="outline"></span>
+</ng-template>
