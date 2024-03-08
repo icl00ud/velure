@@ -1,9 +1,9 @@
 <nz-header>
     <nav class="left-header">
         <div class="logo"></div>
-        <ul nz-menu nzMode="horizontal">
+        <ul nz-menu [nzSelectable]="true" nzMode="horizontal">
             <li nz-menu-item>Home</li>
-            <li nz-submenu [nzTitle]="nzsubmenuTitle" [nzPlacement]="'bottomCenter'">
+            <li nz-submenu [nzTitle]="nzsubmenuTitle" [nzPlacement]="'bottomCenter'" (nzOpenChange)="hoverProducts($event)">
                 <span nz-menu-item>teste 1</span>
                 <span nz-menu-item>teste 2</span>
             </li>
@@ -19,5 +19,5 @@
 
 <ng-template #nzsubmenuTitle>
     <span title>Produtos</span> 
-    <span class="arrow-icon" nz-icon nzType="down" nzTheme="outline"></span>
+    <span class="arrow-icon" nz-icon nzType="down" nzTheme="outline" [ngClass]="hoveringProduct ? 'rotate' : ''"></span>
 </ng-template>
