@@ -5,6 +5,8 @@ import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 
+import { TranslateModule } from '@ngx-translate/core';
+
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -13,6 +15,7 @@ import { NzMenuModule } from 'ng-zorro-antd/menu';
     NzLayoutModule,
     NzIconModule,
     NzMenuModule,
+    TranslateModule
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.less'
@@ -20,7 +23,7 @@ import { NzMenuModule } from 'ng-zorro-antd/menu';
 export class HeaderComponent {
   hoveringProduct: boolean = false;
 
-  constructor() {}
+  constructor() { }
 
   hoverProducts(hovering: any) {
     this.hoveringProduct = hovering;

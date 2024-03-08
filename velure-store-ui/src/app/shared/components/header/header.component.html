@@ -7,7 +7,7 @@
                 <span nz-menu-item>teste 1</span>
                 <span nz-menu-item>teste 2</span>
             </li>
-            <li nz-menu-item>Contato</li>
+            <li nz-menu-item>{{ "GLOBAL.CONTACT" | translate }}</li>
         </ul>
     </nav>
     <div class="right-header">
@@ -18,6 +18,6 @@
 </nz-header>
 
 <ng-template #nzsubmenuTitle>
-    <span title>Produtos</span> 
+    <span title>{{ "GLOBAL.PRODUCTS" | translate }}</span> 
     <span class="arrow-icon" nz-icon nzType="down" nzTheme="outline" [ngClass]="hoveringProduct ? 'rotate' : ''"></span>
 </ng-template>

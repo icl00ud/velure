@@ -12,9 +12,10 @@ import { HeaderComponent } from "./shared/components/header/header.component";
     imports: [
         CommonModule,
         RouterOutlet,
-        HeaderComponent,
+        HeaderComponent
     ]
 })
 export class AppComponent {
-  isCollapsed = false;
+
+  constructor () { }
 }
