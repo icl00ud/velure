@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 
 import { HeaderComponent } from "./shared/components/header/header.component";
+import { CarouselComponent } from './shared/components/carousel/carousel.component';
 
 @Component({
     selector: 'app-root',
@@ -12,7 +13,8 @@ import { HeaderComponent } from "./shared/components/header/header.component";
     imports: [
         CommonModule,
         RouterOutlet,
-        HeaderComponent
+        HeaderComponent,
+        CarouselComponent
     ]
 })
 export class AppComponent {
