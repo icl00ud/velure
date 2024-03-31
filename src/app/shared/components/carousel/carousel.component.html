@@ -1,7 +1,5 @@
 <nz-carousel [nzAutoPlay]="enableAutoPlay" [nzEnableSwipe]="enableSwipe" [nzDots]="enableDots">
-    @for (index of array; track index) {
-    <div nz-carousel-content>
-        <img [src]="index" alt="">
+    <div *ngFor="let image of array" nz-carousel-content>
+        <img [src]="image" alt="">
     </div>
-    }
 </nz-carousel>

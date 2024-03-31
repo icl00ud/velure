@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { NzCarouselModule } from 'ng-zorro-antd/carousel';
@@ -14,13 +14,23 @@ import { NzCarouselModule } from 'ng-zorro-antd/carousel';
   styleUrl: './carousel.component.less'
 })
 export class CarouselComponent {
-  enableSwipe: boolean = false;
+  @Input() carouselData: string[] = [];
+  @Input() fatherComponent: string = '';
+  @Input() enableAutoPlay: boolean = true;
+  @Input() enableSwipe: boolean = false;
+
   enableDots: boolean = true;
-  enableAutoPlay: boolean = true;
 
   array = [
     "https://picsum.photos/seed/picsum/1920/1080",
     "https://picsum.photos/1920/1080?grayscale",
     "https://picsum.photos/1920/1080"
   ];
+
+  constructor() {}
+
+  ngOnInit() {
+    if (this.carouselData.length)
+      this.array = this.carouselData;
+  }
 }
