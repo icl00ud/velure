@@ -4,7 +4,7 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { TranslateService } from './core/services/translate.service';
+import { TranslateService } from './core/services/translate/translate.service';
 
 import { routes } from './app.routes';
 
