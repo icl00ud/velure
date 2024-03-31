@@ -1,0 +1,25 @@
+<section nz-row id="home-products">
+    <div nz-col nzSpan="6" *ngFor="let image of array">
+        <nz-card [nzCover]="coverTemplate" [nzHoverable]="true" [nzBorderless]="borderless"
+            [nzLoading]="isLoading"></nz-card>
+
+        <ng-template #coverTemplate>
+            <div>
+                <app-carousel 
+                    [carouselData]="image" 
+                    [fatherComponent]="'app-product-card'"
+                    [enableAutoPlay]="false"
+                    [enableSwipe]="true">
+                </app-carousel>
+                <h1>Title</h1>
+                <p>Description</p>
+                <h2>Pricae</h2>
+                <nz-rate 
+                    [nzDisabled]="rateDisabled" 
+                    [ngModel]="2.8" 
+                    nzAllowHalf>
+                </nz-rate>
+            </div>
+        </ng-template>
+    </div>
+</section>
