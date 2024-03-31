@@ -15,8 +15,8 @@ import { NzCarouselModule } from 'ng-zorro-antd/carousel';
 })
 export class CarouselComponent {
   array = [
-    "https://picsum.photos/seed/picsum/1250/400",
-    "https://picsum.photos/1250/400?grayscale",
-    "https://picsum.photos/1250/400/?blur"
+    "https://picsum.photos/seed/picsum/1920/1080",
+    "https://picsum.photos/1920/1080?grayscale",
+    "https://picsum.photos/1920/1080"
   ];
 }
