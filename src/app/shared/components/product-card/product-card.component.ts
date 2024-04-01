@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -8,6 +8,9 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzRateModule } from 'ng-zorro-antd/rate';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
+
+import { ProductService } from '../../../core/services/product/product.service';
+import { Product } from '../../interface/product.interface';
 
 @Component({
   selector: 'app-product-card',
@@ -25,52 +28,20 @@ import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
   styleUrl: './product-card.component.less'
 })
 export class ProductCardComponent {
-  isHoverable: boolean = true;
-  borderless: boolean = false;
-  isLoading: boolean = true;
-  rateDisabled: boolean = true;
-  array: any[] = [];
+  @Input() productData: Product[] = [];
+  @Input() isHoverable: boolean = true;
+  @Input() borderless: boolean = false;
+  @Input() isLoading: boolean = false;
+  @Input() rateDisabled: boolean = true;
 
-  constructor() {
-    this.array = [
-      [
-        "https://picsum.photos/seed/picsum/320/100",
-        "https://picsum.photos/320/100?grayscale",
-      ],
-      [
-        "https://picsum.photos/320/100",
-        "https://picsum.photos/320/100",
-        "https://picsum.photos/320/100?grayscale",
-      ],
-      [
-        "https://picsum.photos/320/100",
-        "https://picsum.photos/320/100"
-      ],
-      [
-        "https://picsum.photos/320/100?grayscale",
-      ],
-      [
-        "https://picsum.photos/320/100",
-        "https://picsum.photos/320/100?grayscale",
-      ],
-      [
-        "https://picsum.photos/320/100",
-        "https://picsum.photos/320/100",
-        "https://picsum.photos/320/100?grayscale",
-      ],
-      [
-        "https://picsum.photos/320/100",
-        "https://picsum.photos/320/100"
-      ],
-      [
-        "https://picsum.photos/320/100?grayscale"
-      ]
-    ];
+  constructor(
+    private productService: ProductService
+  ) { 
+    this.productService.getProducts().subscribe((products: Product[]) => {
+      this.productData = products;
+    });
   }
 
   ngOnInit() {
-    setTimeout(() => {
-      this.isLoading = false;
-    }, 2500);
   }
 }
