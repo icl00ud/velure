@@ -5,6 +5,7 @@ import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from "./shared/components/header/header.component";
 import { CarouselComponent } from './shared/components/carousel/carousel.component';
 import { ProductCardComponent } from './shared/components/product-card/product-card.component';
+import { ProductsTabComponent } from './shared/components/products-tab/products-tab.component';
 
 @Component({
     selector: 'app-root',
@@ -16,7 +17,8 @@ import { ProductCardComponent } from './shared/components/product-card/product-c
         RouterOutlet,
         HeaderComponent,
         CarouselComponent,
-        ProductCardComponent
+        ProductCardComponent,
+        ProductsTabComponent
     ]
 })
 export class AppComponent {

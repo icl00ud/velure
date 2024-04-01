@@ -1,6 +1,6 @@
 @carousel-height: 15vh;
 
-#home-products {
+#products-section {
     max-width: 100vw;
     display: flex;
     flex-direction: row;
@@ -19,32 +19,18 @@ nz-card {
     margin-top: 3vh;
 }
 
-nz-card:last-child {
-    margin-bottom: 3vh;
-}
-
 ::ng-deep .ant-card-cover,
 ::ng-deep .ant-card-cover > div{
-    min-height: 25vh;
     max-height: 30vh;
     height: 100%;
 }
 
-::ng-deep .ant-card-cover > div > nz-skeleton {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    justify-content: space-between;
-
-    img {
-        width: 20vw;
-        object-fit: cover;
-    }
+::ng-deep .ant-rate-star {
+    font-size: 1rem;
 }
 
-::ng-deep .ant-rate-star {
-    font-size: 1vw;
+::ng-deep .ant-card-body {
+    padding: 0;
 }
 
 app-carousel {
