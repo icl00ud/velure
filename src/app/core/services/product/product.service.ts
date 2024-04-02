@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { Product } from '../../../shared/interface/product.interface';
+import { Product } from '../../../utils/interfaces/product.interface';
 
 import { ConfigService } from '../config/config.service';
 
