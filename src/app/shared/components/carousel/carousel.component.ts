@@ -14,12 +14,13 @@ import { NzCarouselModule } from 'ng-zorro-antd/carousel';
   styleUrl: './carousel.component.less'
 })
 export class CarouselComponent {
-  @Input() carouselData: string[] = [];
+  @Input() carouselData: string[] | undefined = [];
+  @Input() section: string = 'home';
   @Input() fatherComponent: string = '';
-  @Input() enableAutoPlay: boolean = true;
-  @Input() enableSwipe: boolean = false;
 
-  enableDots: boolean = true;
+  @Input() enableAutoPlay: boolean = true;
+  @Input() enableDots: boolean = true;
+  @Input() enableSwipe: boolean = false;
 
   array = [
     "https://picsum.photos/seed/picsum/1920/1080",
@@ -30,7 +31,10 @@ export class CarouselComponent {
   constructor() {}
 
   ngOnInit() {
-    if (this.carouselData.length)
-      this.array = this.carouselData;
+    if (this.section === 'home') {
+      this.enableDots = false;
+      this.carouselData = this.array;
+    }
+    console.log(this.carouselData);
   }
 }
