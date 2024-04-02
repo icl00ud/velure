@@ -12,10 +12,17 @@ import { NzPaginationModule } from 'ng-zorro-antd/pagination';
   styleUrl: './pagination.component.less'
 })
 export class PaginationComponent {
-  @Input() total: number = 39;
+  @Input() totalItems: number = 1;
   @Input() pageIndex: number = 1;
-  @Input() pageSize: number = 10;
+  @Input() pageSize: number = 2;
   @Input() paginationDisabled: boolean = false;
 
   constructor() { }
+
+  onPageChange(event: number): void {
+    console.log(event);
+    console.log(`cliquei na página ${event}`)
+    this.pageIndex = event;
+    debugger
+  }
 }
