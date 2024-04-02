@@ -1,8 +1,8 @@
-<section nz-row id="products-section">
-    <div nz-col nzSpan="6" *ngFor="let product of productData">
+<div [className]="'product-card'">
+    <div>
         <nz-card 
             [nzCover]="coverTemplate" 
-            [nzHoverable]="true" 
+            [nzHoverable]="isHoverable" 
             [nzBorderless]="borderless"
             [nzLoading]="isLoading">
         </nz-card>
@@ -10,19 +10,21 @@
         <ng-template #coverTemplate>
             <div>
                 <app-carousel 
-                    [carouselData]="product.images" 
-                    [fatherComponent]="'app-product-card'"
-                    [enableAutoPlay]="false"
-                    [enableSwipe]="true">
+                    [carouselData]="product.images"
+                    [enableAutoPlay]="enableCarouselAutoPlay"
+                    [enableSwipe]="enableCarouselSwipe"
+                    [enableDots]="enableCarouselDots"
+                    [section]="section"
+                    [fatherComponent]="'app-product-card'">
                 </app-carousel>
-                <h1>Title</h1>
-                <h2>Pricae</h2>
+                <h1>{{ product.name }}</h1>
+                <h2>{{ product.price }}</h2>
                 <nz-rate 
+                    nzAllowHalf
                     [nzDisabled]="rateDisabled" 
-                    [ngModel]="2.8" 
-                    nzAllowHalf>
+                    [ngModel]="product.rating">
                 </nz-rate>
             </div>
         </ng-template>
     </div>
-</section>
+</div>

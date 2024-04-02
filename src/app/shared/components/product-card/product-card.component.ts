@@ -9,8 +9,7 @@ import { NzRateModule } from 'ng-zorro-antd/rate';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 
-import { ProductService } from '../../../core/services/product/product.service';
-import { Product } from '../../interface/product.interface';
+import { Product } from '../../../utils/interfaces/product.interface';
 
 @Component({
   selector: 'app-product-card',
@@ -28,19 +27,18 @@ import { Product } from '../../interface/product.interface';
   styleUrl: './product-card.component.less'
 })
 export class ProductCardComponent {
-  @Input() productData: Product[] = [];
-  @Input() isHoverable: boolean = true;
+  @Input() product: Product = {} as Product;
+  @Input() isHoverable: boolean = false;
   @Input() borderless: boolean = false;
   @Input() isLoading: boolean = false;
-  @Input() rateDisabled: boolean = true;
+  @Input() rateDisabled: boolean = false;
+  @Input() section: string = '';
 
-  constructor(
-    private productService: ProductService
-  ) { 
-    this.productService.getProducts().subscribe((products: Product[]) => {
-      this.productData = products;
-    });
-  }
+  enableCarouselSwipe: boolean = true;
+  enableCarouselAutoPlay: boolean = false;
+  enableCarouselDots: boolean = true;
+
+  constructor() { }
 
   ngOnInit() {
   }
