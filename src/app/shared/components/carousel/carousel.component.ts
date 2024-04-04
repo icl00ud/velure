@@ -14,9 +14,8 @@ import { NzCarouselModule } from 'ng-zorro-antd/carousel';
   styleUrl: './carousel.component.less'
 })
 export class CarouselComponent {
-  @Input() carouselData: string[] | undefined = [];
-  @Input() section: string = 'home';
-  @Input() fatherComponent: string = '';
+  @Input() carouselData: string[] = [];
+  @Input() section: string = '';
 
   @Input() enableAutoPlay: boolean = true;
   @Input() enableDots: boolean = true;
