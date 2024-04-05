@@ -14,5 +14,6 @@
     [totalItems]="totalProducts"
     [pageIndex]="currentPageIndex" 
     [pageSize]="itemsPerPage"
-    [paginationDisabled]="paginationDisabled">
+    [paginationDisabled]="paginationDisabled"
+    (pageIndexChange)="handlePageChange($event)">
 </app-pagination>

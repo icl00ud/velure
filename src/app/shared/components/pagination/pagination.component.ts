@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 
@@ -12,17 +12,16 @@ import { NzPaginationModule } from 'ng-zorro-antd/pagination';
   styleUrl: './pagination.component.less'
 })
 export class PaginationComponent {
-  @Input() totalItems: number = 1;
-  @Input() pageIndex: number = 1;
-  @Input() pageSize: number = 2;
+  @Input() totalItems: number = 0;
+  @Input() pageIndex: number = 0;
+  @Input() pageSize: number = 0;
   @Input() paginationDisabled: boolean = false;
+
+  @Output() pageIndexChange: EventEmitter<number> = new EventEmitter<number>();
 
   constructor() { }
 
   onPageChange(event: number): void {
-    console.log(event);
-    console.log(`cliquei na página ${event}`)
-    this.pageIndex = event;
-    debugger
+    this.pageIndexChange.emit(event);
   }
 }
