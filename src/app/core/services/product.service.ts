@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { Product } from '../../../utils/interfaces/product.interface';
+import { Product } from '../../utils/interfaces/product.interface';
 
 import { ConfigService } from '../config/config.service';
 
@@ -27,6 +27,11 @@ export class ProductService {
     getProductsByPage(page: number, pageSize: number): Observable<Product[]> {
         const url = `${this.config.productApiUrl}/v1/GetProductsByPage?page=${page}&pageSize=${pageSize}`;
         return this.http.get<Product[]>(url);
+    }
+
+    getProductsCount(): Observable<number> {
+        const url = `${this.config.productApiUrl}/v1/GetProductsCount`;
+        return this.http.get<number>(url);
     }
 
     createProduct(product: any): Observable<any> {
