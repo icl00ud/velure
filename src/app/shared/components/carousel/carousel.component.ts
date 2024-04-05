@@ -34,6 +34,5 @@ export class CarouselComponent {
       this.enableDots = false;
       this.carouselData = this.array;
     }
-    console.log(this.carouselData);
   }
 }
