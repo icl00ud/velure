@@ -2,6 +2,7 @@
     "GLOBAL":
     {
         "CONTACT": "Contato",
-        "PRODUCTS": "Produtos"
+        "PRODUCTS": "Produtos",
+        "404": "Desculpe, a página que você está procurando não existe."
     }
 }
