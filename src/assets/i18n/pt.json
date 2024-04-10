@@ -4,5 +4,16 @@
         "CONTACT": "Contato",
         "PRODUCTS": "Produtos",
         "404": "Desculpe, a página que você está procurando não existe."
+    },
+    "LOGIN": {
+        "USERNAME": "Nome de Usuário",
+        "USERNAME_REQUIRED": "Por favor, insira seu nome de usuário!",
+        "PASSWORD": "Senha",
+        "PASSWORD_REQUIRED": "Por favor, insira sua senha!",
+        "LOGIN": "Entrar",
+        "FORGOT_PASSWORD": "Esqueceu a senha?",
+        "REGISTER": "Registrar",
+        "ERROR": "Nome de usuário ou senha inválidos",
+        "REMEMBERME": "Lembrar-me"
     }
 }
