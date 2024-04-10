@@ -1,1 +1,27 @@
-<p>login works!</p>
+<form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
+    <nz-form-item>
+        <nz-form-control [nzErrorTip]="userErrorTip">
+            <nz-input-group nzPrefixIcon="user">
+                <input type="text" nz-input formControlName="userName" [placeholder]="userPlaceholder" />
+            </nz-input-group>
+        </nz-form-control>
+    </nz-form-item>
+    <nz-form-item>
+        <nz-form-control [nzErrorTip]="passwordErrorTip">
+            <nz-input-group nzPrefixIcon="lock">
+                <input type="password" nz-input formControlName="password" [placeholder]="passwordPlaceholder" />
+            </nz-input-group>
+        </nz-form-control>
+    </nz-form-item>
+    <div>
+        <div>
+            <label nz-checkbox formControlName="remember">
+                <span>{{ "LOGIN.REMEMBERME" | translate }}</span>
+            </label>
+        </div>
+        <div>
+            <a >{{ "LOGIN.FORGOT_PASSWORD" | translate }}</a>
+        </div>
+    </div>
+    <button nz-button [nzType]="'primary'">{{ "LOGIN.LOGIN" | translate }}</button>
+</form>
