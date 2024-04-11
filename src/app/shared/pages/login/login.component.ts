@@ -7,6 +7,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -16,6 +17,7 @@ import { TranslateModule } from '@ngx-translate/core';
     NzFormModule,
     NzInputModule,
     NzButtonModule,
+    NzCheckboxModule,
     ReactiveFormsModule,
     TranslateModule
   ],
@@ -48,7 +50,7 @@ export class LoginComponent {
 
   constructor(
     private fb: NonNullableFormBuilder,
-    private translateService: TranslateService
+    private translateService: TranslateService,
   ) { }
 
   ngOnInit() {
