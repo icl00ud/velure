@@ -1,8 +1,8 @@
-<nz-header>
+<nz-header *ngIf="showHeader">
     <nav class="left-header">
-        <img src="../../../../assets/images/velure-logo-icon.png">
+        <a routerLink="/home" routerLinkActive="router-link-active"><img src="../../../../assets/images/velure-logo-icon.png"></a>
         <ul nz-menu [nzSelectable]="true" nzMode="horizontal">
-            <li nz-menu-item>Home</li>
+            <li nz-menu-item><a routerLink="/home" routerLinkActive="router-link-active">Home</a></li>
             <li nz-submenu [nzTitle]="nzsubmenuTitle" [nzPlacement]="'bottomCenter'" (nzOpenChange)="hoverProducts($event)">
                 <span nz-menu-item>teste 1</span>
                 <span nz-menu-item>teste 2</span>
@@ -11,9 +11,9 @@
         </ul>
     </nav>
     <div class="right-header">
-        <span nz-icon nzType="search" nzTheme="outline"></span>
-        <span nz-icon nzType="shopping-cart" nzTheme="outline"></span>
-        <span nz-icon nzType="user" nzTheme="outline"></span>
+        <a href=""><span nz-icon nzType="search" nzTheme="outline"></span></a>
+        <a href=""><span nz-icon nzType="shopping-cart" nzTheme="outline"></span></a>
+        <a routerLink="/login" routerLinkActive="router-link-active"><span nz-icon nzType="user" nzTheme="outline"></span></a>
     </div>
 </nz-header>
 

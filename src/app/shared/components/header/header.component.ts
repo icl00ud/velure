@@ -6,6 +6,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 
 import { TranslateModule } from '@ngx-translate/core';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-header',
@@ -15,15 +16,20 @@ import { TranslateModule } from '@ngx-translate/core';
     NzLayoutModule,
     NzIconModule,
     NzMenuModule,
-    TranslateModule
+    TranslateModule,
+    RouterModule
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.less'
 })
 export class HeaderComponent {
   hoveringProduct: boolean = false;
+  showHeader: boolean = true;
 
   constructor() { }
+
+  ngOnInit() {
+  }
 
   hoverProducts(hovering: any) {
     this.hoveringProduct = hovering;
