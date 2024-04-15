@@ -3,7 +3,8 @@
     {
         "CONTACT": "Contato",
         "PRODUCTS": "Produtos",
-        "404": "Desculpe, a página que você está procurando não existe."
+        "404": "Desculpe, a página que você está procurando não existe.",
+        "OR": "ou"
     },
     "LOGIN": {
         "USERNAME": "Nome de Usuário",
@@ -15,5 +16,14 @@
         "REGISTER": "Registrar",
         "ERROR": "Nome de usuário ou senha inválidos",
         "REMEMBERME": "Lembrar-me"
+    },
+    "CATEGORY": {
+        "ALL": "Todos",
+        "SHOES": "Calçados",
+        "SHIRTS": "Camisetas",
+        "PANTS": "Calças",
+        "ACCESSORIES": "Acessórios",
+        "HATS": "Bonés",
+        "JACKETS": "Jaquetas"
     }
 }
