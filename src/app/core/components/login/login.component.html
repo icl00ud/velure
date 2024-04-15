@@ -1,7 +1,7 @@
 <div>
     <div class="login-container">
         <div class="login-form">
-            <img src="../../../../assets/images/velure-logo-icon.png">
+            <img [src]="safeLogoImageUrl">
             <form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
                 <nz-form-item>
                     <nz-form-control [nzErrorTip]="userErrorTip">
@@ -15,17 +15,17 @@
                         <nz-input-group nzPrefixIcon="lock">
                             <input type="password" nz-input formControlName="password" [placeholder]="passwordPlaceholder" />
                         </nz-input-group>
-                        <div class="flex">
-                            <label nz-checkbox formControlName="remember">
-                                <span>{{ "LOGIN.REMEMBERME" | translate }}</span>
-                            </label>
-                            <a>{{ "LOGIN.FORGOT_PASSWORD" | translate }}</a>
-                        </div>
                     </nz-form-control>
                 </nz-form-item>
+                <div class="flex">
+                    <label nz-checkbox formControlName="remember">
+                        <span>{{ "LOGIN.REMEMBERME" | translate }}</span>
+                    </label>
+                    <a>{{ "LOGIN.FORGOT_PASSWORD" | translate }}</a>
+                </div>
                 <button nz-button [nzType]="'primary'">{{ "LOGIN.LOGIN" | translate }}</button>
             </form>
-            <p>ou entre com</p>
+            <p>{{ "GLOBAL.OR" | translate }}</p>
             <button class="btn google">
                 <svg version="1.1" width="20" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
                     xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512"
