@@ -3,7 +3,8 @@
     {
         "CONTACT": "Contact",
         "PRODUCTS": "Products",
-        "404": "Sorry, the page you visited does not exist."
+        "404": "Sorry, the page you visited does not exist.",
+        "OR": "or"
     },
     "LOGIN": {
         "USERNAME": "Username",
@@ -15,5 +16,14 @@
         "REGISTER": "Register",
         "ERROR": "Invalid username or password",
         "REMEMBERME": "Remember me"
+    },
+    "CATEGORY": {
+        "ALL": "All",
+        "SHOES": "Shoes",
+        "SHIRTS": "Shirts",
+        "PANTS": "Pants",
+        "ACCESSORIES": "Accessories",
+        "HATS": "Hats",
+        "JACKETS": "Jackets"
     }
 }
