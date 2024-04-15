@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ProductCardComponent } from '../product-card/product-card.component';
@@ -22,25 +22,33 @@ import { ProductService } from '../../../core/services/product.service';
 export class ProductsTabComponent {
   products: Product[] = [];
 
+  @Input() section: string = '';
+
   // Pagination
   totalProducts: number = 8;
   currentPageIndex: number = 1;
-  itemsPerPage: number = 8;
   paginationDisabled: boolean = false;
+  @Input() itemsPerPage: number = 8;
 
   // Product card configuration
-  isProductCardHoverable: boolean = true;
-  isProductCardBorderless: boolean = false;
-  isProductCardLoading: boolean = false;
-  isProductCardRateDisabled: boolean = true;
+  @Input() productCategory: string = 'all';
+  @Input() isProductCardHoverable: boolean = true;
+  @Input() isProductCardBorderless: boolean = false;
+  @Input() isProductCardLoading: boolean = false;
+  @Input() isProductCardRateDisabled: boolean = true;
 
   constructor(
     private readonly productService: ProductService
   ) { }
 
   ngOnInit() {
+    if(this.section === 'home')
+      this.productService.getProductsByPage(this.currentPageIndex, this.itemsPerPage).subscribe(products => this.products = products);  
+    
+    if(this.section === 'category')
+      this.productService.getProductsByPageAndCategory(this.currentPageIndex, this.itemsPerPage, this.productCategory).subscribe(products => {this.products = products; console.log(products)});
+
     this.productService.getProductsCount().subscribe(count => this.totalProducts = count);
-    this.productService.getProductsByPage(this.currentPageIndex, this.itemsPerPage).subscribe(products => this.products = products);  
   }
 
   handlePageChange(event: any): void {

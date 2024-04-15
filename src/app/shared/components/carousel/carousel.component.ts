@@ -31,7 +31,6 @@ export class CarouselComponent {
 
   ngOnInit() {
     if (this.section === 'home') {
-      this.enableDots = false;
       this.carouselData = this.array;
     }
   }

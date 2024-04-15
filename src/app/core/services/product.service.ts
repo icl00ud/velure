@@ -29,6 +29,11 @@ export class ProductService {
         return this.http.get<Product[]>(url);
     }
 
+    getProductsByPageAndCategory(page: number, pageSize: number, productCategory: string): Observable<Product[]> {
+        const url = `${this.config.productApiUrl}/v1/GetProductsByPage?page=${page}&pageSize=${pageSize}&category=${productCategory}`;
+        return this.http.get<Product[]>(url);
+    }
+
     getProductsCount(): Observable<number> {
         const url = `${this.config.productApiUrl}/v1/GetProductsCount`;
         return this.http.get<number>(url);

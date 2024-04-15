@@ -1,0 +1,9 @@
+<h1 class="title">{{ "CATEGORY." + categoryTitle | translate }}</h1>
+<app-products-tab
+    [section]="'category'"
+    [itemsPerPage]="itemsPerPage"
+    [isProductCardBorderless]="enableProductCardBorderless"
+    [isProductCardHoverable]="enableProductCardHoverable"
+    [isProductCardLoading]="enableProductCardLoading"
+    [isProductCardRateDisabled]="enableProductCardRateDisabled">
+</app-products-tab>
