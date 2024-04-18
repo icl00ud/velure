@@ -28,7 +28,7 @@ export class ProductsTabComponent {
   totalProducts: number = 8;
   currentPageIndex: number = 1;
   paginationDisabled: boolean = false;
-  @Input() itemsPerPage: number = 8;
+  @Input() itemsPerPage: number = 0;
 
   // Product card configuration
   @Input() productCategory: string = 'all';
