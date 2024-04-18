@@ -46,7 +46,7 @@ export class ProductsTabComponent {
       this.productService.getProductsByPage(this.currentPageIndex, this.itemsPerPage).subscribe(products => this.products = products);  
     
     if(this.section === 'category')
-      this.productService.getProductsByPageAndCategory(this.currentPageIndex, this.itemsPerPage, this.productCategory).subscribe(products => {this.products = products; console.log(products)});
+      this.productService.getProductsByPageAndCategory(this.currentPageIndex, this.itemsPerPage, this.productCategory).subscribe(products => this.products = products);
 
     this.productService.getProductsCount().subscribe(count => this.totalProducts = count);
   }
