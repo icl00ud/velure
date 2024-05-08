@@ -34,14 +34,13 @@ export class LoginComponent {
   public userPlaceholder: string = '';
   public userErrorTip: string = '';
   public safeLogoImageUrl: SafeUrl = '';
+
   public validateForm: FormGroup<{
     userName: FormControl<string>;
     password: FormControl<string>;
-    remember: FormControl<boolean>;
   }> = this.fb.group({
     userName: ['', [Validators.required]],
     password: ['', [Validators.required]],
-    remember: [true]
   });
 
   private translations = {
@@ -71,6 +70,7 @@ export class LoginComponent {
 
   submitForm(): void {
     if (this.validateForm.valid) {
+      console.log('submitForm', this.validateForm.value);
     } else {
       Object.values(this.validateForm.controls).forEach(control => {
         if (control.invalid) {
