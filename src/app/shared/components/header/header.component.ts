@@ -4,9 +4,13 @@ import { CommonModule } from '@angular/common';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
+import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 
 import { TranslateModule } from '@ngx-translate/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+
+import { AuthenticationService } from '../../../core/services/authentication.service';
+import { ILoginResponse } from '../../../utils/interfaces/user.interface';
 
 @Component({
   selector: 'app-header',
@@ -16,6 +20,7 @@ import { RouterModule } from '@angular/router';
     NzLayoutModule,
     NzIconModule,
     NzMenuModule,
+    NzDropDownModule,
     TranslateModule,
     RouterModule
   ],
@@ -25,13 +30,39 @@ import { RouterModule } from '@angular/router';
 export class HeaderComponent {
   hoveringProduct: boolean = false;
   showHeader: boolean = true;
+  isLoggedIn: boolean = false;
 
-  constructor() { }
+  constructor(
+    private authService: AuthenticationService,
+    private router: Router
+  ) { }
 
   ngOnInit() {
+    this.authService.isAuthenticated().subscribe((loggedIn) => {
+      this.isLoggedIn = loggedIn;
+
+      if (this.isLoggedIn) { 
+        this.showHeader = true;
+      } else { 
+        this.showHeader = false;
+      }
+    });
   }
 
   hoverProducts(hovering: any) {
     this.hoveringProduct = hovering;
+  }
+
+  logout(): boolean {
+    const token: ILoginResponse = JSON.parse(localStorage.getItem('token') ?? '') ?? '';
+    if (token.refreshToken) {
+      this.authService.logout(token.refreshToken).subscribe((response) => {
+        localStorage.removeItem('token');
+        this.router.navigate(['/login']);
+        return response;
+      });
+    }
+
+    return false;
   }
 }

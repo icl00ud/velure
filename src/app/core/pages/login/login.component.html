@@ -1,0 +1,38 @@
+<div>
+    <div class="login-container">
+        <div class="login-form">
+            <img [src]="safeLogoImageUrl">
+            <form nz-form [formGroup]="validateForm" (ngSubmit)="submitForm()">
+                <nz-form-item>
+                    <nz-form-control [nzErrorTip]="userErrorTip">
+                        <nz-input-group nzPrefixIcon="mail">
+                            <input type="text" nz-input formControlName="email" [placeholder]="userPlaceholder" />
+                        </nz-input-group>
+                    </nz-form-control>
+                </nz-form-item>
+                <nz-form-item>
+                    <nz-form-control [nzErrorTip]="passwordErrorTip">
+                        <nz-input-group nzPrefixIcon="lock">
+                            <input type="password" nz-input formControlName="password"
+                                [placeholder]="passwordPlaceholder" />
+                        </nz-input-group>
+                        <div class="forgot-password">
+                            <a routerLink="/forgot-password">{{ "LOGIN.FORGOT_PASSWORD" | translate }}</a>
+                        </div>
+                    </nz-form-control>
+                </nz-form-item>
+                <button nz-button [nzType]="'primary'" [disabled]="isLoading">
+                    <ng-container *ngIf="isLoading; else loginText">
+                        <nz-spin nzSimple></nz-spin>
+                    </ng-container>
+                    <ng-template #loginText>{{ "LOGIN.LOGIN" | translate }}</ng-template>
+                </button>
+            </form>
+            <div class="does-not-have-an-account">
+                <p>{{ "LOGIN.DOES_NOT_HAVE_ACCOUNT" | translate }}</p>
+                <a routerLink="/register">{{ "REGISTER.REGISTER" | translate }}</a>
+            </div>
+        </div>
+        <a href="#" target="_blank" rel="noopener noreferrer"></a>
+    </div>
+</div>
