@@ -16,40 +16,40 @@ export class ProductService {
     ) { }
 
     getProducts(): Observable<Product[]> {
-        return this.http.get<Product[]>(this.config.productApiUrl);
+        return this.http.get<Product[]>(this.config.productServiceApiUrl);
     }
 
     getProductById(id: number): Observable<Product> {
-        const url = `${this.config.productApiUrl}/${id}`;
+        const url = `${this.config.productServiceApiUrl}/${id}`;
         return this.http.get<Product>(url);
     }
 
     getProductsByPage(page: number, pageSize: number): Observable<Product[]> {
-        const url = `${this.config.productApiUrl}/v1/GetProductsByPage?page=${page}&pageSize=${pageSize}`;
+        const url = `${this.config.productServiceApiUrl}/v1/GetProductsByPage?page=${page}&pageSize=${pageSize}`;
         return this.http.get<Product[]>(url);
     }
 
     getProductsByPageAndCategory(page: number, pageSize: number, productCategory: string): Observable<Product[]> {
-        const url = `${this.config.productApiUrl}/v1/GetProductsByPage?page=${page}&pageSize=${pageSize}&category=${productCategory}`;
+        const url = `${this.config.productServiceApiUrl}/v1/GetProductsByPage?page=${page}&pageSize=${pageSize}&category=${productCategory}`;
         return this.http.get<Product[]>(url);
     }
 
     getProductsCount(): Observable<number> {
-        const url = `${this.config.productApiUrl}/v1/GetProductsCount`;
+        const url = `${this.config.productServiceApiUrl}/v1/GetProductsCount`;
         return this.http.get<number>(url);
     }
 
     createProduct(product: any): Observable<any> {
-        return this.http.post<any>(this.config.productApiUrl, product);
+        return this.http.post<any>(this.config.productServiceApiUrl, product);
     }
 
     updateProduct(id: number, product: any): Observable<any> {
-        const url = `${this.config.productApiUrl}/${id}`;
+        const url = `${this.config.productServiceApiUrl}/${id}`;
         return this.http.put<any>(url, product);
     }
 
     deleteProduct(id: number): Observable<any> {
-        const url = `${this.config.productApiUrl}/${id}`;
+        const url = `${this.config.productServiceApiUrl}/${id}`;
         return this.http.delete<any>(url);
     }
 }

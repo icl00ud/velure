@@ -7,15 +7,32 @@
         "OR": "ou"
     },
     "LOGIN": {
-        "USERNAME": "Nome de Usuário",
-        "USERNAME_REQUIRED": "Por favor, insira seu nome de usuário!",
+        "USER_EMAIL": "E-mail",
+        "USER_EMAIL_REQUIRED": "Por favor, insira seu e-mail!",
         "PASSWORD": "Senha",
         "PASSWORD_REQUIRED": "Por favor, insira sua senha!",
         "LOGIN": "Entrar",
+        "LOGOUT": "Sair",
         "FORGOT_PASSWORD": "Esqueceu a senha?",
         "REGISTER": "Registrar",
         "ERROR": "Nome de usuário ou senha inválidos",
-        "REMEMBERME": "Lembrar-me"
+        "REMEMBERME": "Lembrar-me",
+        "DOES_NOT_HAVE_ACCOUNT": "Não tem uma conta?"
+    },
+    "REGISTER": {
+        "NAME": "Nome",
+        "EMAIL": "Email",
+        "PASSWORD": "Senha",
+        "CONFIRM_PASSWORD": "Confirmar Senha",
+        "NAME_REQUIRED": "Por favor, insira seu nome",
+        "EMAIL_REQUIRED": "Por favor, insira um e-mail válido",
+        "PASSWORD_REQUIRED": "Por favor, insira uma senha",
+        "CONFIRM_PASSWORD_REQUIRED": "Por favor, confirme sua senha",
+        "PASSWORD_MISMATCH": "As senhas não coincidem",
+        "REGISTER": "Registre-se!",
+        "SUCCESS": "Registrado com sucesso!",
+        "HAVE_ACCOUNT": "Já tem uma conta?",
+        "LOGIN_NOW": "Login!"
     },
     "CATEGORY": {
         "ALL": "Todos",

@@ -1,17 +1,20 @@
 import { Component } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 
+import { AuthenticationService } from '../../services/authentication.service';
+
+import { CommonModule } from '@angular/common';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
-import { TranslateModule } from '@ngx-translate/core';
+import { Router, RouterModule } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { BlobService } from '../../services/blob.service';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { ILoginResponse, ILoginUser } from '../../../utils/interfaces/user.interface';
 
 @Component({
   selector: 'app-login',
@@ -19,11 +22,13 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
   templateUrl: './login.component.html',
   styleUrl: './login.component.less',
   imports: [
+    CommonModule,
+    NzSpinModule,
     NzFormModule,
     NzInputModule,
     NzButtonModule,
-    NzCheckboxModule,
     ReactiveFormsModule,
+    RouterModule,
     TranslateModule,
   ]
 })
@@ -34,28 +39,31 @@ export class LoginComponent {
   public userPlaceholder: string = '';
   public userErrorTip: string = '';
   public safeLogoImageUrl: SafeUrl = '';
+  public isLoading: boolean = false;
 
   public validateForm: FormGroup<{
-    userName: FormControl<string>;
+    email: FormControl<string>;
     password: FormControl<string>;
   }> = this.fb.group({
-    userName: ['', [Validators.required]],
+    email: ['', [Validators.required]],
     password: ['', [Validators.required]],
   });
 
   private translations = {
-    'LOGIN.USERNAME': 'userPlaceholder',
+    'LOGIN.USER_EMAIL': 'userPlaceholder',
     'LOGIN.PASSWORD': 'passwordPlaceholder',
-    'LOGIN.USERNAME_REQUIRED': 'userErrorTip',
+    'LOGIN.USER_EMAIL_REQUIRED': 'userErrorTip',
     'LOGIN.PASSWORD_REQUIRED': 'passwordErrorTip'
   };
   private logoUrl: string = '../../../../assets/images/logo-black.png';
 
   constructor(
-    private fb: NonNullableFormBuilder,
-    private translateService: TranslateService,
-    private blobService: BlobService,
-    private sanitizer: DomSanitizer
+    private readonly fb: NonNullableFormBuilder,
+    private readonly translateService: TranslateService,
+    private readonly blobService: BlobService,
+    private readonly sanitizer: DomSanitizer,
+    private readonly authService: AuthenticationService,
+    private readonly router: Router
   ) { }
 
   ngOnInit() {
@@ -70,7 +78,15 @@ export class LoginComponent {
 
   submitForm(): void {
     if (this.validateForm.valid) {
-      console.log('submitForm', this.validateForm.value);
+      this.isLoading = true;
+      const loginUserData = this.validateForm.value as ILoginUser;
+
+      this.authService.login(loginUserData).subscribe((response: ILoginResponse) => {
+        localStorage.setItem('token', JSON.stringify(response));
+      }).add(() => {
+        this.isLoading = false;
+        this.router.navigate(['/home']);
+      });
     } else {
       Object.values(this.validateForm.controls).forEach(control => {
         if (control.invalid) {
