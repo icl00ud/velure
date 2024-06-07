@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, SimpleChange } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
@@ -30,7 +30,7 @@ import { ILoginResponse } from '../../../utils/interfaces/user.interface';
 export class HeaderComponent {
   hoveringProduct: boolean = false;
   showHeader: boolean = true;
-  isLoggedIn: boolean = false;
+  isLoggedIn: boolean = true;
 
   constructor(
     private authService: AuthenticationService,
