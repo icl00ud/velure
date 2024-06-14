@@ -4,8 +4,8 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class ConfigService {
-  productServiceApiUrl: string = 'http://localhost:3000/product';
-  authenticationServiceApiUrl: string = 'http://localhost:3001/authentication';
+  productServiceApiUrl: string = 'http://localhost:3000/api/products';
+  authenticationServiceApiUrl: string = 'http://localhost:3000/api/auth';
 
   constructor() { }
 }
