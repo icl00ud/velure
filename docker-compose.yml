@@ -1,0 +1,19 @@
+services:
+  velure-ui-service:
+    build: .
+    container_name: velure-ui-service
+    restart: always
+    ports:
+      - 80:80
+    networks:
+      - kong-net
+      - auth_service_network
+      - product_service_network
+
+networks:
+  kong-net:
+    external: true
+  auth_service_network:
+    external: true
+  product_service_network:
+    external: true
