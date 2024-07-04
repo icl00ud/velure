@@ -63,7 +63,7 @@ export class AuthenticationService {
     }
 
     private validateToken(token: string): Observable<{ isValid: boolean }> {
-        return this.http.post<{ isValid: boolean }>(`${this.config.authenticationServiceApiUrl}/validate-token`, { token }).pipe(
+        return this.http.post<{ isValid: boolean }>(`${this.config.authenticationServiceApiUrl}/validateToken`, { token }).pipe(
             catchError((error) => {
                 console.error('Erro na validação do token', error);
                 return of({ isValid: false });

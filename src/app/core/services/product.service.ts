@@ -25,17 +25,17 @@ export class ProductService {
     }
 
     getProductsByPage(page: number, pageSize: number): Observable<Product[]> {
-        const url = `${this.config.productServiceApiUrl}/GetProductsByPage?page=${page}&pageSize=${pageSize}`;
+        const url = `${this.config.productServiceApiUrl}/getProductsByPage?page=${page}&pageSize=${pageSize}`;
         return this.http.get<Product[]>(url);
     }
 
     getProductsByPageAndCategory(page: number, pageSize: number, productCategory: string): Observable<Product[]> {
-        const url = `${this.config.productServiceApiUrl}/GetProductsByPage?page=${page}&pageSize=${pageSize}&category=${productCategory}`;
+        const url = `${this.config.productServiceApiUrl}/getProductsByPage?page=${page}&pageSize=${pageSize}&category=${productCategory}`;
         return this.http.get<Product[]>(url);
     }
 
     getProductsCount(): Observable<number> {
-        const url = `${this.config.productServiceApiUrl}/GetProductsCount`;
+        const url = `${this.config.productServiceApiUrl}/getProductsCount`;
         return this.http.get<number>(url);
     }
 
