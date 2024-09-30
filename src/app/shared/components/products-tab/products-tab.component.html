@@ -1,0 +1,19 @@
+<section>
+    <app-product-card
+        *ngFor="let product of products"
+        [product]="product"
+        [isHoverable]="isProductCardHoverable"
+        [borderless]="isProductCardBorderless"
+        [isLoading]="isProductCardLoading"
+        [rateDisabled]="isProductCardRateDisabled"
+        [section]="'products-section'">
+    </app-product-card>
+</section>
+
+<app-pagination
+    [totalItems]="totalProducts"
+    [pageIndex]="currentPageIndex" 
+    [pageSize]="itemsPerPage"
+    [paginationDisabled]="paginationDisabled"
+    (pageIndexChange)="handlePageChange($event)">
+</app-pagination>
