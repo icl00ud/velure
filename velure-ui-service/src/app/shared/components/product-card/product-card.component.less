@@ -1,0 +1,54 @@
+@carousel-height: 15vh;
+
+::ng-deep .ant-card-cover,
+::ng-deep .ant-card-cover > div{
+    max-height: 30vh;
+    height: 100%;
+}
+
+::ng-deep nz-card > div.ant-card-cover.ng-star-inserted > div  {
+    p:nth-child(2) {
+        font-size: 1.2em !important;
+        font-weight: bold !important;
+    }
+    
+    p:nth-child(3) {
+        font-size: 1em !important;
+    }
+}
+
+.product-card {
+    max-width: 100vw;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+nz-card {
+    min-width: 20vw;
+    max-height: 30vh;
+    margin-top: 3vh;
+}
+
+app-carousel {
+    max-width: 20vw;
+    max-height: @carousel-height;
+}
+
+[nz-carousel-content] {
+    min-height: @carousel-height;
+    line-height: @carousel-height;
+    background: wheat;
+    overflow: hidden;
+}
+
+[nz-carousel-content] > img {
+    max-height: @carousel-height;
+    object-fit: cover;
+}

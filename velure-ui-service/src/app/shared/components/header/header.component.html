@@ -1,0 +1,34 @@
+<nz-header *ngIf="showHeader">
+    <nav class="left-header">
+        <a routerLink="/home" routerLinkActive="router-link-active"><img src="../../../../assets/images/velure-logo-icon.png"></a>
+        <ul nz-menu [nzSelectable]="true" nzMode="horizontal">
+            <li nz-menu-item><a routerLink="/home" routerLinkActive="router-link-active">Home</a></li>
+            <li nz-submenu [nzTitle]="nzsubmenuTitle" [nzPlacement]="'bottomCenter'" (nzOpenChange)="hoverProducts($event)">
+                <a nz-menu-item routerLink="/shoes"><span>Calçados</span></a>
+                <a nz-menu-item routerLink="/shirts"><span>Camisas</span></a>
+            </li>
+            <li nz-menu-item><a routerLink="/contact">{{ "GLOBAL.CONTACT" | translate }}</a></li>
+        </ul>
+    </nav>
+    <div class="right-header">
+        <a><span nz-icon nzType="search" nzTheme="outline"></span></a>
+        <a><span nz-icon nzType="shopping-cart" nzTheme="outline"></span></a>
+        <a nz-dropdown [nzDropdownMenu]="menu">
+            <span nz-icon nzType="user" nzTheme="outline"></span>
+        </a>
+    </div>
+</nz-header>
+
+<ng-template #nzsubmenuTitle>
+    <div class="products-submenu">
+        <span title [ngStyle]="{ 'padding-right.px': '5' }">{{ "GLOBAL.PRODUCTS" | translate }}</span> 
+        <span nz-icon nzType="down" nzTheme="outline" class="arrow-icon" [ngClass]="hoveringProduct ? 'rotate' : ''"></span>
+    </div>
+</ng-template>
+
+<nz-dropdown-menu #menu="nzDropdownMenu">
+    <ul nz-menu>
+        <li nz-menu-item *ngIf="isLoggedIn" (click)="logout()"><a>{{ "LOGIN.LOGOUT" | translate }}</a></li>
+        <li nz-menu-item *ngIf="!isLoggedIn" routerLink="/login"><a>{{ "LOGIN.LOGIN" | translate }}</a></li>
+    </ul>
+</nz-dropdown-menu>
