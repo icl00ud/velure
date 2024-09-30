@@ -1,0 +1,29 @@
+<div [className]="'product-card'">
+    <div>
+        <nz-card 
+            [nzCover]="coverTemplate" 
+            [nzHoverable]="isHoverable" 
+            [nzBorderless]="borderless"
+            [nzLoading]="isLoading">
+        </nz-card>
+
+        <ng-template #coverTemplate>
+            <div>
+                <app-carousel 
+                    [carouselData]="product.images"
+                    [enableAutoPlay]="enableCarouselAutoPlay"
+                    [enableSwipe]="enableCarouselSwipe"
+                    [enableDots]="enableCarouselDots"
+                    [section]="section">
+                </app-carousel>
+                <p>{{ product.name }}</p>
+                <p>R${{ product.price.toFixed(2) }}</p>
+                <nz-rate 
+                    nzAllowHalf
+                    [nzDisabled]="rateDisabled" 
+                    [ngModel]="product.rating">
+                </nz-rate>
+            </div>
+        </ng-template>
+    </div>
+</div>

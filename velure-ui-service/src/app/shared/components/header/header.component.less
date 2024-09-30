@@ -1,0 +1,55 @@
+@header-font-size: 1rem;
+
+nz-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: white;
+    align-items: center;
+    padding: 0;
+}
+
+.right-header > a {
+    color: black;
+    padding: 0px 25px;
+    font-size: @header-font-size + 0.3rem;
+}
+
+nav.left-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+nav.left-header > a {
+    display: flex;
+}
+
+nav.left-header > ul > li {
+    font-size: @header-font-size;
+    font-weight: 700;
+}
+
+nav.left-header > *,
+nav.left-header > ul > li {
+    padding: 0px 20px;
+}
+
+.arrow-icon {
+    transition: transform 0.3s;
+    font-size: 0.75rem;
+    color: grey;
+}
+
+.rotate {
+    transform: rotate(180deg);
+}
+
+.ant-menu-horizontal {
+    border-bottom: none;
+}
+
+.products-submenu {
+    display: flex;
+    align-items: center;
+}

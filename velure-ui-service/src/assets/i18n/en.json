@@ -1,0 +1,45 @@
+{
+    "GLOBAL": {
+        "CONTACT": "Contact",
+        "PRODUCTS": "Products",
+        "404": "Sorry, the page you are looking for does not exist.",
+        "OR": "or"
+    },
+    "LOGIN": {
+        "USER_EMAIL": "Email",
+        "USER_EMAIL_REQUIRED": "Please enter your email!",
+        "PASSWORD": "Password",
+        "PASSWORD_REQUIRED": "Please enter your password!",
+        "LOGIN": "Login",
+        "LOGOUT": "Logout",
+        "FORGOT_PASSWORD": "Forgot password?",
+        "REGISTER": "Register",
+        "ERROR": "Invalid username or password",
+        "REMEMBERME": "Remember me",
+        "DOES_NOT_HAVE_ACCOUNT": "Don't have an account?"
+    },
+    "REGISTER": {
+        "NAME": "Name",
+        "EMAIL": "Email",
+        "PASSWORD": "Password",
+        "CONFIRM_PASSWORD": "Confirm Password",
+        "NAME_REQUIRED": "Please enter your name",
+        "EMAIL_REQUIRED": "Please enter a valid email",
+        "PASSWORD_REQUIRED": "Please enter a password",
+        "CONFIRM_PASSWORD_REQUIRED": "Please confirm your password",
+        "PASSWORD_MISMATCH": "Passwords do not match",
+        "REGISTER": "Register!",
+        "SUCCESS": "Successfully registered!",
+        "HAVE_ACCOUNT": "Already have an account?",
+        "LOGIN_NOW": "Login!"
+    },
+    "CATEGORY": {
+        "ALL": "All",
+        "SHOES": "Shoes",
+        "SHIRTS": "Shirts",
+        "PANTS": "Pants",
+        "ACCESSORIES": "Accessories",
+        "HATS": "Hats",
+        "JACKETS": "Jackets"
+    }
+}
