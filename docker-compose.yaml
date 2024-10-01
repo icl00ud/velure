@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres_auth_service
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - postgres_auth_network
+    ports:
+      - "${POSTGRES_HOST_PORT}:${POSTGRES_CONTAINER_PORT}"
+
+  velure-auth-service:
+    build: .
+    container_name: velure-auth-service
+    env_file:
+      - .env
+    networks:
+      - auth_service_network
+      - postgres_auth_network
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    depends_on:
+      - postgres
+    command: sh -c "prisma migrate dev && prisma generate && node dist/main"
+
+  velure-product-service:
+    build: .
+    container_name: velure-product-service
+    env_file:
+      - .env
+    networks:
+      - product_service_network
+    ports:
+      - "3010:3010"
+    depends_on:
+      - mongodb
+      - redis
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: velure_user
+      MONGO_INITDB_ROOT_PASSWORD: velure_password
+      MONGO_INITDB_DATABASE: velure_database
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - product_service_network
+
+  redis:
+    image: redis
+    container_name: redis-products
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - product_service_network
+
+  velure-ui-service:
+    build: .
+    container_name: velure-ui-service
+    restart: always
+    ports:
+      - 80:80
+    networks:
+      - kong-net
+      - auth_service_network
+      - product_service_network
+
+networks:
+  postgres_auth_network:
+  auth_service_network:
+    external: true
+  product_service_network:
+    external: true
+  kong-net:
+    external: true
+
+volumes:
+  postgres_auth_data:
+  mongodb_data:
