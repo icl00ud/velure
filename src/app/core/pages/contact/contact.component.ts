@@ -22,7 +22,7 @@ export class ContactComponent {
 
   loadMap(): void {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=&callback=initMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCy7z0_R4tnPvrBmpZOXi9vvSaWzSKj1rM&callback=initMap`;
     script.async = true;
     script.defer = true;
     document.head.appendChild(script);
