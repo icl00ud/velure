@@ -1,0 +1,5 @@
+<nz-carousel [nzAutoPlay]="enableAutoPlay" [nzEnableSwipe]="enableSwipe" [nzDots]="enableDots">
+    <div *ngFor="let image of carouselData" nz-carousel-content>
+        <img [src]="image" alt="">
+    </div>
+</nz-carousel>
