@@ -1,9 +1,12 @@
-# Estágio de construção
+# Build stage
 FROM node:alpine AS build
 
 WORKDIR /app
 
 COPY package*.json ./
+COPY tsconfig.build.json ./
+
+RUN npm install -g @nestjs/cli
 
 RUN npm install --production
 
@@ -11,7 +14,7 @@ COPY . .
 
 RUN npm run build
 
-# Estágio de produção
+# Prod stage
 FROM node:alpine
 
 WORKDIR /app
@@ -24,4 +27,8 @@ COPY --from=build /app/package.json ./
 
 RUN npm install prisma --omit=dev
 
+RUN npx prisma generate
+
 ENV PATH=/app/node_modules/.bin:$PATH
+
+CMD ["node", "dist/main"]
