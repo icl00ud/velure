@@ -7,7 +7,7 @@ declare const module: any;
 
 async function bootstrap() {
   const logger = new Logger('Main');
-  const PORT = process.env.APP_PORT || 3020;
+  const PORT = process.env.AUTH_SERVICE_APP_PORT || 3020;
 
   const app = await NestFactory.create(AppModule);
 
