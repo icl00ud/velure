@@ -1,5 +1,5 @@
 export default () => ({
-  applicationPort: parseInt(process.env.APP_PORT) || 3001,
+  applicationPort: parseInt(process.env.AUTH_SERVICE_APP_PORT) || 3001,
   jwt: {
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN,
