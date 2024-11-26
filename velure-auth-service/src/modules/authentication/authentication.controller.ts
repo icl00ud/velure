@@ -6,27 +6,31 @@ import { CreateAuthenticationDto } from './dto/create-authentication.dto';
 
 import { User } from '@prisma/client';
 import { ILoginResponse } from './dto/login-response-dto';
+import { Token } from 'src/shared/interfaces/token.interface';
 
 @Controller('authentication')
 export class AuthenticationController {
-  constructor(private readonly authService: AuthenticationService) { }
+  constructor(private readonly authService: AuthenticationService) {}
 
   @Post('register')
-  async register(@Body() createAuthDto: CreateAuthenticationDto,): Promise<CreateAuthenticationDto> {
-    try {
-      return await this.authService.createUser(createAuthDto);
-    } catch (error) {
-      throw new Error(error);
-    }
+  async register(
+    @Body() createAuthDto: CreateAuthenticationDto,
+  ): Promise<CreateAuthenticationDto> {
+    return await this.authService.createUser(createAuthDto);
   }
 
   @Post('login')
-  async login(@Body('email') email: string, @Body('password') password: string): Promise<ILoginResponse> {
+  async login(
+    @Body('email') email: string,
+    @Body('password') password: string,
+  ): Promise<ILoginResponse> {
     return await this.authService.login(email, password);
   }
 
   @Post('validateToken')
-  async validateToken(@Body('token') token: string,): Promise<{ isValid: boolean }> {
+  async validateToken(
+    @Body('token') token: Token,
+  ): Promise<{ isValid: boolean }> {
     try {
       const user = await this.authService.validateAccessToken(token);
       return { isValid: !!user };
@@ -50,8 +54,8 @@ export class AuthenticationController {
     return await this.authService.getUserByEmail(email);
   }
 
-  @Post('logout')
-  async logout(@Body() refreshToken: string): Promise<void> {
+  @Delete('logout/:refreshToken')
+  async logout(@Param('refreshToken') refreshToken: string): Promise<void> {
     await this.authService.logout(refreshToken);
   }
 }

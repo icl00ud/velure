@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -6,6 +6,7 @@ import { CreateAuthenticationDto } from './dto/create-authentication.dto';
 import { AuthenticationRepository } from './authentication.repository';
 import { Prisma, Session, User } from '@prisma/client';
 import { ILoginResponse } from './dto/login-response-dto';
+import { Token } from 'src/shared/interfaces/token.interface';
 
 @Injectable()
 export class AuthenticationService {
@@ -22,7 +23,7 @@ export class AuthenticationService {
     const existingUser = await this.getUserByEmail(data.email);
 
     if (existingUser) {
-      throw new BadRequestException('User already exists');
+      throw new ConflictException('User already exists');
     }
 
     const userData: CreateAuthenticationDto = data;
@@ -85,6 +86,7 @@ export class AuthenticationService {
   private async updateOrCreateSession(userId: string): Promise<Session> {
     const sessionExpiresIn: string = this.configService.get<string>('session.expiresIn');
     const user: User = await this.getUserById(parseInt(userId));
+
     const [accessToken, refreshToken] = await Promise.all([
       this.generateAccessToken(user),
       this.generateRefreshToken(user),
@@ -96,7 +98,10 @@ export class AuthenticationService {
       session.accessToken = accessToken;
       session.refreshToken = refreshToken;
       session.expiresAt = new Date(Date.now() + parseInt(sessionExpiresIn, 10));
-      session = await this.authenticationRepository.updateSession(session.id, session);
+      session = await this.authenticationRepository.updateSession(
+        session.id,
+        session,
+      );
     } else {
       const sessionData: Prisma.SessionCreateInput = {
         accessToken,
@@ -112,14 +117,15 @@ export class AuthenticationService {
     return session;
   }
 
-  async validateAccessToken(token: string): Promise<User> {
+  async validateAccessToken(token: Token): Promise<User> {
     try {
-      const payload = this.jwtService.verify(token, { secret: this.secret });
+      const payload = this.jwtService.verify(token.accessToken, {
+        secret: this.secret,
+      });
       const user = await this.getUserById(payload.userId);
       if (!user) throw new Error('User not found');
       return user;
     } catch (error) {
-      console.error(error);
       throw new Error('Invalid token');
     }
   }
@@ -135,10 +141,15 @@ export class AuthenticationService {
 
   private async generateRefreshToken(user: User): Promise<string> {
     const refreshSecret: string = this.configService.get<string>('jwt.refreshSecret');
-    const refreshExpiresIn: string = this.configService.get<string>('jwt.refreshExpiresIn');
+    const refreshExpiresIn: string = this.configService.get<string>(
+      'jwt.refreshExpiresIn',
+    );
 
     const payload = { userId: user.id, email: user.email, role: user.name };
     const secret = this.secret + refreshSecret;
-    return this.jwtService.sign(payload, {secret, expiresIn: refreshExpiresIn });
+    return this.jwtService.sign(payload, {
+      secret,
+      expiresIn: refreshExpiresIn,
+    });
   }
 }

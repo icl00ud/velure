@@ -4,7 +4,6 @@ import { Logger } from '@nestjs/common';
 
 declare const module: any;
 
-
 async function bootstrap() {
   const logger = new Logger('Main');
   const PORT = process.env.AUTH_SERVICE_APP_PORT || 3020;

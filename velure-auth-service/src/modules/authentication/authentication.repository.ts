@@ -66,6 +66,7 @@ export class AuthenticationRepository {
 
   async invalidateSession(refreshToken: string): Promise<void> {
     // Refresh the session to define "expiresAt" as Date.now()
+    console.log(refreshToken)
     await prisma.session.update({
       where: { refreshToken },
       data: { expiresAt: new Date() },
