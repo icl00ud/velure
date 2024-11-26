@@ -9,7 +9,14 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
     RedisModule.forRootAsync({
       useFactory: () => ({
         type: 'single',
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        url: 'redis://localhost:6379',
+        retryStrategy: (times) => {
+          const maxRetries = 5;
+          if (times >= maxRetries) {
+            return null;
+          }
+          return Math.min(times * 50, 2000);
+        },
       }),
     }),
     PrometheusModule.register({
