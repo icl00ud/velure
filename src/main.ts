@@ -7,7 +7,7 @@ async function bootstrap() {
   const logger = new Logger('Main');
   
   dotenv.config();
-  const PORT = process.env.APP_PORT || 3010;
+  const PORT = process.env.PRODUCT_SERVICE_APP_PORT || 3010;
 
   const app = await NestFactory.create(AppModule);
 
