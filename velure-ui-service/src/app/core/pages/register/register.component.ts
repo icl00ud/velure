@@ -13,7 +13,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzMessageModule, NzMessageService } from 'ng-zorro-antd/message';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { IRegisterUser } from '../../../utils/interfaces/user.interface';
 
 @Component({
@@ -77,7 +77,8 @@ export class RegisterComponent implements OnInit {
     private readonly blobService: BlobService,
     private readonly sanitizer: DomSanitizer,
     private readonly authService: AuthenticationService,
-    private readonly message: NzMessageService
+    private readonly message: NzMessageService,
+    private readonly router: Router
   ) { }
 
   ngOnInit() {
@@ -105,12 +106,26 @@ export class RegisterComponent implements OnInit {
 
   submitRegisterForm(): void {
     if (this.registerForm.valid) {
-      delete this.registerForm.value.confirmPassword;
+      const registerData = { ...this.registerForm.value };
+      delete registerData.confirmPassword;
       this.isLoading = true;
 
-      this.authService.register(this.registerForm.value as IRegisterUser).subscribe((response: any) => {}).add(() => {
-        this.isLoading = false
-        this.createMessage('success', 'REGISTER.SUCCESS');
+      this.authService.register(registerData as IRegisterUser).subscribe({
+        next: (response: any) => {
+          this.createMessage('success', 'REGISTER.SUCCESS');
+          this.router.navigate(['/login']);
+        },
+        error: (error: any) => {
+          this.isLoading = false;
+          if (error.status === 409) {
+            return this.createMessage('error', 'REGISTER.ALREADY_EXISTS');
+          }
+
+          console.error('Registration error:', error);
+        },
+        complete: () => {
+          this.isLoading = false;
+        }
       });
     } else {
       Object.values(this.registerForm.controls).forEach(control => {

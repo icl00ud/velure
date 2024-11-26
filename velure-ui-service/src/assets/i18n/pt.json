@@ -24,6 +24,7 @@
         "EMAIL": "Email",
         "PASSWORD": "Senha",
         "CONFIRM_PASSWORD": "Confirmar Senha",
+        "ALREADY_EXISTS": "O e-mail já está em uso!",
         "NAME_REQUIRED": "Por favor, insira seu nome",
         "EMAIL_REQUIRED": "Por favor, insira um e-mail válido",
         "PASSWORD_REQUIRED": "Por favor, insira uma senha",
