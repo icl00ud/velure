@@ -12,8 +12,8 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
     }),
     AuthenticationModule,
     PrometheusModule.register({
-      path: "/authentication/authMetrics"
-    })
+      path: '/authentication/authMetrics',
+    }),
   ],
   controllers: [],
   providers: [],
