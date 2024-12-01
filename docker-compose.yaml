@@ -16,33 +16,6 @@ services:
     ports:
       - "${POSTGRES_HOST_PORT}:${POSTGRES_CONTAINER_PORT}"
 
-  velure-auth-service:
-    build: ./velure-auth-service
-    container_name: velure-auth-service
-    env_file:
-      - .env
-    networks:
-      - auth_service_network
-      - postgres_auth_network
-    ports:
-      - "3020:3020"
-    depends_on:
-      - postgres
-    command: sh -c "prisma migrate dev && prisma generate && node dist/main"
-
-  velure-product-service:
-    build: ./velure-product-service
-    container_name: velure-product-service
-    env_file:
-      - .env
-    networks:
-      - product_service_network
-    ports:
-      - "3010:3010"
-    depends_on:
-      - mongodb
-      - redis
-
   mongodb:
     image: mongo
     container_name: mongodb
@@ -66,17 +39,6 @@ services:
     ports:
       - "6379:6379"
     networks:
-      - product_service_network
-
-  velure-ui-service:
-    build: ./velure-ui-service
-    container_name: velure-ui-service
-    restart: always
-    ports:
-      - 80:80
-    networks:
-      - kong-net
-      - auth_service_network
       - product_service_network
 
 networks:
