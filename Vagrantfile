@@ -12,6 +12,7 @@ Vagrant.configure("2") do |config|
   # Definir o nó mestre
   config.vm.define "kube-master" do |master|
     master.vm.hostname = "kube-master"
+    master.vm.network "private_network", ip: "192.168.56.10"
 
     # Provisionamento com Ansible
     master.vm.provision "ansible" do |ansible|
@@ -25,6 +26,7 @@ Vagrant.configure("2") do |config|
   (1..2).each do |i|
     config.vm.define "kube-node-#{i}" do |node|
       node.vm.hostname = "kube-node-#{i}"
+      node.vm.network "private_network", ip: "192.168.56.1#{i}"
 
       # Provisionamento com Ansible
       node.vm.provision "ansible" do |ansible|
