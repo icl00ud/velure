@@ -1,8 +1,4 @@
 ---
-- name: Atualizar o cache do APT
-  apt:
-    update_cache: yes
-
 - name: Instalar dependências necessárias
   apt:
     name:
@@ -44,7 +40,7 @@
 
 - name: Desativar swap
   command: swapoff -a
-  when: ansible_swaptotal_mb > 0
+  ignore_errors: yes
 
 - name: Remover entrada de swap do fstab
   replace:
@@ -54,9 +50,6 @@
 
 - name: Obter o comando de join do mestre
   shell: kubeadm token create --print-join-command
-  args:
-    executable: /bin/bash
-  delegate_to: kube-master
   register: kubeadm_join_cmd
 
 - name: Executar o comando de join
