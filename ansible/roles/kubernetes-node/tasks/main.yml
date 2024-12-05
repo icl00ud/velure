@@ -1,0 +1,29 @@
+---
+- name: Adicionar chave GPG do Kubernetes
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: Adicionar repositório do Kubernetes
+  apt_repository:
+    repo: 'deb https://apt.kubernetes.io/ kubernetes-xenial main'
+    state: present
+
+- name: Instalar Kubernetes
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: yes
+
+- name: Obter o comando de join do mestre
+  shell: kubeadm token create --print-join-command
+  args:
+    executable: /bin/bash
+  delegate_to: kube-master
+  register: kubeadm_join_cmd
+
+- name: Executar o comando de join
+  command: "{{ kubeadm_join_cmd.stdout }}"

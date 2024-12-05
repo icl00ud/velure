@@ -31,12 +31,12 @@ securityContext: {}
   # runAsUser: 1000
 
 service:
-  type: ClusterIP
-  port: 4200
-  targetPort: 4200
+  type: NodePort
+  port: 80
+  targetPort: 80
 
 ingress:
-  enabled: true
+  enabled: false
   className: "nginx"
   annotations:
     kubernetes.io/ingress.class: "nginx"
@@ -58,11 +58,11 @@ resources:
 livenessProbe:
   httpGet:
     path: /
-    port: 4200 
+    port: 80 
 readinessProbe:
   httpGet:
     path: /
-    port: 4200 
+    port: 80 
 
 autoscaling:
   enabled: false
