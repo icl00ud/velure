@@ -1,4 +1,16 @@
 ---
+- name: Atualizar o cache do APT
+  apt:
+    update_cache: yes
+
+- name: Instalar dependências necessárias
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+    state: present
+
 - name: Adicionar chave GPG do Kubernetes
   apt_key:
     url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
@@ -8,15 +20,37 @@
   apt_repository:
     repo: 'deb https://apt.kubernetes.io/ kubernetes-xenial main'
     state: present
+    filename: 'kubernetes.list'
 
-- name: Instalar Kubernetes
+- name: Atualizar o cache do APT após adicionar o repositório
+  apt:
+    update_cache: yes
+
+- name: Instalar pacotes do Kubernetes
   apt:
     name:
       - kubelet
       - kubeadm
       - kubectl
     state: present
-    update_cache: yes
+
+- name: Manter as versões dos pacotes do Kubernetes
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: hold
+
+- name: Desativar swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: Remover entrada de swap do fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^(.*swap.*)$'
+    replace: '# \1'
 
 - name: Inicializar o cluster Kubernetes
   command: kubeadm init --apiserver-advertise-address=192.168.56.10 --pod-network-cidr=192.168.0.0/16
@@ -29,11 +63,7 @@
     mkdir -p $HOME/.kube
     sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
     sudo chown $(id -u):$(id -g) $HOME/.kube/config
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
 
 - name: Instalar rede de pods (Calico)
   become_user: vagrant
   shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
-  environment:
-    KUBECONFIG: $HOME/.kube/config
