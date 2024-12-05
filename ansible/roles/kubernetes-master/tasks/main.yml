@@ -1,0 +1,39 @@
+---
+- name: Adicionar chave GPG do Kubernetes
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: Adicionar repositório do Kubernetes
+  apt_repository:
+    repo: 'deb https://apt.kubernetes.io/ kubernetes-xenial main'
+    state: present
+
+- name: Instalar Kubernetes
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: yes
+
+- name: Inicializar o cluster Kubernetes
+  command: kubeadm init --apiserver-advertise-address=192.168.56.10 --pod-network-cidr=192.168.0.0/16
+  args:
+    creates: /etc/kubernetes/admin.conf
+
+- name: Configurar o kubectl para o usuário vagrant
+  become_user: vagrant
+  shell: |
+    mkdir -p $HOME/.kube
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+
+- name: Instalar rede de pods (Calico)
+  become_user: vagrant
+  shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+  environment:
+    KUBECONFIG: $HOME/.kube/config

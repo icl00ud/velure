@@ -1,0 +1,23 @@
+---
+- name: Atualizar o cache do APT
+  apt:
+    update_cache: yes
+
+- name: Instalar pacotes básicos
+  apt:
+    name:
+      - curl
+      - apt-transport-https
+      - ca-certificates
+      - software-properties-common
+    state: present
+
+- name: Desativar swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: Remover entrada de swap do fstab
+  replace:
+    path: /etc/fstab
+    regexp: '^(.*swap.*)$'
+    replace: '# \1'
