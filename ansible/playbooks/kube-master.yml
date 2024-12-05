@@ -1,6 +1,6 @@
 ---
-- hosts: kube_masters
+- name: Configurar Kubernetes Master
+  hosts: kube_masters
   become: yes
   roles:
-    - common
     - kubernetes-master
