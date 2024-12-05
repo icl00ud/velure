@@ -10,7 +10,6 @@ Vagrant.configure("2") do |config|
       master.vm.provision "ansible" do |ansible|
         ansible.playbook = "ansible/playbooks/kube-master.yml"
         ansible.inventory_path = "ansible/inventories/hosts.ini"
-        ansible.roles_path = "ansible/roles"
         ansible.limit = "kube-master"
         ansible.become = true
       end
@@ -25,7 +24,6 @@ Vagrant.configure("2") do |config|
         node.vm.provision "ansible" do |ansible|
           ansible.playbook = "ansible/playbooks/kube-node.yml"
           ansible.inventory_path = "ansible/inventories/hosts.ini"
-          ansible.roles_path = "ansible/roles"
           ansible.limit = "kube-node-#{i}"
           ansible.become = true
         end
