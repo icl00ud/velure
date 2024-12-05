@@ -1,6 +1,6 @@
 Vagrant.configure("2") do |config|
   # Definir a box padrão
-  config.vm.box = "base"
+  config.vm.box = "ubuntu/focal64"
 
   # Configuração global de SSH
   config.vm.provider "virtualbox" do |vb|
