@@ -1,5 +1,6 @@
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/focal64"
+  # Definir a box padrão
+  config.vm.box = "base"
 
   # Configuração global de SSH
   config.vm.provider "virtualbox" do |vb|
@@ -19,10 +20,11 @@ Vagrant.configure("2") do |config|
       ansible.playbook = "ansible/playbooks/kube-master.yml"
       ansible.inventory_path = "ansible/inventories/hosts.ini"
       ansible.become = true
+      ansible.verbose = "v"  # Aumenta a verbosidade para debug
     end
   end
 
-  # Definir workers
+  # Definir nós de trabalho
   (1..2).each do |i|
     config.vm.define "kube-node-#{i}" do |node|
       node.vm.hostname = "kube-node-#{i}"
@@ -33,6 +35,7 @@ Vagrant.configure("2") do |config|
         ansible.playbook = "ansible/playbooks/kube-node.yml"
         ansible.inventory_path = "ansible/inventories/hosts.ini"
         ansible.become = true
+        ansible.verbose = "v"  # Aumenta a verbosidade para debug
       end
     end
   end
