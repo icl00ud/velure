@@ -20,7 +20,6 @@ Vagrant.configure("2") do |config|
       ansible.playbook = "ansible/playbooks/kube-master.yml"
       ansible.inventory_path = "ansible/inventories/hosts.ini"
       ansible.become = true
-      ansible.verbose = "v"  # Aumenta a verbosidade para debug
     end
   end
 
@@ -35,7 +34,6 @@ Vagrant.configure("2") do |config|
         ansible.playbook = "ansible/playbooks/kube-node.yml"
         ansible.inventory_path = "ansible/inventories/hosts.ini"
         ansible.become = true
-        ansible.verbose = "v"  # Aumenta a verbosidade para debug
       end
     end
   end
