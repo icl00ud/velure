@@ -1,65 +1,61 @@
 ---
-- name: Configurar Kubernetes Master
-  hosts: kube_masters
-  become: yes
-  tasks:
-    - name: Instalar dependências necessárias
-      apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-        state: present
-        update_cache: yes
+- name: Instalar dependências necessárias
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: yes
 
-    - name: Adicionar chave GPG do Kubernetes
-      get_url:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
-        mode: '0644'
+- name: Adicionar chave GPG do Kubernetes
+  get_url:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    dest: /usr/share/keyrings/kubernetes-archive-keyring.gpg
+    mode: '0644'
 
-    - name: Adicionar repositório do Kubernetes
-      apt_repository:
-        repo: 'deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://packages.cloud.google.com/apt kubernetes-xenial main'
-        state: present
-        filename: 'kubernetes.list'
+- name: Adicionar repositório do Kubernetes
+  apt_repository:
+    repo: 'deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://packages.cloud.google.com/apt kubernetes-xenial main'
+    state: present
+    filename: 'kubernetes.list'
 
-    - name: Atualizar o cache do APT após adicionar o repositório
-      apt:
-        update_cache: yes
+- name: Atualizar o cache do APT após adicionar o repositório
+  apt:
+    update_cache: yes
 
-    - name: Instalar pacotes do Kubernetes
-      apt:
-        name:
-          - kubelet
-          - kubeadm
-          - kubectl
-        state: present
+- name: Instalar pacotes do Kubernetes
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
 
-    - name: Manter as versões dos pacotes do Kubernetes
-      apt:
-        name:
-          - kubelet
-          - kubeadm
-          - kubectl
-        state: hold
+- name: Manter as versões dos pacotes do Kubernetes
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: hold
 
-    - name: Inicializar o cluster Kubernetes
-      command: kubeadm init --apiserver-advertise-address=192.168.56.10 --pod-network-cidr=10.32.0.0/12
-      args:
-        creates: /etc/kubernetes/admin.conf
+- name: Inicializar o cluster Kubernetes
+  command: kubeadm init --apiserver-advertise-address=192.168.56.10 --pod-network-cidr=10.32.0.0/12
+  args:
+    creates: /etc/kubernetes/admin.conf
 
-    - name: Configurar o kubectl para o usuário vagrant
-      become_user: vagrant
-      shell: |
-        mkdir -p $HOME/.kube
-        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-        sudo chown $(id -u):$(id -g) $HOME/.kube/config
-      environment:
-        KUBECONFIG: /etc/kubernetes/admin.conf
+- name: Configurar o kubectl para o usuário vagrant
+  become_user: vagrant
+  shell: |
+    mkdir -p $HOME/.kube
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
 
-    - name: Instalar rede de pods (Weave Net)
-      shell: |
-        kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-      environment:
-        KUBECONFIG: /etc/kubernetes/admin.conf
+- name: Instalar rede de pods (Weave Net)
+  shell: |
+    kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
