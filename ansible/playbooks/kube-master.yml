@@ -3,4 +3,5 @@
   hosts: kube_masters
   become: yes
   roles:
+    - common
     - kubernetes-master
