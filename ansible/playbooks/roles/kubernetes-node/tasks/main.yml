@@ -1,63 +1,86 @@
----
-- name: Atualizar o cache do APT
-  apt:
-    update_cache: yes
+- name: Define hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
 
-- name: Instalar dependências necessárias
-  apt:
-    name:
-      - apt-transport-https
-      - ca-certificates
-      - curl
+- name: Add hostname to /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: ^127\.0\.1\.1
+    line: "127.0.1.1 {{ inventory_hostname }}"
     state: present
 
-- name: Adicionar chave GPG do Kubernetes
-  apt_key:
-    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-    state: present
+- name: Restart hostname service
+  service:
+    name: hostname
+    state: restarted
+  when: ansible_facts['hostname'] != inventory_hostname
 
-- name: Adicionar repositório do Kubernetes
-  apt_repository:
-    repo: 'deb https://apt.kubernetes.io/ kubernetes-xenial main'
-    state: present
-    filename: 'kubernetes.list'
+- name: Reset kubeadm
+  command: kubeadm reset -f
+  ignore_errors: yes
 
-- name: Atualizar o cache do APT após adicionar o repositório
+- name: Remove kubelet.conf if exists
+  file:
+    path: /etc/kubernetes/kubelet.conf
+    state: absent
+
+- name: Remove ca.crt if exists
+  file:
+    path: /etc/kubernetes/pki/ca.crt
+    state: absent
+
+- name: Install lsof
   apt:
-    update_cache: yes
-
-- name: Instalar pacotes do Kubernetes
-  apt:
-    name:
-      - kubelet
-      - kubeadm
-      - kubectl
+    name: lsof
     state: present
+  become: yes
 
-- name: Manter as versões dos pacotes do Kubernetes
-  apt:
-    name:
-      - kubelet
-      - kubeadm
-      - kubectl
-    state: hold
+- name: Stop kubelet service
+  service:
+    name: kubelet
+    state: stopped
+  become: yes
 
-- name: Desativar swap
-  command: swapoff -a
-  when: ansible_swaptotal_mb > 0
+- name: Verify if port 10250 is in use
+  shell: lsof -i :10250
+  register: port_usage
+  ignore_errors: yes
 
-- name: Remover entrada de swap do fstab
-  replace:
-    path: /etc/fstab
-    regexp: '^(.*swap.*)$'
-    replace: '# \1'
+- name: Kill the process using port 10250
+  shell: lsof -t -i :10250 | xargs kill -9
+  when: port_usage.rc == 0
+  become: yes
 
-- name: Obter o comando de join do mestre
-  shell: kubeadm token create --print-join-command
-  args:
-    executable: /bin/bash
+- name: Disable kubelet service
+  systemd:
+    name: kubelet
+    enabled: no
+  become: yes
+
+- name: Restart kubelet service
+  service:
+    name: kubelet
+    state: restarted
+  become: yes
+
+- name: Wait for master node
+  wait_for:
+    host: 192.168.56.10
+    port: 6443
+    timeout: 300
+
+- name: Get the content of the master join command
+  slurp:
+    src: /home/vagrant/join_command.sh
   delegate_to: kube-master
-  register: kubeadm_join_cmd
+  register: join_command_content
+  run_once: true
 
-- name: Executar o comando de join
-  command: "{{ kubeadm_join_cmd.stdout }}"
+- name: Save the join command in the worker node
+  copy:
+    content: "{{ join_command_content.content | b64decode }}"
+    dest: /tmp/join_command.sh
+    mode: '0755'
+
+- name: Execute the join command
+  command: bash /tmp/join_command.sh

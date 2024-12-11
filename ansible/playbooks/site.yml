@@ -1,2 +1,0 @@
-- import_playbook: kube-master.yml
-- import_playbook: kube-node.yml
