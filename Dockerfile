@@ -15,6 +15,10 @@ RUN ng build --configuration=production
 # Etapa final
 FROM nginx:alpine
 
+RUN rm /etc/nginx/conf.d/default.conf
+
+COPY nginx.conf /etc/nginx/conf.d/
+
 COPY --from=build /usr/src/velure-store-ui/dist/velure-store-ui/browser /usr/share/nginx/html
 
 CMD ["nginx", "-g", "daemon off;"]
