@@ -15,6 +15,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { BlobService } from '../../services/blob.service';
 import { ILoginResponse, ILoginUser } from '../../../utils/interfaces/user.interface';
+import { ConfigService } from '../../config/config.service';
 
 @Component({
   selector: 'app-login',
@@ -56,6 +57,7 @@ export class LoginComponent {
     'LOGIN.PASSWORD_REQUIRED': 'passwordErrorTip'
   };
   private logoUrl: string = '../../../../assets/images/logo-black.png';
+  public urls = {};
 
   constructor(
     private readonly fb: NonNullableFormBuilder,
@@ -63,11 +65,13 @@ export class LoginComponent {
     private readonly blobService: BlobService,
     private readonly sanitizer: DomSanitizer,
     private readonly authService: AuthenticationService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly config: ConfigService
   ) { }
 
   ngOnInit() {
     this.blobService.getBase64FromUrl(this.logoUrl).subscribe((base64String: string) => this.safeLogoImageUrl = this.sanitizer.bypassSecurityTrustUrl('data:image/png;base64,' + base64String));
+    this.urls = this.config.getProductServiceUrl();
 
     Object.entries(this.translations).forEach(([key, value]) => {
       this.translateService.get(key).subscribe((res: string) => {
