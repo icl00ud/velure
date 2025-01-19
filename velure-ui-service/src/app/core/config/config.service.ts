@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ConfigService {
-  productServiceApiUrl: string = `${import.meta.env.NG_APP_PRODUCT_SERVICE_URL}/product` || 'http://localhost:3010/product';
-  authenticationServiceApiUrl: string = `${import.meta.env.NG_APP_AUTHENTICATION_SERVICE_URL}/authentication` || 'http://localhost:3020/authentication';
+  productServiceApiUrl: string = `${environment.PRODUCT_SERVICE_URL}/product` || 'http://localhost:3010/product';
+  authenticationServiceApiUrl: string = `${environment.AUTHENTICATION_SERVICE_URL}/authentication` || 'http://localhost:3020/authentication';
 
   constructor() { }
 

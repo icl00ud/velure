@@ -7,6 +7,7 @@ import { CategoryProductsComponent } from './core/pages/category-products/catego
 import { RegisterComponent } from './core/pages/register/register.component';
 import { ForgotPasswordComponent } from './core/pages/forgot-password/forgot-password.component';
 import { ContactComponent } from './core/pages/contact/contact.component';
+import { CartComponent } from './core/pages/cart/cart.component';
 
 import { AuthGuard } from './core/guards/auth.guard';
 import { NoAuthGuard } from './core/guards/noAuth.guard';
@@ -18,11 +19,12 @@ const categoryData = [
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full', canActivate: [AuthGuard] },
-  { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
+  { path: 'home', component: HomeComponent },
   { path: 'login', component: LoginComponent, canActivate: [NoAuthGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [NoAuthGuard] },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'contact', component: ContactComponent},
+  { path: 'cart', component: CartComponent, canActivate: [AuthGuard] },
   ...categoryData.map((category) => ({
     ...category,
     component: CategoryProductsComponent,

@@ -15,7 +15,6 @@ export class AuthGuard implements CanActivate {
     ) { }
 
     canActivate(): Observable<boolean> {
-        debugger
         return this.authService.isAuthenticated().pipe(
             map(isAuthenticated => {
                 if (!isAuthenticated) {
