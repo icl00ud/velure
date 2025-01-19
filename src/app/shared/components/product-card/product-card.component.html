@@ -23,6 +23,10 @@
                     [nzDisabled]="rateDisabled" 
                     [ngModel]="product.rating">
                 </nz-rate>
+                <div class="product-actions">
+                    <button nz-button nzType="primary" (click)="addToCart()">Adicionar ao Carrinho</button>
+                    <button nz-button nzType="default" nzDanger (click)="removeFromCart()">Remover do Carrinho</button>
+                </div>
             </div>
         </ng-template>
     </div>

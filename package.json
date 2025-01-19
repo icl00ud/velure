@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start:dev": "NG_APP_ENV=dev ng serve",
+    "start": "NG_APP_ENV=dev ng serve --hmr --live-reload",
     "start:production": "NG_APP_ENV=production ng serve",
     "build": "NG_APP_ENV=production ng build",
     "watch": "ng build --watch --configuration development",
@@ -19,6 +19,7 @@
     "@angular/platform-browser": "^17.2.0",
     "@angular/platform-browser-dynamic": "^17.2.0",
     "@angular/router": "^17.2.0",
+    "@ctrl/tinycolor": "^4.1.0",
     "@ngx-translate/core": "^15.0.0",
     "ng-zorro-antd": "^17.2.0",
     "rxjs": "~7.8.0",

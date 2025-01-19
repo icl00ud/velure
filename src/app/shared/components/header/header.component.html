@@ -12,10 +12,8 @@
     </nav>
     <div class="right-header">
         <a><span nz-icon nzType="search" nzTheme="outline"></span></a>
-        <a><span nz-icon nzType="shopping-cart" nzTheme="outline"></span></a>
-        <a nz-dropdown [nzDropdownMenu]="menu">
-            <span nz-icon nzType="user" nzTheme="outline"></span>
-        </a>
+        <a routerLink="cart"><span nz-icon nzType="shopping-cart" nzTheme="outline"></span></a>
+        <a nz-dropdown [nzDropdownMenu]="menu"><span nz-icon nzType="user" nzTheme="outline"></span></a>
     </div>
 </nz-header>
 
