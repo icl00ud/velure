@@ -37,9 +37,9 @@ db[collectionName].insertMany([
     disponibility: true,
     quantity_warehouse: 50,
     images: [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     dimensions: {
       height: 10,
@@ -60,9 +60,9 @@ db[collectionName].insertMany([
     disponibility: false,
     quantity_warehouse: 20,
     images: [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     dimensions: {
       height: 8,
@@ -83,9 +83,9 @@ db[collectionName].insertMany([
     disponibility: true,
     quantity_warehouse: 120,
     images: [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     dimensions: {
       height: 12,
@@ -106,9 +106,9 @@ db[collectionName].insertMany([
     disponibility: false,
     quantity_warehouse: 10,
     images: [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     dimensions: {
       height: 15,
@@ -129,9 +129,9 @@ db[collectionName].insertMany([
     disponibility: true,
     quantity_warehouse: 75,
     images: [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     dimensions: {
       height: 18,
@@ -152,9 +152,9 @@ db[collectionName].insertMany([
     disponibility: true,
     quantity_warehouse: 30,
     images: [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     dimensions: {
       height: 14,
@@ -175,9 +175,9 @@ db[collectionName].insertMany([
     disponibility: false,
     quantity_warehouse: 5,
     images: [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     dimensions: {
       height: 16,
@@ -198,9 +198,9 @@ db[collectionName].insertMany([
     disponibility: true,
     quantity_warehouse: 90,
     images: [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     dimensions: {
       height: 20,
@@ -221,9 +221,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 25,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 25,
@@ -244,9 +244,9 @@ db[collectionName].insertMany([
     "disponibility": false,
     "quantity_warehouse": 0,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 15,
@@ -267,9 +267,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 15,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 22,
@@ -290,9 +290,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 50,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 18,
@@ -313,9 +313,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 20,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 19,
@@ -336,9 +336,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 30,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 21,
@@ -359,9 +359,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 10,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 24,
@@ -382,9 +382,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 70,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 17,
@@ -405,9 +405,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 40,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 16,
@@ -428,9 +428,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 20,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 20,
@@ -451,9 +451,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 15,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 18,
@@ -474,9 +474,9 @@ db[collectionName].insertMany([
     "disponibility": true,
     "quantity_warehouse": 25,
     "images": [
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400",
-      "https://placehold.co/600x400"
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100",
+      "https://placehold.co/200x100"
     ],
     "dimensions": {
       "height": 22,
