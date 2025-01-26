@@ -10,6 +10,7 @@ subtrees=(
     "velure-auth-service"
     "velure-ui-service"
     "velure-product-service"
+    "velure-order-service"
 )
 
 # Caminho remoto e branch padrão para cada subtree
@@ -17,6 +18,7 @@ declare -A subtree_remotes=(
     ["velure-auth-service"]="https://github.com/icl00ud/velure-auth-service.git"
     ["velure-ui-service"]="https://github.com/icl00ud/velure-ui-service.git"
     ["velure-product-service"]="https://github.com/icl00ud/velure-product-service.git"
+    ["velure-order-service"]="https://github.com/icl00ud/velure-order-service.git"
 )
 
 branch="master"
