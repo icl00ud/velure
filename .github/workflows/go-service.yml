@@ -1,5 +1,4 @@
-# .github/workflows/go-service.yml
-name: Reusable Go Service Workflow
+name: Go Service Workflow
 
 on:
   workflow_call:

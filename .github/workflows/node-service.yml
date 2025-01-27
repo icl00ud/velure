@@ -1,5 +1,4 @@
-# .github/workflows/node-service.yml
-name: Reusable Node.js Service Workflow
+name: Node.js Service Workflow
 
 on:
   workflow_call:
