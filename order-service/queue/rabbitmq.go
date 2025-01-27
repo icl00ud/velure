@@ -1,3 +1,4 @@
+// queue/rabbitmq.go
 package queue
 
 import (
@@ -13,23 +14,21 @@ import (
 
 var (
 	ErrMissingEnvVar = errors.New("missing environment variables")
-	ErrInvalidEnvVar = errors.New("invalid environment variables")
 )
 
 type RabbitMQRepository struct {
-	conn    *amqp091.Connection
-	channel *amqp091.Channel
-	queue   string
+	conn     *amqp091.Connection
+	channel  *amqp091.Channel
+	exchange string
 }
 
-// NewRabbitMQRepo creates a new RabbitMQ repository with connection and channel
 func NewRabbitMQRepo() (*RabbitMQRepository, error) {
 	requiredVars := []string{
 		"RABBITMQ_HOST",
 		"RABBITMQ_PORT",
 		"RABBITMQ_USER",
 		"RABBITMQ_PASS",
-		"RABBITMQ_QUEUE",
+		"RABBITMQ_EXCHANGE",
 	}
 
 	missing := make([]string, 0)
@@ -49,68 +48,64 @@ func NewRabbitMQRepo() (*RabbitMQRepository, error) {
 		os.Getenv("RABBITMQ_PORT"),
 	)
 
-	// Establish connection
 	conn, err := amqp091.Dial(amqpURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
 	}
 
-	// Create channel
 	ch, err := conn.Channel()
 	if err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("failed to open channel: %w", err)
 	}
 
-	// Declare durable queue
-	queueName := os.Getenv("RABBITMQ_QUEUE")
-	_, err = ch.QueueDeclare(
-		queueName,
-		true,  // Durable
-		false, // Delete when unused
-		false, // Exclusive
-		false, // No-wait
-		nil,   // Arguments
+	exchangeName := os.Getenv("RABBITMQ_EXCHANGE")
+	err = ch.ExchangeDeclare(
+		exchangeName,
+		"topic", // Tipo de exchange
+		true,    // Durable
+		false,   // Auto-deleted
+		false,   // Internal
+		false,   // No-wait
+		nil,     // Arguments
 	)
 	if err != nil {
 		ch.Close()
 		conn.Close()
-		return nil, fmt.Errorf("failed to declare queue: %w", err)
+		return nil, fmt.Errorf("failed to declare exchange: %w", err)
 	}
 
 	return &RabbitMQRepository{
-		conn:    conn,
-		channel: ch,
-		queue:   queueName,
+		conn:     conn,
+		channel:  ch,
+		exchange: exchangeName,
 	}, nil
 }
 
-// PublishOrder publishes an order to the queue with persistent delivery
-func (r *RabbitMQRepository) PublishOrder(order domain.Order) error {
-	body, err := json.Marshal(order)
+func (r *RabbitMQRepository) PublishEvent(event domain.Event) error {
+	body, err := json.Marshal(event)
 	if err != nil {
-		return fmt.Errorf("failed to marshal order: %w", err)
+		return fmt.Errorf("failed to marshal event: %w", err)
 	}
 
 	err = r.channel.Publish(
-		"",      // Exchange
-		r.queue, // Routing key
-		false,   // Mandatory
-		false,   // Immediate
+		r.exchange,         // Exchange
+		string(event.Type), // Routing key
+		false,              // Mandatory
+		false,              // Immediate
 		amqp091.Publishing{
 			ContentType:  "application/json",
-			DeliveryMode: amqp091.Persistent, // Persistent message
+			DeliveryMode: amqp091.Persistent,
 			Body:         body,
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to publish message: %w", err)
+		return fmt.Errorf("failed to publish event: %w", err)
 	}
 
 	return nil
 }
 
-// Close safely closes all connections and collects errors
 func (r *RabbitMQRepository) Close() error {
 	var errs []error
 

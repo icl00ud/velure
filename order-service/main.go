@@ -1,3 +1,4 @@
+// cmd/publisher/main.go
 package main
 
 import (
@@ -16,11 +17,11 @@ func main() {
 
 	rabbitRepo, err := queue.NewRabbitMQRepo()
 	if err != nil {
-		log.Fatalf("Erro ao conectar ao RabbitMQ: %v", err)
+		log.Fatalf("Error connecting to RabbitMQ: %v", err)
 	}
 	defer func() {
 		if err := rabbitRepo.Close(); err != nil {
-			log.Printf("Erro ao fechar a conexão RabbitMQ: %v", err)
+			log.Printf("Error closing RabbitMQ connection: %v", err)
 		}
 	}()
 
@@ -29,24 +30,19 @@ func main() {
 	app.POST("/publish-order", orderHandler.CreateOrder)
 
 	go func() {
-		log.Println("Iniciando a aplicação...")
+		log.Println("Starting the Publisher Service...")
 		app.Run()
-		log.Println("Aplicação iniciada!")
 	}()
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	sig := <-sigChan
-	log.Printf("Recebido sinal %s. Encerrando a aplicação...", sig)
+	log.Printf("Received signal %s. Shutting down the Publisher Service...", sig)
 
 	err = app.Shutdown(gofr.Context{})
 	if err != nil {
-		log.Fatalf("Erro ao encerrar a aplicação: %v", err)
+		log.Fatalf("Error shutting down the Publisher Service: %v", err)
 	}
 
-	if err := rabbitRepo.Close(); err != nil {
-		log.Printf("Erro ao fechar a conexão RabbitMQ: %v", err)
-	}
-
-	log.Println("Aplicação encerrada com sucesso.")
+	log.Println("Publisher Service successfully shut down.")
 }
