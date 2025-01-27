@@ -26,13 +26,13 @@ func NewRabbitMQRepo() (*RabbitMQRepository, error) {
 	amqpURL := fmt.Sprintf("amqp://%s:%s@%s:%s/", user, pass, host, port)
 	conn, err := amqp091.Dial(amqpURL)
 	if err != nil {
-		return nil, fmt.Errorf("falha ao conectar ao RabbitMQ: %w", err)
+		return nil, fmt.Errorf("Falha ao conectar ao RabbitMQ: %w", err)
 	}
 
 	ch, err := conn.Channel()
 	if err != nil {
 		conn.Close()
-		return nil, fmt.Errorf("falha ao abrir o canal RabbitMQ: %w", err)
+		return nil, fmt.Errorf("Falha ao abrir o canal RabbitMQ: %w", err)
 	}
 
 	_, err = ch.QueueDeclare(
@@ -46,7 +46,7 @@ func NewRabbitMQRepo() (*RabbitMQRepository, error) {
 	if err != nil {
 		ch.Close()
 		conn.Close()
-		return nil, fmt.Errorf("falha ao declarar a fila RabbitMQ: %w", err)
+		return nil, fmt.Errorf("Falha ao declarar a fila RabbitMQ: %w", err)
 	}
 
 	return &RabbitMQRepository{
@@ -59,7 +59,7 @@ func NewRabbitMQRepo() (*RabbitMQRepository, error) {
 func (r *RabbitMQRepository) PublishOrder(order domain.Order) error {
 	body, err := json.Marshal(order)
 	if err != nil {
-		return fmt.Errorf("falha ao serializar a ordem: %w", err)
+		return fmt.Errorf("Falha ao serializar a ordem: %w", err)
 	}
 
 	err = r.channel.Publish(
@@ -73,7 +73,7 @@ func (r *RabbitMQRepository) PublishOrder(order domain.Order) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("falha ao publicar a mensagem: %w", err)
+		return fmt.Errorf("Falha ao publicar a mensagem: %w", err)
 	}
 
 	return nil
@@ -81,10 +81,10 @@ func (r *RabbitMQRepository) PublishOrder(order domain.Order) error {
 
 func (r *RabbitMQRepository) Close() error {
 	if err := r.channel.Close(); err != nil {
-		return fmt.Errorf("falha ao fechar o canal RabbitMQ: %w", err)
+		return fmt.Errorf("Falha ao fechar o canal RabbitMQ: %w", err)
 	}
 	if err := r.conn.Close(); err != nil {
-		return fmt.Errorf("falha ao fechar a conexão RabbitMQ: %w", err)
+		return fmt.Errorf("Falha ao fechar a conexão RabbitMQ: %w", err)
 	}
 	return nil
 }
