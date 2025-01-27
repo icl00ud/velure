@@ -1,0 +1,26 @@
+<!-- product-card.component.html -->
+<div class="product-card">
+  <nz-card [nzBorderless]="true">
+    <div class="product-content">
+      <div class="image-container">
+        <app-carousel
+          [carouselData]="product.images"
+          [enableAutoPlay]="false"
+          [enableSwipe]="true"
+          [enableDots]="false"
+        >
+        </app-carousel>
+      </div>
+
+      <div class="product-info">
+        <h3 class="product-name">{{ product.name }}</h3>
+        <p class="product-price">R$ {{ product.price.toFixed(2) }}</p>
+        <p class="product-description">{{ product.description }}</p>
+      </div>
+
+      <button nz-button class="add-button" (click)="addToCart()">
+        Adicionar ao Carrinho
+      </button>
+    </div>
+  </nz-card>
+</div>
