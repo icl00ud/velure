@@ -1,5 +1,5 @@
 # Build stage
-FROM node:alpine AS build
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Prod stage
-FROM node:alpine
+FROM node:18-alpine
 
 WORKDIR /app
 
