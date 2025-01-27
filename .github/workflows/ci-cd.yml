@@ -15,7 +15,7 @@ jobs:
       auth-service: ${{ steps.filter.outputs.auth-service }}
       product-service: ${{ steps.filter.outputs.product-service }}
       ui-service: ${{ steps.filter.outputs.ui-service }}
-      order-service: ${{ steps.filter.outputs.order-service }}
+      publish-order-service: ${{ steps.filter.outputs.publish-order-service }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -31,8 +31,8 @@ jobs:
               - 'product-service/**'
             ui-service:
               - 'ui-service/**'
-            order-service:
-              - 'order-service/**'
+            publish-order-service:
+              - 'publish-order-service/**'
 
   auth-service:
     needs: determine-changes
@@ -67,13 +67,13 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
-  order-service:
+  publish-order-service:
     needs: determine-changes
-    if: needs.determine-changes.outputs.order-service == 'true'
+    if: needs.determine-changes.outputs.publish-order-service == 'true'
     uses: ./.github/workflows/go-service.yml
     with:
-      service-name: order-service
-      service-path: order-service
+      service-name: publish-order-service
+      service-path: publish-order-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
