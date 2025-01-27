@@ -1,0 +1,79 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  determine-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      auth-service: ${{ steps.filter.outputs.auth-service }}
+      product-service: ${{ steps.filter.outputs.product-service }}
+      ui-service: ${{ steps.filter.outputs.ui-service }}
+      order-service: ${{ steps.filter.outputs.order-service }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Determine changed services
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            auth-service:
+              - 'auth-service/**'
+            product-service:
+              - 'product-service/**'
+            ui-service:
+              - 'ui-service/**'
+            order-service:
+              - 'order-service/**'
+
+  auth-service:
+    needs: determine-changes
+    if: needs.determine-changes.outputs.auth-service == 'true'
+    uses: ./.github/workflows/node-service.yml
+    with:
+      service-name: auth-service
+      service-path: auth-service
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  product-service:
+    needs: determine-changes
+    if: needs.determine-changes.outputs.product-service == 'true'
+    uses: ./.github/workflows/node-service.yml
+    with:
+      service-name: product-service
+      service-path: product-service
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  ui-service:
+    needs: determine-changes
+    if: needs.determine-changes.outputs.ui-service == 'true'
+    uses: ./.github/workflows/node-service.yml
+    with:
+      service-name: ui-service
+      service-path: ui-service
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  order-service:
+    needs: determine-changes
+    if: needs.determine-changes.outputs.order-service == 'true'
+    uses: ./.github/workflows/go-service.yml
+    with:
+      service-name: order-service
+      service-path: order-service
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
