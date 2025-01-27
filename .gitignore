@@ -199,3 +199,4 @@ dist
 
 .vagrant
 .DS_Store
+.vscode
