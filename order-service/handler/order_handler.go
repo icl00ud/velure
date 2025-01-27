@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"fmt"
+
 	"github.com/icl00ud/velure-order-service/domain"
 	"github.com/icl00ud/velure-order-service/queue"
 	"gofr.dev/pkg/gofr"
@@ -22,7 +24,13 @@ func (h *OrderHandler) CreateOrder(ctx *gofr.Context) (any, error) {
 		return nil, err
 	}
 
-	if err := h.rabbitRepo.PublishOrder(order); err != nil {
+	ctx.Logger.Info(fmt.Sprintf("Order: %v", order))
+	event := domain.Event{
+		Type:  domain.OrderCreated,
+		Order: order,
+	}
+
+	if err := h.rabbitRepo.PublishEvent(event); err != nil {
 		return nil, err
 	}
 

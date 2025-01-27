@@ -200,3 +200,4 @@ dist
 .vagrant
 .DS_Store
 .vscode
+order-service/docker/rabbitmq
