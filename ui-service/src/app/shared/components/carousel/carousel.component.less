@@ -1,0 +1,20 @@
+@carousel-height: 50vh;
+
+nz-carousel {
+    margin: 30px 0;
+    max-width: 100vw;
+    max-height: @carousel-height;
+}
+
+[nz-carousel-content] {
+    min-height: @carousel-height;
+    line-height: @carousel-height;
+    background: wheat;
+    overflow: hidden;
+}
+
+[nz-carousel-content] > img {
+    max-height: @carousel-height;
+    width: 100vw;
+    object-fit: cover;
+}
