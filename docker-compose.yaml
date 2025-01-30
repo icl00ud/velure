@@ -1,5 +1,5 @@
 services:
-  postgres:
+  auth-postgres:
     image: postgres
     container_name: ${POSTGRES_HOST}
     restart: always

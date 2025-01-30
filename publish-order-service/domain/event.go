@@ -1,14 +1,14 @@
 package domain
 
+import "encoding/json"
+
 type EventType string
 
 const (
-	OrderCreated   EventType = "order.created"
-	OrderUpdated   EventType = "order.updated"
-	OrderCancelled EventType = "order.cancelled"
+	OrderCreated EventType = "order.created"
 )
 
 type Event struct {
-	Type  EventType `json:"type"`
-	Order Order     `json:"order"`
+	Type    EventType       `json:"type"`
+	Payload json.RawMessage `json:"payload"`
 }
