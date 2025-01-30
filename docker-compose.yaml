@@ -1,7 +1,7 @@
 services:
-  postgres:
+  auth-postgres:
     image: postgres
-    container_name: postgres_auth_service
+    container_name: ${POSTGRES_HOST}
     restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DATABASE_NAME}
@@ -14,14 +14,14 @@ services:
 
   mongodb:
     image: mongo
-    container_name: mongodb
+    container_name: ${MONGODB_HOST}
     restart: always
     ports:
-      - "27017:27017"
+      - "${MONGODB_PORT}:${MONGODB_PORT}"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: velure_user
-      MONGO_INITDB_ROOT_PASSWORD: velure_password
-      MONGO_INITDB_DATABASE: velure_database
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGODB_DBNAME}
     volumes:
       - mongodb_data:/data/db
       - ./velure-product-service/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
@@ -31,8 +31,46 @@ services:
     container_name: redis-products
     restart: always
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:${REDIS_PORT}"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ${RABBIT_HOST}
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBIT_PORT}:${RABBIT_PORT}"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./observability/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
 
 volumes:
   postgres_auth_data:
   mongodb_data:
+  rabbitmq_data:

@@ -2,22 +2,22 @@ global:
   scrape_interval: 5s
 
 scrape_configs:
-  - job_name: 'prometheus'
+  - job_name: "prometheus"
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ["localhost:9090"]
         labels:
-          instance: 'prometheus_instance'
+          instance: "prometheus_instance"
 
-  - job_name: 'velure-auth-service'
-    metrics_path: '/authentication/authMetrics'
+  - job_name: "velure-auth-service"
+    metrics_path: "/authentication/authMetrics"
     static_configs:
-      - targets: ['kong:8000']
+      - targets: ["localhost:3020/metrics"]
         labels:
-          instance: 'velure-auth-instance'
+          instance: "velure-auth-instance"
 
-  - job_name: 'velure-product-service'
-    metrics_path: '/product/productMetrics'
+  - job_name: "velure-product-service"
+    metrics_path: "/product/productMetrics"
     static_configs:
-      - targets: ['kong:8000']
+      - targets: ["localhost:3010/metrics"]
         labels:
-          instance: 'velure-product-instance'
+          instance: "velure-product-instance"
