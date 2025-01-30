@@ -1,13 +1,11 @@
 package queue
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/icl00ud/publish-order-service/domain"
 	"github.com/rabbitmq/amqp091-go"
 )
 
@@ -25,8 +23,8 @@ func NewRabbitMQRepo() (*RabbitMQRepository, error) {
 	requiredVars := []string{
 		"RABBITMQ_HOST",
 		"RABBITMQ_PORT",
-		"RABBITMQ_DEFAULT_USER",
-		"RABBITMQ_DEFAULT_PASS",
+		"RABBITMQ_USER",
+		"RABBITMQ_PASS",
 		"RABBITMQ_EXCHANGE",
 	}
 
@@ -81,28 +79,37 @@ func NewRabbitMQRepo() (*RabbitMQRepository, error) {
 	}, nil
 }
 
-func (r *RabbitMQRepository) PublishEvent(event domain.Event) error {
-	body, err := json.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("failed to marshal event: %w", err)
-	}
-
-	err = r.channel.Publish(
-		r.exchange,         // Exchange
-		string(event.Type), // Routing key
-		false,              // Mandatory
-		false,              // Immediate
-		amqp091.Publishing{
-			ContentType:  "application/json",
-			DeliveryMode: amqp091.Persistent,
-			Body:         body,
-		},
+func (r *RabbitMQRepository) DeclareQueue(queueName string) (amqp091.Queue, error) {
+	return r.channel.QueueDeclare(
+		queueName,
+		true,  // Durable
+		false, // Delete when unused
+		false, // Exclusive
+		false, // No-wait
+		nil,   // Arguments
 	)
-	if err != nil {
-		return fmt.Errorf("failed to publish event: %w", err)
-	}
+}
 
-	return nil
+func (r *RabbitMQRepository) BindQueue(queueName, routingKey string) error {
+	return r.channel.QueueBind(
+		queueName,
+		routingKey,
+		r.exchange,
+		false,
+		nil,
+	)
+}
+
+func (r *RabbitMQRepository) Consume(queueName string, consumerTag string, autoAck, exclusive, noLocal, noWait bool, args amqp091.Table) (<-chan amqp091.Delivery, error) {
+	return r.channel.Consume(
+		queueName,
+		consumerTag,
+		autoAck,
+		exclusive,
+		noLocal,
+		noWait,
+		args,
+	)
 }
 
 func (r *RabbitMQRepository) Close() error {
@@ -125,4 +132,8 @@ func (r *RabbitMQRepository) Close() error {
 	}
 
 	return nil
+}
+
+func (r *RabbitMQRepository) GetExchangeName() string {
+	return r.exchange
 }
