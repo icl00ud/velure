@@ -49,7 +49,7 @@ func main() {
 
 	mux.HandleFunc("/create-order", orderHandler.CreateOrder)
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("PUBLISH_ORDER_SERVICE_APP_PORT")
 	if port == "" {
 		port = "8080"
 	}

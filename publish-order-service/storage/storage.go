@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -18,11 +17,11 @@ type Storage struct {
 }
 
 func NewStorage() (*Storage, error) {
-	dbHost := os.Getenv("POSTGRES_HOST")
-	dbPort := os.Getenv("POSTGRES_HOST_PORT")
-	dbUser := os.Getenv("POSTGRES_USER")
-	dbPassword := os.Getenv("POSTGRES_PASSWORD")
-	dbName := os.Getenv("POSTGRES_DATABASE_NAME")
+	dbHost := "order_postgres"
+	dbPort := "5432"
+	dbUser := "user_velure_order"
+	dbPassword := "7Bjaadb9213"
+	dbName := "velure_order"
 
 	if dbHost == "" || dbPort == "" || dbUser == "" || dbPassword == "" || dbName == "" {
 		return nil, fmt.Errorf("missing required database environment variables")
@@ -43,8 +42,7 @@ func NewStorage() (*Storage, error) {
 
 	log.Println("Connected to the database successfully")
 
-	// Executa as migrações
-	migrationPath := "file://migrations"
+	migrationPath := "file://./migrations"
 	m, err := migrate.New(migrationPath, fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		dbUser, dbPassword, dbHost, dbPort, dbName))
 	if err != nil {

@@ -1,23 +1,38 @@
 services:
   auth-postgres:
-    image: postgres
-    container_name: ${POSTGRES_HOST}
+    image: postgres:17-alpine
+    container_name: ${AUTH_POSTGRES_HOST}
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DATABASE_NAME}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${AUTH_POSTGRES_DATABASE_NAME}
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
     volumes:
       - postgres_auth_data:/var/lib/postgresql/data
     ports:
-      - "${POSTGRES_HOST_PORT}:${POSTGRES_CONTAINER_PORT}"
+      - "5432:5432"
+    networks:
+      - auth
+
+  order-postgres:
+    image: postgres:17-alpine
+    container_name: order_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${ORDER_POSTGRES_DATABASE_NAME}
+      POSTGRES_USER: ${ORDER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${ORDER_POSTGRES_PASSWORD}
+    volumes:
+      - postgres_order_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - order
 
   mongodb:
-    image: mongo
+    image: bitnami/mongodb:8.0.4
     container_name: ${MONGODB_HOST}
     restart: always
-    ports:
-      - "${MONGODB_PORT}:${MONGODB_PORT}"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
@@ -25,9 +40,11 @@ services:
     volumes:
       - mongodb_data:/data/db
       - ./velure-product-service/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "${MONGODB_PORT}:${MONGODB_PORT}"
 
   redis:
-    image: redis
+    image: redis:7.2.7-alpine
     container_name: redis-products
     restart: always
     ports:
@@ -35,42 +52,48 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: ${RABBIT_HOST}
+    container_name: ${RABBITMQ_HOST}
     restart: always
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-    ports:
-      - "${RABBIT_PORT}:${RABBIT_PORT}"
-      - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    volumes:
-      - ./observability/prometheus:/etc/prometheus
-      - prometheus_data:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
-      - "9090:9090"
+      - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"
+      - "15672:15672"
+    networks:
+      - order
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
+  publish-order-service:
+    build:
+      context: ./publish-order-service
+      dockerfile: Dockerfile
+    container_name: ${PUBLISH_ORDER_SERVICE_HOST}
+    restart: always
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE}
+      POSTGRES_HOST: ${ORDER_POSTGRES_HOST}
+      POSTGRES_USER: ${ORDER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${ORDER_POSTGRES_PASSWORD}
+      POSTGRES_DATABASE_NAME: ${ORDER_POSTGRES_DATABASE_NAME}
     ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    depends_on:
-      - prometheus
+      - "${PUBLISH_ORDER_SERVICE_PORT}:${PUBLISH_ORDER_SERVICE_PORT}"
+    networks:
+      - order
 
 volumes:
   postgres_auth_data:
+  postgres_order_data:
   mongodb_data:
   rabbitmq_data:
+
+networks:
+  auth:
+    driver: bridge
+  order:
+    driver: bridge
