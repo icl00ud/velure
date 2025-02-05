@@ -1,4 +1,3 @@
-# Estágio de construção
 FROM node:18-alpine AS build
 
 WORKDIR /app
@@ -14,7 +13,6 @@ COPY . .
 
 RUN npm run build
 
-# Estágio de produção
 FROM node:18-alpine
 
 WORKDIR /app

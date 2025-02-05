@@ -16,7 +16,7 @@ services:
 
   order-postgres:
     image: postgres:17-alpine
-    container_name: order_postgres
+    container_name: ${ORDER_POSTGRES_HOST}
     restart: always
     environment:
       POSTGRES_DB: ${ORDER_POSTGRES_DATABASE_NAME}
@@ -34,14 +34,18 @@ services:
     container_name: ${MONGODB_HOST}
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGODB_DBNAME}
+      MONGODB_ROOT_USER: ${MONGODB_ROOT_USER}
+      MONGODB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD}
+      MONGODB_USERNAME: ${MONGODB_NORMAL_USER}
+      MONGODB_PASSWORD: ${MONGODB_NORMAL_PASSWORD}
+      MONGODB_DATABASE: ${MONGODB_DBNAME}
     volumes:
       - mongodb_data:/data/db
-      - ./velure-product-service/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./product-service/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     ports:
       - "${MONGODB_PORT}:${MONGODB_PORT}"
+    networks:
+      - order
 
   redis:
     image: redis:7.2.7-alpine
@@ -49,6 +53,8 @@ services:
     restart: always
     ports:
       - "${REDIS_PORT}:${REDIS_PORT}"
+    networks:
+      - order
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -72,17 +78,65 @@ services:
     container_name: ${PUBLISH_ORDER_SERVICE_HOST}
     restart: always
     environment:
+      PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
       RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE}
       POSTGRES_HOST: ${ORDER_POSTGRES_HOST}
+      POSTGRES_PORT: ${ORDER_POSTGRES_CONTAINER_PORT}
       POSTGRES_USER: ${ORDER_POSTGRES_USER}
       POSTGRES_PASSWORD: ${ORDER_POSTGRES_PASSWORD}
       POSTGRES_DATABASE_NAME: ${ORDER_POSTGRES_DATABASE_NAME}
     ports:
       - "${PUBLISH_ORDER_SERVICE_PORT}:${PUBLISH_ORDER_SERVICE_PORT}"
+    networks:
+      - order
+
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    restart: always
+    environment:
+      AUTH_SERVICE_APP_PORT: ${AUTH_SERVICE_APP_PORT}
+      AUTH_POSTGRES_HOST: ${AUTH_POSTGRES_HOST}
+      AUTH_POSTGRES_HOST_PORT: ${AUTH_POSTGRES_HOST_PORT}
+      AUTH_POSTGRES_DATABASE_NAME: ${AUTH_POSTGRES_DATABASE_NAME}
+      AUTH_POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      AUTH_POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      JWT_REFRESH_TOKEN_SECRET: ${JWT_REFRESH_TOKEN_SECRET}
+      JWT_REFRESH_TOKEN_EXPIRES_IN: ${JWT_REFRESH_TOKEN_EXPIRES_IN}
+      SESSION_SECRET: ${SESSION_SECRET}
+      SESSION_EXPIRES_IN: ${SESSION_EXPIRES_IN}
+    ports:
+      - "${AUTH_SERVICE_APP_PORT}:${AUTH_SERVICE_APP_PORT}"
+    networks:
+      - auth
+
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: ${PRODUCT_SERVICE_HOST}
+    restart: always
+    environment:
+      PRODUCT_SERVICE_APP_PORT: ${PRODUCT_SERVICE_APP_PORT}
+      PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL}
+      MONGODB_HOST: ${MONGODB_HOST}
+      MONGODB_PORT: ${MONGODB_PORT}
+      MONGODB_DBNAME: ${MONGODB_DBNAME}
+      MONGODB_NORMAL_USER: ${MONGODB_NORMAL_USER}
+      MONGODB_NORMAL_PASSWORD: ${MONGODB_NORMAL_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_URL: ${REDIS_URL}
+    ports:
+      - "${PRODUCT_SERVICE_APP_PORT}:${PRODUCT_SERVICE_APP_PORT}"
     networks:
       - order
 

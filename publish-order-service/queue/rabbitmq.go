@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -21,7 +22,7 @@ type RabbitMQRepository struct {
 	exchange string
 }
 
-func NewRabbitMQRepo() (*RabbitMQRepository, error) {
+func NewRabbitMQRepo() *RabbitMQRepository {
 	requiredVars := []string{
 		"RABBITMQ_HOST",
 		"RABBITMQ_PORT",
@@ -37,7 +38,7 @@ func NewRabbitMQRepo() (*RabbitMQRepository, error) {
 		}
 	}
 	if len(missing) > 0 {
-		return nil, fmt.Errorf("%w: %s", ErrMissingEnvVar, strings.Join(missing, ", "))
+		log.Fatalf("%v: %s", ErrMissingEnvVar, strings.Join(missing, ", "))
 	}
 
 	amqpURL := fmt.Sprintf("amqp://%s:%s@%s:%s/",
@@ -49,13 +50,13 @@ func NewRabbitMQRepo() (*RabbitMQRepository, error) {
 
 	conn, err := amqp091.Dial(amqpURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
+		log.Fatalf("failed to connect to RabbitMQ: %v", err)
 	}
 
 	ch, err := conn.Channel()
 	if err != nil {
 		conn.Close()
-		return nil, fmt.Errorf("failed to open channel: %w", err)
+		log.Fatalf("failed to open channel: %v", err)
 	}
 
 	exchangeName := os.Getenv("RABBITMQ_EXCHANGE")
@@ -71,22 +72,22 @@ func NewRabbitMQRepo() (*RabbitMQRepository, error) {
 	if err != nil {
 		ch.Close()
 		conn.Close()
-		return nil, fmt.Errorf("failed to declare exchange: %w", err)
+		log.Fatalf("failed to declare exchange: %v", err)
 	}
 
-	fmt.Println("Connected to RabbitMQ successfully")
+	log.Println("Connected to RabbitMQ successfully")
 
 	return &RabbitMQRepository{
 		conn:     conn,
 		channel:  ch,
 		exchange: exchangeName,
-	}, nil
+	}
 }
 
-func (r *RabbitMQRepository) PublishEvent(event domain.Event) error {
+func (r *RabbitMQRepository) PublishEvent(event domain.Event) {
 	body, err := json.Marshal(event)
 	if err != nil {
-		return fmt.Errorf("failed to marshal event: %w", err)
+		log.Fatalf("failed to marshal event: %v", err)
 	}
 
 	err = r.channel.Publish(
@@ -101,30 +102,20 @@ func (r *RabbitMQRepository) PublishEvent(event domain.Event) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to publish event: %w", err)
+		log.Fatalf("failed to publish event: %v", err)
 	}
-
-	return nil
 }
 
-func (r *RabbitMQRepository) Close() error {
-	var errs []error
-
+func (r *RabbitMQRepository) Close() {
 	if r.channel != nil {
 		if err := r.channel.Close(); err != nil {
-			errs = append(errs, fmt.Errorf("channel close error: %w", err))
+			log.Printf("channel close error: %v", err)
 		}
 	}
 
 	if r.conn != nil {
 		if err := r.conn.Close(); err != nil {
-			errs = append(errs, fmt.Errorf("connection close error: %w", err))
+			log.Printf("connection close error: %v", err)
 		}
 	}
-
-	if len(errs) > 0 {
-		return fmt.Errorf("rabbitmq shutdown errors: %v", errs)
-	}
-
-	return nil
 }

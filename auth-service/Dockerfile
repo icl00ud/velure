@@ -1,36 +1,33 @@
-# Build stage
-FROM node:18-alpine AS build
+FROM oven/bun:canary-alpine AS build
 
 WORKDIR /app
 
 COPY package*.json ./
 COPY tsconfig.build.json ./
 
-RUN npm install -g @nestjs/cli
+RUN bun install -g @nestjs/cli
 
-RUN npm install
+RUN bun install
 
 COPY . .
 
-RUN npx prisma generate
+RUN bun run prisma generate
 
-RUN npm run build
+RUN bun run build
 
-# Prod stage
-FROM node:18-alpine
+FROM oven/bun:canary-alpine
 
 WORKDIR /app
 
 COPY ./prisma /app/
-COPY ./.env /app/
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./
 
-RUN npm install prisma --omit=dev
+RUN bun install prisma --production
 
-RUN npx prisma generate
+RUN bun run prisma generate
 
 ENV PATH=/app/node_modules/.bin:$PATH
 
-CMD ["node", "dist/main"]
+CMD ["bun", "run", "dist/main"]
