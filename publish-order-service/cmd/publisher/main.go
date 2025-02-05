@@ -39,6 +39,6 @@ func main() {
 
 	log.Printf("Publisher Service initialized at PORT: %s...", port)
 	if err := http.ListenAndServe(":"+port, loggedMux); err != nil {
-		log.Fatalf("Erro ao iniciar o servidor: %v", err)
+		log.Fatalf("Failed to open server: %v", err)
 	}
 }
