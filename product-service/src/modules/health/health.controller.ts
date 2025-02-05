@@ -1,19 +1,21 @@
+import { Controller, Get } from "@nestjs/common";
+import {
+  HealthCheckService,
+  HealthCheck,
+  HealthIndicatorResult,
+} from "@nestjs/terminus";
 
-import { Controller, Get } from '@nestjs/common';
-import { HealthCheckService, HttpHealthIndicator, HealthCheck } from '@nestjs/terminus';
-
-@Controller('health')
+@Controller("health")
 export class HealthController {
-  constructor(
-    private health: HealthCheckService,
-    private http: HttpHealthIndicator,
-  ) {}
+  constructor(private health: HealthCheckService) {}
 
   @Get()
   @HealthCheck()
-  check() {
+  async check() {
     return this.health.check([
-      () => this.http.pingCheck('google', 'https://google.com'),
+      async (): Promise<HealthIndicatorResult> => ({
+        custom: { status: "up" },
+      }),
     ]);
   }
 }
