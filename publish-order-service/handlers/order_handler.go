@@ -1,4 +1,3 @@
-// handlers/order_handler.go
 package handlers
 
 import (
@@ -8,31 +7,30 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/icl00ud/publish-order-service/client"
 	"github.com/icl00ud/publish-order-service/domain"
 	"github.com/icl00ud/publish-order-service/queue"
 	"github.com/icl00ud/publish-order-service/storage"
 )
 
 type OrderHandler struct {
-	ProductClient *client.ProductClient
-	Storage       *storage.Storage
-	RabbitRepo    *queue.RabbitMQRepository
+	Storage    *storage.Storage
+	RabbitRepo *queue.RabbitMQRepository
 }
 
-func NewOrderHandler(pc *client.ProductClient, s *storage.Storage, rr *queue.RabbitMQRepository) *OrderHandler {
+func NewOrderHandler(s *storage.Storage, rr *queue.RabbitMQRepository) *OrderHandler {
 	return &OrderHandler{
-		ProductClient: pc,
-		Storage:       s,
-		RabbitRepo:    rr,
+		Storage:    s,
+		RabbitRepo: rr,
 	}
 }
 
 func (oh *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var orderInput struct {
 		Items []struct {
-			ProductID string `json:"product_id"`
-			Quantity  int    `json:"quantity"`
+			ProductID string  `json:"product_id"`
+			Name      string  `json:"name"`
+			Quantity  int     `json:"quantity"`
+			Price     float64 `json:"price"`
 		} `json:"items"`
 	}
 
@@ -49,31 +47,15 @@ func (oh *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var cartItems []domain.CartItem
 	total := 0
 
-	// Buscar detalhes dos produtos no Product Service
+	// Uso as informações recebidas para montar os itens do pedido
 	for _, item := range orderInput.Items {
-		product, err := oh.ProductClient.GetProductByID(r.Context(), item.ProductID)
-		if err != nil {
-			log.Printf("Error fetching product %s: %v", item.ProductID, err)
-			http.Error(w, "Failed to fetch product details", http.StatusInternalServerError)
-			return
-		}
-
-		if !product.Disponibility {
-			http.Error(w, "Product "+product.Name+" is not available", http.StatusBadRequest)
-			return
-		}
-
-		if product.QuantityWarehouse < item.Quantity {
-			http.Error(w, "Insufficient quantity for product "+product.Name, http.StatusBadRequest)
-			return
-		}
-
 		cartItems = append(cartItems, domain.CartItem{
 			ProductID: item.ProductID,
+			Name:      item.Name,
 			Quantity:  item.Quantity,
+			Price:     item.Price,
 		})
-
-		total += item.Quantity * product.Price
+		total += int(item.Price * float64(item.Quantity))
 	}
 
 	orderID := uuid.New().String()
@@ -87,13 +69,8 @@ func (oh *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: time.Now(),
 	}
 
-	if err := oh.Storage.CreateOrder(order); err != nil {
-		log.Printf("Error saving order to database: %v", err)
-		http.Error(w, "Failed to create order", http.StatusInternalServerError)
-		return
-	}
+	oh.Storage.CreateOrder(order)
 
-	// Publica o evento OrderCreated no RabbitMQ
 	eventPayload, err := json.Marshal(order)
 	if err != nil {
 		log.Printf("Error marshaling event payload: %v", err)
@@ -106,14 +83,10 @@ func (oh *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		Payload: eventPayload,
 	}
 
-	if err := oh.RabbitRepo.PublishEvent(event); err != nil {
-		log.Printf("Error publishing event to RabbitMQ: %v", err)
-		http.Error(w, "Failed to publish event", http.StatusInternalServerError)
-		return
-	}
+	oh.RabbitRepo.PublishEvent(event)
 
-	// Retorna a resposta com os detalhes do pedido
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"order_id": order.ID,
 		"total":    order.Total,

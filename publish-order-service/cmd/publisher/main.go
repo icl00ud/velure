@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/icl00ud/publish-order-service/client"
 	"github.com/icl00ud/publish-order-service/handlers"
 	"github.com/icl00ud/publish-order-service/middleware"
 	"github.com/icl00ud/publish-order-service/queue"
@@ -16,32 +15,16 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("Nenhum arquivo .env encontrado. Usando variáveis de ambiente existentes.")
+		log.Println("No .env found! Using the system environment variables.")
 	}
 
-	rabbitRepo, err := queue.NewRabbitMQRepo()
-	if err != nil {
-		log.Fatalf("Erro ao conectar ao RabbitMQ: %v", err)
-	}
-	defer func() {
-		if err := rabbitRepo.Close(); err != nil {
-			log.Printf("Erro ao fechar a conexão RabbitMQ: %v", err)
-		}
-	}()
+	rabbitRepo := queue.NewRabbitMQRepo()
+	defer rabbitRepo.Close()
 
-	dbStorage, err := storage.NewStorage()
-	if err != nil {
-		log.Fatalf("Erro ao conectar ao banco de dados: %v", err)
-	}
+	dbStorage := storage.NewStorage()
 	defer dbStorage.DB.Close()
 
-	productServiceURL := os.Getenv("PRODUCT_SERVICE_URL")
-	if productServiceURL == "" {
-		log.Fatalf("PRODUCT_SERVICE_URL não está definido no .env")
-	}
-	productClient := client.NewProductClient(productServiceURL)
-
-	orderHandler := handlers.NewOrderHandler(productClient, dbStorage, rabbitRepo)
+	orderHandler := handlers.NewOrderHandler(dbStorage, rabbitRepo)
 
 	mux := http.NewServeMux()
 
@@ -54,7 +37,7 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Publisher Service iniciado na porta %s...", port)
+	log.Printf("Publisher Service initialized at PORT: %s...", port)
 	if err := http.ListenAndServe(":"+port, loggedMux); err != nil {
 		log.Fatalf("Erro ao iniciar o servidor: %v", err)
 	}

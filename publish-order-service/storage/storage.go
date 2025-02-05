@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -16,15 +17,15 @@ type Storage struct {
 	DB *sql.DB
 }
 
-func NewStorage() (*Storage, error) {
-	dbHost := "order_postgres"
-	dbPort := "5432"
-	dbUser := "user_velure_order"
-	dbPassword := "7Bjaadb9213"
-	dbName := "velure_order"
+func NewStorage() *Storage {
+	dbHost := os.Getenv("POSTGRES_HOST")
+	dbPort := os.Getenv("POSTGRES_PORT")
+	dbUser := os.Getenv("POSTGRES_USER")
+	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	dbName := os.Getenv("POSTGRES_DATABASE_NAME")
 
 	if dbHost == "" || dbPort == "" || dbUser == "" || dbPassword == "" || dbName == "" {
-		return nil, fmt.Errorf("missing required database environment variables")
+		log.Fatalf("missing required database environment variables")
 	}
 
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -32,26 +33,24 @@ func NewStorage() (*Storage, error) {
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		log.Fatalf("failed to open database: %v", err)
 	}
 
 	err = db.Ping()
 	if err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+		log.Fatalf("failed to ping database: %v", err)
 	}
-
-	log.Println("Connected to the database successfully")
 
 	migrationPath := "file://./migrations"
 	m, err := migrate.New(migrationPath, fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		dbUser, dbPassword, dbHost, dbPort, dbName))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create migrate instance: %w", err)
+		log.Fatalf("failed to create migrate instance: %v", err)
 	}
 
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		return nil, fmt.Errorf("failed to apply migrations: %w", err)
+		log.Fatalf("failed to apply migrations: %v", err)
 	}
 
 	if err == migrate.ErrNoChange {
@@ -60,23 +59,22 @@ func NewStorage() (*Storage, error) {
 		log.Println("Migrations applied successfully.")
 	}
 
-	return &Storage{DB: db}, nil
+	return &Storage{DB: db}
 }
 
-func (s *Storage) CreateOrder(order domain.Order) error {
+func (s *Storage) CreateOrder(order domain.Order) {
 	itemsJSON, err := json.Marshal(order.Items)
 	if err != nil {
-		return fmt.Errorf("failed to marshal cart items: %w", err)
+		log.Fatalf("failed to marshal cart items: %v", err)
 	}
 
 	query := `
-		INSERT INTO orders (id, items, total, status, created_at, updated_at)
+		INSERT INTO TBLOrders (id, items, total, status, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO NOTHING
 	`
 	_, err = s.DB.Exec(query, order.ID, itemsJSON, order.Total, order.Status, order.CreatedAt, order.UpdatedAt)
 	if err != nil {
-		return fmt.Errorf("failed to insert order: %w", err)
+		log.Fatalf("failed to insert order: %v", err)
 	}
-	return nil
 }
