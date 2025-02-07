@@ -17,6 +17,6 @@ WORKDIR /app
 COPY --from=build /app/migrations ./migrations
 COPY --from=build /app/main .
 
-EXPOSE ${PUBLISH_ORDER_SERVICE_APP_PORT}
+EXPOSE ${PROCESS_ORDER_SERVICE_APP_PORT}
 
 CMD ["./main"]

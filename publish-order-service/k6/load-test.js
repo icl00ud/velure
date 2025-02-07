@@ -2,13 +2,13 @@ import http from "k6/http";
 import { sleep, check } from "k6";
 
 export let options = {
-  vus: 100,
-  duration: "30s",
+  vus: 5000,
+  duration: "60s",
 };
 
 export default function () {
   const counter = __ITER + 1;
-  const url = "http://localhost:8080/create-order";
+  const url = "http://localhost:3030/create-order";
   const payload = JSON.stringify({
     items: [
       {

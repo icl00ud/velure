@@ -27,9 +27,7 @@ func main() {
 	orderHandler := handlers.NewOrderHandler(dbStorage, rabbitRepo)
 
 	mux := http.NewServeMux()
-
 	loggedMux := middleware.LoggingMiddleware(mux)
-
 	mux.HandleFunc("/create-order", orderHandler.CreateOrder)
 
 	port := os.Getenv("PUBLISH_ORDER_SERVICE_APP_PORT")

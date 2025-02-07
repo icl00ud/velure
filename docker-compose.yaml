@@ -14,18 +14,33 @@ services:
     networks:
       - auth
 
-  order-postgres:
+  publisher-payment-postgres:
     image: postgres:17-alpine
-    container_name: ${ORDER_POSTGRES_HOST}
+    container_name: ${PUBLISHER_POSTGRES_HOST}
     restart: always
     environment:
-      POSTGRES_DB: ${ORDER_POSTGRES_DATABASE_NAME}
-      POSTGRES_USER: ${ORDER_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${ORDER_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${PUBLISHER_POSTGRES_DATABASE_NAME}
+      POSTGRES_USER: ${PUBLISHER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PUBLISHER_POSTGRES_PASSWORD}
     volumes:
-      - postgres_order_data:/var/lib/postgresql/data
+      - postgres_publish_payment_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "5433:${PUBLISHER_POSTGRES_CONTAINER_PORT}"
+    networks:
+      - order
+
+  process-payment-postgres:
+    image: postgres:17-alpine
+    container_name: ${PROCESS_POSTGRES_HOST}
+    restart: always
+    environment:
+      POSTGRES_DB: ${PROCESS_POSTGRES_DATABASE_NAME}
+      POSTGRES_USER: ${PROCESS_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PROCESS_POSTGRES_PASSWORD}
+    volumes:
+      - postgres_process_payment_data:/var/lib/postgresql/data
+    ports:
+      - "5434:${PROCESS_POSTGRES_CONTAINER_PORT}"
     networks:
       - order
 
@@ -63,13 +78,19 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      PUBLISHER_RABBITMQ_PASSWORD: ${PUBLISHER_RABBITMQ_PASSWORD}
+      PUBLISHER_RABBITMQ_USER: ${PUBLISHER_RABBITMQ_USER}
+      PROCESS_RABBITMQ_PASSWORD: ${PROCESS_RABBITMQ_PASSWORD}
+      PROCESS_RABBITMQ_USER: ${PROCESS_RABBITMQ_USER}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq-entrypoint.sh:/docker-entrypoint.sh
     ports:
-      - "${RABBITMQ_PORT}:${RABBITMQ_PORT}"
+      - "${RABBITMQ_PORT}:5672"
       - "15672:15672"
     networks:
       - order
+    entrypoint: ["/bin/bash", "/docker-entrypoint.sh"]
 
   publish-order-service:
     build:
@@ -78,19 +99,43 @@ services:
     container_name: ${PUBLISH_ORDER_SERVICE_HOST}
     restart: always
     environment:
-      PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
       RABBITMQ_PORT: ${RABBITMQ_PORT}
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-      RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE}
-      POSTGRES_HOST: ${ORDER_POSTGRES_HOST}
-      POSTGRES_PORT: ${ORDER_POSTGRES_CONTAINER_PORT}
-      POSTGRES_USER: ${ORDER_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${ORDER_POSTGRES_PASSWORD}
-      POSTGRES_DATABASE_NAME: ${ORDER_POSTGRES_DATABASE_NAME}
+      RABBITMQ_USER: ${PUBLISHER_RABBITMQ_USER}
+      RABBITMQ_PASS: ${PUBLISHER_RABBITMQ_PASSWORD}
+      RABBITMQ_EXCHANGE: ${PUBLISHER_RABBITMQ_EXCHANGE}
+      POSTGRES_HOST: ${PUBLISHER_POSTGRES_HOST}
+      POSTGRES_PORT: ${PUBLISHER_POSTGRES_CONTAINER_PORT}
+      POSTGRES_USER: ${PUBLISHER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PUBLISHER_POSTGRES_PASSWORD}
+      POSTGRES_DATABASE_NAME: ${PUBLISHER_POSTGRES_DATABASE_NAME}
+      PUBLISH_ORDER_SERVICE_APP_PORT: ${PUBLISH_ORDER_SERVICE_APP_PORT}
     ports:
-      - "${PUBLISH_ORDER_SERVICE_PORT}:${PUBLISH_ORDER_SERVICE_PORT}"
+      - "${PUBLISH_ORDER_SERVICE_APP_PORT}:${PUBLISH_ORDER_SERVICE_APP_PORT}"
+    networks:
+      - order
+
+  process-order-service:
+    build:
+      context: ./process-order-service
+      dockerfile: Dockerfile
+    container_name: ${PROCESS_ORDER_SERVICE_HOST}
+    restart: always
+    environment:
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${PROCESS_RABBITMQ_USER}
+      RABBITMQ_PASS: ${PROCESS_RABBITMQ_PASSWORD}
+      RABBITMQ_EXCHANGE: ${PROCESS_RABBITMQ_EXCHANGE}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
+      POSTGRES_HOST: ${PROCESS_POSTGRES_HOST}
+      POSTGRES_PORT: ${PROCESS_POSTGRES_CONTAINER_PORT}
+      POSTGRES_USER: ${PROCESS_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PROCESS_POSTGRES_PASSWORD}
+      POSTGRES_DATABASE_NAME: ${PROCESS_POSTGRES_DATABASE_NAME}
+      PROCESS_ORDER_SERVICE_APP_PORT: ${PROCESS_ORDER_SERVICE_APP_PORT}
+    ports:
+      - "${PROCESS_ORDER_SERVICE_APP_PORT}:${PROCESS_ORDER_SERVICE_APP_PORT}"
     networks:
       - order
 
@@ -142,7 +187,8 @@ services:
 
 volumes:
   postgres_auth_data:
-  postgres_order_data:
+  postgres_publish_payment_data:
+  postgres_process_payment_data:
   mongodb_data:
   rabbitmq_data:
 

@@ -2,23 +2,21 @@ package storage
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/icl00ud/publish-order-service/domain"
+	"github.com/icl00ud/process-order-service/domain"
 )
 
-type Storage struct {
+type PaymentStorage struct {
 	DB *sql.DB
 }
 
-func NewStorage() *Storage {
+func NewPaymentStorage() *PaymentStorage {
 	dbHost := os.Getenv("POSTGRES_HOST")
 	dbPort := os.Getenv("POSTGRES_PORT")
 	dbUser := os.Getenv("POSTGRES_USER")
@@ -37,10 +35,6 @@ func NewStorage() *Storage {
 		log.Fatalf("failed to open database: %v", err)
 	}
 
-	db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(1)
-	db.SetConnMaxLifetime(5 * time.Minute)
-
 	err = db.Ping()
 	if err != nil {
 		log.Fatalf("failed to ping database: %v", err)
@@ -58,28 +52,19 @@ func NewStorage() *Storage {
 		log.Fatalf("failed to apply migrations: %v", err)
 	}
 
-	if err == migrate.ErrNoChange {
-		log.Println("No new migrations to apply.")
-	} else {
-		log.Println("Migrations applied successfully.")
-	}
+	log.Println("Payments migrations applied successfully.")
 
-	return &Storage{DB: db}
+	return &PaymentStorage{DB: db}
 }
 
-func (s *Storage) CreateOrder(order domain.Order) {
-	itemsJSON, err := json.Marshal(order.Items)
-	if err != nil {
-		log.Fatalf("failed to marshal cart items: %v", err)
-	}
-
+func (ps *PaymentStorage) StorePayment(payment domain.Payment) {
 	query := `
-		INSERT INTO TBLOrders (id, items, total, status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO TBlProcessedPayments (id, order_id, amount, status, processed_at)
+		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (id) DO NOTHING
 	`
-	_, err = s.DB.Exec(query, order.ID, itemsJSON, order.Total, order.Status, order.CreatedAt, order.UpdatedAt)
+	_, err := ps.DB.Exec(query, payment.ID, payment.OrderID, payment.Amount, payment.Status, payment.ProcessedAt)
 	if err != nil {
-		log.Fatalf("failed to insert order: %v", err)
+		log.Fatalf("failed to insert payment: %v", err)
 	}
 }
