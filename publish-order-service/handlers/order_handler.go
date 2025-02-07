@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,7 +48,6 @@ func (oh *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var cartItems []domain.CartItem
 	total := 0
 
-	// Uso as informações recebidas para montar os itens do pedido
 	for _, item := range orderInput.Items {
 		cartItems = append(cartItems, domain.CartItem{
 			ProductID: item.ProductID,
@@ -69,8 +69,6 @@ func (oh *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: time.Now(),
 	}
 
-	oh.Storage.CreateOrder(order)
-
 	eventPayload, err := json.Marshal(order)
 	if err != nil {
 		log.Printf("Error marshaling event payload: %v", err)
@@ -83,8 +81,23 @@ func (oh *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		Payload: eventPayload,
 	}
 
-	oh.RabbitRepo.PublishEvent(event)
+	// Executa as operações de inserção e publicação em paralelo
+	var wg sync.WaitGroup
+	wg.Add(2)
 
+	go func() {
+		defer wg.Done()
+		oh.Storage.CreateOrder(order)
+	}()
+
+	go func() {
+		defer wg.Done()
+		oh.RabbitRepo.PublishEvent(event)
+	}()
+
+	wg.Wait()
+
+	// Retorna a resposta somente após as operações concluírem
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{

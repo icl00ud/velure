@@ -2,38 +2,25 @@ package main
 
 import (
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/icl00ud/process-order-service/handler"
 	"github.com/icl00ud/process-order-service/queue"
+	"github.com/icl00ud/process-order-service/storage"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Inicializa o repositório RabbitMQ
-	rabbitRepo, err := queue.NewRabbitMQRepo()
+	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Erro ao conectar ao RabbitMQ: %v", err)
+		log.Println("No .env file found, using system environment variables")
 	}
-	defer func() {
-		if err := rabbitRepo.Close(); err != nil {
-			log.Printf("Erro ao fechar a conexão RabbitMQ: %v", err)
-		}
-	}()
 
-	// Inicializa o consumidor de pedidos
-	orderConsumer := handler.NewOrderConsumer(rabbitRepo)
-	orderConsumer.StartConsuming()
+	paymentStorage := storage.NewPaymentStorage()
+	defer paymentStorage.DB.Close()
 
-	log.Println("Consumer Service iniciado e escutando por eventos...")
+	consumer := queue.NewConsumer()
+	defer consumer.Close()
 
-	// Escuta por sinais de interrupção para finalizar a aplicação
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	sig := <-sigChan
-	log.Printf("Recebido sinal %s. Encerrando o Consumer Service...", sig)
-
-	// Encerramento limpo
-	log.Println("Consumer Service encerrado com sucesso.")
+	orderConsumer := handler.NewOrderConsumer(consumer)
+	orderConsumer.StartConsuming(paymentStorage)
 }
