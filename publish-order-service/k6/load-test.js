@@ -1,3 +1,4 @@
+// k6/load-test.js
 import http from "k6/http";
 import { sleep, check } from "k6";
 
