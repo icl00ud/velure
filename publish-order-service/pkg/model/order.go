@@ -1,4 +1,5 @@
-package domain
+// model/order.go
+package model
 
 import "time"
 
