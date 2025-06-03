@@ -1,6 +1,6 @@
 # Velure E-Commerce Microservices Project
 
-Main objetive of this project is: learn :)
+Main objective of this project is: learn :)
 
 This repository contains a basic e-commerce system built using microservices architecture. The project provides essential functionalities, including user registration, login, and checkout processes. Below is an overview of the services and tools used in the project.
 
@@ -70,7 +70,7 @@ This repository contains a basic e-commerce system built using microservices arc
      ```
    - **Order Service:**
      ```bash
-     cd order-service
+     cd publish-order-service
      go run main.go
      ```
 
