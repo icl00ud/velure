@@ -1,6 +1,10 @@
 package service
 
-import "github.com/icl00ud/publish-order-service/pkg/model"
+import (
+	"math"
+
+	"github.com/icl00ud/publish-order-service/pkg/model"
+)
 
 type PricingCalculator interface {
 	Calculate(items []model.CartItem) int
@@ -13,9 +17,9 @@ func NewPricingCalculator() PricingCalculator {
 }
 
 func (d defaultPricing) Calculate(items []model.CartItem) int {
-	sum := 0
+	total := 0.0
 	for _, it := range items {
-		sum += int(it.Price * float64(it.Quantity))
+		total += it.Price * float64(it.Quantity)
 	}
-	return sum
+	return int(math.Round(total))
 }
