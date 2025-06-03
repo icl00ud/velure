@@ -70,7 +70,7 @@ This repository contains a basic e-commerce system built using microservices arc
      ```
    - **Order Service:**
      ```bash
-     cd order-service
+     cd publish-order-service
      go run main.go
      ```
 
