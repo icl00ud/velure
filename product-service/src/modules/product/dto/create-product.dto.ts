@@ -24,7 +24,7 @@ export class CreateProductDto {
     readonly quantity_warehouse: number;
     
     @IsArray()
-    @IsBase64()
+    @IsBase64({ each: true })
     readonly images: string[];
 
     @IsNumber({}, { each: true})
