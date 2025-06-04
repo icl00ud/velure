@@ -2,9 +2,9 @@ FROM golang:1.23.5-alpine AS build
 
 WORKDIR /app
 
-COPY /internal/migrations ./migrations
-COPY go.mod go.sum ./
+COPY internal/migrations ./internal/migrations
 
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
@@ -15,8 +15,9 @@ FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=build /migrations ./migrations
-COPY --from=build /main .
+COPY --from=build /app/internal/migrations ./migrations
+
+COPY --from=build /app/main .
 
 EXPOSE ${PUBLISH_ORDER_SERVICE_APP_PORT}
 
