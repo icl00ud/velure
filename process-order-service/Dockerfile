@@ -14,7 +14,6 @@ FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=build /app/migrations ./migrations
 COPY --from=build /app/main .
 
 EXPOSE ${PROCESS_ORDER_SERVICE_APP_PORT}
