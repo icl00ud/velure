@@ -1,7 +1,0 @@
-CREATE TABLE IF NOT EXISTS TBLProcessedPayments (
-    id VARCHAR(255) PRIMARY KEY,
-    order_id VARCHAR(255) NOT NULL,
-    amount NUMERIC(10, 2) NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    processed_at TIMESTAMPTZ NOT NULL
-);

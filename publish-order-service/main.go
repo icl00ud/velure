@@ -9,24 +9,29 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/icl00ud/publish-order-service/config"
-	"github.com/icl00ud/publish-order-service/handler"
-	"github.com/icl00ud/publish-order-service/middleware"
-	"github.com/icl00ud/publish-order-service/publisher"
-	"github.com/icl00ud/publish-order-service/repository"
-	"github.com/icl00ud/publish-order-service/service"
+	"github.com/icl00ud/publish-order-service/internal/config"
+	"github.com/icl00ud/publish-order-service/internal/handler"
+	"github.com/icl00ud/publish-order-service/internal/middleware"
+	"github.com/icl00ud/publish-order-service/internal/publisher"
+	"github.com/icl00ud/publish-order-service/internal/repository"
+	"github.com/icl00ud/publish-order-service/internal/service"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
+	godotenv.Load()
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
 	zap.ReplaceGlobals(logger)
 
-	cfg, _ := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		logger.Fatal("config error", zap.Error(err))
+	}
 
 	repo, _ := repository.NewOrderRepository(cfg.PostgresURL)
-	pub, _ := publisher.NewRabbitMQPublisher(cfg.RabbitURL, cfg.Exchange)
+	pub, _ := publisher.NewRabbitMQPublisher(cfg.RabbitURL, cfg.Exchange, logger)
 
 	svc := service.NewOrderService(repo, service.NewPricingCalculator())
 	oh := handler.NewOrderHandler(svc, pub)
@@ -35,7 +40,9 @@ func main() {
 	mux.Handle("/create-order", middleware.Logging(http.HandlerFunc(oh.CreateOrder)))
 	mux.Handle("/update-order-status", middleware.Logging(http.HandlerFunc(oh.UpdateStatus)))
 
-	srv := &http.Server{Addr: ":" + cfg.Port, Handler: mux}
+	srv := &http.Server{
+		Addr: ":" + cfg.Port, Handler: mux,
+	}
 
 	go func() {
 		zap.L().Info("server starting", zap.String("addr", cfg.Port))

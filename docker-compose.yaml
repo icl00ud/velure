@@ -1,6 +1,11 @@
+version: "3.8"
+
 services:
+  # -------------------------
+  # Auth Service
+  # -------------------------
   auth-postgres:
-    image: postgres:17-alpine
+    image: postgres:17.2-alpine3.21
     container_name: ${AUTH_POSTGRES_HOST}
     restart: always
     environment:
@@ -10,140 +15,15 @@ services:
     volumes:
       - postgres_auth_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${AUTH_POSTGRES_HOST_PORT}:${AUTH_POSTGRES_CONTAINER_PORT}"
     networks:
       - auth
-
-  publisher-payment-postgres:
-    image: postgres:17-alpine
-    container_name: ${PUBLISHER_POSTGRES_HOST}
-    restart: always
-    environment:
-      POSTGRES_DB: ${PUBLISHER_POSTGRES_DATABASE_NAME}
-      POSTGRES_USER: ${PUBLISHER_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${PUBLISHER_POSTGRES_PASSWORD}
-    volumes:
-      - postgres_publish_payment_data:/var/lib/postgresql/data
-    ports:
-      - "5433:${PUBLISHER_POSTGRES_CONTAINER_PORT}"
-    networks:
-      - order
-
-  process-payment-postgres:
-    image: postgres:17-alpine
-    container_name: ${PROCESS_POSTGRES_HOST}
-    restart: always
-    environment:
-      POSTGRES_DB: ${PROCESS_POSTGRES_DATABASE_NAME}
-      POSTGRES_USER: ${PROCESS_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${PROCESS_POSTGRES_PASSWORD}
-    volumes:
-      - postgres_process_payment_data:/var/lib/postgresql/data
-    ports:
-      - "5434:${PROCESS_POSTGRES_CONTAINER_PORT}"
-    networks:
-      - order
-
-  mongodb:
-    image: bitnami/mongodb:8.0.4
-    container_name: ${MONGODB_HOST}
-    restart: always
-    environment:
-      MONGODB_ROOT_USER: ${MONGODB_ROOT_USER}
-      MONGODB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD}
-      MONGODB_USERNAME: ${MONGODB_NORMAL_USER}
-      MONGODB_PASSWORD: ${MONGODB_NORMAL_PASSWORD}
-      MONGODB_DATABASE: ${MONGODB_DBNAME}
-    volumes:
-      - mongodb_data:/data/db
-      - ./product-service/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    ports:
-      - "${MONGODB_PORT}:${MONGODB_PORT}"
-    networks:
-      - order
-
-  redis:
-    image: redis:7.2.7-alpine
-    container_name: redis-products
-    restart: always
-    ports:
-      - "${REDIS_PORT}:${REDIS_PORT}"
-    networks:
-      - order
-
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: ${RABBITMQ_HOST}
-    restart: always
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-      PUBLISHER_RABBITMQ_PASSWORD: ${PUBLISHER_RABBITMQ_PASSWORD}
-      PUBLISHER_RABBITMQ_USER: ${PUBLISHER_RABBITMQ_USER}
-      PROCESS_RABBITMQ_PASSWORD: ${PROCESS_RABBITMQ_PASSWORD}
-      PROCESS_RABBITMQ_USER: ${PROCESS_RABBITMQ_USER}
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-      - ./rabbitmq-entrypoint.sh:/docker-entrypoint.sh
-    ports:
-      - "${RABBITMQ_PORT}:5672"
-      - "15672:15672"
-    networks:
-      - order
-    entrypoint: ["/bin/bash", "/docker-entrypoint.sh"]
-
-  publish-order-service:
-    build:
-      context: ./publish-order-service
-      dockerfile: Dockerfile
-    container_name: ${PUBLISH_ORDER_SERVICE_HOST}
-    restart: always
-    environment:
-      RABBITMQ_HOST: ${RABBITMQ_HOST}
-      RABBITMQ_PORT: ${RABBITMQ_PORT}
-      RABBITMQ_USER: ${PUBLISHER_RABBITMQ_USER}
-      RABBITMQ_PASS: ${PUBLISHER_RABBITMQ_PASSWORD}
-      RABBITMQ_EXCHANGE: ${PUBLISHER_RABBITMQ_EXCHANGE}
-      POSTGRES_HOST: ${PUBLISHER_POSTGRES_HOST}
-      POSTGRES_PORT: ${PUBLISHER_POSTGRES_CONTAINER_PORT}
-      POSTGRES_USER: ${PUBLISHER_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${PUBLISHER_POSTGRES_PASSWORD}
-      POSTGRES_DATABASE_NAME: ${PUBLISHER_POSTGRES_DATABASE_NAME}
-      PUBLISH_ORDER_SERVICE_APP_PORT: ${PUBLISH_ORDER_SERVICE_APP_PORT}
-    ports:
-      - "${PUBLISH_ORDER_SERVICE_APP_PORT}:${PUBLISH_ORDER_SERVICE_APP_PORT}"
-    networks:
-      - order
-
-  process-order-service:
-    build:
-      context: ./process-order-service
-      dockerfile: Dockerfile
-    container_name: ${PROCESS_ORDER_SERVICE_HOST}
-    restart: always
-    environment:
-      RABBITMQ_HOST: ${RABBITMQ_HOST}
-      RABBITMQ_PORT: ${RABBITMQ_PORT}
-      RABBITMQ_USER: ${PROCESS_RABBITMQ_USER}
-      RABBITMQ_PASS: ${PROCESS_RABBITMQ_PASSWORD}
-      RABBITMQ_EXCHANGE: ${PROCESS_RABBITMQ_EXCHANGE}
-      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE}
-      POSTGRES_HOST: ${PROCESS_POSTGRES_HOST}
-      POSTGRES_PORT: ${PROCESS_POSTGRES_CONTAINER_PORT}
-      POSTGRES_USER: ${PROCESS_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${PROCESS_POSTGRES_PASSWORD}
-      POSTGRES_DATABASE_NAME: ${PROCESS_POSTGRES_DATABASE_NAME}
-      PROCESS_ORDER_SERVICE_APP_PORT: ${PROCESS_ORDER_SERVICE_APP_PORT}
-    ports:
-      - "${PROCESS_ORDER_SERVICE_APP_PORT}:${PROCESS_ORDER_SERVICE_APP_PORT}"
-    networks:
-      - order
 
   auth-service:
     build:
       context: ./auth-service
       dockerfile: Dockerfile
-    container_name: auth-service
+    container_name: ${AUTH_SERVICE_HOST:-auth-service}
     restart: always
     environment:
       AUTH_SERVICE_APP_PORT: ${AUTH_SERVICE_APP_PORT}
@@ -162,6 +42,118 @@ services:
       - "${AUTH_SERVICE_APP_PORT}:${AUTH_SERVICE_APP_PORT}"
     networks:
       - auth
+
+  # -------------------------
+  # Order Services
+  # -------------------------
+  rabbitmq:
+    image: rabbitmq:3.13.7-management-alpine
+    container_name: ${RABBITMQ_HOST}
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq-entrypoint.sh:/docker-entrypoint.sh
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "15672:15672"
+    networks:
+      - order
+    entrypoint: ["/bin/bash", "/docker-entrypoint.sh"]
+
+  publisher-payment-postgres:
+    image: postgres:17.2-alpine3.21
+    container_name: ${PUBLISHER_POSTGRES_HOST}
+    restart: always
+    environment:
+      POSTGRES_DB: ${PUBLISHER_POSTGRES_DATABASE_NAME}
+      POSTGRES_USER: ${PUBLISHER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PUBLISHER_POSTGRES_PASSWORD}
+    volumes:
+      - postgres_publish_payment_data:/var/lib/postgresql/data
+    ports:
+      - "${PUBLISHER_POSTGRES_HOST_PORT}:${PUBLISHER_POSTGRES_CONTAINER_PORT}"
+    networks:
+      - order
+
+  publish-order-service:
+    build:
+      context: ./publish-order-service
+      dockerfile: Dockerfile
+    container_name: ${PUBLISH_ORDER_SERVICE_HOST}
+    restart: always
+    environment:
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${PUBLISHER_RABBITMQ_USER}
+      RABBITMQ_PASS: ${PUBLISHER_RABBITMQ_PASSWORD}
+      RABBITMQ_EXCHANGE: ${ORDER_EXCHANGE}
+      POSTGRES_HOST: ${PUBLISHER_POSTGRES_HOST}
+      POSTGRES_PORT: ${PUBLISHER_POSTGRES_CONTAINER_PORT}
+      POSTGRES_USER: ${PUBLISHER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PUBLISHER_POSTGRES_PASSWORD}
+      POSTGRES_DATABASE_NAME: ${PUBLISHER_POSTGRES_DATABASE_NAME}
+      PUBLISH_ORDER_SERVICE_APP_PORT: ${PUBLISHER_ORDER_SERVICE_APP_PORT}
+    ports:
+      - "${PUBLISHER_ORDER_SERVICE_APP_PORT}:${PUBLISHER_ORDER_SERVICE_APP_PORT}"
+    networks:
+      - order
+
+  process-order-service:
+    build:
+      context: ./process-order-service
+      dockerfile: Dockerfile
+    container_name: ${PROCESS_ORDER_SERVICE_HOST}
+    restart: always
+    environment:
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${PROCESS_RABBITMQ_USER}
+      RABBITMQ_PASS: ${PROCESS_RABBITMQ_PASSWORD}
+      RABBITMQ_EXCHANGE: ${ORDER_EXCHANGE}
+      RABBITMQ_QUEUE: ${RABBITMQ_ORDER_QUEUE}
+      POSTGRES_HOST: ${PROCESS_POSTGRES_HOST}
+      POSTGRES_PORT: ${PROCESS_POSTGRES_CONTAINER_PORT}
+      POSTGRES_USER: ${PROCESS_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PROCESS_POSTGRES_PASSWORD}
+      POSTGRES_DATABASE_NAME: ${PROCESS_POSTGRES_DATABASE_NAME}
+      PROCESS_ORDER_SERVICE_APP_PORT: ${PROCESS_ORDER_SERVICE_APP_PORT}
+    ports:
+      - "${PROCESS_ORDER_SERVICE_APP_PORT}:${PROCESS_ORDER_SERVICE_APP_PORT}"
+    networks:
+      - order
+
+  # -------------------------
+  # Product Service + Cache + DB
+  # -------------------------
+  mongodb:
+    image: arm64v8/mongo:6.0
+    container_name: ${MONGODB_HOST}
+    restart: always
+    environment:
+      MONGODB_ROOT_USER: ${MONGODB_ROOT_USER}
+      MONGODB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD}
+      MONGODB_USERNAME: ${MONGODB_NORMAL_USER}
+      MONGODB_PASSWORD: ${MONGODB_NORMAL_PASSWORD}
+      MONGODB_DATABASE: ${MONGODB_DBNAME}
+    volumes:
+      - mongodb_data:/data/db
+      - ./product-service/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "${MONGODB_PORT}:${MONGODB_PORT}"
+    networks:
+      - order
+
+  redis:
+    image: redis:8.0-rc1
+    container_name: ${REDIS_CONTAINER_NAME}
+    restart: always
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    networks:
+      - order
 
   product-service:
     build:
