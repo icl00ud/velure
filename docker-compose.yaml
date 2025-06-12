@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # -------------------------
   # Auth Service
@@ -50,22 +48,25 @@ services:
   # Order Services
   # -------------------------
   rabbitmq:
-    image: rabbitmq:3.13.7-management-alpine
+    image: rabbitmq:3.13
     container_name: ${RABBITMQ_HOST}
     restart: always
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      PUBLISHER_RABBITMQ_USER: ${PUBLISHER_RABBITMQ_USER}
+      PUBLISHER_RABBITMQ_PASSWORD: ${PUBLISHER_RABBITMQ_PASSWORD}
+      PROCESS_RABBITMQ_USER: ${PROCESS_RABBITMQ_USER}
+      PROCESS_RABBITMQ_PASSWORD: ${PROCESS_RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-      - ./rabbitmq-entrypoint.sh:/docker-entrypoint.sh
+      - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     ports:
       - "${RABBITMQ_PORT}:5672"
       - "15672:15672"
     networks:
       - order
-    entrypoint: ["/bin/bash", "/docker-entrypoint.sh"]
-
 
   publish-order-service:
     build:

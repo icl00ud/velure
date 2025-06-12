@@ -1,0 +1,35 @@
+{
+  "users": [
+    {
+      "name": "${PUBLISHER_RABBITMQ_USER}",
+      "password": "${PUBLISHER_RABBITMQ_PASSWORD}",
+      "tags": ""
+    },
+    {
+      "name": "${PROCESS_RABBITMQ_USER}",
+      "password": "${PROCESS_RABBITMQ_PASSWORD}",
+      "tags": ""
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "${PUBLISHER_RABBITMQ_USER}",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "${PROCESS_RABBITMQ_USER}",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ]
+}
