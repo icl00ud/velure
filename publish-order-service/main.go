@@ -30,8 +30,16 @@ func main() {
 		logger.Fatal("config error", zap.Error(err))
 	}
 
-	repo, _ := repository.NewOrderRepository(cfg.PostgresURL)
-	pub, _ := publisher.NewRabbitMQPublisher(cfg.RabbitURL, cfg.Exchange, logger)
+	repo, err := repository.NewOrderRepository(cfg.PostgresURL)
+	if err != nil {
+		logger.Fatal("repository init", zap.Error(err))
+	}
+
+	pub, err := publisher.NewRabbitMQPublisher(cfg.RabbitURL, cfg.Exchange, logger)
+	if err != nil {
+		logger.Fatal("publisher init", zap.Error(err))
+	}
+	defer pub.Close()
 
 	svc := service.NewOrderService(repo, service.NewPricingCalculator())
 	oh := handler.NewOrderHandler(svc, pub)
