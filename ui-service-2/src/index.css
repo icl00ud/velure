@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Petshop ecommerce design system - Nature-inspired colors for pet health & happiness */
+
+@layer base {
+  :root {
+    /* Core petshop color palette */
+    --background: 48 100% 98%; /* #FFFDF8 - off-white for lightness */
+    --foreground: 0 0% 18%; /* #2D2D2D - matte black */
+
+    --card: 48 100% 98%;
+    --card-foreground: 0 0% 18%;
+
+    --popover: 48 100% 98%;
+    --popover-foreground: 0 0% 18%;
+
+    /* Primary green - nature & pet health */
+    --primary: 138 44% 43%; /* #3C9A5F */
+    --primary-foreground: 48 100% 98%;
+    --primary-light: 138 44% 55%;
+    --primary-dark: 138 44% 35%;
+
+    /* Secondary orange - energy & joy */
+    --secondary: 23 100% 65%; /* #FF914D */
+    --secondary-foreground: 48 100% 98%;
+    --secondary-light: 23 100% 75%;
+    --secondary-dark: 23 100% 55%;
+
+    /* Accent yellow - fun & friendly */
+    --accent: 48 100% 62%; /* #FFD93D */
+    --accent-foreground: 0 0% 18%;
+    --accent-light: 48 100% 72%;
+    --accent-dark: 48 100% 52%;
+
+    --muted: 48 20% 92%;
+    --muted-foreground: 0 0% 45%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 48 100% 98%;
+
+    --border: 48 20% 88%;
+    --input: 48 20% 88%;
+    --ring: 138 44% 43%;
+
+    --radius: 0.75rem;
+
+    /* Custom gradients for petshop theme */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary-light)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-light)));
+    
+    /* Shadows with brand colors */
+    --shadow-primary: 0 4px 20px hsl(var(--primary) / 0.15);
+    --shadow-secondary: 0 4px 20px hsl(var(--secondary) / 0.15);
+    --shadow-soft: 0 2px 10px hsl(0 0% 0% / 0.1);
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

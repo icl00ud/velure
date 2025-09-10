@@ -43,6 +43,7 @@ services:
     networks:
       - auth
       - order
+      - frontend
 
   # -------------------------
   # Order Services
@@ -149,6 +150,41 @@ services:
       - "${PRODUCT_SERVICE_APP_PORT}:${PRODUCT_SERVICE_APP_PORT}"
     networks:
       - order
+      - frontend
+
+  # -------------------------
+  # UI Services
+  # -------------------------
+  ui-service:
+    build:
+      context: ./ui-service
+      dockerfile: Dockerfile
+    container_name: ${UI_SERVICE_HOST}
+    restart: always
+    ports:
+      - "${UI_SERVICE_PORT}:80"
+    networks:
+      - frontend
+    depends_on:
+      - auth-service
+      - product-service
+
+  ui-service-2:
+    build:
+      context: ./ui-service-2
+      dockerfile: Dockerfile
+      args:
+        VITE_PRODUCT_SERVICE_URL: http://localhost:${PRODUCT_SERVICE_APP_PORT}
+        VITE_AUTHENTICATION_SERVICE_URL: http://localhost:${AUTH_SERVICE_APP_PORT}
+    container_name: ${UI_SERVICE_2_HOST}
+    restart: always
+    ports:
+      - "${UI_SERVICE_2_PORT}:80"
+    networks:
+      - frontend
+    depends_on:
+      - auth-service
+      - product-service
 
 volumes:
   postgres_data:
@@ -159,4 +195,6 @@ networks:
   auth:
     driver: bridge
   order:
+    driver: bridge
+  frontend:
     driver: bridge
