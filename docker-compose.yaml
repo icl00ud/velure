@@ -49,20 +49,18 @@ services:
   # Order Services
   # -------------------------
   rabbitmq:
-    image: rabbitmq:3.13
+    build: ./rabbitmq
     container_name: ${RABBITMQ_HOST}
     restart: always
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
       PUBLISHER_RABBITMQ_USER: ${PUBLISHER_RABBITMQ_USER}
       PUBLISHER_RABBITMQ_PASSWORD: ${PUBLISHER_RABBITMQ_PASSWORD}
       PROCESS_RABBITMQ_USER: ${PROCESS_RABBITMQ_USER}
       PROCESS_RABBITMQ_PASSWORD: ${PROCESS_RABBITMQ_PASSWORD}
+      ADMIN_RABBITMQ_USER: ${ADMIN_RABBITMQ_USER}
+      ADMIN_RABBITMQ_PASSWORD: ${ADMIN_RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-      - ./rabbitmq-definitions.json:/etc/rabbitmq/definitions.json:ro
-      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     ports:
       - "${RABBITMQ_PORT}:5672"
       - "15672:15672"
@@ -159,27 +157,13 @@ services:
     build:
       context: ./ui-service
       dockerfile: Dockerfile
+      args:
+        VITE_PRODUCT_SERVICE_URL: http://localhost:${PRODUCT_SERVICE_APP_PORT}
+        VITE_AUTHENTICATION_SERVICE_URL: http://localhost:${AUTH_SERVICE_APP_PORT}
     container_name: ${UI_SERVICE_HOST}
     restart: always
     ports:
       - "${UI_SERVICE_PORT}:80"
-    networks:
-      - frontend
-    depends_on:
-      - auth-service
-      - product-service
-
-  ui-service-2:
-    build:
-      context: ./ui-service-2
-      dockerfile: Dockerfile
-      args:
-        VITE_PRODUCT_SERVICE_URL: http://localhost:${PRODUCT_SERVICE_APP_PORT}
-        VITE_AUTHENTICATION_SERVICE_URL: http://localhost:${AUTH_SERVICE_APP_PORT}
-    container_name: ${UI_SERVICE_2_HOST}
-    restart: always
-    ports:
-      - "${UI_SERVICE_2_PORT}:80"
     networks:
       - frontend
     depends_on:
