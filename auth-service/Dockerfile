@@ -1,33 +1,39 @@
-FROM oven/bun:canary-alpine AS build
+# Build stage
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-COPY tsconfig.build.json ./
+# Install dependencies
+RUN apk add --no-cache git
 
-RUN bun install -g @nestjs/cli
+# Copy go mod and sum files
+COPY go.mod go.sum ./
 
-RUN bun install
+# Download dependencies
+RUN go mod download
 
+# Copy source code
 COPY . .
 
-RUN bun run prisma generate
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
-RUN bun run build
+# Final stage
+FROM alpine:latest
 
-FROM oven/bun:canary-alpine
+RUN apk --no-cache add ca-certificates
 
-WORKDIR /app
+WORKDIR /root/
 
-COPY ./prisma /app/
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./
+# Copy the binary from builder stage
+COPY --from=builder /app/main .
 
-RUN bun install prisma --production
+# Copy wait-for-it script if it exists
+COPY wait-for-it.sh .
+RUN chmod +x wait-for-it.sh
 
-RUN bun run prisma generate
+# Expose port
+EXPOSE 3020
 
-ENV PATH=/app/node_modules/.bin:$PATH
-
-CMD ["bun", "run", "dist/main"]
+# Command to run
+CMD ["./main"]
