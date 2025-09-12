@@ -153,10 +153,10 @@ EOF
 echo -e "${YELLOW}🎯 Starting Individual Service Tests${NC}"
 echo "======================================"
 
-run_test "auth-service" "auth-service-test.js" "Authentication Service"
-run_test "product-service" "product-service-test.js" "Product Service"
-run_test "publish-order-service" "publish-order-service-test.js" "Order Service"
-run_test "ui-service" "ui-service-test.js" "UI Service"
+run_test "auth-service" "k6-load-tests/auth-service-test.js" "Authentication Service"
+run_test "product-service" "k6-load-tests/product-service-test.js" "Product Service"
+run_test "publish-order-service" "k6-load-tests/publish-order-service-test.js" "Order Service"
+run_test "ui-service" "k6-load-tests/ui-service-test.js" "UI Service"
 
 echo -e "${YELLOW}🔄 Waiting 30 seconds before integrated test...${NC}"
 sleep 30
@@ -165,7 +165,7 @@ sleep 30
 echo -e "${YELLOW}🎯 Starting Integrated Load Test${NC}"
 echo "================================="
 
-run_test "integrated" "integrated-load-test.js" "All Services"
+run_test "integrated" "k6-load-tests/integrated-load-test.js" "All Services"
 
 # Generate summary report
 echo -e "${YELLOW}📊 Generating Summary Report...${NC}"
