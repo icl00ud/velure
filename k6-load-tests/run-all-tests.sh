@@ -52,10 +52,6 @@ if ! check_service "Order Service" "http://localhost:3030"; then
     services_ok=false
 fi
 
-if ! check_service "UI Service" "http://localhost:3000"; then
-    services_ok=false
-fi
-
 if [ "$services_ok" = false ]; then
     echo -e "${RED}❌ Some services are not running. Please start them with: docker-compose up -d${NC}"
     exit 1
@@ -156,7 +152,6 @@ echo "======================================"
 run_test "auth-service" "k6-load-tests/auth-service-test.js" "Authentication Service"
 run_test "product-service" "k6-load-tests/product-service-test.js" "Product Service"
 run_test "publish-order-service" "k6-load-tests/publish-order-service-test.js" "Order Service"
-run_test "ui-service" "k6-load-tests/ui-service-test.js" "UI Service"
 
 echo -e "${YELLOW}🔄 Waiting 30 seconds before integrated test...${NC}"
 sleep 30
@@ -218,13 +213,6 @@ cat > "$RESULTS_DIR/summary.html" << EOF
             </div>
 
             <div class="test-card">
-                <h3>🖥️ UI Service</h3>
-                <p>Frontend asset delivery and navigation</p>
-                <a href="ui-service-report.html" class="btn btn-primary">View Report</a>
-                <a href="ui-service-results.json" class="btn btn-success">Raw Data</a>
-            </div>
-
-            <div class="test-card">
                 <h3>🔄 Integrated Test</h3>
                 <p>Cross-service workflow simulation</p>
                 <a href="integrated-report.html" class="btn btn-primary">View Report</a>
@@ -252,5 +240,4 @@ echo "   Summary: $RESULTS_DIR/summary.html"
 echo "   Auth Service: $RESULTS_DIR/auth-service-report.html"
 echo "   Product Service: $RESULTS_DIR/product-service-report.html"
 echo "   Order Service: $RESULTS_DIR/publish-order-service-report.html"
-echo "   UI Service: $RESULTS_DIR/ui-service-report.html"
 echo "   Integrated: $RESULTS_DIR/integrated-report.html"
