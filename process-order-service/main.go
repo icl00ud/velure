@@ -31,10 +31,9 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	// Retry logic para conexão RabbitMQ
 	var consumer queue.Consumer
 	var publisher queue.Publisher
-	
+
 	for i := 0; i < 5; i++ {
 		consumer, err = queue.NewRabbitMQConsumer(cfg.RabbitURL, cfg.OrderQueue, logger)
 		if err != nil {

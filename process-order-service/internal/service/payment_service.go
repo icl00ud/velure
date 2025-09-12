@@ -36,7 +36,6 @@ func (s *paymentService) Process(orderID string, amount int) error {
 	}
 
 	sleepTime := time.Duration(rand.Uint32()) % 3 * time.Second
-	fmt.Printf("Sleeping for %v", sleepTime)
 	time.Sleep(sleepTime)
 
 	compEvt := model.Event{

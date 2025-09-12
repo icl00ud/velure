@@ -47,33 +47,31 @@ func (oc *OrderConsumer) Start(ctx context.Context) error {
 		go func(id int) {
 			defer func() {
 				if r := recover(); r != nil {
-					oc.logger.Error("worker panic recovered", zap.Int("id", id), zap.Any("panic", r))
+					oc.logger.Error("worker panic", zap.Int("id", id), zap.Any("panic", r))
 				}
 			}()
-			
-					for {
+
+			for {
 				select {
 				case <-ctx.Done():
 					return
 				default:
 					if err := oc.consumer.Consume(ctx, handler); err != nil {
 						if ctx.Err() != nil {
-							return // Context cancelled, exit gracefully
+							return
 						}
-						oc.logger.Error("worker erro", zap.Int("id", id), zap.Error(err))
-						// Small delay before retrying
+						oc.logger.Error("worker error", zap.Int("id", id), zap.Error(err))
 						select {
 						case <-ctx.Done():
 							return
 						case <-time.After(time.Second):
-							// Continue after delay
 						}
 					}
 				}
 			}
 		}(i)
 	}
-	oc.logger.Info("OrderConsumer iniciado", zap.Int("workers", oc.workers))
+	oc.logger.Info("order consumer started", zap.Int("workers", oc.workers))
 	<-ctx.Done()
 	return nil
 }
