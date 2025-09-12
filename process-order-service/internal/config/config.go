@@ -46,7 +46,7 @@ func Load() (Config, error) {
 	if v := strings.TrimSpace(os.Getenv("WORKERS")); v != "" {
 		w, err := strconv.Atoi(v)
 		if err != nil {
-			return c, fmt.Errorf("WORKERS inválido: %w", err)
+			return c, fmt.Errorf("invalid WORKERS value: %w", err)
 		}
 		c.Workers = w
 	} else {
@@ -54,7 +54,7 @@ func Load() (Config, error) {
 	}
 
 	if len(missing) > 0 {
-		return c, fmt.Errorf("variáveis ausentes: %s", strings.Join(missing, ", "))
+		return c, fmt.Errorf("missing environment variables: %s", strings.Join(missing, ", "))
 	}
 	return c, nil
 }

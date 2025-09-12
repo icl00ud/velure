@@ -31,23 +31,13 @@ func NewRabbitPublisher(amqpURL, exchange string, logger *zap.Logger) (Publisher
 		conn.Close()
 		return nil, fmt.Errorf("open channel: %w", err)
 	}
-	
-	// Declarar o exchange para garantir que existe
-	if err := ch.ExchangeDeclare(
-		exchange,
-		"topic",
-		true,  // durable
-		false, // auto-deleted
-		false, // internal
-		false, // no-wait
-		nil,   // arguments
-	); err != nil {
+
+	if err := ch.ExchangeDeclare(exchange, "topic", true, false, false, false, nil); err != nil {
 		ch.Close()
 		conn.Close()
 		return nil, fmt.Errorf("declare exchange: %w", err)
 	}
-	
-	logger.Info("Publisher ready", zap.String("exchange", exchange))
+
 	return &rabbitPublisher{conn: conn, channel: ch, exchange: exchange, logger: logger}, nil
 }
 
@@ -56,16 +46,12 @@ func (r *rabbitPublisher) Publish(evt model.Event) error {
 	if err != nil {
 		return err
 	}
-	if err := r.channel.Publish(
+	return r.channel.Publish(
 		r.exchange,
 		evt.Type,
 		false, false,
 		amqp091.Publishing{ContentType: "application/json", Body: body},
-	); err != nil {
-		return err
-	}
-	r.logger.Debug("event published", zap.String("type", evt.Type))
-	return nil
+	)
 }
 
 func (r *rabbitPublisher) Close() error {
