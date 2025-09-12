@@ -35,6 +35,22 @@ func NewRabbitMQConsumer(amqpURL, queueName string, logger *zap.Logger) (Consume
 	}
 	logger.Info("Channel openned", zap.String("queue", queueName))
 
+	// Declarar a fila para garantir que existe
+	_, err = ch.QueueDeclare(
+		queueName, // name
+		true,      // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
+	)
+	if err != nil {
+		ch.Close()
+		conn.Close()
+		return nil, err
+	}
+	logger.Info("Queue declared", zap.String("queue", queueName))
+
 	return &rabbitMQConsumer{conn: conn, channel: ch, queue: queueName, logger: logger}, nil
 }
 

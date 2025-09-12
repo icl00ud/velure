@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -44,8 +45,31 @@ func (oc *OrderConsumer) Start(ctx context.Context) error {
 
 	for i := 0; i < oc.workers; i++ {
 		go func(id int) {
-			if err := oc.consumer.Consume(ctx, handler); err != nil {
-				oc.logger.Error("worker erro", zap.Int("id", id), zap.Error(err))
+			defer func() {
+				if r := recover(); r != nil {
+					oc.logger.Error("worker panic recovered", zap.Int("id", id), zap.Any("panic", r))
+				}
+			}()
+			
+					for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					if err := oc.consumer.Consume(ctx, handler); err != nil {
+						if ctx.Err() != nil {
+							return // Context cancelled, exit gracefully
+						}
+						oc.logger.Error("worker erro", zap.Int("id", id), zap.Error(err))
+						// Small delay before retrying
+						select {
+						case <-ctx.Done():
+							return
+						case <-time.After(time.Second):
+							// Continue after delay
+						}
+					}
+				}
 			}
 		}(i)
 	}

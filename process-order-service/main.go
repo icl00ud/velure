@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -30,15 +31,35 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	consumer, err := queue.NewRabbitMQConsumer(cfg.RabbitURL, cfg.OrderQueue, logger)
+	// Retry logic para conexão RabbitMQ
+	var consumer queue.Consumer
+	var publisher queue.Publisher
+	
+	for i := 0; i < 5; i++ {
+		consumer, err = queue.NewRabbitMQConsumer(cfg.RabbitURL, cfg.OrderQueue, logger)
+		if err != nil {
+			logger.Warn("consumer init failed, retrying", zap.Error(err), zap.Int("attempt", i+1))
+			time.Sleep(time.Duration(i+1) * 2 * time.Second)
+			continue
+		}
+		break
+	}
 	if err != nil {
-		logger.Fatal("consumer init", zap.Error(err))
+		logger.Fatal("consumer init failed after retries", zap.Error(err))
 	}
 	defer consumer.Close()
 
-	publisher, err := queue.NewRabbitPublisher(cfg.RabbitURL, cfg.OrderExchange, logger)
+	for i := 0; i < 5; i++ {
+		publisher, err = queue.NewRabbitPublisher(cfg.RabbitURL, cfg.OrderExchange, logger)
+		if err != nil {
+			logger.Warn("publisher init failed, retrying", zap.Error(err), zap.Int("attempt", i+1))
+			time.Sleep(time.Duration(i+1) * 2 * time.Second)
+			continue
+		}
+		break
+	}
 	if err != nil {
-		logger.Fatal("publisher init", zap.Error(err))
+		logger.Fatal("publisher init failed after retries", zap.Error(err))
 	}
 	defer publisher.Close()
 
