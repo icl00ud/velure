@@ -1,24 +1,36 @@
-FROM node:18-alpine AS build
+# Dockerfile para Go
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-COPY tsconfig.build.json ./
+# Instalar dependências do sistema
+RUN apk add --no-cache git
 
-RUN npm install -g @nestjs/cli
+# Copiar go.mod e go.sum
+COPY go.mod go.sum ./
 
-RUN npm install
+# Download das dependências
+RUN go mod download
 
+# Copiar código fonte
 COPY . .
 
-RUN npm run build
+# Compilar a aplicação
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
-FROM node:18-alpine
+# Imagem final
+FROM alpine:latest
 
-WORKDIR /app
+# Instalar ca-certificates para conexões HTTPS
+RUN apk --no-cache add ca-certificates
 
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./
+WORKDIR /root/
 
-CMD ["node", "dist/main"]
+# Copiar o binário da etapa de build
+COPY --from=builder /app/main .
+
+# Expor a porta
+EXPOSE 3010
+
+# Comando para executar a aplicação
+CMD ["./main"]
