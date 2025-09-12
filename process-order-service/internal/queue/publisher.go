@@ -31,6 +31,8 @@ func NewRabbitPublisher(amqpURL, exchange string, logger *zap.Logger) (Publisher
 		conn.Close()
 		return nil, fmt.Errorf("open channel: %w", err)
 	}
+	
+	// Declarar o exchange para garantir que existe
 	if err := ch.ExchangeDeclare(
 		exchange,
 		"topic",
@@ -44,6 +46,7 @@ func NewRabbitPublisher(amqpURL, exchange string, logger *zap.Logger) (Publisher
 		conn.Close()
 		return nil, fmt.Errorf("declare exchange: %w", err)
 	}
+	
 	logger.Info("Publisher ready", zap.String("exchange", exchange))
 	return &rabbitPublisher{conn: conn, channel: ch, exchange: exchange, logger: logger}, nil
 }
