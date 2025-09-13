@@ -60,6 +60,8 @@ spec:
               value: {{ .Values.mongodb.host | default "mongodb.database.svc.cluster.local" }}
             - name: MONGODB_PORT
               value: {{ .Values.mongodb.port | default "27017" | quote }}
+            - name: MONGODB_AUTH_DATABASE
+              value: {{ .Values.mongodb.authDatabase | default "admin" }}
             - name: REDIS_HOST
               value: {{ .Values.redis.host | default "redis-master.database.svc.cluster.local" }}
             - name: REDIS_PORT
@@ -69,7 +71,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.redis.passwordSecretName }}
-                  key: password
+                  key: redis-password
             {{- end }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}

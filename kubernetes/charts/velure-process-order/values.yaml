@@ -1,8 +1,7 @@
-namespace: order
 replicaCount: 1
 image:
-  repository: icl00ud/velure-process-order-service
-  tag: "0.1.0"
+  repository: icl00ud/velure-process-order
+  tag: "latest"
   pullPolicy: IfNotPresent
 service:
   type: ClusterIP

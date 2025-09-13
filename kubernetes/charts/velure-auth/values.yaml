@@ -1,12 +1,11 @@
 # Define o número de réplicas para o Deployment
-replicaCount: 1
-namespace: authentication
+replicaCount: 2
 
 # Configuração da imagem do Docker
 image:
-  repository: icl00ud/velure-auth-service
+  repository: icl00ud/velure-auth
   pullPolicy: IfNotPresent
-  tag: "0.1.0"
+  tag: "latest"
 
 # Segredos para repositórios privados (opcional, vazio para públicos)
 imagePullSecrets: []
@@ -63,11 +62,11 @@ resources:
 # Probes de liveness e readiness
 livenessProbe:
   httpGet:
-    path: /
+    path: /health
     port: http
 readinessProbe:
   httpGet:
-    path: /
+    path: /health
     port: http
 
 # Configuração de autoscaling

@@ -7,25 +7,26 @@ replicaCount: 1
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: icl00ud/velure-product-service
+  repository: icl00ud/velure-product
   # This sets the pull policy for images.
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.1.0"
+  tag: "latest"
 
 mongodb:
-  secretName: mongodb-secrets
-  username: velure_user
-  password: velure_password
-  database: velure_database
-  host: mongodb.database.svc.cluster.local
+  secretName: velure-product-secret
+  username: root
+  password: root
+  database: velure
+  authDatabase: admin
+  host: mongodb.datastores.svc.cluster.local
   port: "27017"
 
 redis:
-  host: redis-master.database.svc.cluster.local
+  host: redis-master.datastores.svc.cluster.local
   port: "6379"
   # Se usar senha, crie um Secret e informe o nome
-  passwordSecretName: ""
+  passwordSecretName: "redis"
 
 # This is for the secretes for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []

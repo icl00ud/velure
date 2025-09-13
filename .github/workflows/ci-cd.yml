@@ -40,9 +40,9 @@ jobs:
   auth-service:
     needs: determine-changes
     if: needs.determine-changes.outputs.auth-service == 'true'
-    uses: ./.github/workflows/node-service.yml
+    uses: ./.github/workflows/go-service.yml
     with:
-      service-name: auth-service
+      service-name: auth
       service-path: auth-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -51,9 +51,9 @@ jobs:
   product-service:
     needs: determine-changes
     if: needs.determine-changes.outputs.product-service == 'true'
-    uses: ./.github/workflows/node-service.yml
+    uses: ./.github/workflows/go-service.yml
     with:
-      service-name: product-service
+      service-name: product
       service-path: product-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -64,7 +64,7 @@ jobs:
     if: needs.determine-changes.outputs.ui-service == 'true'
     uses: ./.github/workflows/node-service.yml
     with:
-      service-name: ui-service
+      service-name: ui
       service-path: ui-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -75,7 +75,7 @@ jobs:
     if: needs.determine-changes.outputs.publish-order-service == 'true'
     uses: ./.github/workflows/go-service.yml
     with:
-      service-name: publish-order-service
+      service-name: publish-order
       service-path: publish-order-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -86,7 +86,7 @@ jobs:
     if: needs.determine-changes.outputs.process-order-service == 'true'
     uses: ./.github/workflows/go-service.yml
     with:
-      service-name: process-order-service
+      service-name: process-order
       service-path: process-order-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}

@@ -1,8 +1,7 @@
-namespace: order
-replicaCount: 1
+replicaCount: 2
 image:
-  repository: icl00ud/velure-publish-order-service
-  tag: "0.1.0"
+  repository: icl00ud/velure-publish-order
+  tag: "latest"
   pullPolicy: IfNotPresent
 service:
   type: ClusterIP
@@ -46,6 +45,6 @@ securityContext:
 secrets:
   create: true
   rabbitmq:
-    url: "amqp://user:password@rabbitmq.order.svc.cluster.local:5672/"
+    url: "amqp://admin:admin@rabbitmq.datastores.svc.cluster.local:5672/"
   postgres:
-    url: "postgres://user:password@postgres.database.svc.cluster.local:5432/orders?sslmode=disable"
+    url: "postgresql://postgres:postgres@postgresql.datastores.svc.cluster.local:5432/velure"
