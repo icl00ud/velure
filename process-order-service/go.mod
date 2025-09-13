@@ -1,6 +1,6 @@
 module github.com/icl00ud/process-order-service
 
-go 1.23.10
+go 1.23.12
 
 require (
 	github.com/joho/godotenv v1.5.1
