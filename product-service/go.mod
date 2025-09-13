@@ -1,6 +1,6 @@
 module product-service
 
-go 1.23.10
+go 1.23.12
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.9
