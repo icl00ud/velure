@@ -19,6 +19,8 @@ COPY --from=build /app/internal/migrations ./migrations
 
 COPY --from=build /app/main .
 
-EXPOSE ${PUBLISH_ORDER_SERVICE_APP_PORT}
+RUN addgroup -S app && adduser -S app -G app
+USER app
+EXPOSE 3030
 
 CMD ["./main"]

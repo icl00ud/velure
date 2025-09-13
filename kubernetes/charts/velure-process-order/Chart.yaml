@@ -1,0 +1,6 @@
+apiVersion: v2
+name: velure-process-order
+version: 0.1.0
+description: Helm chart para o Process Order Service
+type: application
+appVersion: "0.1.0"

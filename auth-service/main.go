@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 
 	"velure-auth-service/internal/config"
@@ -61,6 +62,11 @@ func main() {
 
 	// Prometheus metrics
 	router.GET("/authentication/authMetrics", gin.WrapH(promhttp.Handler()))
+
+	// Health endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
 
 	// Routes
 	setupRoutes(router, authHandler)

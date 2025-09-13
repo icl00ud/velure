@@ -1,0 +1,20 @@
+namespace: order
+image:
+  repository: rabbitmq:3.13-management
+  pullPolicy: IfNotPresent
+  tag: ""
+service:
+  type: ClusterIP
+  amqpPort: 5672
+  httpPort: 15672
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClassName: ""
+secrets:
+  adminUser: admin
+  adminPassword: admin
+  publisherUser: publisher
+  publisherPassword: publisher
+  processUser: processor
+  processPassword: processor
