@@ -23,10 +23,11 @@ func New() *Config {
 	mongoPort := getEnv("MONGODB_PORT", "27017")
 	mongoUser := getEnv("MONGODB_NORMAL_USER", "")
 	mongoPassword := getEnv("MONGODB_NORMAL_PASSWORD", "")
+	mongoAuthDB := getEnv("MONGODB_AUTH_DATABASE", "admin")
 
 	var mongoURI string
 	if mongoUser != "" && mongoPassword != "" {
-		mongoURI = "mongodb://" + mongoUser + ":" + mongoPassword + "@" + mongoHost + ":" + mongoPort
+		mongoURI = "mongodb://" + mongoUser + ":" + mongoPassword + "@" + mongoHost + ":" + mongoPort + "/?authSource=" + mongoAuthDB
 	} else {
 		mongoURI = "mongodb://" + mongoHost + ":" + mongoPort
 	}

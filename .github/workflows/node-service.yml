@@ -35,6 +35,11 @@ jobs:
           cd ${{ inputs.service-path }}
           npm install
 
+      - name: Run linting
+        run: |
+          cd ${{ inputs.service-path }}
+          npm run lint
+
       - name: Build
         run: |
           cd ${{ inputs.service-path }}
@@ -49,5 +54,5 @@ jobs:
       - name: Build and push Docker image
         run: |
           cd ${{ inputs.service-path }}
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ inputs.service-name }}:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/velure-${{ inputs.service-name }}:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/velure-${{ inputs.service-name }}:latest
