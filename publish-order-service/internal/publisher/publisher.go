@@ -3,6 +3,7 @@ package publisher
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"github.com/rabbitmq/amqp091-go"
@@ -19,6 +20,8 @@ type rabbitMQPublisher struct {
 	ch       *amqp091.Channel
 	exchange string
 	logger   *zap.Logger
+	closed   bool
+	mu       sync.Mutex
 }
 
 func NewRabbitMQPublisher(amqpURL string, exchange string, logger *zap.Logger) (Publisher, error) {
@@ -59,6 +62,13 @@ func NewRabbitMQPublisher(amqpURL string, exchange string, logger *zap.Logger) (
 }
 
 func (r *rabbitMQPublisher) Publish(evt model.Event) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.closed {
+		return fmt.Errorf("publisher is closed")
+	}
+
 	body, err := json.Marshal(evt)
 	if err != nil {
 		r.logger.Error("failed to marshal event", zap.Error(err), zap.Any("event", evt))
@@ -83,12 +93,24 @@ func (r *rabbitMQPublisher) Publish(evt model.Event) error {
 }
 
 func (r *rabbitMQPublisher) Close() error {
-	if err := r.ch.Close(); err != nil {
-		r.logger.Warn("channel close error", zap.Error(err))
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.closed {
+		return nil
 	}
-	if err := r.conn.Close(); err != nil {
-		r.logger.Warn("connection close error", zap.Error(err))
-		return err
+	r.closed = true
+
+	if r.ch != nil {
+		if err := r.ch.Close(); err != nil {
+			r.logger.Warn("channel close error", zap.Error(err))
+		}
+	}
+	if r.conn != nil {
+		if err := r.conn.Close(); err != nil {
+			r.logger.Warn("connection close error", zap.Error(err))
+			return err
+		}
 	}
 	r.logger.Info("RabbitMQ connection closed")
 	return nil
