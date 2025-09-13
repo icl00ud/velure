@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -66,6 +67,24 @@ func main() {
 	oc := handler.NewOrderConsumer(consumer, paySvc, cfg.Workers, logger)
 
 	g, ctx := errgroup.WithContext(ctx)
+	// health server
+	g.Go(func() error {
+		port := os.Getenv("PROCESS_ORDER_SERVICE_APP_PORT")
+		if port == "" {
+			port = "3040"
+		}
+		mux := http.NewServeMux()
+		mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("ok"))
+		})
+		srv := &http.Server{Addr: ":" + port, Handler: mux}
+		go func() {
+			<-ctx.Done()
+			_ = srv.Shutdown(context.Background())
+		}()
+		return srv.ListenAndServe()
+	})
 	g.Go(func() error {
 		return oc.Start(ctx)
 	})

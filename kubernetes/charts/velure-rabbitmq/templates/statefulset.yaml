@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rabbitmq
+  namespace: {{ .Values.namespace | quote }}
+spec:
+  selector:
+    matchLabels:
+      app: rabbitmq
+  serviceName: rabbitmq
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: "{{ .Values.image.repository }}{{ if .Values.image.tag }}:{{ .Values.image.tag }}{{ end }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: amqp
+              containerPort: {{ .Values.service.amqpPort }}
+            - name: http
+              containerPort: {{ .Values.service.httpPort }}
+          envFrom:
+            - secretRef:
+                name: rabbitmq-credentials
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/rabbitmq
+            - name: bootstrap
+              mountPath: /usr/local/bin/bootstrap.sh
+              subPath: bootstrap.sh
+          command: ["/usr/local/bin/bootstrap.sh"]
+      volumes:
+        - name: bootstrap
+          configMap:
+            name: rabbitmq-bootstrap
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+        storageClassName: {{ .Values.persistence.storageClassName | quote }}

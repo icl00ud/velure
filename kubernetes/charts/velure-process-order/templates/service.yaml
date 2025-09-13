@@ -1,10 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: velure-auth
-  namespace: {{ .Values.namespace | quote }}
+  name: velure-process-order
   labels:
-    app: velure-auth
+    app: velure-process-order
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -13,4 +12,4 @@ spec:
       targetPort: {{ .Values.service.port }}
       protocol: TCP
   selector:
-    app: velure-auth
+    app: velure-process-order

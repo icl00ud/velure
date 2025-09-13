@@ -1,0 +1,6 @@
+apiVersion: v2
+name: velure-rabbitmq
+version: 0.1.0
+description: Helm chart para RabbitMQ com bootstrap de usuários
+appVersion: "3.13"
+type: application

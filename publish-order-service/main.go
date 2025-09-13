@@ -47,6 +47,10 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/create-order", middleware.Logging(http.HandlerFunc(oh.CreateOrder)))
 	mux.Handle("/update-order-status", middleware.Logging(http.HandlerFunc(oh.UpdateStatus)))
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
 
 	srv := &http.Server{
 		Addr: ":" + cfg.Port, Handler: mux,

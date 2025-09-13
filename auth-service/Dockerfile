@@ -23,7 +23,7 @@ FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /root/
+WORKDIR /app
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
@@ -33,6 +33,8 @@ COPY wait-for-it.sh .
 RUN chmod +x wait-for-it.sh
 
 # Expose port
+RUN addgroup -S app && adduser -S app -G app
+USER app
 EXPOSE 3020
 
 # Command to run

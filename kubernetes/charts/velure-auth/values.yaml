@@ -6,7 +6,7 @@ namespace: authentication
 image:
   repository: icl00ud/velure-auth-service
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "0.1.0"
 
 # Segredos para repositórios privados (opcional, vazio para públicos)
 imagePullSecrets: []
@@ -37,15 +37,19 @@ service:
 
 # Configuração de Ingress (desativado por enquanto)
 ingress:
-  enabled: false
-  className: ""
-  annotations: {}
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
   hosts:
-    - host: auth.velure.local # Ajuste conforme necessário
+    - host: auth.velure.local
       paths:
         - path: /
-          pathType: ImplementationSpecific
-  tls: []
+          pathType: Prefix
+  tls:
+    - secretName: velure-auth-tls
+      hosts:
+        - auth.velure.local
 
 # Recursos de CPU e memória para o container
 resources:
@@ -69,7 +73,7 @@ readinessProbe:
 # Configuração de autoscaling
 autoscaling:
   enabled: true
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 10
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 65
@@ -82,3 +86,12 @@ volumeMounts: []
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+# Secrets configuration (use existing secrets or allow creating externally)
+secrets:
+  postgres:
+    existingSecret: ""
+  jwt:
+    existingSecret: ""
+  session:
+    existingSecret: ""

@@ -1,24 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: velure-auth
-  namespace: {{ .Values.namespace | quote }}
+  name: velure-process-order
   labels:
-    app: velure-auth
+    app: velure-process-order
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: velure-auth
+      app: velure-process-order
   template:
     metadata:
       labels:
-        app: velure-auth
+        app: velure-process-order
     spec:
       securityContext:
         fsGroup: 65532
       containers:
-        - name: {{ .Chart.Name }}
+        - name: process-order
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -26,43 +25,17 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
-            - name: AUTH_SERVICE_APP_PORT
+            - name: PROCESS_ORDER_SERVICE_APP_PORT
               value: "{{ .Values.service.port }}"
-            - name: POSTGRES_URL
+            - name: ORDER_EXCHANGE
+              value: "{{ .Values.order.exchange }}"
+            - name: RABBITMQ_ORDER_QUEUE
+              value: "{{ .Values.order.queue }}"
+            - name: PROCESS_RABBITMQ_URL
               valueFrom:
                 secretKeyRef:
-                  name: velure-auth-postgres
+                  name: rabbitmq-conn
                   key: url
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: velure-auth-jwt
-                  key: secret
-            - name: JWT_EXPIRES_IN
-              valueFrom:
-                secretKeyRef:
-                  name: velure-auth-jwt
-                  key: expiresIn
-            - name: JWT_REFRESH_TOKEN_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: velure-auth-jwt
-                  key: refreshSecret
-            - name: JWT_REFRESH_TOKEN_EXPIRES_IN
-              valueFrom:
-                secretKeyRef:
-                  name: velure-auth-jwt
-                  key: refreshExpiresIn
-            - name: SESSION_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: velure-auth-session
-                  key: secret
-            - name: SESSION_EXPIRES_IN
-              valueFrom:
-                secretKeyRef:
-                  name: velure-auth-session
-                  key: expiresIn
           livenessProbe:
             httpGet:
               path: /health

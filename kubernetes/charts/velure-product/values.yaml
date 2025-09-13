@@ -11,13 +11,21 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "latest"
+  tag: "0.1.0"
 
 mongodb:
   secretName: mongodb-secrets
   username: velure_user
   password: velure_password
   database: velure_database
+  host: mongodb.database.svc.cluster.local
+  port: "27017"
+
+redis:
+  host: redis-master.database.svc.cluster.local
+  port: "6379"
+  # Se usar senha, crie um Secret e informe o nome
+  passwordSecretName: ""
 
 # This is for the secretes for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -51,7 +59,11 @@ podLabels: {
 podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext: {}
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  readOnlyRootFilesystem: true
   # capabilities:
   #   drop:
   #   - ALL
@@ -78,6 +90,10 @@ ingress:
       paths:
         - path: /
           pathType: ImplementationSpecific
+  tls:
+    - secretName: velure-product-tls
+      hosts:
+        - velure-product-service.local
 
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -96,7 +112,7 @@ resources:
 #This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
   enabled: true
-  minReplicas: 1
+  minReplicas: 2
   maxReplicas: 10
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 65
@@ -119,3 +135,29 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 2
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 2
+
+networkPolicy:
+  enabled: true
+  allow:
+    ingressFromIngressController: true
+    egress:
+      dns: true
+      mongodb: true
+      redis: true
+      rabbitmq: false

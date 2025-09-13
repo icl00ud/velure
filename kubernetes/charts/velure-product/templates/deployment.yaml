@@ -46,20 +46,31 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-secret
                   key: database
-            - name: MONGODB_USER
+            - name: MONGODB_NORMAL_USER
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-secret
                   key: username
-            - name: MONGODB_PASSWORD
+            - name: MONGODB_NORMAL_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ .Release.Name }}-secret
                   key: password
             - name: MONGODB_HOST
-              value: cluster0.cnwbo.mongodb.net
+              value: {{ .Values.mongodb.host | default "mongodb.database.svc.cluster.local" }}
+            - name: MONGODB_PORT
+              value: {{ .Values.mongodb.port | default "27017" | quote }}
             - name: REDIS_HOST
-              value: redis-master.database.svc.cluster.local
+              value: {{ .Values.redis.host | default "redis-master.database.svc.cluster.local" }}
+            - name: REDIS_PORT
+              value: {{ .Values.redis.port | default "6379" | quote }}
+            {{- if .Values.redis.passwordSecretName }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.passwordSecretName }}
+                  key: password
+            {{- end }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:

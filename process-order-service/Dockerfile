@@ -16,6 +16,8 @@ WORKDIR /app
 
 COPY --from=build /app/main .
 
-EXPOSE ${PROCESS_ORDER_SERVICE_APP_PORT}
+RUN addgroup -S app && adduser -S app -G app
+USER app
+EXPOSE 3040
 
 CMD ["./main"]

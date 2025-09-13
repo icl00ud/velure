@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-bootstrap
+  namespace: {{ .Values.namespace | quote }}
+data:
+  bootstrap.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    : "${PUBLISHER_RABBITMQ_USER:?env faltando}"
+    : "${PUBLISHER_RABBITMQ_PASSWORD:?env faltando}"
+    : "${PROCESS_RABBITMQ_USER:?env faltando}"
+    : "${PROCESS_RABBITMQ_PASSWORD:?env faltando}"
+    : "${ADMIN_RABBITMQ_USER:?env faltando}"
+    : "${ADMIN_RABBITMQ_PASSWORD:?env faltando}"
+
+    rabbitmq-server -detached
+    until rabbitmq-diagnostics -q ping; do sleep 2; done
+    rabbitmqctl await_startup
+
+    ensure_user() {
+      local user="$1" pass="$2"
+      if rabbitmqctl list_users | awk '{print $1}' | grep -xq "$user"; then
+        rabbitmqctl change_password "$user" "$pass"
+      else
+        rabbitmqctl add_user "$user" "$pass"
+      fi
+    }
+
+    set_perms() {
+      local user="$1" vhost="${2:-/}"
+      rabbitmqctl set_permissions -p "$vhost" "$user" ".*" ".*" ".*"
+    }
+
+    ensure_user "$PUBLISHER_RABBITMQ_USER" "$PUBLISHER_RABBITMQ_PASSWORD"
+    set_perms   "$PUBLISHER_RABBITMQ_USER" /
+
+    ensure_user "$PROCESS_RABBITMQ_USER" "$PROCESS_RABBITMQ_PASSWORD"
+    set_perms   "$PROCESS_RABBITMQ_USER" /
+
+    ensure_user "$ADMIN_RABBITMQ_USER" "$ADMIN_RABBITMQ_PASSWORD"
+    rabbitmqctl set_user_tags "$ADMIN_RABBITMQ_USER" administrator
+    set_perms   "$ADMIN_RABBITMQ_USER" /
+
+    rabbitmqctl delete_user guest || true
+
+    # Keep in foreground
+    rabbitmqctl stop_app
+    exec rabbitmq-server

@@ -24,12 +24,14 @@ FROM alpine:latest
 # Instalar ca-certificates para conexões HTTPS
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /root/
+WORKDIR /app
 
 # Copiar o binário da etapa de build
 COPY --from=builder /app/main .
 
 # Expor a porta
+RUN addgroup -S app && adduser -S app -G app
+USER app
 EXPOSE 3010
 
 # Comando para executar a aplicação
