@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import { toast } from "@/hooks/use-toast";
 import { useProductsPaginated } from "@/hooks/use-products";
 import { useCart } from "@/hooks/use-cart";
+import { ProductImageWithFallback } from "@/components/ProductImage";
 
 // No mock data needed - using real API
 
@@ -204,16 +205,13 @@ const ProductCatalog = () => {
                     // Grid View
                     <>
                       <div className="relative">
-                        <div className="aspect-square bg-muted rounded-t-lg flex items-center justify-center text-6xl">
-                          {product.images && product.images.length > 0 ? (
-                            <img 
-                              src={product.images[0]} 
-                              alt={product.name}
-                              className="w-full h-full object-cover rounded-t-lg"
-                            />
-                          ) : (
-                            "🐕"
-                          )}
+                        <div className="aspect-square">
+                          <ProductImageWithFallback
+                            images={product.images || []}
+                            alt={product.name}
+                            className="w-full h-full rounded-t-lg"
+                            fallbackIcon="🐕"
+                          />
                         </div>
                         {/* Placeholder for discount badge */}
                         <Button
@@ -291,16 +289,13 @@ const ProductCatalog = () => {
                   ) : (
                     // List View
                     <div className="flex gap-4 p-4">
-                      <div className="w-32 h-32 bg-muted rounded-lg flex items-center justify-center text-4xl flex-shrink-0">
-                        {product.images && product.images.length > 0 ? (
-                          <img 
-                            src={product.images[0]} 
-                            alt={product.name}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                        ) : (
-                          "🐕"
-                        )}
+                      <div className="w-32 h-32 flex-shrink-0">
+                        <ProductImageWithFallback
+                          images={product.images || []}
+                          alt={product.name}
+                          className="w-full h-full rounded-lg"
+                          fallbackIcon="🐕"
+                        />
                       </div>
                       
                       <div className="flex-1">

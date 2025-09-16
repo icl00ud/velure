@@ -3,6 +3,11 @@
  * Usa dados reais e imagens de APIs gratuitas
  */
 
+// Incluir os scripts de geração de produtos (simulação de require para MongoDB)
+// Em ambiente de produção, você pode usar require() se suportado
+load('scripts/generate-realistic-products.js');
+load('scripts/pet-image-service.js');
+
 function printLargeText(text, numLines) {
   for (let i = 0; i < numLines; i++) {
     print(text);
