@@ -24,8 +24,8 @@ const Index = () => {
         <div className="relative container mx-auto px-4 py-24 lg:py-32">
           <div className="max-w-2xl">
             <h1 className="text-5xl lg:text-6xl font-bold text-foreground mb-6">
-              Tudo Que Seu
-              <span className="text-primary block">Pet Precisa</span>
+              Tudo que seu
+              <span className="text-primary block">pet precisa</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
               De ração premium a camas aconchegantes, brinquedos a cuidados de saúde - temos tudo
@@ -37,7 +37,7 @@ const Index = () => {
                 className="bg-gradient-primary hover:opacity-90 text-primary-foreground px-8"
                 asChild
               >
-                <Link to="/products/dogs">Comprar Agora</Link>
+                <Link to="/products/dogs">Comprar agora</Link>
               </Button>
               <Button
                 variant="outline"
@@ -45,7 +45,7 @@ const Index = () => {
                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                 asChild
               >
-                <Link to="/contact">Saiba Mais</Link>
+                <Link to="/contact">Saiba mais</Link>
               </Button>
             </div>
           </div>
@@ -57,7 +57,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              Por Que Tutores Nos Escolhem
+              Por que tutores nos escolhem
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Somos mais do que uma pet shop - somos seu parceiro no cuidado com pets
@@ -70,7 +70,7 @@ const Index = () => {
                 <div className="mx-auto bg-gradient-primary rounded-full p-4 w-16 h-16 flex items-center justify-center mb-4">
                   <Heart className="h-8 w-8 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-primary">Qualidade Premium</CardTitle>
+                <CardTitle className="text-primary">Qualidade premium</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
@@ -84,7 +84,7 @@ const Index = () => {
                 <div className="mx-auto bg-gradient-secondary rounded-full p-4 w-16 h-16 flex items-center justify-center mb-4">
                   <Shield className="h-8 w-8 text-secondary-foreground" />
                 </div>
-                <CardTitle className="text-secondary">Saúde Garantida</CardTitle>
+                <CardTitle className="text-secondary">Saúde garantida</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
@@ -99,7 +99,7 @@ const Index = () => {
                 <div className="mx-auto bg-gradient-accent rounded-full p-4 w-16 h-16 flex items-center justify-center mb-4">
                   <Truck className="h-8 w-8 text-accent-foreground" />
                 </div>
-                <CardTitle className="text-accent-foreground">Entrega Rápida</CardTitle>
+                <CardTitle className="text-accent-foreground">Entrega rápida</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
@@ -113,7 +113,7 @@ const Index = () => {
                 <div className="mx-auto bg-gradient-primary rounded-full p-4 w-16 h-16 flex items-center justify-center mb-4">
                   <Users className="h-8 w-8 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-primary">Suporte Especializado</CardTitle>
+                <CardTitle className="text-primary">Suporte especializado</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
@@ -130,7 +130,7 @@ const Index = () => {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">Compre por Pet</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">Compre por pet</h2>
             <p className="text-lg text-muted-foreground">
               Encontre tudo que seu pet específico precisa
             </p>
@@ -169,7 +169,7 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-4xl lg:text-5xl font-bold text-primary-foreground mb-6">
-              Pronto Para Mimar Seu Pet?
+              Pronto para mimar seu pet?
             </h2>
             <p className="text-xl text-primary-foreground/90 mb-8 leading-relaxed">
               Junte-se a milhares de tutores felizes que confiam em nós para a felicidade e saúde de
@@ -180,7 +180,7 @@ const Index = () => {
               className="bg-background text-primary hover:bg-background/90 px-8"
               asChild
             >
-              <Link to="/products/dogs">Começar a Comprar</Link>
+              <Link to="/products/dogs">Começar a comprar</Link>
             </Button>
           </div>
         </div>
