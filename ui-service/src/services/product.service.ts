@@ -28,7 +28,16 @@ class ProductService {
     }
   }
 
-  async getProductsByPage(page: number, pageSize: number): Promise<Product[]> {
+  async getProductsByPage(
+    page: number,
+    pageSize: number
+  ): Promise<{
+    products: Product[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
     try {
       const url = `${configService.productServiceUrl}/getProductsByPage?page=${page}&pageSize=${pageSize}`;
       const response = await fetch(url);
@@ -46,7 +55,13 @@ class ProductService {
     page: number,
     pageSize: number,
     productCategory: string
-  ): Promise<Product[]> {
+  ): Promise<{
+    products: Product[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
     try {
       const url = `${configService.productServiceUrl}/getProductsByPageAndCategory?page=${page}&pageSize=${pageSize}&category=${productCategory}`;
       const response = await fetch(url);
