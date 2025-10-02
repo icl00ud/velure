@@ -70,7 +70,7 @@ const ProductList = () => {
               Início
             </Link>
             <span>/</span>
-            <span className="text-foreground font-medium">Todos os Produtos</span>
+            <span className="text-foreground font-medium">Todos os produtos</span>
           </div>
         </nav>
 
@@ -78,7 +78,7 @@ const ProductList = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">Todos os Produtos</h1>
+              <h1 className="text-4xl font-bold text-foreground mb-2">Todos os produtos</h1>
               <p className="text-muted-foreground">
                 {loading ? "Carregando..." : `${totalCount} produtos disponíveis`}
               </p>
