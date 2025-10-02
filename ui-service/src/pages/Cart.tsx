@@ -1,6 +1,6 @@
-import { ArrowLeft, Minus, Plus, Shield, ShoppingBag, Trash2, Truck } from "lucide-react";
+import { ArrowLeft, Loader2, Minus, Plus, Shield, ShoppingBag, Trash2, Truck } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { ProductImageWithFallback } from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "@/hooks/use-toast";
+import { orderService } from "@/services/order.service";
 
 const Cart = () => {
+  const navigate = useNavigate();
   const { cartItems, updateQuantity, removeFromCart, clearCart, totalPrice } = useCart();
   const [promoCode, setPromoCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleRemoveItem = (productId: string, productName: string) => {
     removeFromCart(productId);
@@ -46,6 +49,32 @@ const Cart = () => {
         description: "O código promocional não é válido.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleCheckout = async () => {
+    setIsProcessing(true);
+    try {
+      const order = await orderService.createOrder(cartItems);
+
+      toast({
+        title: "Pedido criado com sucesso!",
+        description: `Seu pedido #${order.order_id} foi criado. Total: R$ ${(order.total / 100).toFixed(2)}`,
+      });
+
+      // Limpar carrinho após criar pedido
+      clearCart();
+
+      // Redirecionar para página de sucesso (você pode criar essa página depois)
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Erro ao processar pedido",
+        description: error instanceof Error ? error.message : "Tente novamente mais tarde",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -222,9 +251,17 @@ const Cart = () => {
 
                     <Button
                       className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
-                      disabled={cartItems.length === 0}
+                      disabled={cartItems.length === 0 || isProcessing}
+                      onClick={handleCheckout}
                     >
-                      Finalizar compra
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processando...
+                        </>
+                      ) : (
+                        "Finalizar compra"
+                      )}
                     </Button>
                   </div>
                 </CardContent>
