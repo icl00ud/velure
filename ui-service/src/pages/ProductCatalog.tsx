@@ -48,7 +48,7 @@ const ProductCatalog = () => {
   const handleAdicionarToCart = (product: any) => {
     addToCart(product);
     toast({
-      title: "Adicionado to cart!",
+      title: "Adicionado ao carrinho!",
       description: `${product.name} foi adicionado ao seu carrinho.`,
     });
   };
@@ -65,7 +65,16 @@ const ProductCatalog = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const categoryName = category || "All Produtos";
+  // Mapeamento de categorias para português
+  const categoryNames: Record<string, string> = {
+    dogs: "Cães",
+    cats: "Gatos",
+    birds: "Pássaros",
+    fish: "Peixes",
+    "small-pets": "Pets pequenos",
+  };
+
+  const categoryName = category ? categoryNames[category] || category : "Todos os produtos";
   const categoryEmoji =
     category === "dogs"
       ? "🐕"
@@ -97,7 +106,7 @@ const ProductCatalog = () => {
             {category && (
               <>
                 <span>/</span>
-                <span className="text-foreground font-medium capitalize">{category}</span>
+                <span className="text-foreground font-medium">{categoryName}</span>
               </>
             )}
           </div>
@@ -108,7 +117,7 @@ const ProductCatalog = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-2">
-                {category ? `${categoryName} Produtos` : "All Produtos"}
+                {category ? `Produtos para ${categoryName}` : "Todos os produtos"}
               </h1>
               <p className="text-muted-foreground">
                 {loading ? "Carregando..." : `${totalCount} produtos encontrados`}
@@ -141,9 +150,9 @@ const ProductCatalog = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Produtos</SelectItem>
-                    <SelectItem value="on-sale">Em Promoção</SelectItem>
-                    <SelectItem value="in-stock">Em Estoque</SelectItem>
+                    <SelectItem value="all">Todos os produtos</SelectItem>
+                    <SelectItem value="on-sale">Em promoção</SelectItem>
+                    <SelectItem value="in-stock">Em estoque</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -211,7 +220,7 @@ const ProductCatalog = () => {
                     onClick={() => window.location.reload()}
                     className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
                   >
-                    Tentar Novamente
+                    Tentar novamente
                   </Button>
                 </CardContent>
               </Card>
@@ -275,7 +284,7 @@ const ProductCatalog = () => {
                             <Star className="h-3 w-3 text-accent fill-current" />
                             <span className="text-xs font-medium ml-1">{product.rating}</span>
                           </div>
-                          <span className="text-xs text-muted-foreground">(reviews)</span>
+                          <span className="text-xs text-muted-foreground">(avaliações)</span>
                         </div>
 
                         <div className="flex flex-wrap gap-1 mb-3">
@@ -365,13 +374,13 @@ const ProductCatalog = () => {
                             <Star className="h-4 w-4 text-accent fill-current" />
                             <span className="text-sm font-medium ml-1">{product.rating}</span>
                           </div>
-                          <span className="text-sm text-muted-foreground">(reviews)</span>
+                          <span className="text-sm text-muted-foreground">(avaliações)</span>
                           {!product.disponibility && (
-                            <Badge variant="destructive">Sem Estoque</Badge>
+                            <Badge variant="destructive">Sem estoque</Badge>
                           )}
                           {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
                             <Badge variant="outline" className="text-orange-500">
-                              Estoque Baixo
+                              Estoque baixo
                             </Badge>
                           )}
                         </div>
@@ -427,12 +436,12 @@ const ProductCatalog = () => {
         </div>
 
         {/* No Results */}
-        {filteredProdutos.length === 0 && (
+        {filteredProdutos.length === 0 && !loading && (
           <Card className="text-center py-12">
             <CardContent>
               <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
-                No produtos encontrados
+                Nenhum produto encontrado
               </h3>
               <p className="text-muted-foreground mb-6">
                 Tente ajustar sua busca ou critérios de filtro
@@ -444,7 +453,7 @@ const ProductCatalog = () => {
                 }}
                 className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
               >
-                Limpar Filtros
+                Limpar filtros
               </Button>
             </CardContent>
           </Card>
