@@ -81,7 +81,8 @@ class ProductService {
       if (!response.ok) {
         throw new Error("Erro ao buscar contagem de produtos");
       }
-      return await response.json();
+      const data = await response.json();
+      return data.count || 0;
     } catch (error) {
       console.error("Erro ao buscar contagem de produtos:", error);
       throw error;
