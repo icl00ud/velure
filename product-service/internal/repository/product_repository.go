@@ -18,9 +18,10 @@ import (
 type ProductRepository interface {
 	GetAllProducts(ctx context.Context) ([]models.ProductResponse, error)
 	GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error)
-	GetProductsByPage(ctx context.Context, page, pageSize int) ([]models.ProductResponse, error)
-	GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) ([]models.ProductResponse, error)
+	GetProductsByPage(ctx context.Context, page, pageSize int) (*models.PaginatedProductsResponse, error)
+	GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) (*models.PaginatedProductsResponse, error)
 	GetProductsCount(ctx context.Context) (int64, error)
+	GetProductsCountByCategory(ctx context.Context, category string) (int64, error)
 	GetCategories(ctx context.Context) ([]string, error)
 	CreateProduct(ctx context.Context, product models.CreateProductRequest) (*models.ProductResponse, error)
 	DeleteProductsByName(ctx context.Context, name string) error
@@ -96,16 +97,22 @@ func (r *productRepository) GetProductsByName(ctx context.Context, name string) 
 	return response, nil
 }
 
-func (r *productRepository) GetProductsByPage(ctx context.Context, page, pageSize int) ([]models.ProductResponse, error) {
+func (r *productRepository) GetProductsByPage(ctx context.Context, page, pageSize int) (*models.PaginatedProductsResponse, error) {
 	cacheKey := fmt.Sprintf("productsPage:%d:%d", page, pageSize)
 
 	// Try to get from cache
 	cached, err := r.redis.Get(ctx, cacheKey).Result()
 	if err == nil {
-		var products []models.ProductResponse
-		if err := json.Unmarshal([]byte(cached), &products); err == nil {
-			return products, nil
+		var response models.PaginatedProductsResponse
+		if err := json.Unmarshal([]byte(cached), &response); err == nil {
+			return &response, nil
 		}
+	}
+
+	// Get total count
+	totalCount, err := r.GetProductsCount(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	skip := int64((page - 1) * pageSize)
@@ -123,9 +130,22 @@ func (r *productRepository) GetProductsByPage(ctx context.Context, page, pageSiz
 		return nil, err
 	}
 
-	response := make([]models.ProductResponse, len(products))
+	productResponses := make([]models.ProductResponse, len(products))
 	for i, product := range products {
-		response[i] = r.toProductResponse(product)
+		productResponses[i] = r.toProductResponse(product)
+	}
+
+	totalPages := int(totalCount) / pageSize
+	if int(totalCount)%pageSize != 0 {
+		totalPages++
+	}
+
+	response := &models.PaginatedProductsResponse{
+		Products:   productResponses,
+		TotalCount: totalCount,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
 	}
 
 	// Cache the result
@@ -136,7 +156,13 @@ func (r *productRepository) GetProductsByPage(ctx context.Context, page, pageSiz
 	return response, nil
 }
 
-func (r *productRepository) GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) ([]models.ProductResponse, error) {
+func (r *productRepository) GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) (*models.PaginatedProductsResponse, error) {
+	// Get total count for this category
+	totalCount, err := r.GetProductsCountByCategory(ctx, category)
+	if err != nil {
+		return nil, err
+	}
+
 	skip := int64((page - 1) * pageSize)
 	limit := int64(pageSize)
 
@@ -153,16 +179,32 @@ func (r *productRepository) GetProductsByPageAndCategory(ctx context.Context, pa
 		return nil, err
 	}
 
-	response := make([]models.ProductResponse, len(products))
+	productResponses := make([]models.ProductResponse, len(products))
 	for i, product := range products {
-		response[i] = r.toProductResponse(product)
+		productResponses[i] = r.toProductResponse(product)
 	}
 
-	return response, nil
+	totalPages := int(totalCount) / pageSize
+	if int(totalCount)%pageSize != 0 {
+		totalPages++
+	}
+
+	return &models.PaginatedProductsResponse{
+		Products:   productResponses,
+		TotalCount: totalCount,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+	}, nil
 }
 
 func (r *productRepository) GetProductsCount(ctx context.Context) (int64, error) {
 	return r.collection.CountDocuments(ctx, bson.M{})
+}
+
+func (r *productRepository) GetProductsCountByCategory(ctx context.Context, category string) (int64, error) {
+	filter := bson.M{"category": category}
+	return r.collection.CountDocuments(ctx, filter)
 }
 
 func (r *productRepository) GetCategories(ctx context.Context) ([]string, error) {

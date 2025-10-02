@@ -64,3 +64,11 @@ type ProductResponse struct {
 type CountResponse struct {
 	Count int64 `json:"count"`
 }
+
+type PaginatedProductsResponse struct {
+	Products   []ProductResponse `json:"products"`
+	TotalCount int64             `json:"totalCount"`
+	Page       int               `json:"page"`
+	PageSize   int               `json:"pageSize"`
+	TotalPages int               `json:"totalPages"`
+}

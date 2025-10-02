@@ -10,8 +10,8 @@ import (
 type ProductService interface {
 	GetAllProducts(ctx context.Context) ([]models.ProductResponse, error)
 	GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error)
-	GetProductsByPage(ctx context.Context, page, pageSize int) ([]models.ProductResponse, error)
-	GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) ([]models.ProductResponse, error)
+	GetProductsByPage(ctx context.Context, page, pageSize int) (*models.PaginatedProductsResponse, error)
+	GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) (*models.PaginatedProductsResponse, error)
 	GetProductsCount(ctx context.Context) (*models.CountResponse, error)
 	GetCategories(ctx context.Context) ([]string, error)
 	CreateProduct(ctx context.Context, product models.CreateProductRequest) (*models.ProductResponse, error)
@@ -37,11 +37,11 @@ func (s *productService) GetProductsByName(ctx context.Context, name string) ([]
 	return s.repo.GetProductsByName(ctx, name)
 }
 
-func (s *productService) GetProductsByPage(ctx context.Context, page, pageSize int) ([]models.ProductResponse, error) {
+func (s *productService) GetProductsByPage(ctx context.Context, page, pageSize int) (*models.PaginatedProductsResponse, error) {
 	return s.repo.GetProductsByPage(ctx, page, pageSize)
 }
 
-func (s *productService) GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) ([]models.ProductResponse, error) {
+func (s *productService) GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) (*models.PaginatedProductsResponse, error) {
 	return s.repo.GetProductsByPageAndCategory(ctx, page, pageSize, category)
 }
 
