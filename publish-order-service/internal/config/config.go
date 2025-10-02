@@ -23,11 +23,11 @@ func Load() (Config, error) {
 		missing = append(missing, "PUBLISHER_ORDER_SERVICE_APP_PORT")
 	}
 
-        if v, ok := os.LookupEnv("POSTGRES_URL"); ok && strings.TrimSpace(v) != "" {
-                c.PostgresURL = v
-        } else {
-                missing = append(missing, "POSTGRES_URL")
-        }
+	if v, ok := os.LookupEnv("POSTGRES_URL"); ok && strings.TrimSpace(v) != "" {
+		c.PostgresURL = v
+	} else {
+		missing = append(missing, "POSTGRES_URL")
+	}
 
 	if v, ok := os.LookupEnv("PUBLISHER_RABBITMQ_URL"); ok && strings.TrimSpace(v) != "" {
 		c.RabbitURL = v

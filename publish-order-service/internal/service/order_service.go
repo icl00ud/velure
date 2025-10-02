@@ -53,3 +53,7 @@ func (s *OrderService) UpdateStatus(ctx context.Context, id, status string) (mod
 	}
 	return o, nil
 }
+
+func (s *OrderService) GetOrdersByPage(ctx context.Context, page, pageSize int) (*model.PaginatedOrdersResponse, error) {
+	return s.repo.GetOrdersByPage(ctx, page, pageSize)
+}

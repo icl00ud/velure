@@ -135,6 +135,20 @@ func (s *AuthService) GetUsers() ([]models.UserResponse, error) {
 	return responses, nil
 }
 
+func (s *AuthService) GetUsersByPage(page, pageSize int) (*models.PaginatedUsersResponse, error) {
+	users, total, err := s.userRepo.GetByPage(page, pageSize)
+	if err != nil {
+		return nil, fmt.Errorf("error getting users by page: %w", err)
+	}
+
+	responses := make([]models.UserResponse, len(users))
+	for i, user := range users {
+		responses[i] = user.ToResponse()
+	}
+
+	return models.NewPaginatedUsersResponse(responses, total, page, pageSize), nil
+}
+
 func (s *AuthService) GetUserByID(id uint) (*models.UserResponse, error) {
 	user, err := s.userRepo.GetByID(id)
 	if err != nil {

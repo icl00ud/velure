@@ -49,3 +49,17 @@ func (r *UserRepository) Update(user *models.User) error {
 func (r *UserRepository) Delete(id uint) error {
 	return r.db.Delete(&models.User{}, id).Error
 }
+
+func (r *UserRepository) GetByPage(page, pageSize int) ([]models.User, int64, error) {
+	var users []models.User
+	var total int64
+
+	offset := (page - 1) * pageSize
+
+	if err := r.db.Model(&models.User{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := r.db.Limit(pageSize).Offset(offset).Find(&users).Error
+	return users, total, err
+}

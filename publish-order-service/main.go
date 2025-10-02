@@ -47,6 +47,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/create-order", middleware.Logging(http.HandlerFunc(oh.CreateOrder)))
 	mux.Handle("/update-order-status", middleware.Logging(http.HandlerFunc(oh.UpdateStatus)))
+	mux.Handle("/orders", middleware.Logging(http.HandlerFunc(oh.GetOrdersByPage)))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
