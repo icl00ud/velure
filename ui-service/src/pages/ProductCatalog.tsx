@@ -45,16 +45,16 @@ const ProductCatalog = () => {
     );
   };
 
-  const handleAddToCart = (product: any) => {
+  const handleAdicionarToCart = (product: any) => {
     addToCart(product);
     toast({
-      title: "Added to cart!",
-      description: `${product.name} has been added to your cart.`,
+      title: "Adicionado to cart!",
+      description: `${product.name} foi adicionado ao seu carrinho.`,
     });
   };
 
   // Filtrar produtos com base na busca e filtros
-  const filteredProducts = products.filter((product) => {
+  const filteredProdutos = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.brand || "").toLowerCase().includes(searchQuery.toLowerCase());
@@ -65,7 +65,7 @@ const ProductCatalog = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const categoryName = category || "All Products";
+  const categoryName = category || "All Produtos";
   const categoryEmoji =
     category === "dogs"
       ? "🐕"
@@ -88,11 +88,11 @@ const ProductCatalog = () => {
         <nav className="mb-6">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-primary">
-              Home
+              Início
             </Link>
             <span>/</span>
             <Link to="/products" className="hover:text-primary">
-              Products
+              Produtos
             </Link>
             {category && (
               <>
@@ -108,10 +108,10 @@ const ProductCatalog = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-2">
-                {category ? `${categoryName} Products` : "All Products"}
+                {category ? `${categoryName} Produtos` : "All Produtos"}
               </h1>
               <p className="text-muted-foreground">
-                {loading ? "Loading..." : `${totalCount} products found`}
+                {loading ? "Carregando..." : `${totalCount} produtos encontrados`}
               </p>
             </div>
             <div className="text-6xl">{categoryEmoji}</div>
@@ -127,7 +127,7 @@ const ProductCatalog = () => {
                 <div className="relative flex-1 max-w-md">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search products..."
+                    placeholder="Buscar produtos..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -141,9 +141,9 @@ const ProductCatalog = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Products</SelectItem>
-                    <SelectItem value="on-sale">On Sale</SelectItem>
-                    <SelectItem value="in-stock">In Stock</SelectItem>
+                    <SelectItem value="all">All Produtos</SelectItem>
+                    <SelectItem value="on-sale">Em Promoção</SelectItem>
+                    <SelectItem value="in-stock">Em Estoque</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -153,11 +153,11 @@ const ProductCatalog = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="popularity">Most Popular</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
-                    <SelectItem value="newest">Newest</SelectItem>
+                    <SelectItem value="popularity">Mais Popular</SelectItem>
+                    <SelectItem value="price-low">Preço: Menor ao Maior</SelectItem>
+                    <SelectItem value="price-high">Preço: Maior ao Menor</SelectItem>
+                    <SelectItem value="rating">Melhor Avaliado</SelectItem>
+                    <SelectItem value="newest">Mais Recente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -183,7 +183,7 @@ const ProductCatalog = () => {
           </CardContent>
         </Card>
 
-        {/* Products Grid */}
+        {/* Produtos Grid */}
         <div
           className={
             viewMode === "grid"
@@ -195,7 +195,7 @@ const ProductCatalog = () => {
             // Loading state
             <div className="col-span-full flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Loading products...</span>
+              <span className="ml-2 text-muted-foreground">Carregando produtos...</span>
             </div>
           ) : error ? (
             // Error state
@@ -204,20 +204,20 @@ const ProductCatalog = () => {
                 <CardContent>
                   <div className="text-6xl mb-4">⚠️</div>
                   <h3 className="text-xl font-semibold text-foreground mb-2">
-                    Error loading products
+                    Erro ao carregar produtos
                   </h3>
                   <p className="text-muted-foreground mb-6">{error}</p>
                   <Button
                     onClick={() => window.location.reload()}
                     className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
                   >
-                    Try Again
+                    Tentar Novamente
                   </Button>
                 </CardContent>
               </Card>
             </div>
           ) : (
-            filteredProducts.map((product) => (
+            filteredProdutos.map((product) => (
               <Card
                 key={product._id}
                 className="group shadow-soft hover:shadow-primary transition-all duration-300"
@@ -252,7 +252,7 @@ const ProductCatalog = () => {
                         </Button>
                         {!product.disponibility && (
                           <div className="absolute inset-0 bg-background/80 rounded-t-lg flex items-center justify-center">
-                            <Badge variant="destructive">Out of Stock</Badge>
+                            <Badge variant="destructive">Sem Estoque</Badge>
                           </div>
                         )}
                       </div>
@@ -260,7 +260,7 @@ const ProductCatalog = () => {
                       <div className="p-4">
                         <div className="mb-2">
                           <p className="text-xs text-muted-foreground font-medium">
-                            {product.brand || "Brand"}
+                            {product.brand || "Marca"}
                           </p>
                           <Link
                             to={`/product/${product._id}`}
@@ -286,7 +286,7 @@ const ProductCatalog = () => {
                           )}
                           {product.colors && product.colors.length > 0 && (
                             <Badge variant="secondary" className="text-xs">
-                              {product.colors.length} colors
+                              {product.colors.length} cores
                             </Badge>
                           )}
                         </div>
@@ -298,18 +298,18 @@ const ProductCatalog = () => {
                             </div>
                             {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
                               <div className="text-xs text-orange-500">
-                                Only {product.quantity_warehouse} left
+                                Apenas {product.quantity_warehouse} restantes
                               </div>
                             )}
                           </div>
                           <Button
                             size="sm"
                             className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
-                            onClick={() => handleAddToCart(product)}
+                            onClick={() => handleAdicionarToCart(product)}
                             disabled={!product.disponibility || product.quantity_warehouse === 0}
                           >
                             <ShoppingCart className="h-3 w-3 mr-1" />
-                            {isInCart(product._id) ? "Added" : "Add"}
+                            {isInCart(product._id) ? "Adicionado" : "Adicionar"}
                           </Button>
                         </div>
                       </div>
@@ -330,7 +330,7 @@ const ProductCatalog = () => {
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <p className="text-sm text-muted-foreground font-medium">
-                              {product.brand || "Brand"}
+                              {product.brand || "Marca"}
                             </p>
                             <Link
                               to={`/product/${product._id}`}
@@ -367,11 +367,11 @@ const ProductCatalog = () => {
                           </div>
                           <span className="text-sm text-muted-foreground">(reviews)</span>
                           {!product.disponibility && (
-                            <Badge variant="destructive">Out of Stock</Badge>
+                            <Badge variant="destructive">Sem Estoque</Badge>
                           )}
                           {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
                             <Badge variant="outline" className="text-orange-500">
-                              Low Stock
+                              Estoque Baixo
                             </Badge>
                           )}
                         </div>
@@ -402,17 +402,19 @@ const ProductCatalog = () => {
                             </div>
                             {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
                               <span className="text-sm text-orange-500">
-                                Only {product.quantity_warehouse} left
+                                Apenas {product.quantity_warehouse} restantes
                               </span>
                             )}
                           </div>
                           <Button
                             className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
-                            onClick={() => handleAddToCart(product)}
+                            onClick={() => handleAdicionarToCart(product)}
                             disabled={!product.disponibility || product.quantity_warehouse === 0}
                           >
                             <ShoppingCart className="h-4 w-4 mr-2" />
-                            {isInCart(product._id) ? "Added to Cart" : "Add to Cart"}
+                            {isInCart(product._id)
+                              ? "Adicionado ao Carrinho"
+                              : "Adicionar ao Carrinho"}
                           </Button>
                         </div>
                       </div>
@@ -425,13 +427,15 @@ const ProductCatalog = () => {
         </div>
 
         {/* No Results */}
-        {filteredProducts.length === 0 && (
+        {filteredProdutos.length === 0 && (
           <Card className="text-center py-12">
             <CardContent>
               <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">No products found</h3>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                No produtos encontrados
+              </h3>
               <p className="text-muted-foreground mb-6">
-                Try adjusting your search or filter criteria
+                Tente ajustar sua busca ou critérios de filtro
               </p>
               <Button
                 onClick={() => {
@@ -440,7 +444,7 @@ const ProductCatalog = () => {
                 }}
                 className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
               >
-                Clear Filters
+                Limpar Filtros
               </Button>
             </CardContent>
           </Card>
