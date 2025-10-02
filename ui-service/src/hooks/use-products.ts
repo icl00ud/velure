@@ -81,10 +81,12 @@ export function useProductsPaginated(page: number = 1, pageSize: number = 10, ca
       } else {
         response = await productService.getProductsByPage(page, pageSize);
       }
-      setProducts(response.products);
-      setTotalCount(response.totalCount);
-      setTotalPages(response.totalPages);
+      console.log("API Response:", response);
+      setProducts(response.products || []);
+      setTotalCount(response.totalCount || 0);
+      setTotalPages(response.totalPages || 0);
     } catch (err) {
+      console.error("Error fetching products:", err);
       setError(err instanceof Error ? err.message : "Erro ao buscar produtos");
     } finally {
       setLoading(false);

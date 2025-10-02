@@ -146,6 +146,34 @@ class AuthenticationService {
       return null;
     }
   }
+
+  async getUsersByPage(
+    page: number,
+    pageSize: number
+  ): Promise<{
+    users: User[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
+    const url = `${configService.authenticationServiceUrl}/users?page=${page}&pageSize=${pageSize}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar usuários paginados");
+    }
+
+    return response.json();
+  }
+}
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const authenticationService = new AuthenticationService();
