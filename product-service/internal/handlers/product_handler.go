@@ -58,11 +58,11 @@ func (h *ProductHandler) GetProductsByPage(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter")
 	}
 
-	products, err := h.service.GetProductsByPage(c.Context(), page, pageSize)
+	response, err := h.service.GetProductsByPage(c.Context(), page, pageSize)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(products)
+	return c.JSON(response)
 }
 
 func (h *ProductHandler) GetProductsByPageAndCategory(c *fiber.Ctx) error {
@@ -84,11 +84,11 @@ func (h *ProductHandler) GetProductsByPageAndCategory(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter")
 	}
 
-	products, err := h.service.GetProductsByPageAndCategory(c.Context(), page, pageSize, category)
+	response, err := h.service.GetProductsByPageAndCategory(c.Context(), page, pageSize, category)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(products)
+	return c.JSON(response)
 }
 
 func (h *ProductHandler) GetProductsCount(c *fiber.Ctx) error {
