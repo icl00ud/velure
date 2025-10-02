@@ -413,8 +413,8 @@ const ProductCatalog = () => {
                           >
                             <ShoppingCart className="h-4 w-4 mr-2" />
                             {isInCart(product._id)
-                              ? "Adicionado ao Carrinho"
-                              : "Adicionar ao Carrinho"}
+                              ? "Adicionado ao carrinho"
+                              : "Adicionar ao carrinho"}
                           </Button>
                         </div>
                       </div>
