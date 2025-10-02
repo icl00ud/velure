@@ -109,3 +109,33 @@ export function useProductsPaginated(page: number = 1, pageSize: number = 10, ca
     refetch: fetchProducts,
   };
 }
+
+export function useCategories() {
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCategories = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await productService.getCategories();
+      setCategories(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao buscar categorias");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  return {
+    categories,
+    loading,
+    error,
+    refetch: fetchCategories,
+  };
+}

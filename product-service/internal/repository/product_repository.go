@@ -21,6 +21,7 @@ type ProductRepository interface {
 	GetProductsByPage(ctx context.Context, page, pageSize int) ([]models.ProductResponse, error)
 	GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) ([]models.ProductResponse, error)
 	GetProductsCount(ctx context.Context) (int64, error)
+	GetCategories(ctx context.Context) ([]string, error)
 	CreateProduct(ctx context.Context, product models.CreateProductRequest) (*models.ProductResponse, error)
 	DeleteProductsByName(ctx context.Context, name string) error
 	DeleteProductById(ctx context.Context, id string) error
@@ -162,6 +163,40 @@ func (r *productRepository) GetProductsByPageAndCategory(ctx context.Context, pa
 
 func (r *productRepository) GetProductsCount(ctx context.Context) (int64, error) {
 	return r.collection.CountDocuments(ctx, bson.M{})
+}
+
+func (r *productRepository) GetCategories(ctx context.Context) ([]string, error) {
+	cacheKey := "productCategories"
+
+	// Try to get from cache
+	cached, err := r.redis.Get(ctx, cacheKey).Result()
+	if err == nil {
+		var categories []string
+		if err := json.Unmarshal([]byte(cached), &categories); err == nil {
+			return categories, nil
+		}
+	}
+
+	// Get distinct categories from MongoDB
+	categories, err := r.collection.Distinct(ctx, "category", bson.M{})
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert interface{} to []string
+	result := make([]string, 0, len(categories))
+	for _, cat := range categories {
+		if catStr, ok := cat.(string); ok && catStr != "" {
+			result = append(result, catStr)
+		}
+	}
+
+	// Cache the result for 1 hour
+	if data, err := json.Marshal(result); err == nil {
+		r.redis.Set(ctx, cacheKey, data, time.Hour)
+	}
+
+	return result, nil
 }
 
 func (r *productRepository) CreateProduct(ctx context.Context, req models.CreateProductRequest) (*models.ProductResponse, error) {

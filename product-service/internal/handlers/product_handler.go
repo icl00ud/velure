@@ -99,6 +99,14 @@ func (h *ProductHandler) GetProductsCount(c *fiber.Ctx) error {
 	return c.JSON(count)
 }
 
+func (h *ProductHandler) GetCategories(c *fiber.Ctx) error {
+	categories, err := h.service.GetCategories(c.Context())
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(categories)
+}
+
 func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 	var req models.CreateProductRequest
 	if err := c.BodyParser(&req); err != nil {
