@@ -46,8 +46,8 @@ const ProductList = () => {
   const handleAddToCart = (product: any) => {
     addToCart(product, 1);
     toast({
-      title: "Added to cart!",
-      description: `${product.name} has been added to your cart.`,
+      title: "Adicionado ao carrinho!",
+      description: `${product.name} foi adicionado ao seu carrinho.`,
     });
   };
 
@@ -67,10 +67,10 @@ const ProductList = () => {
         <nav className="mb-6">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-primary">
-              Home
+              Início
             </Link>
             <span>/</span>
-            <span className="text-foreground font-medium">All Products</span>
+            <span className="text-foreground font-medium">Todos os Produtos</span>
           </div>
         </nav>
 
@@ -78,9 +78,9 @@ const ProductList = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">All Products</h1>
+              <h1 className="text-4xl font-bold text-foreground mb-2">Todos os Produtos</h1>
               <p className="text-muted-foreground">
-                {loading ? "Loading..." : `${totalCount} products available`}
+                {loading ? "Carregando..." : `${totalCount} produtos disponíveis`}
               </p>
             </div>
             <div className="text-6xl">🐾</div>
@@ -95,7 +95,7 @@ const ProductList = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search products..."
+                  placeholder="Buscar produtos..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -105,13 +105,13 @@ const ProductList = () => {
               {/* Category Filter */}
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All Categories" />
+                  <SelectValue placeholder="Todas as Categorias" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="all">Todas as Categorias</SelectItem>
                   {loadingCategories ? (
                     <SelectItem value="loading" disabled>
-                      Loading...
+                      Carregando...
                     </SelectItem>
                   ) : (
                     categories.map((category) => (
@@ -126,13 +126,13 @@ const ProductList = () => {
               {/* Sort By */}
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder="Ordenar por" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="popularity">Popularity</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="popularity">Popularidade</SelectItem>
+                  <SelectItem value="price-low">Preço: Menor ao Maior</SelectItem>
+                  <SelectItem value="price-high">Preço: Maior ao Menor</SelectItem>
+                  <SelectItem value="name">Nome</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -169,7 +169,7 @@ const ProductList = () => {
             <div className="col-span-full flex items-center justify-center py-12">
               <div className="text-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading products...</p>
+                <p className="text-muted-foreground">Carregando produtos...</p>
               </div>
             </div>
           ) : error ? (
@@ -178,11 +178,11 @@ const ProductList = () => {
                 <CardContent>
                   <div className="text-6xl mb-4">⚠️</div>
                   <h3 className="text-xl font-semibold text-foreground mb-2">
-                    Error loading products
+                    Erro ao carregar produtos
                   </h3>
                   <p className="text-muted-foreground mb-6">{error}</p>
                   <Button onClick={() => window.location.reload()} variant="outline">
-                    Try Again
+                    Tentar Novamente
                   </Button>
                 </CardContent>
               </Card>
@@ -192,9 +192,11 @@ const ProductList = () => {
               <Card className="text-center py-12">
                 <CardContent>
                   <div className="text-6xl mb-4">🔍</div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">No products found</h3>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                    Nenhum produto encontrado
+                  </h3>
                   <p className="text-muted-foreground">
-                    Try adjusting your filters or search query
+                    Tente ajustar seus filtros ou termo de busca
                   </p>
                 </CardContent>
               </Card>
@@ -230,7 +232,7 @@ const ProductList = () => {
                       </Button>
                       {!product.disponibility && (
                         <div className="absolute inset-0 bg-background/80 rounded-t-lg flex items-center justify-center">
-                          <Badge variant="secondary">Out of Stock</Badge>
+                          <Badge variant="secondary">Sem Estoque</Badge>
                         </div>
                       )}
                     </div>
@@ -238,7 +240,7 @@ const ProductList = () => {
                     <div className="p-4">
                       <div className="mb-2">
                         <p className="text-xs text-muted-foreground font-medium">
-                          {product.brand || "Brand"}
+                          {product.brand || "Marca"}
                         </p>
                         <Link
                           to={`/product/${product._id}`}
@@ -272,7 +274,7 @@ const ProductList = () => {
                           <div className="font-bold text-primary">${product.price.toFixed(2)}</div>
                           {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
                             <div className="text-xs text-orange-500">
-                              Only {product.quantity_warehouse} left
+                              Apenas {product.quantity_warehouse} restantes
                             </div>
                           )}
                         </div>
@@ -283,7 +285,7 @@ const ProductList = () => {
                           className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
                         >
                           <ShoppingCart className="h-3 w-3 mr-1" />
-                          {isInCart(product._id) ? "In Cart" : "Add"}
+                          {isInCart(product._id) ? "No Carrinho" : "Adicionar"}
                         </Button>
                       </div>
                     </div>
@@ -302,7 +304,7 @@ const ProductList = () => {
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
             >
-              Previous
+              Anterior
             </Button>
             <div className="flex items-center gap-2">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -323,7 +325,7 @@ const ProductList = () => {
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
             >
-              Next
+              Próximo
             </Button>
           </div>
         )}
