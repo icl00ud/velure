@@ -69,24 +69,21 @@ export function useProductsPaginated(page: number = 1, pageSize: number = 10, ca
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(0);
 
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
-      let data: Product[];
+      let response;
       if (category) {
-        data = await productService.getProductsByPageAndCategory(page, pageSize, category);
+        response = await productService.getProductsByPageAndCategory(page, pageSize, category);
       } else {
-        data = await productService.getProductsByPage(page, pageSize);
+        response = await productService.getProductsByPage(page, pageSize);
       }
-      setProducts(data);
-
-      // Buscar contagem total apenas na primeira vez ou quando a categoria muda
-      if (page === 1) {
-        const count = await productService.getProductsCount();
-        setTotalCount(count);
-      }
+      setProducts(response.products);
+      setTotalCount(response.totalCount);
+      setTotalPages(response.totalPages);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao buscar produtos");
     } finally {
@@ -97,8 +94,6 @@ export function useProductsPaginated(page: number = 1, pageSize: number = 10, ca
   useEffect(() => {
     fetchProducts();
   }, [page, pageSize, category]);
-
-  const totalPages = Math.ceil(totalCount / pageSize);
 
   return {
     products,

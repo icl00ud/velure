@@ -281,11 +281,11 @@ const ProductList = () => {
                         <Button
                           size="sm"
                           onClick={() => handleAddToCart(product)}
-                          disabled={!product.disponibility || isInCart(product._id)}
+                          disabled={!product.disponibility}
                           className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
                         >
                           <ShoppingCart className="h-3 w-3 mr-1" />
-                          {isInCart(product._id) ? "No Carrinho" : "Adicionar"}
+                          {isInCart(product._id) ? "Adicionado" : "Adicionar"}
                         </Button>
                       </div>
                     </div>
