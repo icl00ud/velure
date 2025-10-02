@@ -72,6 +72,26 @@ func (h *AuthHandler) ValidateToken(c *gin.Context) {
 }
 
 func (h *AuthHandler) GetUsers(c *gin.Context) {
+	// Verifica se há parâmetros de paginação
+	pageStr := c.Query("page")
+	pageSizeStr := c.Query("pageSize")
+
+	if pageStr != "" && pageSizeStr != "" {
+		page, errPage := strconv.Atoi(pageStr)
+		pageSize, errPageSize := strconv.Atoi(pageSizeStr)
+
+		if errPage == nil && errPageSize == nil && page > 0 && pageSize > 0 {
+			result, err := h.authService.GetUsersByPage(page, pageSize)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, result)
+			return
+		}
+	}
+
+	// Fallback para retornar todos os usuários
 	users, err := h.authService.GetUsers()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

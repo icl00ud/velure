@@ -83,6 +83,19 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *OrderHandler) GetOrdersByPage(w http.ResponseWriter, r *http.Request) {
+	page, pageSize := parsePagination(r)
+
+	result, err := h.svc.GetOrdersByPage(r.Context(), page, pageSize)
+	if err != nil {
+		zap.L().Error("get orders by page failed", zap.Error(err))
+		writeJSON(w, http.StatusInternalServerError, response{"error": "internal error"})
+		return
+	}
+
+	writeJSONData(w, http.StatusOK, result)
+}
+
 func mustMarshal(v interface{}) json.RawMessage {
 	b, _ := json.Marshal(v)
 	return b
