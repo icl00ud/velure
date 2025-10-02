@@ -52,7 +52,7 @@ const ProductList = () => {
   };
 
   // Filtrar produtos com base na busca
-  const filteredProducts = products.filter(
+  const filteredProducts = (products || []).filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.brand || "").toLowerCase().includes(searchQuery.toLowerCase())
@@ -80,7 +80,7 @@ const ProductList = () => {
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-2">Todos os produtos</h1>
               <p className="text-muted-foreground">
-                {loading ? "Carregando..." : `${totalCount} produtos disponíveis`}
+                {loading ? "Carregando..." : `${totalCount || 0} produtos disponíveis`}
               </p>
             </div>
             <div className="text-6xl">🐾</div>

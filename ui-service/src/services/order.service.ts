@@ -58,6 +58,40 @@ class OrderService {
       throw new Error("Erro ao atualizar status do pedido");
     }
   }
+
+  async getOrdersByPage(
+    page: number,
+    pageSize: number
+  ): Promise<{
+    orders: Order[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
+    const url = `${this.baseURL}/orders?page=${page}&pageSize=${pageSize}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar pedidos paginados");
+    }
+
+    return response.json();
+  }
+}
+
+export interface Order {
+  id: string;
+  items: Array<{
+    product_id: string;
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
+  total: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const orderService = new OrderService();
