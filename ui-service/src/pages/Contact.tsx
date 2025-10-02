@@ -1,11 +1,11 @@
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import { useState } from "react";
+import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Phone, MapPin, Clock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import Header from "@/components/Header";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -34,7 +34,7 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
@@ -56,7 +56,10 @@ const Contact = () => {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+                    <label
+                      htmlFor="name"
+                      className="block text-sm font-medium text-foreground mb-2"
+                    >
                       Name
                     </label>
                     <Input
@@ -68,9 +71,12 @@ const Contact = () => {
                       className="border-border focus:ring-primary"
                     />
                   </div>
-                  
+
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-foreground mb-2"
+                    >
                       Email
                     </label>
                     <Input
@@ -83,9 +89,12 @@ const Contact = () => {
                       className="border-border focus:ring-primary"
                     />
                   </div>
-                  
+
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
+                    <label
+                      htmlFor="message"
+                      className="block text-sm font-medium text-foreground mb-2"
+                    >
                       Message
                     </label>
                     <Textarea
@@ -98,9 +107,9 @@ const Contact = () => {
                       className="border-border focus:ring-primary"
                     />
                   </div>
-                  
-                  <Button 
-                    type="submit" 
+
+                  <Button
+                    type="submit"
                     className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
                   >
                     Send Message
@@ -120,7 +129,8 @@ const Contact = () => {
                     <div>
                       <h3 className="font-semibold text-foreground">Address</h3>
                       <p className="text-muted-foreground mt-1">
-                        123 Pet Street<br />
+                        123 Pet Street
+                        <br />
                         Happy Pet City, PC 12345
                       </p>
                     </div>
@@ -137,7 +147,8 @@ const Contact = () => {
                     <div>
                       <h3 className="font-semibold text-foreground">Phone</h3>
                       <p className="text-muted-foreground mt-1">
-                        (555) 123-PETS<br />
+                        (555) 123-PETS
+                        <br />
                         (555) 123-7387
                       </p>
                     </div>
@@ -154,7 +165,8 @@ const Contact = () => {
                     <div>
                       <h3 className="font-semibold text-foreground">Email</h3>
                       <p className="text-muted-foreground mt-1">
-                        info@petlove.com<br />
+                        info@petlove.com
+                        <br />
                         support@petlove.com
                       </p>
                     </div>

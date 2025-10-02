@@ -1,16 +1,22 @@
+import { Filter, Grid3X3, Heart, List, Loader2, Search, ShoppingCart, Star } from "lucide-react";
 import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import Header from "@/components/Header";
+import { ProductImageWithFallback } from "@/components/ProductImage";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Heart, Search, Filter, Grid3X3, List, Star, ShoppingCart, Loader2 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
-import Header from "@/components/Header";
-import { toast } from "@/hooks/use-toast";
-import { useProductsPaginated } from "@/hooks/use-products";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCart } from "@/hooks/use-cart";
-import { ProductImageWithFallback } from "@/components/ProductImage";
+import { useProductsPaginated } from "@/hooks/use-products";
+import { toast } from "@/hooks/use-toast";
 
 // No mock data needed - using real API
 
@@ -26,18 +32,16 @@ const ProductCatalog = () => {
 
   // Use hooks para produtos e carrinho
   const { products, loading, error, totalCount, totalPages } = useProductsPaginated(
-    page, 
-    pageSize, 
+    page,
+    pageSize,
     category !== "all" ? category : undefined
   );
   const { addToCart, isInCart } = useCart();
 
   const toggleFavorite = (productId: string) => {
     const numId = parseInt(productId);
-    setFavorites(prev => 
-      prev.includes(numId) 
-        ? prev.filter(id => id !== numId)
-        : [...prev, numId]
+    setFavorites((prev) =>
+      prev.includes(numId) ? prev.filter((id) => id !== numId) : [...prev, numId]
     );
   };
 
@@ -50,34 +54,40 @@ const ProductCatalog = () => {
   };
 
   // Filtrar produtos com base na busca e filtros
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (product.brand || "").toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterBy === "all" || 
-                         (filterBy === "on-sale" && product.price) || // Aqui você pode adicionar lógica de desconto
-                         (filterBy === "in-stock" && product.disponibility);
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.brand || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter =
+      filterBy === "all" ||
+      (filterBy === "on-sale" && product.price) || // Aqui você pode adicionar lógica de desconto
+      (filterBy === "in-stock" && product.disponibility);
     return matchesSearch && matchesFilter;
   });
 
   const categoryNames: { [key: string]: string } = {
     dogs: "Dogs",
-    cats: "Cats", 
+    cats: "Cats",
     birds: "Birds",
     fish: "Fish",
-    "small-pets": "Small Pets"
+    "small-pets": "Small Pets",
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="mb-6">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-primary">Home</Link>
+            <Link to="/" className="hover:text-primary">
+              Home
+            </Link>
             <span>/</span>
-            <Link to="/products" className="hover:text-primary">Products</Link>
+            <Link to="/products" className="hover:text-primary">
+              Products
+            </Link>
             <span>/</span>
             <span className="text-foreground font-medium">{categoryNames[category]}</span>
           </div>
@@ -90,15 +100,18 @@ const ProductCatalog = () => {
               <h1 className="text-4xl font-bold text-foreground mb-2">
                 Products for {categoryNames[category]}
               </h1>
-              <p className="text-muted-foreground">
-                {filteredProducts.length} products found
-              </p>
+              <p className="text-muted-foreground">{filteredProducts.length} products found</p>
             </div>
             <div className="text-6xl">
-              {category === "dogs" ? "🐕" : 
-               category === "cats" ? "🐱" : 
-               category === "birds" ? "🦜" : 
-               category === "fish" ? "🐠" : "🐹"}
+              {category === "dogs"
+                ? "🐕"
+                : category === "cats"
+                  ? "🐱"
+                  : category === "birds"
+                    ? "🦜"
+                    : category === "fish"
+                      ? "🐠"
+                      : "🐹"}
             </div>
           </div>
         </div>
@@ -169,11 +182,13 @@ const ProductCatalog = () => {
         </Card>
 
         {/* Products Grid */}
-        <div className={
-          viewMode === "grid" 
-            ? "grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-            : "space-y-4"
-        }>
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              : "space-y-4"
+          }
+        >
           {loading ? (
             // Loading state
             <div className="col-span-full flex items-center justify-center py-12">
@@ -186,7 +201,9 @@ const ProductCatalog = () => {
               <Card className="text-center py-12">
                 <CardContent>
                   <div className="text-6xl mb-4">⚠️</div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">Error loading products</h3>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
+                    Error loading products
+                  </h3>
                   <p className="text-muted-foreground mb-6">{error}</p>
                   <Button
                     onClick={() => window.location.reload()}
@@ -199,7 +216,10 @@ const ProductCatalog = () => {
             </div>
           ) : (
             filteredProducts.map((product) => (
-              <Card key={product._id} className="group shadow-soft hover:shadow-primary transition-all duration-300">
+              <Card
+                key={product._id}
+                className="group shadow-soft hover:shadow-primary transition-all duration-300"
+              >
                 <CardContent className="p-0">
                   {viewMode === "grid" ? (
                     // Grid View
@@ -218,13 +238,15 @@ const ProductCatalog = () => {
                           variant="ghost"
                           size="icon"
                           className={`absolute top-2 right-2 ${
-                            favorites.includes(parseInt(product._id)) 
-                              ? "text-red-500 hover:text-red-600" 
+                            favorites.includes(parseInt(product._id))
+                              ? "text-red-500 hover:text-red-600"
                               : "text-muted-foreground hover:text-red-500"
                           }`}
                           onClick={() => toggleFavorite(product._id)}
                         >
-                          <Heart className={`h-4 w-4 ${favorites.includes(parseInt(product._id)) ? "fill-current" : ""}`} />
+                          <Heart
+                            className={`h-4 w-4 ${favorites.includes(parseInt(product._id)) ? "fill-current" : ""}`}
+                          />
                         </Button>
                         {!product.disponibility && (
                           <div className="absolute inset-0 bg-background/80 rounded-t-lg flex items-center justify-center">
@@ -232,18 +254,20 @@ const ProductCatalog = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="p-4">
                         <div className="mb-2">
-                          <p className="text-xs text-muted-foreground font-medium">{product.brand || "Brand"}</p>
-                          <Link 
+                          <p className="text-xs text-muted-foreground font-medium">
+                            {product.brand || "Brand"}
+                          </p>
+                          <Link
                             to={`/product/${product._id}`}
                             className="font-semibold text-foreground hover:text-primary transition-colors line-clamp-2"
                           >
                             {product.name}
                           </Link>
                         </div>
-                        
+
                         <div className="flex items-center space-x-1 mb-2">
                           <div className="flex items-center">
                             <Star className="h-3 w-3 text-accent fill-current" />
@@ -264,10 +288,12 @@ const ProductCatalog = () => {
                             </Badge>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="font-bold text-primary">${product.price.toFixed(2)}</div>
+                            <div className="font-bold text-primary">
+                              ${product.price.toFixed(2)}
+                            </div>
                             {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
                               <div className="text-xs text-orange-500">
                                 Only {product.quantity_warehouse} left
@@ -297,12 +323,14 @@ const ProductCatalog = () => {
                           fallbackIcon="🐕"
                         />
                       </div>
-                      
+
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <p className="text-sm text-muted-foreground font-medium">{product.brand || "Brand"}</p>
-                            <Link 
+                            <p className="text-sm text-muted-foreground font-medium">
+                              {product.brand || "Brand"}
+                            </p>
+                            <Link
                               to={`/product/${product._id}`}
                               className="text-lg font-semibold text-foreground hover:text-primary transition-colors"
                             >
@@ -317,13 +345,19 @@ const ProductCatalog = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className={favorites.includes(parseInt(product._id)) ? "text-red-500" : "text-muted-foreground"}
+                            className={
+                              favorites.includes(parseInt(product._id))
+                                ? "text-red-500"
+                                : "text-muted-foreground"
+                            }
                             onClick={() => toggleFavorite(product._id)}
                           >
-                            <Heart className={`h-4 w-4 ${favorites.includes(parseInt(product._id)) ? "fill-current" : ""}`} />
+                            <Heart
+                              className={`h-4 w-4 ${favorites.includes(parseInt(product._id)) ? "fill-current" : ""}`}
+                            />
                           </Button>
                         </div>
-                        
+
                         <div className="flex items-center space-x-2 mb-2">
                           <div className="flex items-center">
                             <Star className="h-4 w-4 text-accent fill-current" />
@@ -351,16 +385,19 @@ const ProductCatalog = () => {
                               SKU: {product.sku}
                             </Badge>
                           )}
-                          {product.colors && product.colors.map((color, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {color}
-                            </Badge>
-                          ))}
+                          {product.colors &&
+                            product.colors.map((color, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {color}
+                              </Badge>
+                            ))}
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            <div className="text-xl font-bold text-primary">${product.price.toFixed(2)}</div>
+                            <div className="text-xl font-bold text-primary">
+                              ${product.price.toFixed(2)}
+                            </div>
                             {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
                               <span className="text-sm text-orange-500">
                                 Only {product.quantity_warehouse} left
