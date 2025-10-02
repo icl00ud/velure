@@ -89,6 +89,7 @@ func main() {
 	products.Get("/getProductsByPage", handler.GetProductsByPage)
 	products.Get("/getProductsByPageAndCategory", handler.GetProductsByPageAndCategory)
 	products.Get("/getProductsCount", handler.GetProductsCount)
+	products.Get("/categories", handler.GetCategories)
 	products.Post("/", handler.CreateProduct)
 	products.Delete("/deleteProductsByName/:name", handler.DeleteProductsByName)
 	products.Delete("/deleteProductById/:id", handler.DeleteProductById)
@@ -104,10 +105,7 @@ func main() {
 
 // maskURI masks sensitive information in MongoDB URI for logging
 func maskURI(uri string) string {
-	// Simple masking for password in URI
-	// mongodb://user:password@host:port -> mongodb://user:***@host:port
 	if len(uri) > 20 && uri[:10] == "mongodb://" {
-		// Find password section
 		if idx := strings.Index(uri, "://"); idx != -1 {
 			remaining := uri[idx+3:]
 			if atIdx := strings.Index(remaining, "@"); atIdx != -1 {

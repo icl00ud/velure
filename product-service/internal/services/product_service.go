@@ -13,6 +13,7 @@ type ProductService interface {
 	GetProductsByPage(ctx context.Context, page, pageSize int) ([]models.ProductResponse, error)
 	GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) ([]models.ProductResponse, error)
 	GetProductsCount(ctx context.Context) (*models.CountResponse, error)
+	GetCategories(ctx context.Context) ([]string, error)
 	CreateProduct(ctx context.Context, product models.CreateProductRequest) (*models.ProductResponse, error)
 	DeleteProductsByName(ctx context.Context, name string) error
 	DeleteProductById(ctx context.Context, id string) error
@@ -50,6 +51,10 @@ func (s *productService) GetProductsCount(ctx context.Context) (*models.CountRes
 		return nil, err
 	}
 	return &models.CountResponse{Count: count}, nil
+}
+
+func (s *productService) GetCategories(ctx context.Context) ([]string, error) {
+	return s.repo.GetCategories(ctx)
 }
 
 func (s *productService) CreateProduct(ctx context.Context, product models.CreateProductRequest) (*models.ProductResponse, error) {

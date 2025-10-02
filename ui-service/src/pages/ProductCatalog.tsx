@@ -21,7 +21,7 @@ import { toast } from "@/hooks/use-toast";
 // No mock data needed - using real API
 
 const ProductCatalog = () => {
-  const { category = "dogs" } = useParams();
+  const { category } = useParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("popularity");
   const [filterBy, setFilterBy] = useState("all");
@@ -34,7 +34,7 @@ const ProductCatalog = () => {
   const { products, loading, error, totalCount, totalPages } = useProductsPaginated(
     page,
     pageSize,
-    category !== "all" ? category : undefined
+    category
   );
   const { addToCart, isInCart } = useCart();
 
@@ -60,18 +60,24 @@ const ProductCatalog = () => {
       (product.brand || "").toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter =
       filterBy === "all" ||
-      (filterBy === "on-sale" && product.price) || // Aqui você pode adicionar lógica de desconto
+      (filterBy === "on-sale" && product.price) ||
       (filterBy === "in-stock" && product.disponibility);
     return matchesSearch && matchesFilter;
   });
 
-  const categoryNames: { [key: string]: string } = {
-    dogs: "Dogs",
-    cats: "Cats",
-    birds: "Birds",
-    fish: "Fish",
-    "small-pets": "Small Pets",
-  };
+  const categoryName = category || "All Products";
+  const categoryEmoji =
+    category === "dogs"
+      ? "🐕"
+      : category === "cats"
+        ? "🐱"
+        : category === "birds"
+          ? "🦜"
+          : category === "fish"
+            ? "🐠"
+            : category === "small-pets"
+              ? "🐹"
+              : "🐾";
 
   return (
     <div className="min-h-screen bg-background">
@@ -88,8 +94,12 @@ const ProductCatalog = () => {
             <Link to="/products" className="hover:text-primary">
               Products
             </Link>
-            <span>/</span>
-            <span className="text-foreground font-medium">{categoryNames[category]}</span>
+            {category && (
+              <>
+                <span>/</span>
+                <span className="text-foreground font-medium capitalize">{category}</span>
+              </>
+            )}
           </div>
         </nav>
 
@@ -98,21 +108,13 @@ const ProductCatalog = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-4xl font-bold text-foreground mb-2">
-                Products for {categoryNames[category]}
+                {category ? `${categoryName} Products` : "All Products"}
               </h1>
-              <p className="text-muted-foreground">{filteredProducts.length} products found</p>
+              <p className="text-muted-foreground">
+                {loading ? "Loading..." : `${totalCount} products found`}
+              </p>
             </div>
-            <div className="text-6xl">
-              {category === "dogs"
-                ? "🐕"
-                : category === "cats"
-                  ? "🐱"
-                  : category === "birds"
-                    ? "🦜"
-                    : category === "fish"
-                      ? "🐠"
-                      : "🐹"}
-            </div>
+            <div className="text-6xl">{categoryEmoji}</div>
           </div>
         </div>
 

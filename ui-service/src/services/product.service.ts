@@ -48,7 +48,7 @@ class ProductService {
     productCategory: string
   ): Promise<Product[]> {
     try {
-      const url = `${configService.productServiceUrl}/getProductsByPage?page=${page}&pageSize=${pageSize}&category=${productCategory}`;
+      const url = `${configService.productServiceUrl}/getProductsByPageAndCategory?page=${page}&pageSize=${pageSize}&category=${productCategory}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Erro ao buscar produtos por categoria");
@@ -56,6 +56,20 @@ class ProductService {
       return await response.json();
     } catch (error) {
       console.error("Erro ao buscar produtos por categoria:", error);
+      throw error;
+    }
+  }
+
+  async getCategories(): Promise<string[]> {
+    try {
+      const url = `${configService.productServiceUrl}/categories`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Erro ao buscar categorias");
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Erro ao buscar categorias:", error);
       throw error;
     }
   }
