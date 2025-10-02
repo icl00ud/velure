@@ -15,7 +15,7 @@ const Index = () => {
         <div className="absolute inset-0">
           <img
             src={heroImage}
-            alt="Happy pets in our store"
+            alt="Pets felizes em nossa loja"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent"></div>
@@ -24,12 +24,12 @@ const Index = () => {
         <div className="relative container mx-auto px-4 py-24 lg:py-32">
           <div className="max-w-2xl">
             <h1 className="text-5xl lg:text-6xl font-bold text-foreground mb-6">
-              Everything Your
-              <span className="text-primary block">Pet Needs</span>
+              Tudo Que Seu
+              <span className="text-primary block">Pet Precisa</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              From premium food to cozy beds, toys to health care - we have everything to keep your
-              furry, feathered, and finned friends happy and healthy.
+              De ração premium a camas aconchegantes, brinquedos a cuidados de saúde - temos tudo
+              para manter seus amigos peludos, emplumados e nadadeiros felizes e saudáveis.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
@@ -37,7 +37,7 @@ const Index = () => {
                 className="bg-gradient-primary hover:opacity-90 text-primary-foreground px-8"
                 asChild
               >
-                <Link to="/products/dogs">Shop Now</Link>
+                <Link to="/products/dogs">Comprar Agora</Link>
               </Button>
               <Button
                 variant="outline"
@@ -45,7 +45,7 @@ const Index = () => {
                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                 asChild
               >
-                <Link to="/contact">Learn More</Link>
+                <Link to="/contact">Saiba Mais</Link>
               </Button>
             </div>
           </div>
@@ -57,10 +57,10 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              Why Pet Parents Choose Us
+              Por Que Tutores Nos Escolhem
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              We're more than just a pet store - we're your partner in pet care
+              Somos mais do que uma pet shop - somos seu parceiro no cuidado com pets
             </p>
           </div>
 
@@ -70,11 +70,11 @@ const Index = () => {
                 <div className="mx-auto bg-gradient-primary rounded-full p-4 w-16 h-16 flex items-center justify-center mb-4">
                   <Heart className="h-8 w-8 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-primary">Premium Quality</CardTitle>
+                <CardTitle className="text-primary">Qualidade Premium</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Only the best products from trusted brands for your beloved pets
+                  Apenas os melhores produtos de marcas confiáveis para seus pets amados
                 </CardDescription>
               </CardContent>
             </Card>
@@ -84,11 +84,12 @@ const Index = () => {
                 <div className="mx-auto bg-gradient-secondary rounded-full p-4 w-16 h-16 flex items-center justify-center mb-4">
                   <Shield className="h-8 w-8 text-secondary-foreground" />
                 </div>
-                <CardTitle className="text-secondary">Health Guaranteed</CardTitle>
+                <CardTitle className="text-secondary">Saúde Garantida</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  All our products are vet-approved and come with health guarantees
+                  Todos os nossos produtos são aprovados por veterinários e vêm com garantias de
+                  saúde
                 </CardDescription>
               </CardContent>
             </Card>
@@ -98,11 +99,11 @@ const Index = () => {
                 <div className="mx-auto bg-gradient-accent rounded-full p-4 w-16 h-16 flex items-center justify-center mb-4">
                   <Truck className="h-8 w-8 text-accent-foreground" />
                 </div>
-                <CardTitle className="text-accent-foreground">Fast Delivery</CardTitle>
+                <CardTitle className="text-accent-foreground">Entrega Rápida</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Free shipping on orders over $50. Same-day delivery available
+                  Frete grátis em pedidos acima de R$ 250. Entrega no mesmo dia disponível
                 </CardDescription>
               </CardContent>
             </Card>
@@ -112,11 +113,12 @@ const Index = () => {
                 <div className="mx-auto bg-gradient-primary rounded-full p-4 w-16 h-16 flex items-center justify-center mb-4">
                   <Users className="h-8 w-8 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-primary">Expert Support</CardTitle>
+                <CardTitle className="text-primary">Suporte Especializado</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
-                  Our pet care experts are here to help you make the best choices
+                  Nossos especialistas em cuidados com pets estão aqui para ajudá-lo a fazer as
+                  melhores escolhas
                 </CardDescription>
               </CardContent>
             </Card>
@@ -128,17 +130,24 @@ const Index = () => {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">Shop by Pet</h2>
-            <p className="text-lg text-muted-foreground">Find everything your specific pet needs</p>
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">Compre por Pet</h2>
+            <p className="text-lg text-muted-foreground">
+              Encontre tudo que seu pet específico precisa
+            </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {[
-              { name: "Dogs", emoji: "🐕", color: "primary", link: "/products/dogs" },
-              { name: "Cats", emoji: "🐱", color: "secondary", link: "/products/cats" },
-              { name: "Birds", emoji: "🦜", color: "accent", link: "/products/birds" },
-              { name: "Fish", emoji: "🐠", color: "primary", link: "/products/fish" },
-              { name: "Small Pets", emoji: "🐹", color: "secondary", link: "/products/small-pets" },
+              { name: "Cães", emoji: "🐕", color: "primary", link: "/products/dogs" },
+              { name: "Gatos", emoji: "🐱", color: "secondary", link: "/products/cats" },
+              { name: "Pássaros", emoji: "🦜", color: "accent", link: "/products/birds" },
+              { name: "Peixes", emoji: "🐠", color: "primary", link: "/products/fish" },
+              {
+                name: "Pets Pequenos",
+                emoji: "🐹",
+                color: "secondary",
+                link: "/products/small-pets",
+              },
             ].map((category) => (
               <Link key={category.name} to={category.link}>
                 <Card className="group cursor-pointer hover:scale-105 transition-transform duration-300 shadow-soft">
@@ -160,17 +169,18 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-4xl lg:text-5xl font-bold text-primary-foreground mb-6">
-              Ready to Spoil Your Pet?
+              Pronto Para Mimar Seu Pet?
             </h2>
             <p className="text-xl text-primary-foreground/90 mb-8 leading-relaxed">
-              Join thousands of happy pet parents who trust us with their pets' happiness and health
+              Junte-se a milhares de tutores felizes que confiam em nós para a felicidade e saúde de
+              seus pets
             </p>
             <Button
               size="lg"
               className="bg-background text-primary hover:bg-background/90 px-8"
               asChild
             >
-              <Link to="/products/dogs">Start Shopping</Link>
+              <Link to="/products/dogs">Começar a Comprar</Link>
             </Button>
           </div>
         </div>
