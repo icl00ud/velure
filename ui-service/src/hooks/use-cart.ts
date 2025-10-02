@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { cartService } from '../services/cart.service';
-import { CartItem, Product } from '../types/product.types';
+import { useEffect, useState } from "react";
+import { cartService } from "../services/cart.service";
+import type { CartItem, Product } from "../types/product.types";
 
 export function useCart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -34,11 +34,11 @@ export function useCart() {
   };
 
   const isInCart = (productId: string): boolean => {
-    return cartItems.some(item => item.product._id === productId);
+    return cartItems.some((item) => item.product._id === productId);
   };
 
   const getItemQuantity = (productId: string): number => {
-    const item = cartItems.find(item => item.product._id === productId);
+    const item = cartItems.find((item) => item.product._id === productId);
     return item ? item.quantity : 0;
   };
 

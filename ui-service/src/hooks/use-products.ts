@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { productService } from '../services/product.service';
-import { Product } from '../types/product.types';
+import { useEffect, useState } from "react";
+import { productService } from "../services/product.service";
+import type { Product } from "../types/product.types";
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -14,7 +14,7 @@ export function useProducts() {
       const data = await productService.getProducts();
       setProducts(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao buscar produtos');
+      setError(err instanceof Error ? err.message : "Erro ao buscar produtos");
     } finally {
       setLoading(false);
     }
@@ -39,14 +39,14 @@ export function useProduct(id: number) {
 
   const fetchProduct = async () => {
     if (!id) return;
-    
+
     setLoading(true);
     setError(null);
     try {
       const data = await productService.getProductById(id);
       setProduct(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao buscar produto');
+      setError(err instanceof Error ? err.message : "Erro ao buscar produto");
     } finally {
       setLoading(false);
     }
@@ -81,14 +81,14 @@ export function useProductsPaginated(page: number = 1, pageSize: number = 10, ca
         data = await productService.getProductsByPage(page, pageSize);
       }
       setProducts(data);
-      
+
       // Buscar contagem total apenas na primeira vez ou quando a categoria muda
       if (page === 1) {
         const count = await productService.getProductsCount();
         setTotalCount(count);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao buscar produtos');
+      setError(err instanceof Error ? err.message : "Erro ao buscar produtos");
     } finally {
       setLoading(false);
     }

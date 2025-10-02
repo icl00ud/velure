@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { authenticationService } from '../services/authentication.service';
-import { ILoginUser, ILoginResponse, IRegisterUser } from '../types/user.types';
+import { useEffect, useState } from "react";
+import { authenticationService } from "../services/authentication.service";
+import type { ILoginResponse, ILoginUser, IRegisterUser } from "../types/user.types";
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);

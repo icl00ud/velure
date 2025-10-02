@@ -1,3 +1,4 @@
+import { ChevronDown, Heart, LogOut, ShoppingCart, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,9 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, ShoppingCart, User, Heart, LogOut } from "lucide-react";
-import { useCart } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
+import { useCart } from "@/hooks/use-cart";
 
 const Header = () => {
   const { itemsCount } = useCart();
@@ -18,7 +18,7 @@ const Header = () => {
     try {
       await logout();
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
@@ -70,11 +70,8 @@ const Header = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
-          <Link 
-            to="/contact" 
-            className="text-foreground hover:text-primary transition-colors"
-          >
+
+          <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
             Contact
           </Link>
         </nav>

@@ -1,25 +1,25 @@
+import {
+  ArrowLeft,
+  Award,
+  Heart,
+  Minus,
+  Plus,
+  RotateCcw,
+  Share2,
+  Shield,
+  ShoppingCart,
+  Star,
+  Truck,
+} from "lucide-react";
 import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import Header from "@/components/Header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Heart, 
-  Star, 
-  Minus, 
-  Plus, 
-  ShoppingCart, 
-  Share2, 
-  ArrowLeft,
-  Truck,
-  Shield,
-  RotateCcw,
-  Award
-} from "lucide-react";
-import { Link, useParams } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import Header from "@/components/Header";
 
 // Mock product data
 const mockProduct = {
@@ -35,28 +35,30 @@ const mockProduct = {
   inStock: true,
   stockQuantity: 23,
   discount: 13,
-  description: "Give your dog the nutrition they deserve with our premium chicken and rice formula. Made with real chicken as the first ingredient, this recipe provides complete and balanced nutrition for adult dogs.",
+  description:
+    "Give your dog the nutrition they deserve with our premium chicken and rice formula. Made with real chicken as the first ingredient, this recipe provides complete and balanced nutrition for adult dogs.",
   features: [
     "Real chicken as first ingredient",
-    "No artificial colors, flavors, or preservatives", 
+    "No artificial colors, flavors, or preservatives",
     "Rich in protein for lean muscle maintenance",
     "Added vitamins and minerals for immune support",
-    "Omega-6 fatty acids for healthy skin and coat"
+    "Omega-6 fatty acids for healthy skin and coat",
   ],
   specifications: {
-    "Weight": "15 lbs (6.8 kg)",
+    Weight: "15 lbs (6.8 kg)",
     "Life Stage": "Adult",
     "Breed Size": "All Sizes",
     "Primary Protein": "Chicken",
-    "Special Diet": "Grain-Free"
+    "Special Diet": "Grain-Free",
   },
-  ingredients: "Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Chicken Fat, Tomato Pomace, Natural Flavor, Salt, Choline Chloride, Taurine, Dried Chicory Root, Yucca Schidigera Extract, Rosemary Extract, Mixed Tocopherols",
+  ingredients:
+    "Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Chicken Fat, Tomato Pomace, Natural Flavor, Salt, Choline Chloride, Taurine, Dried Chicory Root, Yucca Schidigera Extract, Rosemary Extract, Mixed Tocopherols",
   images: [
     "/api/placeholder/500/500",
-    "/api/placeholder/500/500", 
     "/api/placeholder/500/500",
-    "/api/placeholder/500/500"
-  ]
+    "/api/placeholder/500/500",
+    "/api/placeholder/500/500",
+  ],
 };
 
 const mockReviews = [
@@ -66,24 +68,27 @@ const mockReviews = [
     rating: 5,
     date: "2024-01-15",
     title: "My dog loves it!",
-    content: "My golden retriever absolutely loves this food. His coat is shinier and he has more energy. Highly recommend!"
+    content:
+      "My golden retriever absolutely loves this food. His coat is shinier and he has more energy. Highly recommend!",
   },
   {
-    id: 2, 
+    id: 2,
     author: "Mike R.",
     rating: 4,
     date: "2024-01-10",
     title: "Great quality",
-    content: "Good quality food at a reasonable price. My dog took a few days to adjust but now eats it happily."
+    content:
+      "Good quality food at a reasonable price. My dog took a few days to adjust but now eats it happily.",
   },
   {
     id: 3,
     author: "Lisa K.",
     rating: 5,
-    date: "2024-01-05", 
+    date: "2024-01-05",
     title: "Excellent nutrition",
-    content: "Vet recommended this brand. Great ingredients and my dog's digestion has improved significantly."
-  }
+    content:
+      "Vet recommended this brand. Great ingredients and my dog's digestion has improved significantly.",
+  },
 ];
 
 const ProductDetail = () => {
@@ -109,14 +114,18 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="mb-6">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-primary">Home</Link>
+            <Link to="/" className="hover:text-primary">
+              Home
+            </Link>
             <span>/</span>
-            <Link to="/products/dogs" className="hover:text-primary">Dogs</Link>
+            <Link to="/products/dogs" className="hover:text-primary">
+              Dogs
+            </Link>
             <span>/</span>
             <span className="text-foreground font-medium">{mockProduct.category}</span>
           </div>
@@ -136,14 +145,16 @@ const ProductDetail = () => {
             <div className="aspect-square bg-muted rounded-lg flex items-center justify-center text-8xl overflow-hidden">
               🐕
             </div>
-            
+
             <div className="grid grid-cols-4 gap-2">
               {[0, 1, 2, 3].map((index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
                   className={`aspect-square bg-muted rounded-lg flex items-center justify-center text-2xl border-2 transition-colors ${
-                    selectedImage === index ? 'border-primary' : 'border-transparent hover:border-muted-foreground'
+                    selectedImage === index
+                      ? "border-primary"
+                      : "border-transparent hover:border-muted-foreground"
                   }`}
                 >
                   🐕
@@ -157,16 +168,16 @@ const ProductDetail = () => {
             <div>
               <p className="text-muted-foreground font-medium mb-2">{mockProduct.brand}</p>
               <h1 className="text-3xl font-bold text-foreground mb-4">{mockProduct.name}</h1>
-              
+
               <div className="flex items-center space-x-4 mb-4">
                 <div className="flex items-center">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Star 
+                    <Star
                       key={star}
                       className={`h-4 w-4 ${
-                        star <= Math.floor(mockProduct.rating) 
-                          ? 'text-accent fill-current' 
-                          : 'text-muted-foreground'
+                        star <= Math.floor(mockProduct.rating)
+                          ? "text-accent fill-current"
+                          : "text-muted-foreground"
                       }`}
                     />
                   ))}
@@ -177,7 +188,9 @@ const ProductDetail = () => {
 
               <div className="flex flex-wrap gap-2 mb-6">
                 {mockProduct.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary">{tag}</Badge>
+                  <Badge key={index} variant="secondary">
+                    {tag}
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -196,9 +209,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            <p className="text-muted-foreground leading-relaxed">
-              {mockProduct.description}
-            </p>
+            <p className="text-muted-foreground leading-relaxed">{mockProduct.description}</p>
 
             {/* Stock Status */}
             <div className="flex items-center space-x-2">
@@ -241,7 +252,7 @@ const ProductDetail = () => {
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   onClick={handleBuyNow}
@@ -258,7 +269,7 @@ const ProductDetail = () => {
                   onClick={() => setIsFavorite(!isFavorite)}
                   className={isFavorite ? "text-red-500 border-red-500" : ""}
                 >
-                  <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                  <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
                 </Button>
                 <Button variant="outline" size="icon">
                   <Share2 className="h-4 w-4" />
@@ -277,7 +288,7 @@ const ProductDetail = () => {
                   <p className="text-xs text-muted-foreground">On orders over $50</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <div className="bg-secondary/10 rounded-full p-2">
                   <RotateCcw className="h-4 w-4 text-secondary" />
@@ -287,7 +298,7 @@ const ProductDetail = () => {
                   <p className="text-xs text-muted-foreground">Money back guarantee</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <div className="bg-accent/10 rounded-full p-2">
                   <Shield className="h-4 w-4 text-accent-foreground" />
@@ -297,7 +308,7 @@ const ProductDetail = () => {
                   <p className="text-xs text-muted-foreground">Premium products</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <div className="bg-primary/10 rounded-full p-2">
                   <Award className="h-4 w-4 text-primary" />
@@ -321,14 +332,12 @@ const ProductDetail = () => {
                 <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
                 <TabsTrigger value="reviews">Reviews ({mockProduct.reviews})</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="description" className="p-6">
                 <div className="space-y-4">
                   <h3 className="text-xl font-semibold text-foreground">Product Description</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {mockProduct.description}
-                  </p>
-                  
+                  <p className="text-muted-foreground leading-relaxed">{mockProduct.description}</p>
+
                   <h4 className="text-lg font-semibold text-foreground mt-6">Key Features</h4>
                   <ul className="space-y-2">
                     {mockProduct.features.map((feature, index) => (
@@ -340,7 +349,7 @@ const ProductDetail = () => {
                   </ul>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="specifications" className="p-6">
                 <div className="space-y-4">
                   <h3 className="text-xl font-semibold text-foreground">Specifications</h3>
@@ -354,16 +363,14 @@ const ProductDetail = () => {
                   </div>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="ingredients" className="p-6">
                 <div className="space-y-4">
                   <h3 className="text-xl font-semibold text-foreground">Ingredients</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {mockProduct.ingredients}
-                  </p>
+                  <p className="text-muted-foreground leading-relaxed">{mockProduct.ingredients}</p>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="reviews" className="p-6">
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
@@ -371,12 +378,12 @@ const ProductDetail = () => {
                     <div className="flex items-center space-x-2">
                       <div className="flex items-center">
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <Star 
+                          <Star
                             key={star}
                             className={`h-4 w-4 ${
-                              star <= Math.floor(mockProduct.rating) 
-                                ? 'text-accent fill-current' 
-                                : 'text-muted-foreground'
+                              star <= Math.floor(mockProduct.rating)
+                                ? "text-accent fill-current"
+                                : "text-muted-foreground"
                             }`}
                           />
                         ))}
@@ -384,9 +391,9 @@ const ProductDetail = () => {
                       <span className="font-medium">{mockProduct.rating} out of 5</span>
                     </div>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="space-y-6">
                     {mockReviews.map((review) => (
                       <div key={review.id} className="space-y-3">
@@ -396,12 +403,12 @@ const ProductDetail = () => {
                               <span className="font-medium text-foreground">{review.author}</span>
                               <div className="flex items-center">
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star 
+                                  <Star
                                     key={star}
                                     className={`h-3 w-3 ${
-                                      star <= review.rating 
-                                        ? 'text-accent fill-current' 
-                                        : 'text-muted-foreground'
+                                      star <= review.rating
+                                        ? "text-accent fill-current"
+                                        : "text-muted-foreground"
                                     }`}
                                   />
                                 ))}

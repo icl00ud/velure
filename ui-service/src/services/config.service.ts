@@ -1,4 +1,4 @@
-import { environment } from '../config/environment';
+import { environment } from "../config/environment";
 
 export class ConfigService {
   private readonly productServiceApiUrl: string;
@@ -20,7 +20,7 @@ export class ConfigService {
   getUrls() {
     return {
       productServiceUrl: this.productServiceUrl,
-      authenticationServiceUrl: this.authenticationServiceUrl
+      authenticationServiceUrl: this.authenticationServiceUrl,
     };
   }
 }

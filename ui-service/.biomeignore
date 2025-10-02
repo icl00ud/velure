@@ -1,0 +1,6 @@
+dist
+node_modules
+.vite
+coverage
+build
+bun.lockb

@@ -1,15 +1,15 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Shield, Truck, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import Header from "@/components/Header";
 import heroImage from "@/assets/petshop-hero.jpg";
+import Header from "@/components/Header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
@@ -20,7 +20,7 @@ const Index = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent"></div>
         </div>
-        
+
         <div className="relative container mx-auto px-4 py-24 lg:py-32">
           <div className="max-w-2xl">
             <h1 className="text-5xl lg:text-6xl font-bold text-foreground mb-6">
@@ -28,20 +28,20 @@ const Index = () => {
               <span className="text-primary block">Pet Needs</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              From premium food to cozy beds, toys to health care - we have everything 
-              to keep your furry, feathered, and finned friends happy and healthy.
+              From premium food to cozy beds, toys to health care - we have everything to keep your
+              furry, feathered, and finned friends happy and healthy.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-gradient-primary hover:opacity-90 text-primary-foreground px-8"
                 asChild
               >
                 <Link to="/products/dogs">Shop Now</Link>
               </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
+              <Button
+                variant="outline"
+                size="lg"
                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                 asChild
               >
@@ -63,7 +63,7 @@ const Index = () => {
               We're more than just a pet store - we're your partner in pet care
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="text-center shadow-soft hover:shadow-primary transition-all duration-300">
               <CardHeader>
@@ -128,14 +128,10 @@ const Index = () => {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              Shop by Pet
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Find everything your specific pet needs
-            </p>
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">Shop by Pet</h2>
+            <p className="text-lg text-muted-foreground">Find everything your specific pet needs</p>
           </div>
-          
+
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {[
               { name: "Dogs", emoji: "🐕", color: "primary", link: "/products/dogs" },
@@ -169,8 +165,8 @@ const Index = () => {
             <p className="text-xl text-primary-foreground/90 mb-8 leading-relaxed">
               Join thousands of happy pet parents who trust us with their pets' happiness and health
             </p>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="bg-background text-primary hover:bg-background/90 px-8"
               asChild
             >

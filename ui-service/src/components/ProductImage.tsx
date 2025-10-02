@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import type React from "react";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface ProductImageProps {
   src: string;
@@ -52,7 +53,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
 
   if (imageError) {
     return (
-      <div 
+      <div
         className={cn(
           "bg-muted rounded-lg flex items-center justify-center text-4xl transition-colors",
           "hover:bg-muted/80",
@@ -67,9 +68,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
 
   return (
     <div className={cn("relative overflow-hidden rounded-lg", className)}>
-      {isLoading && (
-        <div className="absolute inset-0 bg-muted animate-pulse rounded-lg" />
-      )}
+      {isLoading && <div className="absolute inset-0 bg-muted animate-pulse rounded-lg" />}
       <img
         src={src}
         alt={alt}
@@ -101,17 +100,17 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
   // Determinar o ícone baseado no tipo de produto
   const getProductIcon = (productName: string): string => {
     const name = productName.toLowerCase();
-    
-    if (name.includes('gato') || name.includes('cat') || name.includes('felino')) {
+
+    if (name.includes("gato") || name.includes("cat") || name.includes("felino")) {
       return "🐱";
-    } else if (name.includes('pássaro') || name.includes('bird') || name.includes('canário')) {
+    } else if (name.includes("pássaro") || name.includes("bird") || name.includes("canário")) {
       return "🐦";
-    } else if (name.includes('peixe') || name.includes('fish') || name.includes('aquário')) {
+    } else if (name.includes("peixe") || name.includes("fish") || name.includes("aquário")) {
       return "🐟";
-    } else if (name.includes('hamster') || name.includes('coelho')) {
+    } else if (name.includes("hamster") || name.includes("coelho")) {
       return "🐹";
     }
-    
+
     return "🐕"; // Padrão para cães
   };
 
@@ -119,7 +118,7 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
 
   const handleImageError = () => {
     const nextIndex = currentImageIndex + 1;
-    
+
     if (nextIndex < images.length) {
       setCurrentImageIndex(nextIndex);
     } else {
@@ -139,7 +138,7 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
 
   if (!images || images.length === 0 || allImagesFailed) {
     return (
-      <div 
+      <div
         className={cn(
           "bg-muted rounded-lg flex items-center justify-center text-4xl transition-colors",
           "hover:bg-muted/80",
@@ -177,17 +176,17 @@ const useImagePreloader = (images: string[]) => {
     const preloadImage = (src: string): Promise<void> => {
       return new Promise((resolve) => {
         const img = new Image();
-        
+
         img.onload = () => {
-          setLoadedImages(prev => new Set(prev).add(src));
+          setLoadedImages((prev) => new Set(prev).add(src));
           resolve();
         };
-        
+
         img.onerror = () => {
-          setFailedImages(prev => new Set(prev).add(src));
+          setFailedImages((prev) => new Set(prev).add(src));
           resolve();
         };
-        
+
         img.src = src;
       });
     };
@@ -222,18 +221,10 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   const { isLoaded, hasFailed } = useImagePreloader(images);
 
   // Filtrar imagens que falharam
-  const validImages = images.filter((_, index) => 
-    !hasFailed(images[index]) && index < 3
-  );
+  const validImages = images.filter((_, index) => !hasFailed(images[index]) && index < 3);
 
   if (validImages.length === 0) {
-    return (
-      <ProductImageWithFallback
-        images={[]}
-        alt={productName}
-        className={className}
-      />
-    );
+    return <ProductImageWithFallback images={[]} alt={productName} className={className} />;
   }
 
   return (
@@ -257,9 +248,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               onClick={() => setSelectedImage(index)}
               className={cn(
                 "w-16 h-16 border-2 rounded-lg overflow-hidden transition-colors",
-                selectedImage === index
-                  ? "border-primary"
-                  : "border-muted hover:border-primary/50"
+                selectedImage === index ? "border-primary" : "border-muted hover:border-primary/50"
               )}
             >
               <ProductImageWithFallback
@@ -275,9 +264,4 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   );
 };
 
-export { 
-  ProductImage, 
-  ProductImageWithFallback, 
-  ProductImageGallery,
-  useImagePreloader 
-};
+export { ProductImage, ProductImageWithFallback, ProductImageGallery, useImagePreloader };

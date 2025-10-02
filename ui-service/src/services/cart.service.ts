@@ -1,8 +1,8 @@
-import { Product, CartItem } from '../types/product.types';
+import type { CartItem, Product } from "../types/product.types";
 
 class CartService {
   private cart: CartItem[] = [];
-  private readonly localStorageKey = 'cart';
+  private readonly localStorageKey = "cart";
   private readonly maxQuantity = 99;
   private cartListeners: Set<(cart: CartItem[]) => void> = new Set();
 
@@ -19,7 +19,7 @@ class CartService {
   }
 
   private notifyCartChange(): void {
-    this.cartListeners.forEach(callback => callback(this.cart));
+    this.cartListeners.forEach((callback) => callback(this.cart));
   }
 
   addToCart(product: Product, quantity: number = 1): void {
@@ -53,10 +53,7 @@ class CartService {
   }
 
   getTotalPrice(): number {
-    return this.cart.reduce(
-      (total, item) => total + item.product.price * item.quantity,
-      0
-    );
+    return this.cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
   }
 
   clearCart(): void {
@@ -73,7 +70,7 @@ class CartService {
     try {
       localStorage.setItem(this.localStorageKey, JSON.stringify(this.cart));
     } catch (error) {
-      console.error('Falha ao salvar no LocalStorage:', error);
+      console.error("Falha ao salvar no LocalStorage:", error);
     }
   }
 
@@ -82,18 +79,20 @@ class CartService {
     if (cartData) {
       try {
         const parsedData: CartItem[] = JSON.parse(cartData);
-        this.cart = Array.isArray(parsedData) 
-          ? parsedData.filter(item => this.isValidCartItem(item)) 
+        this.cart = Array.isArray(parsedData)
+          ? parsedData.filter((item) => this.isValidCartItem(item))
           : [];
       } catch (error) {
-        console.error('Falha ao carregar do LocalStorage:', error);
+        console.error("Falha ao carregar do LocalStorage:", error);
         this.cart = [];
       }
     }
   }
 
   private isValidCartItem(item: any): item is CartItem {
-    return item?.product && typeof item.product._id === 'string' && typeof item.quantity === 'number';
+    return (
+      item?.product && typeof item.product._id === "string" && typeof item.quantity === "number"
+    );
   }
 }
 

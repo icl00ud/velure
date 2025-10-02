@@ -1,12 +1,12 @@
+import { ArrowLeft, Minus, Plus, Shield, ShoppingBag, Trash2, Truck } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, Truck, Shield } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import Header from "@/components/Header";
 
 // Mock data - no backend needed
 const mockCartItems = [
@@ -48,15 +48,13 @@ const Cart = () => {
 
   const updateQuantity = (id: number, newQuantity: number) => {
     if (newQuantity < 1) return;
-    setCartItems(items => 
-      items.map(item => 
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
+    setCartItems((items) =>
+      items.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item))
     );
   };
 
   const removeItem = (id: number) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+    setCartItems((items) => items.filter((item) => item.id !== id));
     toast({
       title: "Item removed",
       description: "Item has been removed from your cart.",
@@ -70,16 +68,16 @@ const Cart = () => {
     });
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = subtotal > 50 ? 0 : 9.99;
-  const discount = 5.00; // Mock discount
+  const discount = 5.0; // Mock discount
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax - discount;
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <Link
@@ -91,7 +89,7 @@ const Cart = () => {
           </Link>
           <h1 className="text-4xl font-bold text-foreground">Shopping Cart</h1>
           <p className="text-muted-foreground mt-2">
-            {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in your cart
+            {cartItems.length} {cartItems.length === 1 ? "item" : "items"} in your cart
           </p>
         </div>
 
@@ -103,7 +101,10 @@ const Cart = () => {
               <p className="text-muted-foreground mb-6">
                 Looks like you haven't added any items to your cart yet.
               </p>
-              <Button asChild className="bg-gradient-primary hover:opacity-90 text-primary-foreground">
+              <Button
+                asChild
+                className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
+              >
                 <Link to="/">Start Shopping</Link>
               </Button>
             </CardContent>
@@ -119,12 +120,14 @@ const Cart = () => {
                       <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center">
                         <span className="text-2xl">🐕</span>
                       </div>
-                      
+
                       <div className="flex-1">
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <h3 className="font-semibold text-foreground">{item.name}</h3>
-                            <p className="text-sm text-muted-foreground">{item.brand} • {item.category}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {item.brand} • {item.category}
+                            </p>
                             {!item.inStock && (
                               <p className="text-sm text-destructive mt-1">Out of stock</p>
                             )}
@@ -138,7 +141,7 @@ const Cart = () => {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <Button
@@ -160,10 +163,14 @@ const Cart = () => {
                               <Plus className="h-3 w-3" />
                             </Button>
                           </div>
-                          
+
                           <div className="text-right">
-                            <div className="font-semibold text-primary">${(item.price * item.quantity).toFixed(2)}</div>
-                            <div className="text-sm text-muted-foreground">${item.price.toFixed(2)} each</div>
+                            <div className="font-semibold text-primary">
+                              ${(item.price * item.quantity).toFixed(2)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              ${item.price.toFixed(2)} each
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -178,7 +185,7 @@ const Cart = () => {
               <Card className="shadow-soft">
                 <CardContent className="p-6">
                   <h3 className="font-semibold text-foreground mb-4">Order Summary</h3>
-                  
+
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Subtotal</span>
@@ -187,7 +194,7 @@ const Cart = () => {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Shipping</span>
                       <span className="font-medium">
-                        {shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}
+                        {shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -228,7 +235,7 @@ const Cart = () => {
               <Card className="shadow-soft">
                 <CardContent className="p-6">
                   <h4 className="font-semibold text-foreground mb-4">Your Benefits</h4>
-                  
+
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3">
                       <div className="bg-primary/10 rounded-full p-2">
@@ -239,7 +246,7 @@ const Cart = () => {
                         <p className="text-xs text-muted-foreground">On orders over $50</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-3">
                       <div className="bg-secondary/10 rounded-full p-2">
                         <Shield className="h-4 w-4 text-secondary" />
