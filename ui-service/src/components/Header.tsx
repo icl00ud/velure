@@ -38,41 +38,41 @@ const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center space-x-1">
-                <span>Products</span>
+                <span>Produtos</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 bg-background border border-border shadow-soft">
               <DropdownMenuItem asChild>
                 <Link to="/products/dogs" className="w-full">
-                  🐕 Dogs
+                  🐕 Cães
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/products/cats" className="w-full">
-                  🐱 Cats
+                  🐱 Gatos
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/products/birds" className="w-full">
-                  🦜 Birds
+                  🦜 Pássaros
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/products/fish" className="w-full">
-                  🐠 Fish
+                  🐠 Peixes
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/products/small-pets" className="w-full">
-                  🐹 Small Pets
+                  🐹 Pets pequenos
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
-            Contact
+            Contato
           </Link>
         </nav>
 
@@ -101,7 +101,7 @@ const Header = () => {
               <DropdownMenuContent className="w-56 bg-background border border-border shadow-soft">
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
-                  Logout
+                  Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
