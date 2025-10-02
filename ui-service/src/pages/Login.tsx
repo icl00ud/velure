@@ -51,8 +51,8 @@ const Login = () => {
           password: formData.password,
         });
         toast({
-          title: "Account created!",
-          description: "Welcome to PetLove! You can now sign in.",
+          title: "Conta criada!",
+          description: "Bem-vindo ao Velure! Você já pode entrar.",
         });
         setIsLogin(true);
         setFormData({ name: "", email: "", password: "", confirmPassword: "" });
@@ -82,22 +82,22 @@ const Login = () => {
             <div className="bg-gradient-primary rounded-full p-3">
               <Heart className="h-8 w-8 text-primary-foreground" />
             </div>
-            <span className="font-bold text-2xl text-primary">PetLove</span>
+            <span className="font-bold text-2xl text-primary">Velure</span>
           </Link>
           <p className="text-muted-foreground">
-            {isLogin ? "Welcome back!" : "Join the PetLove family"}
+            {isLogin ? "Bem-vindo de volta!" : "Junte-se à família Velure"}
           </p>
         </div>
 
         <Card className="shadow-soft border border-border/50">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl text-primary">
-              {isLogin ? "Sign In" : "Create Account"}
+              {isLogin ? "Entrar" : "Criar conta"}
             </CardTitle>
             <CardDescription>
               {isLogin
-                ? "Enter your credentials to access your account"
-                : "Sign up to start shopping for your pets"}
+                ? "Digite suas credenciais para acessar sua conta"
+                : "Cadastre-se para começar a comprar para seus pets"}
             </CardDescription>
           </CardHeader>
 
@@ -106,13 +106,13 @@ const Login = () => {
               {!isLogin && (
                 <div className="space-y-2">
                   <label htmlFor="name" className="text-sm font-medium text-foreground">
-                    Full Name
+                    Nome completo
                   </label>
                   <Input
                     id="name"
                     name="name"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder="Digite seu nome completo"
                     value={formData.name}
                     onChange={handleInputChange}
                     required={!isLogin}
@@ -123,7 +123,7 @@ const Login = () => {
 
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-foreground">
-                  Email
+                  E-mail
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -131,7 +131,7 @@ const Login = () => {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Digite seu e-mail"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -142,7 +142,7 @@ const Login = () => {
 
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium text-foreground">
-                  Password
+                  Senha
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -150,7 +150,7 @@ const Login = () => {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="Digite sua senha"
                     value={formData.password}
                     onChange={handleInputChange}
                     required
@@ -175,7 +175,7 @@ const Login = () => {
               {!isLogin && (
                 <div className="space-y-2">
                   <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
-                    Confirm Password
+                    Confirmar senha
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -183,7 +183,7 @@ const Login = () => {
                       id="confirmPassword"
                       name="confirmPassword"
                       type="password"
-                      placeholder="Confirm your password"
+                      placeholder="Confirme sua senha"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       required={!isLogin}
@@ -197,10 +197,10 @@ const Login = () => {
                 <div className="flex items-center justify-between text-sm">
                   <label className="flex items-center space-x-2">
                     <input type="checkbox" className="rounded border-border" />
-                    <span className="text-muted-foreground">Remember me</span>
+                    <span className="text-muted-foreground">Lembrar-me</span>
                   </label>
                   <Link to="/forgot-password" className="text-primary hover:text-primary-dark">
-                    Forgot password?
+                    Esqueceu a senha?
                   </Link>
                 </div>
               )}
@@ -210,7 +210,7 @@ const Login = () => {
                 className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
                 disabled={isLoading}
               >
-                {isLoading ? "Loading..." : isLogin ? "Sign In" : "Create Account"}
+                {isLoading ? "Carregando..." : isLogin ? "Entrar" : "Criar conta"}
               </Button>
             </form>
 
@@ -219,7 +219,7 @@ const Login = () => {
                 <Separator />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
               </div>
             </div>
 
@@ -257,12 +257,12 @@ const Login = () => {
 
         <div className="text-center mt-6">
           <p className="text-muted-foreground">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+            {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
             <button
               onClick={() => setIsLogin(!isLogin)}
               className="text-primary hover:text-primary-dark font-medium"
             >
-              {isLogin ? "Sign up" : "Sign in"}
+              {isLogin ? "Cadastre-se" : "Entre"}
             </button>
           </p>
         </div>
@@ -272,7 +272,7 @@ const Login = () => {
             to="/"
             className="text-muted-foreground hover:text-primary transition-colors text-sm"
           >
-            ← Back to home
+            ← Voltar ao início
           </Link>
         </div>
       </div>

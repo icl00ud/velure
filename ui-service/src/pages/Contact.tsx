@@ -18,8 +18,8 @@ const Contact = () => {
     e.preventDefault();
     // Simulate form submission
     toast({
-      title: "Message sent!",
-      description: "We'll get back to you within 24 hours.",
+      title: "Mensagem enviada!",
+      description: "Retornaremos em até 24 horas.",
     });
     setFormData({ name: "", email: "", message: "" });
   };
@@ -38,9 +38,10 @@ const Contact = () => {
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">Contact Us</h1>
+            <h1 className="text-4xl font-bold text-foreground mb-4">Entre em contato</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Have questions about our products or need help with your pet? We're here to help!
+              Tem dúvidas sobre nossos produtos ou precisa de ajuda com seu pet? Estamos aqui para
+              ajudar!
             </p>
           </div>
 
@@ -48,9 +49,9 @@ const Contact = () => {
             {/* Contact Form */}
             <Card className="shadow-soft">
               <CardHeader>
-                <CardTitle className="text-primary">Send us a message</CardTitle>
+                <CardTitle className="text-primary">Envie-nos uma mensagem</CardTitle>
                 <CardDescription>
-                  Fill out the form below and we'll get back to you soon.
+                  Preencha o formulário abaixo e retornaremos em breve.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -60,7 +61,7 @@ const Contact = () => {
                       htmlFor="name"
                       className="block text-sm font-medium text-foreground mb-2"
                     >
-                      Name
+                      Nome
                     </label>
                     <Input
                       id="name"
@@ -77,7 +78,7 @@ const Contact = () => {
                       htmlFor="email"
                       className="block text-sm font-medium text-foreground mb-2"
                     >
-                      Email
+                      E-mail
                     </label>
                     <Input
                       id="email"
@@ -95,7 +96,7 @@ const Contact = () => {
                       htmlFor="message"
                       className="block text-sm font-medium text-foreground mb-2"
                     >
-                      Message
+                      Mensagem
                     </label>
                     <Textarea
                       id="message"
@@ -112,7 +113,7 @@ const Contact = () => {
                     type="submit"
                     className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
                   >
-                    Send Message
+                    Enviar mensagem
                   </Button>
                 </form>
               </CardContent>
@@ -127,11 +128,11 @@ const Contact = () => {
                       <MapPin className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground">Address</h3>
+                      <h3 className="font-semibold text-foreground">Endereço</h3>
                       <p className="text-muted-foreground mt-1">
-                        123 Pet Street
+                        Rua dos Pets, 123
                         <br />
-                        Happy Pet City, PC 12345
+                        São Paulo, SP 01234-567
                       </p>
                     </div>
                   </div>
@@ -145,11 +146,11 @@ const Contact = () => {
                       <Phone className="h-6 w-6 text-secondary-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground">Phone</h3>
+                      <h3 className="font-semibold text-foreground">Telefone</h3>
                       <p className="text-muted-foreground mt-1">
-                        (555) 123-PETS
+                        (11) 1234-5678
                         <br />
-                        (555) 123-7387
+                        (11) 98765-4321
                       </p>
                     </div>
                   </div>
@@ -165,9 +166,9 @@ const Contact = () => {
                     <div>
                       <h3 className="font-semibold text-foreground">Email</h3>
                       <p className="text-muted-foreground mt-1">
-                        info@petlove.com
+                        info@velure.pet
                         <br />
-                        support@petlove.com
+                        support@velure.pet
                       </p>
                     </div>
                   </div>
@@ -181,11 +182,11 @@ const Contact = () => {
                       <Clock className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground">Hours</h3>
+                      <h3 className="font-semibold text-foreground">Horário</h3>
                       <div className="text-muted-foreground mt-1">
-                        <p>Monday - Friday: 9AM - 8PM</p>
-                        <p>Saturday: 9AM - 6PM</p>
-                        <p>Sunday: 10AM - 5PM</p>
+                        <p>Segunda - Sexta: 9h - 20h</p>
+                        <p>Sábado: 9h - 18h</p>
+                        <p>Domingo: 10h - 17h</p>
                       </div>
                     </div>
                   </div>

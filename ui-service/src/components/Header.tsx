@@ -30,7 +30,7 @@ const Header = () => {
           <div className="bg-gradient-primary rounded-full p-2">
             <Heart className="h-6 w-6 text-primary-foreground" />
           </div>
-          <span className="font-bold text-xl text-primary">PetLove</span>
+          <span className="font-bold text-xl text-primary">Velure</span>
         </Link>
 
         {/* Navigation */}
