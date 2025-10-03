@@ -40,13 +40,11 @@ class ProductService {
   }> {
     try {
       const url = `${configService.productServiceUrl}/getProductsByPage?page=${page}&pageSize=${pageSize}`;
-      console.log("Fetching from URL:", url);
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Erro ao buscar produtos paginados");
       }
       const data = await response.json();
-      console.log("Response data:", data);
       return data;
     } catch (error) {
       console.error("Erro ao buscar produtos paginados:", error);
