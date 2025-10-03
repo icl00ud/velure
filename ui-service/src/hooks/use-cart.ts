@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { cartService } from "../services/cart.service";
 import type { CartItem, Product } from "../types/product.types";
 
@@ -7,40 +7,63 @@ export function useCart() {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [itemsCount, setItemsCount] = useState<number>(0);
 
+  // Atualizar totais sempre que cartItems mudar
+  useEffect(() => {
+    setTotalPrice(cartService.getTotalPrice());
+    setItemsCount(cartService.getCartItemsCount());
+  }, [cartItems]);
+
   useEffect(() => {
     const unsubscribe = cartService.subscribeToCart((cart) => {
       setCartItems(cart);
-      setTotalPrice(cartService.getTotalPrice());
-      setItemsCount(cartService.getCartItemsCount());
     });
 
     return unsubscribe;
   }, []);
 
-  const addToCart = (product: Product, quantity: number = 1) => {
-    cartService.addToCart(product, quantity);
-  };
+  const addToCart = useCallback((product: any, quantity: number = 1) => {
+    // Normalizar o produto para garantir que tenha _id
+    const normalizedProduct = {
+      ...product,
+      _id: product._id || product.id, // Usar _id se existir, senão usar id
+    };
 
-  const removeFromCart = (productId: string) => {
+    if (!normalizedProduct || !normalizedProduct._id) {
+      console.error("Produto inválido:", normalizedProduct);
+      return;
+    }
+    cartService.addToCart(normalizedProduct, quantity);
+  }, []);
+
+  const removeFromCart = useCallback((productId: string) => {
+    if (!productId) return;
     cartService.removeFromCart(productId);
-  };
+  }, []);
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
+    if (!productId) return;
     cartService.updateQuantity(productId, quantity);
-  };
+  }, []);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     cartService.clearCart();
-  };
+  }, []);
 
-  const isInCart = (productId: string): boolean => {
-    return cartItems.some((item) => item.product._id === productId);
-  };
+  const isInCart = useCallback(
+    (productId: string): boolean => {
+      if (!productId) return false;
+      return cartService.isInCart(productId);
+    },
+    [cartItems]
+  );
 
-  const getItemQuantity = (productId: string): number => {
-    const item = cartItems.find((item) => item.product._id === productId);
-    return item ? item.quantity : 0;
-  };
+  const getItemQuantity = useCallback(
+    (productId: string): number => {
+      if (!productId) return 0;
+      return cartService.getItemQuantity(productId);
+    },
+    [cartItems]
+  );
 
   return {
     cartItems,

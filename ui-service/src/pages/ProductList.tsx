@@ -34,7 +34,7 @@ const ProductList = () => {
     pageSize,
     selectedCategory !== "all" ? selectedCategory : undefined
   );
-  const { addToCart, isInCart } = useCart();
+  const { addToCart, isInCart, getItemQuantity } = useCart();
 
   const toggleFavorite = (productId: string) => {
     const numId = parseInt(productId);
@@ -285,7 +285,14 @@ const ProductList = () => {
                           className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
                         >
                           <ShoppingCart className="h-3 w-3 mr-1" />
-                          {isInCart(product._id) ? "Adicionado" : "Adicionar"}
+                          {(() => {
+                            const productId = product._id || (product as any).id;
+                            const quantity = getItemQuantity(productId);
+                            if (quantity > 0) {
+                              return `No carrinho (${quantity})`;
+                            }
+                            return "Adicionar";
+                          })()}
                         </Button>
                       </div>
                     </div>
