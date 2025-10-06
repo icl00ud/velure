@@ -14,8 +14,18 @@ type createOrderDTO struct {
 }
 
 func parseCreateOrder(r io.Reader) ([]model.CartItem, error) {
+	body, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []model.CartItem
+	if err := json.Unmarshal(body, &items); err == nil {
+		return items, nil
+	}
+
 	var dto createOrderDTO
-	if err := json.NewDecoder(r).Decode(&dto); err != nil {
+	if err := json.Unmarshal(body, &dto); err != nil {
 		return nil, err
 	}
 	return dto.Items, nil
