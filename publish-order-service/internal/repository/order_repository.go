@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"time"
 
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"go.uber.org/zap"
@@ -20,11 +21,32 @@ type PostgresOrderRepository struct {
 	db *sql.DB
 }
 
+func (r *PostgresOrderRepository) DB() *sql.DB {
+	return r.db
+}
+
 func NewOrderRepository(dsn string) (OrderRepository, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}
+
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(30 * time.Second)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
+		return nil, err
+	}
+
+	zap.L().Info("database connection pool configured",
+		zap.Int("max_open_conns", 25),
+		zap.Int("max_idle_conns", 10))
+
 	return &PostgresOrderRepository{db: db}, nil
 }
 
