@@ -88,7 +88,7 @@ func (r *rabbitMQPublisher) Publish(evt model.Event) error {
 		r.logger.Error("publish failed", zap.Error(err), zap.String("exchange", r.exchange), zap.String("routingKey", evt.Type))
 		return err
 	}
-	r.logger.Debug("event published", zap.String("exchange", r.exchange), zap.String("routingKey", evt.Type))
+	r.logger.Info("event published successfully", zap.String("exchange", r.exchange), zap.String("routingKey", evt.Type), zap.Int("body_size", len(body)))
 	return nil
 }
 
