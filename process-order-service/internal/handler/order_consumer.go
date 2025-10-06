@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -43,35 +42,22 @@ func (oc *OrderConsumer) Start(ctx context.Context) error {
 		return oc.svc.Process(p.ID, p.Total)
 	}
 
+	oc.logger.Info("order consumer started", zap.Int("workers", oc.workers))
+
 	for i := 0; i < oc.workers; i++ {
-		go func(id int) {
+		go func(workerID int) {
 			defer func() {
 				if r := recover(); r != nil {
-					oc.logger.Error("worker panic", zap.Int("id", id), zap.Any("panic", r))
+					oc.logger.Error("worker panic", zap.Int("worker_id", workerID), zap.Any("panic", r))
 				}
 			}()
 
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-					if err := oc.consumer.Consume(ctx, handler); err != nil {
-						if ctx.Err() != nil {
-							return
-						}
-						oc.logger.Error("worker error", zap.Int("id", id), zap.Error(err))
-						select {
-						case <-ctx.Done():
-							return
-						case <-time.After(time.Second):
-						}
-					}
-				}
+			if err := oc.consumer.Consume(ctx, handler); err != nil && ctx.Err() == nil {
+				oc.logger.Error("worker stopped", zap.Int("worker_id", workerID), zap.Error(err))
 			}
 		}(i)
 	}
-	oc.logger.Info("order consumer started", zap.Int("workers", oc.workers))
+
 	<-ctx.Done()
 	return nil
 }
