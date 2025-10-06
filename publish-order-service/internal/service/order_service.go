@@ -31,7 +31,7 @@ func (s *OrderService) Create(ctx context.Context, items []model.CartItem) (mode
 		ID:        uuid.NewString(),
 		Items:     items,
 		Total:     total,
-		Status:    model.OrderCreated,
+		Status:    model.StatusCreated,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
