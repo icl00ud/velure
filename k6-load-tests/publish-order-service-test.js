@@ -7,14 +7,14 @@ const errorRate = new Rate('errors');
 export const options = {
   stages: [
     { duration: '15s', target: 10 },   // Ramp up to 10 users
-    { duration: '15s', target: 30 },   // Ramp up to 30 users
-    { duration: '15s', target: 60 },   // Ramp up to 60 users
-    { duration: '15s', target: 100 },  // Ramp up to 100 users
-    { duration: '15s', target: 150 },  // Ramp up to 150 users
-    { duration: '15s', target: 200 },  // Peak load
-    { duration: '15s', target: 100 },  // Ramp down
-    { duration: '15s', target: 50 },   // Ramp down
-    { duration: '15s', target: 0 },    // Ramp down to 0
+    { duration: '15s', target: 100 },   // Ramp up to 100 users
+    { duration: '15s', target: 1000 },   // Ramp up to 1000 users
+    { duration: '15s', target: 10000 },  // Ramp up to 10000 users
+    { duration: '15s', target: 15000 },    // Ramp up to 15000 users
+    { duration: '15s', target: 20000 },    // Peak load
+    { duration: '15s', target: 10000 },    // Ramp down
+    { duration: '15s', target: 5000 },     // Ramp down
+    { duration: '15s', target: 0 },      // Ramp down to 0
   ],
   thresholds: {
     http_req_duration: ['p(95)<2000'], // 95% of requests must complete below 2000ms
@@ -22,56 +22,34 @@ export const options = {
   },
 };
 
-const BASE_URL = 'http://localhost:3030'; // Adjust port based on your config
+const BASE_URL = 'http://localhost:3030';
 let orderIds = [];
 
 export function setup() {
-  // Create some initial orders for status updates
   const sampleOrders = [
-    {
-      customer_id: "customer-1",
-      items: [
-        { product_id: "product-1", quantity: 2, price: 29.99 },
-        { product_id: "product-2", quantity: 1, price: 49.99 }
-      ],
-      shipping_address: {
-        street: "123 Test St",
-        city: "Test City",
-        state: "TS",
-        zip: "12345",
-        country: "US"
-      }
-    },
-    {
-      customer_id: "customer-2",
-      items: [
-        { product_id: "product-3", quantity: 1, price: 99.99 }
-      ],
-      shipping_address: {
-        street: "456 Load Ave",
-        city: "Load City",
-        state: "LC",
-        zip: "67890",
-        country: "US"
-      }
-    }
+    [
+      { product_id: "68c8522460d8eb66fa2b925c", name: "Product 1", quantity: 2, price: 29.99 },
+      { product_id: "68c8522460d8eb66fa2b925d", name: "Product 2", quantity: 1, price: 49.99 }
+    ],
+    [
+      { product_id: "68c8522460d8eb66fa2b925e", name: "Product 3", quantity: 1, price: 99.99 }
+    ]
   ];
 
   const createdOrderIds = [];
   
-  for (const order of sampleOrders) {
-    const res = http.post(`${BASE_URL}/create-order`, JSON.stringify(order), {
+  for (const items of sampleOrders) {
+    const res = http.post(`${BASE_URL}/create-order`, JSON.stringify(items), {
       headers: { 'Content-Type': 'application/json' },
     });
     
     if (res.status === 201 || res.status === 200) {
       try {
         const orderData = JSON.parse(res.body);
-        if (orderData.id || orderData.order_id) {
-          createdOrderIds.push(orderData.id || orderData.order_id);
+        if (orderData.order_id) {
+          createdOrderIds.push(orderData.order_id);
         }
       } catch (e) {
-        // Continue if parsing fails
       }
     }
   }
@@ -85,7 +63,6 @@ export default function (data) {
     () => testUpdateOrderStatus(data.orderIds),
   ];
 
-  // Weight scenarios - more creates than updates
   const weights = [0.7, 0.3];
   const random = Math.random();
   let selectedScenario = 0;
@@ -104,16 +81,17 @@ export default function (data) {
 }
 
 function testCreateOrder() {
-  const customerIds = ['customer-1', 'customer-2', 'customer-3', 'customer-4', 'customer-5'];
-  const productIds = ['product-1', 'product-2', 'product-3', 'product-4', 'product-5'];
+  const productIds = [
+    '68c8522460d8eb66fa2b925c',
+    '68c8522460d8eb66fa2b925d',
+    '68c8522460d8eb66fa2b925e',
+    '68c8522460d8eb66fa2b925f',
+    '68c8522460d8eb66fa2b9260'
+  ];
   
-  const order = {
-    customer_id: customerIds[Math.floor(Math.random() * customerIds.length)],
-    items: generateRandomItems(productIds),
-    shipping_address: generateRandomAddress()
-  };
+  const items = generateRandomItems(productIds);
 
-  const res = http.post(`${BASE_URL}/create-order`, JSON.stringify(order), {
+  const res = http.post(`${BASE_URL}/create-order`, JSON.stringify(items), {
     headers: { 'Content-Type': 'application/json' },
   });
 
@@ -129,8 +107,8 @@ function testCreateOrder() {
   if (res.status === 200 || res.status === 201) {
     try {
       const orderData = JSON.parse(res.body);
-      if (orderData.id || orderData.order_id) {
-        orderIds.push(orderData.id || orderData.order_id);
+      if (orderData.order_id) {
+        orderIds.push(orderData.order_id);
         // Keep only last 50 order IDs to prevent memory issues
         if (orderIds.length > 50) {
           orderIds = orderIds.slice(-50);
@@ -146,9 +124,8 @@ function testUpdateOrderStatus(setupOrderIds) {
   const allOrderIds = [...(setupOrderIds || []), ...orderIds];
   
   if (allOrderIds.length === 0) {
-    // Create a dummy order ID for testing
-    const dummyOrderId = `order-${Math.random().toString(36).substring(7)}`;
-    allOrderIds.push(dummyOrderId);
+    // Skip if no orders available
+    return;
   }
 
   const orderId = allOrderIds[Math.floor(Math.random() * allOrderIds.length)];
@@ -157,9 +134,7 @@ function testUpdateOrderStatus(setupOrderIds) {
 
   const statusUpdate = {
     order_id: orderId,
-    status: randomStatus,
-    updated_by: 'load-test',
-    notes: `Status updated to ${randomStatus} during load test`
+    status: randomStatus
   };
 
   const res = http.post(`${BASE_URL}/update-order-status`, JSON.stringify(statusUpdate), {
@@ -177,10 +152,12 @@ function testUpdateOrderStatus(setupOrderIds) {
 function generateRandomItems(productIds) {
   const numItems = Math.floor(Math.random() * 3) + 1; // 1-3 items
   const items = [];
+  const productNames = ['Product A', 'Product B', 'Product C', 'Product D', 'Product E'];
   
   for (let i = 0; i < numItems; i++) {
     items.push({
       product_id: productIds[Math.floor(Math.random() * productIds.length)],
+      name: productNames[Math.floor(Math.random() * productNames.length)],
       quantity: Math.floor(Math.random() * 5) + 1,
       price: Math.round((Math.random() * 100 + 10) * 100) / 100
     });
