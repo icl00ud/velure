@@ -48,5 +48,16 @@ set_perms   "$ADMIN_RABBITMQ_USER" /
 # opcional: remover guest
 rabbitmqctl delete_user guest || true
 
+echo "[bootstrap] Declarando exchange 'orders'..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare exchange name=orders type=topic durable=true
+
+echo "[bootstrap] Declarando fila 'process-order-queue'..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare queue name=process-order-queue durable=true
+
+echo "[bootstrap] Criando binding entre exchange 'orders' e fila 'process-order-queue'..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare binding source=orders destination=process-order-queue routing_key=order.created
+
+echo "[bootstrap] Infraestrutura RabbitMQ configurada com sucesso!"
+
 echo "[bootstrap] Concluído. Aguardando o RabbitMQ (pid=$RABBIT_PID)."
 wait "$RABBIT_PID"
