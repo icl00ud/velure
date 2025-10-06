@@ -46,15 +46,26 @@ func (r *rabbitPublisher) Publish(evt model.Event) error {
 	if err != nil {
 		return err
 	}
-	return r.channel.Publish(
+	err = r.channel.Publish(
 		r.exchange,
 		evt.Type,
 		false, false,
 		amqp091.Publishing{ContentType: "application/json", Body: body},
 	)
+	if err != nil {
+		r.logger.Error("publish failed", zap.Error(err), zap.String("exchange", r.exchange), zap.String("event_type", evt.Type))
+		return err
+	}
+	r.logger.Info("payment event published", zap.String("exchange", r.exchange), zap.String("event_type", evt.Type))
+	return nil
 }
 
 func (r *rabbitPublisher) Close() error {
-	r.channel.Close()
-	return r.conn.Close()
+	if r.channel != nil {
+		r.channel.Close()
+	}
+	if r.conn != nil {
+		return r.conn.Close()
+	}
+	return nil
 }

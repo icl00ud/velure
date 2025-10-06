@@ -40,6 +40,12 @@ func NewRabbitMQConsumer(amqpURL, queueName string, logger *zap.Logger) (Consume
 		return nil, err
 	}
 
+	if err := ch.Qos(1, 0, false); err != nil {
+		ch.Close()
+		conn.Close()
+		return nil, err
+	}
+
 	return &rabbitMQConsumer{conn: conn, channel: ch, queue: queueName, logger: logger}, nil
 }
 
@@ -48,17 +54,24 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(model.Event
 	if err != nil {
 		return err
 	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case d := <-msgs:
+		case d, ok := <-msgs:
+			if !ok {
+				return nil
+			}
 			var evt model.Event
 			if err := json.Unmarshal(d.Body, &evt); err != nil {
 				d.Nack(false, true)
 				r.logger.Error("invalid event", zap.Error(err))
 				continue
 			}
+
+			r.logger.Info("payment processing started", zap.String("event_type", evt.Type))
+
 			if err := handler(evt); err != nil {
 				d.Nack(false, true)
 				r.logger.Error("handler failed", zap.Error(err))
@@ -70,6 +83,11 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(model.Event
 }
 
 func (r *rabbitMQConsumer) Close() error {
-	r.channel.Close()
-	return r.conn.Close()
+	if r.channel != nil {
+		r.channel.Close()
+	}
+	if r.conn != nil {
+		return r.conn.Close()
+	}
+	return nil
 }

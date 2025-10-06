@@ -32,34 +32,30 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	var consumer queue.Consumer
-	var publisher queue.Publisher
-
+	var rabbitConn *queue.RabbitMQConnection
 	for i := 0; i < 5; i++ {
-		consumer, err = queue.NewRabbitMQConsumer(cfg.RabbitURL, cfg.OrderQueue, logger)
+		rabbitConn, err = queue.NewRabbitMQConnection(cfg.RabbitURL, logger)
 		if err != nil {
-			logger.Warn("consumer init failed, retrying", zap.Error(err), zap.Int("attempt", i+1))
+			logger.Warn("rabbitmq connection failed, retrying", zap.Error(err), zap.Int("attempt", i+1))
 			time.Sleep(time.Duration(i+1) * 2 * time.Second)
 			continue
 		}
 		break
 	}
 	if err != nil {
-		logger.Fatal("consumer init failed after retries", zap.Error(err))
+		logger.Fatal("rabbitmq connection failed after retries", zap.Error(err))
+	}
+	defer rabbitConn.Close()
+
+	consumer, err := rabbitConn.NewConsumer(cfg.OrderQueue)
+	if err != nil {
+		logger.Fatal("consumer init failed", zap.Error(err))
 	}
 	defer consumer.Close()
 
-	for i := 0; i < 5; i++ {
-		publisher, err = queue.NewRabbitPublisher(cfg.RabbitURL, cfg.OrderExchange, logger)
-		if err != nil {
-			logger.Warn("publisher init failed, retrying", zap.Error(err), zap.Int("attempt", i+1))
-			time.Sleep(time.Duration(i+1) * 2 * time.Second)
-			continue
-		}
-		break
-	}
+	publisher, err := rabbitConn.NewPublisher(cfg.OrderExchange)
 	if err != nil {
-		logger.Fatal("publisher init failed after retries", zap.Error(err))
+		logger.Fatal("publisher init failed", zap.Error(err))
 	}
 	defer publisher.Close()
 
