@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -11,6 +12,8 @@ type Config struct {
 	PostgresURL string
 	RabbitURL   string
 	Exchange    string
+	Queue       string
+	Workers     int
 }
 
 func Load() (Config, error) {
@@ -39,6 +42,19 @@ func Load() (Config, error) {
 		c.Exchange = v
 	} else {
 		missing = append(missing, "ORDER_EXCHANGE")
+	}
+
+	if v, ok := os.LookupEnv("PUBLISHER_ORDER_QUEUE"); ok && strings.TrimSpace(v) != "" {
+		c.Queue = v
+	} else {
+		c.Queue = "publish-order-status-updates"
+	}
+
+	c.Workers = 3
+	if v, ok := os.LookupEnv("PUBLISHER_CONSUMER_WORKERS"); ok && strings.TrimSpace(v) != "" {
+		if w, err := strconv.Atoi(v); err == nil && w > 0 {
+			c.Workers = w
+		}
 	}
 
 	if len(missing) > 0 {

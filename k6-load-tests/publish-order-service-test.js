@@ -7,14 +7,14 @@ const errorRate = new Rate('errors');
 export const options = {
   stages: [
     { duration: '5s', target: 10 },   // Ramp up to 10 users
-    { duration: '5s', target: 50 },   // Ramp up to 100 users
-    { duration: '5s', target: 100 },   // Ramp up to 1000 users
-    { duration: '5s', target: 200 },  // Ramp up to 10000 users
-    { duration: '5s', target: 500 },    // Ramp up to 15000 users
-    { duration: '5s', target: 1000 },    // Peak load
-    { duration: '5s', target: 500 },    // Ramp down
-    { duration: '5s', target: 100 },     // Ramp down
-    { duration: '5s', target: 0 },      // Ramp down to 0
+    { duration: '5s', target: 50 },   // Ramp up to 50 users
+    { duration: '5s', target: 100 },  // Ramp up to 100 users
+    { duration: '5s', target: 200 },  // Ramp up to 200 users
+    { duration: '5s', target: 500 },  // Ramp up to 500 users
+    { duration: '5s', target: 1000 }, // Peak load
+    { duration: '5s', target: 500 },  // Ramp down
+    { duration: '5s', target: 100 },  // Ramp down
+    { duration: '5s', target: 0 },    // Ramp down to 0
   ],
   thresholds: {
     http_req_duration: ['p(95)<2000'], // 95% of requests must complete below 2000ms
@@ -23,44 +23,11 @@ export const options = {
 };
 
 const BASE_URL = 'http://localhost:3030';
-let orderIds = [];
 
-export function setup() {
-  const sampleOrders = [
-    [
-      { product_id: "68c8522460d8eb66fa2b925c", name: "Product 1", quantity: 2, price: 29.99 },
-      { product_id: "68c8522460d8eb66fa2b925d", name: "Product 2", quantity: 1, price: 49.99 }
-    ],
-    [
-      { product_id: "68c8522460d8eb66fa2b925e", name: "Product 3", quantity: 1, price: 99.99 }
-    ]
-  ];
-
-  const createdOrderIds = [];
-  
-  for (const items of sampleOrders) {
-    const res = http.post(`${BASE_URL}/create-order`, JSON.stringify(items), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-    
-    if (res.status === 201 || res.status === 200) {
-      try {
-        const orderData = JSON.parse(res.body);
-        if (orderData.order_id) {
-          createdOrderIds.push(orderData.order_id);
-        }
-      } catch (e) {
-      }
-    }
-  }
-
-  return { orderIds: createdOrderIds };
-}
-
-export default function (data) {
+export default function () {
   const scenarios = [
     () => testCreateOrder(),
-    () => testUpdateOrderStatus(data.orderIds),
+    () => testGetOrders(),
   ];
 
   const weights = [0.7, 0.3];
@@ -99,51 +66,39 @@ function testCreateOrder() {
     'create order response received': (r) => r.status !== 0,
     'create order response time < 2000ms': (r) => r.timings.duration < 2000,
     'create order status is success': (r) => r.status === 200 || r.status === 201,
+    'order has id': (r) => {
+      try {
+        const data = JSON.parse(r.body);
+        return data.order_id !== undefined;
+      } catch (e) {
+        return false;
+      }
+    },
   });
 
   errorRate.add(!success);
-
-  // Store order ID for potential status updates
-  if (res.status === 200 || res.status === 201) {
-    try {
-      const orderData = JSON.parse(res.body);
-      if (orderData.order_id) {
-        orderIds.push(orderData.order_id);
-        // Keep only last 50 order IDs to prevent memory issues
-        if (orderIds.length > 50) {
-          orderIds = orderIds.slice(-50);
-        }
-      }
-    } catch (e) {
-      // Continue if parsing fails
-    }
-  }
 }
 
-function testUpdateOrderStatus(setupOrderIds) {
-  const allOrderIds = [...(setupOrderIds || []), ...orderIds];
-  
-  if (allOrderIds.length === 0) {
-    // Skip if no orders available
-    return;
-  }
+function testGetOrders() {
+  const page = Math.floor(Math.random() * 5) + 1; // Pages 1-5
+  const pageSize = 10;
 
-  const orderId = allOrderIds[Math.floor(Math.random() * allOrderIds.length)];
-  const statuses = ['processing', 'shipped', 'delivered', 'cancelled'];
-  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-
-  const statusUpdate = {
-    order_id: orderId,
-    status: randomStatus
-  };
-
-  const res = http.post(`${BASE_URL}/update-order-status`, JSON.stringify(statusUpdate), {
+  const res = http.get(`${BASE_URL}/orders?page=${page}&page_size=${pageSize}`, {
     headers: { 'Content-Type': 'application/json' },
   });
 
   const success = check(res, {
-    'update order status response received': (r) => r.status !== 0,
-    'update order status response time < 1500ms': (r) => r.timings.duration < 1500,
+    'get orders response received': (r) => r.status !== 0,
+    'get orders response time < 1500ms': (r) => r.timings.duration < 1500,
+    'get orders status is success': (r) => r.status === 200,
+    'orders have data': (r) => {
+      try {
+        const data = JSON.parse(r.body);
+        return data.orders !== undefined && Array.isArray(data.orders);
+      } catch (e) {
+        return false;
+      }
+    },
   });
 
   errorRate.add(!success);
@@ -164,18 +119,4 @@ function generateRandomItems(productIds) {
   }
   
   return items;
-}
-
-function generateRandomAddress() {
-  const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'];
-  const states = ['NY', 'CA', 'IL', 'TX', 'AZ'];
-  const streets = ['Main St', 'Oak Ave', 'Park Blvd', 'First St', 'Second Ave'];
-  
-  return {
-    street: `${Math.floor(Math.random() * 9999) + 1} ${streets[Math.floor(Math.random() * streets.length)]}`,
-    city: cities[Math.floor(Math.random() * cities.length)],
-    state: states[Math.floor(Math.random() * states.length)],
-    zip: String(Math.floor(Math.random() * 90000) + 10000),
-    country: 'US'
-  };
 }

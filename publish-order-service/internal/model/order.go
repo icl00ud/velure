@@ -3,6 +3,12 @@ package model
 
 import "time"
 
+const (
+	StatusCreated    = "CREATED"
+	StatusProcessing = "PROCESSING"
+	StatusCompleted  = "COMPLETED"
+)
+
 type Order struct {
 	ID        string     `json:"id"`
 	Items     []CartItem `json:"items"`
