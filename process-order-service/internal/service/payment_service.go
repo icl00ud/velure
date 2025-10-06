@@ -35,7 +35,7 @@ func (s *paymentService) Process(orderID string, amount int) error {
 		return fmt.Errorf("publish processing: %w", err)
 	}
 
-	sleepTime := time.Duration(rand.Uint32()) % 3 * time.Second
+	sleepTime := time.Duration(rand.Uint32()%3) * time.Second
 	time.Sleep(sleepTime)
 
 	compEvt := model.Event{
