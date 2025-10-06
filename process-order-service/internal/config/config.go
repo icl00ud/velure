@@ -50,7 +50,7 @@ func Load() (Config, error) {
 		}
 		c.Workers = w
 	} else {
-		c.Workers = 10
+		c.Workers = 100
 	}
 
 	if len(missing) > 0 {

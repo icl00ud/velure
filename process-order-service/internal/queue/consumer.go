@@ -40,7 +40,7 @@ func NewRabbitMQConsumer(amqpURL, queueName string, logger *zap.Logger) (Consume
 		return nil, err
 	}
 
-	if err := ch.Qos(1, 0, false); err != nil {
+	if err := ch.Qos(50, 0, false); err != nil {
 		ch.Close()
 		conn.Close()
 		return nil, err

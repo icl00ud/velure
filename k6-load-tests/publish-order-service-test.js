@@ -6,15 +6,15 @@ const errorRate = new Rate('errors');
 
 export const options = {
   stages: [
-    { duration: '15s', target: 10 },   // Ramp up to 10 users
-    { duration: '15s', target: 100 },   // Ramp up to 100 users
-    { duration: '15s', target: 1000 },   // Ramp up to 1000 users
-    { duration: '15s', target: 10000 },  // Ramp up to 10000 users
-    { duration: '15s', target: 15000 },    // Ramp up to 15000 users
-    { duration: '15s', target: 20000 },    // Peak load
-    { duration: '15s', target: 10000 },    // Ramp down
-    { duration: '15s', target: 5000 },     // Ramp down
-    { duration: '15s', target: 0 },      // Ramp down to 0
+    { duration: '5s', target: 10 },   // Ramp up to 10 users
+    { duration: '5s', target: 50 },   // Ramp up to 100 users
+    { duration: '5s', target: 100 },   // Ramp up to 1000 users
+    { duration: '5s', target: 200 },  // Ramp up to 10000 users
+    { duration: '5s', target: 500 },    // Ramp up to 15000 users
+    { duration: '5s', target: 1000 },    // Peak load
+    { duration: '5s', target: 500 },    // Ramp down
+    { duration: '5s', target: 100 },     // Ramp down
+    { duration: '5s', target: 0 },      // Ramp down to 0
   ],
   thresholds: {
     http_req_duration: ['p(95)<2000'], // 95% of requests must complete below 2000ms

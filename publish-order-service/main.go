@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/icl00ud/publish-order-service/internal/config"
+	"github.com/icl00ud/publish-order-service/internal/database"
 	"github.com/icl00ud/publish-order-service/internal/handler"
 	"github.com/icl00ud/publish-order-service/internal/middleware"
 	"github.com/icl00ud/publish-order-service/internal/publisher"
@@ -35,6 +36,10 @@ func main() {
 		logger.Fatal("repository init", zap.Error(err))
 	}
 
+	if err := database.RunMigrations(repo.(*repository.PostgresOrderRepository).DB(), "./migrations"); err != nil {
+		logger.Fatal("migration error", zap.Error(err))
+	}
+
 	pub, err := publisher.NewRabbitMQPublisher(cfg.RabbitURL, cfg.Exchange, logger)
 	if err != nil {
 		logger.Fatal("publisher init", zap.Error(err))
@@ -45,16 +50,20 @@ func main() {
 	oh := handler.NewOrderHandler(svc, pub)
 
 	mux := http.NewServeMux()
-	mux.Handle("/create-order", middleware.CORS(middleware.Logging(http.HandlerFunc(oh.CreateOrder))))
-	mux.Handle("/update-order-status", middleware.CORS(middleware.Logging(http.HandlerFunc(oh.UpdateStatus))))
-	mux.Handle("/orders", middleware.CORS(middleware.Logging(http.HandlerFunc(oh.GetOrdersByPage))))
+	mux.Handle("/create-order", middleware.CORS(middleware.Timeout(5*time.Second)(middleware.Logging(http.HandlerFunc(oh.CreateOrder)))))
+	mux.Handle("/update-order-status", middleware.CORS(middleware.Timeout(5*time.Second)(middleware.Logging(http.HandlerFunc(oh.UpdateStatus)))))
+	mux.Handle("/orders", middleware.CORS(middleware.Timeout(3*time.Second)(middleware.Logging(http.HandlerFunc(oh.GetOrdersByPage)))))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
 
 	srv := &http.Server{
-		Addr: ":" + cfg.Port, Handler: mux,
+		Addr:         ":" + cfg.Port,
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
 	}
 
 	go func() {
