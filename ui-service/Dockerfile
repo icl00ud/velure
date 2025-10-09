@@ -15,9 +15,11 @@ COPY . .
 # Create .env file with build-time variables
 ARG VITE_PRODUCT_SERVICE_URL=http://localhost:3010
 ARG VITE_AUTHENTICATION_SERVICE_URL=http://localhost:3020
+ARG VITE_ORDER_SERVICE_URL=http://localhost:3030
 
 RUN echo "VITE_PRODUCT_SERVICE_URL=${VITE_PRODUCT_SERVICE_URL}" > .env
 RUN echo "VITE_AUTHENTICATION_SERVICE_URL=${VITE_AUTHENTICATION_SERVICE_URL}" >> .env
+RUN echo "VITE_ORDER_SERVICE_URL=${VITE_ORDER_SERVICE_URL}" >> .env
 
 # Build the application
 RUN bun run build

@@ -68,9 +68,13 @@ velure.local {
 	}
 
 	# API Gateway - Auth Service
-	handle /api/auth* {
-		uri strip_prefix /api
-		reverse_proxy auth-service:3001 {
+	@auth_routes path /api/auth/*
+	handle @auth_routes {
+		uri strip_prefix /api/auth
+		reverse_proxy auth-service:3020 {
+			# Rewrite path para adicionar /authentication
+			rewrite /authentication{uri}
+			
 			# Health check
 			health_uri /health
 			health_interval 10s
@@ -96,7 +100,8 @@ velure.local {
 	}
 
 	# API Gateway - Product Service
-	handle /api/product* {
+	@product_routes path /api/product/*
+	handle @product_routes {
 		uri strip_prefix /api
 		reverse_proxy product-service:3010 {
 			health_uri /health
@@ -117,47 +122,32 @@ velure.local {
 		}
 	}
 
-	# API Gateway - Order Service (REST)
-	handle /api/order* {
-		uri strip_prefix /api
-		reverse_proxy publish-order-service:3002 {
+	# API Gateway - Order Service (REST + SSE)
+	@order_routes path /api/order/*
+	handle @order_routes {
+		uri strip_prefix /api/order
+		reverse_proxy publish-order-service:3030 {
 			health_uri /health
 			health_interval 10s
 			health_timeout 5s
 			health_status 2xx
 			
-			header_up X-Real-IP {remote_host}
-			header_up X-Forwarded-For {remote_host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Forwarded-Host {host}
-			
-			header_down Access-Control-Allow-Origin "*"
-			header_down Access-Control-Allow-Credentials "true"
-		}
-	}
-
-	# API Gateway - SSE (Server-Sent Events)
-	handle /api/sse* {
-		uri strip_prefix /api
-		reverse_proxy publish-order-service:3002 {
-			# SSE requer configurações especiais
-			flush_interval -1  # Flush imediato
+			# SSE requer flush imediato
+			flush_interval -1
 			
 			header_up X-Real-IP {remote_host}
 			header_up X-Forwarded-For {remote_host}
 			header_up X-Forwarded-Proto {scheme}
 			header_up X-Forwarded-Host {host}
-			header_up Connection "keep-alive"
-			header_up Cache-Control "no-cache"
 			
 			header_down Access-Control-Allow-Origin "*"
 			header_down Access-Control-Allow-Credentials "true"
 			header_down Cache-Control "no-cache"
-			header_down Connection "keep-alive"
 			header_down X-Accel-Buffering "no"
 			
-			# Timeout muito longo para SSE (2 horas)
+			# Timeout longo para SSE
 			transport http {
+				dial_timeout 10s
 				read_timeout 7200s
 				write_timeout 7200s
 			}

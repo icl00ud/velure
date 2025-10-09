@@ -263,8 +263,9 @@ services:
       context: ./ui-service
       dockerfile: Dockerfile
       args:
-        VITE_PRODUCT_SERVICE_URL: http://localhost:${PRODUCT_SERVICE_APP_PORT}
-        VITE_AUTHENTICATION_SERVICE_URL: http://localhost:${AUTH_SERVICE_APP_PORT}
+        VITE_PRODUCT_SERVICE_URL: /api/product
+        VITE_AUTHENTICATION_SERVICE_URL: /api/auth
+        VITE_ORDER_SERVICE_URL: /api/order
     container_name: ${UI_SERVICE_HOST}
     restart: always
     # Portas removidas - acesso via Caddy proxy
