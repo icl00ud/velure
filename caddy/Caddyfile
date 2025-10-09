@@ -1,7 +1,3 @@
-# Caddyfile para Velure
-# Proxy reverso com TLS automático
-
-# Configuração global
 {
 	# Email para Let's Encrypt
 	email admin@velure.local
@@ -67,22 +63,13 @@ velure.local {
 
 	# Health check agregado de todos os serviços
 	handle /health {
-		respond `{
-			"status": "healthy",
-			"timestamp": "{time.now.unix}",
-			"proxy": "caddy v2.8",
-			"services": {
-				"auth": "/api/auth/health",
-				"product": "/api/product/health",
-				"orders": "/api/order/health"
-			}
-		}` 200 {
-			header Content-Type "application/json"
-		}
+		header Content-Type "application/json"
+		respond `{"status":"healthy","timestamp":"{time.now.unix}","proxy":"caddy v2.8","services":{"auth":"/api/auth/health","product":"/api/product/health","orders":"/api/order/health"}}` 200
 	}
 
 	# API Gateway - Auth Service
-	handle_path /api/auth* {
+	handle /api/auth* {
+		uri strip_prefix /api
 		reverse_proxy auth-service:3001 {
 			# Health check
 			health_uri /health
@@ -109,7 +96,8 @@ velure.local {
 	}
 
 	# API Gateway - Product Service
-	handle_path /api/product* {
+	handle /api/product* {
+		uri strip_prefix /api
 		reverse_proxy product-service:3010 {
 			health_uri /health
 			health_interval 10s
@@ -130,7 +118,8 @@ velure.local {
 	}
 
 	# API Gateway - Order Service (REST)
-	handle_path /api/order* {
+	handle /api/order* {
+		uri strip_prefix /api
 		reverse_proxy publish-order-service:3002 {
 			health_uri /health
 			health_interval 10s
@@ -148,7 +137,8 @@ velure.local {
 	}
 
 	# API Gateway - SSE (Server-Sent Events)
-	handle_path /api/sse* {
+	handle /api/sse* {
+		uri strip_prefix /api
 		reverse_proxy publish-order-service:3002 {
 			# SSE requer configurações especiais
 			flush_interval -1  # Flush imediato
@@ -196,24 +186,14 @@ velure.local {
 	handle_errors {
 		@5xx expression `{http.error.status_code} >= 500`
 		handle @5xx {
-			respond `{
-				"error": "Erro interno do servidor",
-				"message": "Por favor, tente novamente mais tarde",
-				"status": {http.error.status_code}
-			}` {http.error.status_code} {
-				header Content-Type "application/json"
-			}
+			header Content-Type "application/json"
+			respond `{"error":"Erro interno do servidor","message":"Por favor, tente novamente mais tarde","status":{http.error.status_code}}` {http.error.status_code}
 		}
 		
 		@4xx expression `{http.error.status_code} >= 400 && {http.error.status_code} < 500`
 		handle @4xx {
-			respond `{
-				"error": "Requisição inválida",
-				"message": "Verifique os dados e tente novamente",
-				"status": {http.error.status_code}
-			}` {http.error.status_code} {
-				header Content-Type "application/json"
-			}
+			header Content-Type "application/json"
+			respond `{"error":"Requisição inválida","message":"Verifique os dados e tente novamente","status":{http.error.status_code}}` {http.error.status_code}
 		}
 	}
 }
