@@ -121,10 +121,10 @@ const Orders = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">
-                        {order.items.length} {order.items.length === 1 ? "item" : "itens"}
+                        {order.items?.length || 0} {(order.items?.length || 0) === 1 ? "item" : "itens"}
                       </span>
                       <span className="text-lg font-semibold text-primary">
-                        R$ {order.total.toFixed(2)}
+                        R$ {(order.total || 0).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex gap-2">

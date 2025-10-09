@@ -247,7 +247,7 @@ const OrderDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {order.items.map((item, index) => (
+                  {order.items?.map((item, index) => (
                     <div key={index}>
                       <div className="flex justify-between items-start">
                         <div>
@@ -265,9 +265,9 @@ const OrderDetail = () => {
                           </p>
                         </div>
                       </div>
-                      {index < order.items.length - 1 && <Separator className="mt-4" />}
+                      {index < (order.items?.length || 0) - 1 && <Separator className="mt-4" />}
                     </div>
-                  ))}
+                  )) || <p className="text-muted-foreground">Nenhum item encontrado</p>}
                 </div>
               </CardContent>
             </Card>
