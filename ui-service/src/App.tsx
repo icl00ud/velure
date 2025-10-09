@@ -3,11 +3,14 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Cart from "./pages/Cart";
 import Contact from "./pages/Contact";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import Orders from "./pages/Orders";
+import OrderDetail from "./pages/OrderDetail";
 import ProductCatalog from "./pages/ProductCatalog";
 import ProductDetail from "./pages/ProductDetail";
 import ProductList from "./pages/ProductList";
@@ -23,8 +26,31 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/login" element={<Login />} />
+          <Route 
+            path="/login" 
+            element={
+              <ProtectedRoute requireAuth={false}>
+                <Login />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="/cart" element={<Cart />} />
+          <Route 
+            path="/orders" 
+            element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/orders/:id" 
+            element={
+              <ProtectedRoute>
+                <OrderDetail />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/:category" element={<ProductCatalog />} />
           <Route path="/product/:id" element={<ProductDetail />} />
