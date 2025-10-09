@@ -4,12 +4,13 @@ import type { ILoginResponse, ILoginUser, IRegisterUser } from "../types/user.ty
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
   useEffect(() => {
     const unsubscribe = authenticationService.subscribeToAuthStatus((status) => {
       setIsAuthenticated(status);
-      setIsLoading(false);
+      setIsInitializing(false);
     });
 
     return unsubscribe;
@@ -49,6 +50,7 @@ export function useAuth() {
   return {
     isAuthenticated,
     isLoading,
+    isInitializing,
     login,
     logout,
     register,
