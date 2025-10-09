@@ -3,14 +3,58 @@ import { configService } from "./config.service";
 
 class AuthenticationService {
   private authStatusListeners: Set<(status: boolean) => void> = new Set();
+  private validationCacheDuration: number = 5 * 60 * 1000; // 5 minutos
 
   constructor() {
     this.checkInitialAuthStatus();
   }
 
+  private getLastValidationTime(): number {
+    const stored = localStorage.getItem("lastValidation");
+    return stored ? parseInt(stored, 10) : 0;
+  }
+
+  private setLastValidationTime(time: number): void {
+    localStorage.setItem("lastValidation", time.toString());
+  }
+
+  private clearLastValidationTime(): void {
+    localStorage.removeItem("lastValidation");
+  }
+
   private async checkInitialAuthStatus(): Promise<void> {
-    const isAuth = await this.isAuthenticated();
-    this.notifyAuthStatusChange(isAuth);
+    const tokenString = localStorage.getItem("token");
+    if (!tokenString) {
+      this.notifyAuthStatusChange(false);
+      return;
+    }
+
+    try {
+      const token: Token = JSON.parse(tokenString);
+      
+      // Se validou recentemente, considera válido sem validar novamente
+      const now = Date.now();
+      const lastValidation = this.getLastValidationTime();
+      
+      if (lastValidation > 0 && now - lastValidation < this.validationCacheDuration) {
+        this.notifyAuthStatusChange(true);
+        return;
+      }
+
+      const isValid = await this.validateToken(token);
+      this.notifyAuthStatusChange(isValid);
+      if (!isValid) {
+        localStorage.removeItem("token");
+        this.clearLastValidationTime();
+      } else {
+        this.setLastValidationTime(now);
+      }
+    } catch (error) {
+      console.error("Erro ao verificar status inicial de autenticação:", error);
+      localStorage.removeItem("token");
+      this.notifyAuthStatusChange(false);
+      this.clearLastValidationTime();
+    }
   }
 
   private hasToken(): boolean {
@@ -20,6 +64,9 @@ class AuthenticationService {
 
   subscribeToAuthStatus(callback: (status: boolean) => void): () => void {
     this.authStatusListeners.add(callback);
+    // Envia o status atual imediatamente quando alguém se inscreve
+    const tokenString = localStorage.getItem("token");
+    callback(!!tokenString);
     return () => this.authStatusListeners.delete(callback);
   }
 
@@ -43,6 +90,7 @@ class AuthenticationService {
 
       const loginResponse: ILoginResponse = await response.json();
       localStorage.setItem("token", JSON.stringify(loginResponse));
+      this.setLastValidationTime(Date.now()); // Marca como validado
       this.notifyAuthStatusChange(true);
       console.log("Login realizado com sucesso.");
       return loginResponse;
@@ -66,6 +114,7 @@ class AuthenticationService {
       }
 
       localStorage.removeItem("token");
+      this.clearLastValidationTime(); // Reseta o cache de validação
       this.notifyAuthStatusChange(false);
       console.log("Logout realizado com sucesso.");
       return true;
@@ -106,10 +155,13 @@ class AuthenticationService {
     try {
       const token: Token = JSON.parse(tokenString);
       const isValid = await this.validateToken(token);
-      this.notifyAuthStatusChange(isValid);
+      if (!isValid) {
+        localStorage.removeItem("token");
+      }
       return isValid;
     } catch (error) {
-      this.notifyAuthStatusChange(false);
+      console.error("Erro ao verificar autenticação:", error);
+      localStorage.removeItem("token");
       return false;
     }
   }
@@ -121,7 +173,7 @@ class AuthenticationService {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token: token.accessToken }),
       });
 
       if (!response.ok) {

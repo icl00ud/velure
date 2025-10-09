@@ -19,6 +19,13 @@ class OrderService {
   private readonly baseURL = "http://localhost:3030";
 
   async createOrder(cartItems: CartItem[]): Promise<CreateOrderResponse> {
+    const tokenString = localStorage.getItem("token");
+    if (!tokenString) {
+      throw new Error("Usuário não autenticado");
+    }
+
+    const token = JSON.parse(tokenString);
+
     const items = cartItems.map((item) => ({
       product_id: item.product._id,
       name: item.product.name,
@@ -30,6 +37,7 @@ class OrderService {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token.accessToken}`,
       },
       body: JSON.stringify(items),
     });
@@ -40,6 +48,69 @@ class OrderService {
     }
 
     return response.json();
+  }
+
+  async getUserOrders(
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<{
+    orders: Order[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
+    const tokenString = localStorage.getItem("token");
+    if (!tokenString) {
+      throw new Error("Usuário não autenticado");
+    }
+
+    const token = JSON.parse(tokenString);
+    const url = `${this.baseURL}/user/orders?page=${page}&pageSize=${pageSize}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar pedidos do usuário");
+    }
+
+    return response.json();
+  }
+
+  async getUserOrderById(orderId: string): Promise<Order> {
+    const tokenString = localStorage.getItem("token");
+    if (!tokenString) {
+      throw new Error("Usuário não autenticado");
+    }
+
+    const token = JSON.parse(tokenString);
+    const url = `${this.baseURL}/user/order?id=${orderId}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token.accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Erro ao buscar pedido");
+    }
+
+    return response.json();
+  }
+
+  createOrderStatusStream(orderId: string): EventSource {
+    const tokenString = localStorage.getItem("token");
+    if (!tokenString) {
+      throw new Error("Usuário não autenticado");
+    }
+
+    const token = JSON.parse(tokenString);
+    const url = `${this.baseURL}/user/order/status?id=${orderId}&token=${encodeURIComponent(token.accessToken)}`;
+    
+    return new EventSource(url);
   }
 
   async updateOrderStatus(orderId: string, status: string): Promise<void> {
@@ -82,6 +153,7 @@ class OrderService {
 
 export interface Order {
   id: string;
+  user_id: string;
   items: Array<{
     product_id: string;
     name: string;
