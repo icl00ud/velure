@@ -1,4 +1,5 @@
 import type { CartItem } from "../types/product.types";
+import { environment } from "../config/environment";
 
 export interface CreateOrderRequest {
   items: Array<{
@@ -16,7 +17,9 @@ export interface CreateOrderResponse {
 }
 
 class OrderService {
-  private readonly baseURL = "http://localhost:3030";
+  private readonly baseURL = environment.ORDER_SERVICE_URL.startsWith('/')
+    ? environment.ORDER_SERVICE_URL
+    : `${environment.ORDER_SERVICE_URL}/order`;
 
   async createOrder(cartItems: CartItem[]): Promise<CreateOrderResponse> {
     const tokenString = localStorage.getItem("token");
