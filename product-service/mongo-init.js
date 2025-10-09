@@ -331,6 +331,246 @@ const realisticProducts = [
     sku: "ASC-AQUARIUM-60L-KIT",
   },
 
+  // === MAIS PRODUTOS PARA CÃES ===
+  {
+    name: "Guia Retrátil 5m com Trava de Segurança",
+    description: "Guia retrátil automática com fita de nylon resistente. Sistema de trava com um toque, cabo ergonômico. Para cães até 25kg.",
+    price: 79.90,
+    rating: 4.5,
+    category: "Acessórios",
+    disponibility: true,
+    quantity_warehouse: 41,
+    images: [
+      "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=300&fit=crop&q=80&seed=34",
+      "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=300&fit=crop&q=80&seed=35",
+      "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=300&fit=crop&q=80&seed=36"
+    ],
+    dimensions: { height: 12, width: 15, length: 4, weight: 0.35 },
+    brand: "Flexi Pro",
+    colors: ["Preto", "Azul", "Rosa"],
+    sku: "FP-LEASH-RETRACT-5M",
+  },
+  {
+    name: "Comedouro Lento Anti-Voracidade",
+    description: "Comedouro com design labirinto que reduz a velocidade de alimentação. Previne problemas digestivos e obesidade. Antiderrapante.",
+    price: 54.90,
+    rating: 4.6,
+    category: "Acessórios",
+    disponibility: true,
+    quantity_warehouse: 34,
+    images: [
+      "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?w=400&h=300&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?w=400&h=300&fit=crop&q=80&seed=37",
+      "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?w=400&h=300&fit=crop&q=80&seed=38"
+    ],
+    dimensions: { height: 6, width: 30, length: 30, weight: 0.6 },
+    brand: "SlowFeeder",
+    colors: ["Azul", "Verde", "Rosa"],
+    sku: "SF-BOWL-SLOW-LARGE",
+  },
+  {
+    name: "Ossinho Dental Filhotes 500g",
+    description: "Petiscos mastigáveis para filhotes com cálcio e vitaminas. Formato especial para limpeza dental. Sabor frango.",
+    price: 32.90,
+    rating: 4.7,
+    category: "Petiscos",
+    disponibility: true,
+    quantity_warehouse: 78,
+    images: [
+      "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400&h=300&fit=crop&q=80&seed=39",
+      "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400&h=300&fit=crop&q=80&seed=40",
+      "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400&h=300&fit=crop&q=80&seed=41"
+    ],
+    dimensions: { height: 20, width: 15, length: 8, weight: 0.5 },
+    brand: "DentaPet",
+    colors: ["Natural"],
+    sku: "DP-DENTAL-PUPPY-500G",
+  },
+  {
+    name: "Tapete Higiênico Super Absorvente 30un",
+    description: "Tapetes higiênicos com gel super absorvente e neutralizador de odores. Bordas adesivas para fixação. Ideal para treinamento.",
+    price: 45.90,
+    rating: 4.4,
+    category: "Higiene",
+    disponibility: true,
+    quantity_warehouse: 52,
+    images: [
+      "https://placehold.co/400x300/87CEEB/000000?text=Puppy+Pads",
+      "https://placehold.co/400x300/87CEEB/000000?text=Puppy+Pads&seed=1",
+      "https://placehold.co/400x300/87CEEB/000000?text=Puppy+Pads&seed=2"
+    ],
+    dimensions: { height: 8, width: 40, length: 30, weight: 1.8 },
+    brand: "CleanPad Pro",
+    colors: ["Branco"],
+    sku: "CPP-PAD-SUPER-30UN",
+  },
+  {
+    name: "Roupinha Fleece para Cães Pequenos",
+    description: "Roupinha de fleece macia e quentinha. Fácil de vestir com velcro, disponível em diversos tamanhos. Lavável na máquina.",
+    price: 49.90,
+    rating: 4.3,
+    category: "Vestuário",
+    disponibility: true,
+    quantity_warehouse: 27,
+    images: [
+      "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&h=300&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&h=300&fit=crop&q=80&seed=42",
+      "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&h=300&fit=crop&q=80&seed=43"
+    ],
+    dimensions: { height: 2, width: 30, length: 25, weight: 0.15 },
+    brand: "PetFashion",
+    colors: ["Rosa", "Azul", "Vermelho", "Cinza"],
+    sku: "PF-FLEECE-SMALL",
+  },
+
+  // === MAIS PRODUTOS PARA GATOS ===
+  {
+    name: "Fonte de Água Automática com Filtro",
+    description: "Fonte de água circulante com sistema de filtração triplo. Estimula os gatos a beberem mais água. Capacidade 2 litros, ultra silenciosa.",
+    price: 159.90,
+    rating: 4.8,
+    category: "Acessórios",
+    disponibility: true,
+    quantity_warehouse: 19,
+    images: [
+      "https://images.unsplash.com/photo-1573865526739-10c1dd85fd5f?w=400&h=300&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1573865526739-10c1dd85fd5f?w=400&h=300&fit=crop&q=80&seed=44",
+      "https://images.unsplash.com/photo-1573865526739-10c1dd85fd5f?w=400&h=300&fit=crop&q=80&seed=45"
+    ],
+    dimensions: { height: 15, width: 22, length: 22, weight: 1.2 },
+    brand: "CatFlow",
+    colors: ["Branco", "Cinza"],
+    sku: "CF-FOUNTAIN-2L",
+  },
+  {
+    name: "Areia Sanitária Aglomerante Perfumada 4kg",
+    description: "Areia sanitária super aglomerante com fragrância de lavanda. Alto poder de absorção, controle superior de odores. Baixo pó.",
+    price: 39.90,
+    rating: 4.5,
+    category: "Higiene",
+    disponibility: true,
+    quantity_warehouse: 65,
+    images: [
+      "https://placehold.co/400x300/DDA0DD/000000?text=Cat+Litter",
+      "https://placehold.co/400x300/DDA0DD/000000?text=Cat+Litter&seed=1",
+      "https://placehold.co/400x300/DDA0DD/000000?text=Cat+Litter&seed=2"
+    ],
+    dimensions: { height: 30, width: 25, length: 10, weight: 4.0 },
+    brand: "LitterFresh",
+    colors: ["Lavanda"],
+    sku: "LF-LITTER-CLUMP-4KG",
+  },
+  {
+    name: "Túnel Dobrável para Gatos 3 vias",
+    description: "Túnel de brincar dobrável com 3 entradas e bola suspensa. Material durável, fácil armazenamento. Ideal para exercício e diversão.",
+    price: 89.90,
+    rating: 4.6,
+    category: "Brinquedos",
+    disponibility: true,
+    quantity_warehouse: 23,
+    images: [
+      "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=400&h=300&fit=crop&q=80&seed=46",
+      "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=400&h=300&fit=crop&q=80&seed=47",
+      "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=400&h=300&fit=crop&q=80&seed=48"
+    ],
+    dimensions: { height: 30, width: 120, length: 30, weight: 0.8 },
+    brand: "PlayCat",
+    colors: ["Cinza", "Bege"],
+    sku: "PC-TUNNEL-3WAY",
+  },
+  {
+    name: "Escova Removedora de Pelos",
+    description: "Escova profissional para remoção de pelos mortos. Lâminas de aço inoxidável, cabo ergonômico. Reduz em 90% a queda de pelos.",
+    price: 67.90,
+    rating: 4.7,
+    category: "Higiene",
+    disponibility: true,
+    quantity_warehouse: 38,
+    images: [
+      "https://placehold.co/400x300/FF69B4/FFFFFF?text=Pet+Brush",
+      "https://placehold.co/400x300/FF69B4/FFFFFF?text=Pet+Brush&seed=1",
+      "https://placehold.co/400x300/FF69B4/FFFFFF?text=Pet+Brush&seed=2"
+    ],
+    dimensions: { height: 18, width: 10, length: 5, weight: 0.25 },
+    brand: "FurRemover Pro",
+    colors: ["Azul", "Rosa"],
+    sku: "FRP-BRUSH-DESHED",
+  },
+  {
+    name: "Rede Suspensa para Janela",
+    description: "Rede de descanso para gatos com ventosas ultra forte. Suporta até 15kg, tecido respirável. Perfeita para banho de sol.",
+    price: 79.90,
+    rating: 4.4,
+    category: "Camas e Descanso",
+    disponibility: true,
+    quantity_warehouse: 16,
+    images: [
+      "https://images.unsplash.com/photo-1558617047-ac1a6b5abbd7?w=400&h=300&fit=crop&q=80&seed=49",
+      "https://images.unsplash.com/photo-1558617047-ac1a6b5abbd7?w=400&h=300&fit=crop&q=80&seed=50",
+      "https://images.unsplash.com/photo-1558617047-ac1a6b5abbd7?w=400&h=300&fit=crop&q=80&seed=51"
+    ],
+    dimensions: { height: 5, width: 50, length: 40, weight: 0.6 },
+    brand: "WindowCat",
+    colors: ["Cinza", "Bege"],
+    sku: "WC-HAMMOCK-WINDOW",
+  },
+
+  // === PRODUTOS PARA PEQUENOS ROEDORES ===
+  {
+    name: "Gaiola Ampla Hamster 2 Andares",
+    description: "Habitat completo para hamster com 2 andares conectados. Inclui roda de exercício, bebedouro e comedouro. Base alta anti-derramamento.",
+    price: 189.90,
+    rating: 4.5,
+    category: "Gaiolas",
+    disponibility: true,
+    quantity_warehouse: 11,
+    images: [
+      "https://placehold.co/400x300/FFD700/000000?text=Hamster+Cage",
+      "https://placehold.co/400x300/FFD700/000000?text=Hamster+Cage&seed=1",
+      "https://placehold.co/400x300/FFD700/000000?text=Hamster+Cage&seed=2"
+    ],
+    dimensions: { height: 40, width: 60, length: 35, weight: 5.5 },
+    brand: "SmallPet Home",
+    colors: ["Transparente"],
+    sku: "SPH-CAGE-HAMSTER-2FL",
+  },
+  {
+    name: "Ração Premium para Coelhos 1.5kg",
+    description: "Ração extrusada para coelhos adultos. Rica em fibras, com feno timothy e vegetais. Promove desgaste dental adequado.",
+    price: 42.90,
+    rating: 4.6,
+    category: "Alimentação",
+    disponibility: true,
+    quantity_warehouse: 47,
+    images: [
+      "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=300&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=300&fit=crop&q=80&seed=52",
+      "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=300&fit=crop&q=80&seed=53"
+    ],
+    dimensions: { height: 25, width: 18, length: 8, weight: 1.5 },
+    brand: "BunnyFood Premium",
+    colors: ["Natural"],
+    sku: "BFP-RABBIT-ADULT-1.5KG",
+  },
+  {
+    name: "Roda de Exercício Silenciosa 20cm",
+    description: "Roda de exercício silenciosa para hamsters e pequenos roedores. Base sólida, sem eixo central. Material atóxico e seguro.",
+    price: 54.90,
+    rating: 4.7,
+    category: "Brinquedos",
+    disponibility: true,
+    quantity_warehouse: 31,
+    images: [
+      "https://placehold.co/400x300/FF6347/FFFFFF?text=Exercise+Wheel",
+      "https://placehold.co/400x300/FF6347/FFFFFF?text=Exercise+Wheel&seed=1",
+      "https://placehold.co/400x300/FF6347/FFFFFF?text=Exercise+Wheel&seed=2"
+    ],
+    dimensions: { height: 20, width: 20, length: 8, weight: 0.3 },
+    brand: "RunWheel Silent",
+    colors: ["Rosa", "Azul", "Verde"],
+    sku: "RWS-WHEEL-20CM",
+  },
+
   // === PRODUTOS GERAIS PARA PETS ===
   {
     name: "Shampoo Neutro para Todos os Pets 500ml",
@@ -367,6 +607,60 @@ const realisticProducts = [
     brand: "TravelPet Pro",
     colors: ["Preto", "Cinza"],
     sku: "TPP-CARRIER-WHEELS-L",
+  },
+  {
+    name: "Manta Térmica Pet com Desligamento Automático",
+    description: "Manta térmica elétrica com controle de temperatura e timer. Capa impermeável removível e lavável. Segurança certificada.",
+    price: 129.90,
+    rating: 4.6,
+    category: "Camas e Descanso",
+    disponibility: true,
+    quantity_warehouse: 14,
+    images: [
+      "https://placehold.co/400x300/FF8C00/FFFFFF?text=Heated+Blanket",
+      "https://placehold.co/400x300/FF8C00/FFFFFF?text=Heated+Blanket&seed=1",
+      "https://placehold.co/400x300/FF8C00/FFFFFF?text=Heated+Blanket&seed=2"
+    ],
+    dimensions: { height: 5, width: 60, length: 45, weight: 1.2 },
+    brand: "WarmPet",
+    colors: ["Cinza", "Marrom"],
+    sku: "WP-BLANKET-HEATED-M",
+  },
+  {
+    name: "Kit Primeiros Socorros Pet",
+    description: "Kit completo de primeiros socorros para emergências. Inclui bandagens, gazes, termômetro, luvas e manual de instruções.",
+    price: 89.90,
+    rating: 4.8,
+    category: "Saúde",
+    disponibility: true,
+    quantity_warehouse: 25,
+    images: [
+      "https://placehold.co/400x300/DC143C/FFFFFF?text=First+Aid+Kit",
+      "https://placehold.co/400x300/DC143C/FFFFFF?text=First+Aid+Kit&seed=1",
+      "https://placehold.co/400x300/DC143C/FFFFFF?text=First+Aid+Kit&seed=2"
+    ],
+    dimensions: { height: 10, width: 25, length: 18, weight: 0.8 },
+    brand: "PetCare Emergency",
+    colors: ["Vermelho"],
+    sku: "PCE-FIRSTAID-KIT",
+  },
+  {
+    name: "Localizador GPS para Coleira",
+    description: "Rastreador GPS em tempo real com app móvel. Bateria de longa duração, resistente à água. Histórico de localização e zona segura.",
+    price: 249.90,
+    rating: 4.5,
+    category: "Tecnologia",
+    disponibility: true,
+    quantity_warehouse: 18,
+    images: [
+      "https://placehold.co/400x300/4169E1/FFFFFF?text=GPS+Tracker",
+      "https://placehold.co/400x300/4169E1/FFFFFF?text=GPS+Tracker&seed=1",
+      "https://placehold.co/400x300/4169E1/FFFFFF?text=GPS+Tracker&seed=2"
+    ],
+    dimensions: { height: 2, width: 5, length: 4, weight: 0.05 },
+    brand: "TrackPet Pro",
+    colors: ["Preto"],
+    sku: "TPP-GPS-TRACKER",
   }
 ];
 
@@ -376,7 +670,7 @@ db.getCollection(collectionName).insertMany(realisticProducts);
 printLargeText("✅ Database with realistic pet products created successfully!", 8);
 print(`📊 Inserted ${realisticProducts.length} realistic pet products`);
 print("🖼️  All products include real images from Unsplash and fallback options");
-print("🎯 Categories: Alimentação, Brinquedos, Acessórios, Higiene, Transporte, Gaiolas, Aquários");
-print("🐕 Covers: Dogs, Cats, Birds, Fish and general pet products");
+print("🎯 Categories: Alimentação, Brinquedos, Acessórios, Higiene, Transporte, Gaiolas, Aquários, Petiscos, Vestuário, Suplementos, Saúde, Tecnologia, Camas e Descanso");
+print("🐕 Covers: Dogs, Cats, Birds, Fish, Small Rodents and general pet products");
 print("💰 Price range: R$ 24,90 to R$ 599,90");
 print("⭐ All products have realistic ratings between 4.3 and 4.9");
