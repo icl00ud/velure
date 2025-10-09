@@ -88,13 +88,22 @@ const ProductList = () => {
         </nav>
 
         {/* Header Section */}
-        <div className="mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Todos os produtos</h1>
-            <p className="text-muted-foreground">
-              {loading ? "Carregando..." : `${totalCount || 0} produtos disponíveis`}
-            </p>
-          </div>
+        <div className="mb-8 text-center lg:text-left">
+          <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-3">
+            Todos os produtos
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Carregando produtos...
+              </span>
+            ) : (
+              <>
+                <span className="font-semibold text-primary">{totalCount || 0}</span> produtos disponíveis para seu pet
+              </>
+            )}
+          </p>
         </div>
 
         {/* Filters */}
@@ -189,100 +198,113 @@ const ProductList = () => {
             filteredProducts.map((product) => (
               <Card
                 key={product._id}
-                className="group shadow-soft hover:shadow-primary transition-all duration-300"
+                className="group shadow-soft hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-primary/20"
               >
                 <CardContent className="p-0">
                   <div>
-                    <div className="relative aspect-square overflow-hidden rounded-t-lg bg-muted">
+                    <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gradient-to-br from-muted to-muted/50">
                       <ProductImageWithFallback
                         images={product.images || []}
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         fallbackIcon="🐕"
                       />
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={`absolute top-2 right-2 ${
+                        className={`absolute top-3 right-3 backdrop-blur-sm bg-background/80 rounded-full ${
                           favorites.includes(parseInt(product._id))
-                            ? "text-red-500 hover:text-red-600"
-                            : "text-muted-foreground hover:text-red-500"
-                        }`}
+                            ? "text-red-500 hover:text-red-600 hover:bg-red-50"
+                            : "text-muted-foreground hover:text-red-500 hover:bg-background"
+                        } transition-all duration-200`}
                         onClick={() => toggleFavorite(product._id)}
                       >
                         <Heart
-                          className={`h-4 w-4 ${favorites.includes(parseInt(product._id)) ? "fill-current" : ""}`}
+                          className={`h-5 w-5 ${favorites.includes(parseInt(product._id)) ? "fill-current" : ""}`}
                         />
                       </Button>
+                      {product.price > 100 && (
+                        <Badge className="absolute top-3 left-3 bg-secondary text-secondary-foreground font-semibold">
+                          15% OFF
+                        </Badge>
+                      )}
                       {!product.disponibility && (
-                        <div className="absolute inset-0 bg-background/80 rounded-t-lg flex items-center justify-center">
-                          <Badge variant="secondary">Sem Estoque</Badge>
+                        <div className="absolute inset-0 bg-background/90 backdrop-blur-sm rounded-t-lg flex items-center justify-center">
+                          <Badge variant="secondary" className="text-base px-4 py-2">Sem Estoque</Badge>
                         </div>
                       )}
                     </div>
 
-                    <div className="p-4">
-                      <div className="mb-2">
-                        <p className="text-xs text-muted-foreground font-medium">
-                          {product.brand || "Marca"}
+                    <div className="p-4 space-y-2">
+                      {product.brand && (
+                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                          {product.brand}
                         </p>
-                        <Link
-                          to={`/product/${product._id}`}
-                          className="font-semibold text-foreground hover:text-primary transition-colors line-clamp-2"
-                        >
+                      )}
+                      <Link
+                        to={`/product/${product._id}`}
+                        className="block"
+                      >
+                        <h3 className="font-semibold text-foreground hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]">
                           {product.name}
-                        </Link>
-                      </div>
+                        </h3>
+                      </Link>
 
-                      <div className="flex items-center space-x-1 mb-2">
-                        <div className="flex items-center">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-1">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <Star 
                               key={star} 
-                              className={`h-3 w-3 ${
+                              className={`h-4 w-4 ${
                                 star <= Math.round(product.rating || 0)
-                                  ? "text-accent fill-current"
-                                  : "text-muted-foreground"
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
                               }`}
                             />
                           ))}
+                          <span className="text-sm font-medium text-foreground ml-1">
+                            {(product.rating || 0).toFixed(1)}
+                          </span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          ({(product.rating || 0).toFixed(1)})
-                        </span>
                       </div>
 
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {product.category && (
-                          <Badge variant="secondary" className="text-xs">
-                            {product.category}
-                          </Badge>
-                        )}
-                      </div>
+                      {product.category && (
+                        <Badge variant="outline" className="text-xs font-medium border-primary/20 text-primary">
+                          {product.category}
+                        </Badge>
+                      )}
 
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-bold text-primary">${product.price.toFixed(2)}</div>
-                          {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
-                            <div className="text-xs text-orange-500">
-                              Apenas {product.quantity_warehouse} restantes
-                            </div>
+                      <div className="space-y-3">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-primary">R$ {product.price.toFixed(2)}</span>
+                          {product.price > 100 && (
+                            <span className="text-xs text-muted-foreground line-through">
+                              R$ {(product.price * 1.15).toFixed(2)}
+                            </span>
                           )}
                         </div>
+                        {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                            <span className="text-xs font-medium text-orange-600">
+                              Apenas {product.quantity_warehouse} em estoque
+                            </span>
+                          </div>
+                        )}
                         <Button
                           size="sm"
                           onClick={() => handleAddToCart(product)}
                           disabled={!product.disponibility}
-                          className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
+                          className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium"
                         >
-                          <ShoppingCart className="h-3 w-3 mr-1" />
+                          <ShoppingCart className="h-4 w-4 mr-2" />
                           {(() => {
                             const productId = product._id || (product as any).id;
                             const quantity = getItemQuantity(productId);
                             if (quantity > 0) {
                               return `No carrinho (${quantity})`;
                             }
-                            return "Adicionar";
+                            return "Adicionar ao carrinho";
                           })()}
                         </Button>
                       </div>
@@ -296,34 +318,38 @@ const ProductList = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-8 flex justify-center gap-2">
+          <div className="mt-12 flex justify-center items-center gap-2">
             <Button
               variant="outline"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
+              className="hover:bg-primary hover:text-primary-foreground"
             >
-              Anterior
+              ← Anterior
             </Button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const pageNum = i + 1;
                 return (
                   <Button
                     key={pageNum}
-                    variant={page === pageNum ? "default" : "outline"}
+                    variant={page === pageNum ? "default" : "ghost"}
                     onClick={() => setPage(pageNum)}
+                    className={page === pageNum ? "bg-primary text-primary-foreground" : ""}
                   >
                     {pageNum}
                   </Button>
                 );
               })}
+              {totalPages > 5 && <span className="px-2 text-muted-foreground">...</span>}
             </div>
             <Button
               variant="outline"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
+              className="hover:bg-primary hover:text-primary-foreground"
             >
-              Próximo
+              Próximo →
             </Button>
           </div>
         )}
