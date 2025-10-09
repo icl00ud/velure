@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/icl00ud/publish-order-service/internal/middleware"
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"github.com/icl00ud/publish-order-service/internal/service"
 	"go.uber.org/zap"
@@ -23,6 +24,13 @@ func NewOrderHandler(svc *service.OrderService, pub Publisher) *OrderHandler {
 }
 
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	if userID == "" {
+		zap.L().Warn("missing user_id in context")
+		writeJSON(w, http.StatusUnauthorized, response{"error": "unauthorized"})
+		return
+	}
+
 	items, err := parseCreateOrder(r.Body)
 	if err != nil {
 		zap.L().Warn("invalid payload", zap.Error(err))
@@ -30,7 +38,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	o, err := h.svc.Create(r.Context(), items)
+	o, err := h.svc.Create(r.Context(), userID, items)
 	if err != nil {
 		code := http.StatusInternalServerError
 		if err == service.ErrNoItems {
@@ -51,6 +59,51 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		"total":    o.Total,
 		"status":   o.Status,
 	})
+}
+
+func (h *OrderHandler) GetUserOrders(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	if userID == "" {
+		zap.L().Warn("missing user_id in context")
+		writeJSON(w, http.StatusUnauthorized, response{"error": "unauthorized"})
+		return
+	}
+
+	page, pageSize := parsePagination(r)
+
+	result, err := h.svc.GetOrdersByUserID(r.Context(), userID, page, pageSize)
+	if err != nil {
+		zap.L().Error("get user orders failed", zap.Error(err))
+		writeJSON(w, http.StatusInternalServerError, response{"error": "internal error"})
+		return
+	}
+
+	writeJSONData(w, http.StatusOK, result)
+}
+
+func (h *OrderHandler) GetUserOrderByID(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	if userID == "" {
+		zap.L().Warn("missing user_id in context")
+		writeJSON(w, http.StatusUnauthorized, response{"error": "unauthorized"})
+		return
+	}
+
+	orderID := r.URL.Query().Get("id")
+	if orderID == "" {
+		zap.L().Warn("missing order_id in query")
+		writeJSON(w, http.StatusBadRequest, response{"error": "order_id required"})
+		return
+	}
+
+	order, err := h.svc.GetOrderByID(r.Context(), userID, orderID)
+	if err != nil {
+		zap.L().Error("get user order by id failed", zap.Error(err))
+		writeJSON(w, http.StatusNotFound, response{"error": "order not found"})
+		return
+	}
+
+	writeJSONData(w, http.StatusOK, order)
 }
 
 func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
