@@ -1,4 +1,4 @@
-import { Filter, Grid3X3, Heart, List, Loader2, Search, ShoppingCart, Star } from "lucide-react";
+import { Heart, Loader2, Search, ShoppingCart, Star } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
@@ -22,7 +22,6 @@ const ProductList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("popularity");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [viewMode, setViewMode] = useState("grid");
   const [favorites, setFavorites] = useState<number[]>([]);
   const [page, setPage] = useState(1);
   const pageSize = 12;
@@ -51,12 +50,26 @@ const ProductList = () => {
     });
   };
 
-  // Filtrar produtos com base na busca
-  const filteredProducts = (products || []).filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.brand || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filtrar e ordenar produtos
+  const filteredProducts = (products || [])
+    .filter(
+      (product) =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (product.brand || "").toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "price-low":
+          return a.price - b.price;
+        case "price-high":
+          return b.price - a.price;
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "popularity":
+        default:
+          return 0; // Mantém ordem original (do banco)
+      }
+    });
 
   return (
     <div className="min-h-screen bg-background">
@@ -87,7 +100,7 @@ const ProductList = () => {
         {/* Filters */}
         <Card className="mb-6 shadow-soft">
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -132,36 +145,12 @@ const ProductList = () => {
                   <SelectItem value="name">Nome</SelectItem>
                 </SelectContent>
               </Select>
-
-              {/* View Mode */}
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Products Grid */}
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-              : "space-y-4"
-          }
-        >
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {loading ? (
             <div className="col-span-full flex items-center justify-center py-12">
               <div className="text-center">
