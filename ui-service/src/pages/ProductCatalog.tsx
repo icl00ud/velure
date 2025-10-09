@@ -75,18 +75,6 @@ const ProductCatalog = () => {
   };
 
   const categoryName = category ? categoryNames[category] || category : "Todos os produtos";
-  const categoryEmoji =
-    category === "dogs"
-      ? "🐕"
-      : category === "cats"
-        ? "🐱"
-        : category === "birds"
-          ? "🦜"
-          : category === "fish"
-            ? "🐠"
-            : category === "small-pets"
-              ? "🐹"
-              : "🐾";
 
   return (
     <div className="min-h-screen bg-background">
@@ -114,16 +102,13 @@ const ProductCatalog = () => {
 
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">
-                {category ? `Produtos para ${categoryName}` : "Todos os produtos"}
-              </h1>
-              <p className="text-muted-foreground">
-                {loading ? "Carregando..." : `${totalCount} produtos encontrados`}
-              </p>
-            </div>
-            <div className="text-6xl">{categoryEmoji}</div>
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">
+              {category ? `Produtos para ${categoryName}` : "Todos os produtos"}
+            </h1>
+            <p className="text-muted-foreground">
+              {loading ? "Carregando..." : `${totalCount} produtos encontrados`}
+            </p>
           </div>
         </div>
 
@@ -211,7 +196,6 @@ const ProductCatalog = () => {
             <div className="col-span-full">
               <Card className="text-center py-12">
                 <CardContent>
-                  <div className="text-6xl mb-4">⚠️</div>
                   <h3 className="text-xl font-semibold text-foreground mb-2">
                     Erro ao carregar produtos
                   </h3>
@@ -449,7 +433,6 @@ const ProductCatalog = () => {
         {filteredProdutos.length === 0 && !loading && (
           <Card className="text-center py-12">
             <CardContent>
-              <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
                 Nenhum produto encontrado
               </h3>
@@ -467,6 +450,40 @@ const ProductCatalog = () => {
               </Button>
             </CardContent>
           </Card>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && filteredProdutos.length > 0 && (
+          <div className="mt-8 flex justify-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Anterior
+            </Button>
+            <div className="flex items-center gap-2">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNum = i + 1;
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={page === pageNum ? "default" : "outline"}
+                    onClick={() => setPage(pageNum)}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Próximo
+            </Button>
+          </div>
         )}
       </main>
     </div>

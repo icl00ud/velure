@@ -76,14 +76,11 @@ const ProductList = () => {
 
         {/* Header Section */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">Todos os produtos</h1>
-              <p className="text-muted-foreground">
-                {loading ? "Carregando..." : `${totalCount || 0} produtos disponíveis`}
-              </p>
-            </div>
-            <div className="text-6xl">🐾</div>
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">Todos os produtos</h1>
+            <p className="text-muted-foreground">
+              {loading ? "Carregando..." : `${totalCount || 0} produtos disponíveis`}
+            </p>
           </div>
         </div>
 
@@ -176,7 +173,6 @@ const ProductList = () => {
             <div className="col-span-full">
               <Card className="text-center py-12">
                 <CardContent>
-                  <div className="text-6xl mb-4">⚠️</div>
                   <h3 className="text-xl font-semibold text-foreground mb-2">
                     Erro ao carregar produtos
                   </h3>
@@ -191,7 +187,6 @@ const ProductList = () => {
             <div className="col-span-full">
               <Card className="text-center py-12">
                 <CardContent>
-                  <div className="text-6xl mb-4">🔍</div>
                   <h3 className="text-xl font-semibold text-foreground mb-2">
                     Nenhum produto encontrado
                   </h3>

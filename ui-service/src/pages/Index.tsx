@@ -138,13 +138,12 @@ const Index = () => {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {[
-              { name: "Cães", emoji: "🐕", color: "primary", link: "/products/dogs" },
-              { name: "Gatos", emoji: "🐱", color: "secondary", link: "/products/cats" },
-              { name: "Pássaros", emoji: "🦜", color: "accent", link: "/products/birds" },
-              { name: "Peixes", emoji: "🐠", color: "primary", link: "/products/fish" },
+              { name: "Cães", color: "primary", link: "/products/dogs" },
+              { name: "Gatos", color: "secondary", link: "/products/cats" },
+              { name: "Pássaros", color: "accent", link: "/products/birds" },
+              { name: "Peixes", color: "primary", link: "/products/fish" },
               {
                 name: "Pets Pequenos",
-                emoji: "🐹",
                 color: "secondary",
                 link: "/products/small-pets",
               },
@@ -152,8 +151,7 @@ const Index = () => {
               <Link key={category.name} to={category.link}>
                 <Card className="group cursor-pointer hover:scale-105 transition-transform duration-300 shadow-soft">
                   <CardContent className="p-8 text-center">
-                    <div className="text-6xl mb-4">{category.emoji}</div>
-                    <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
+                    <h3 className="font-semibold text-xl text-foreground group-hover:text-primary transition-colors">
                       {category.name}
                     </h3>
                   </CardContent>
