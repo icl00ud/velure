@@ -33,13 +33,13 @@ func (oc *OrderConsumer) Start(ctx context.Context) error {
 			return nil
 		}
 		var p struct {
-			ID    string `json:"id"`
-			Total int    `json:"total"`
+			ID    string  `json:"id"`
+			Total float64 `json:"total"`
 		}
 		if err := json.Unmarshal(evt.Payload, &p); err != nil {
 			return err
 		}
-		return oc.svc.Process(p.ID, p.Total)
+		return oc.svc.Process(p.ID, int(p.Total))
 	}
 
 	oc.logger.Info("order consumer started", zap.Int("workers", oc.workers))
