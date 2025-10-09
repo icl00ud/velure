@@ -1,5 +1,39 @@
 services:
   # -------------------------
+  # Caddy - Reverse Proxy & TLS
+  # -------------------------
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: caddy-proxy
+    restart: always
+    ports:
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    networks:
+      - frontend
+      - auth
+      - order
+    depends_on:
+      - auth-service
+      - product-service
+      - publish-order-service
+      - ui-service
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # -------------------------
   # Auth Service
   # -------------------------
   postgres:
@@ -46,8 +80,9 @@ services:
       JWT_REFRESH_TOKEN_EXPIRES_IN: ${JWT_REFRESH_TOKEN_EXPIRES_IN}
       SESSION_SECRET: ${SESSION_SECRET}
       SESSION_EXPIRES_IN: ${SESSION_EXPIRES_IN}
-    ports:
-      - "${AUTH_SERVICE_APP_PORT}:${AUTH_SERVICE_APP_PORT}"
+    # Portas removidas - acesso via Caddy proxy
+    # ports:
+    #   - "${AUTH_SERVICE_APP_PORT}:${AUTH_SERVICE_APP_PORT}"
     networks:
       - auth
       - order
@@ -106,8 +141,9 @@ services:
       PUBLISHER_CONSUMER_WORKERS: ${PUBLISHER_CONSUMER_WORKERS:-3}
       POSTGRES_URL: ${POSTGRES_URL}
       JWT_SECRET: ${JWT_SECRET}
-    ports:
-      - "${PUBLISHER_ORDER_SERVICE_APP_PORT}:${PUBLISHER_ORDER_SERVICE_APP_PORT}"
+    # Portas removidas - acesso via Caddy proxy
+    # ports:
+    #   - "${PUBLISHER_ORDER_SERVICE_APP_PORT}:${PUBLISHER_ORDER_SERVICE_APP_PORT}"
     networks:
       - order
     deploy:
@@ -204,8 +240,9 @@ services:
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       REDIS_URL: ${REDIS_URL}
-    ports:
-      - "${PRODUCT_SERVICE_APP_PORT}:${PRODUCT_SERVICE_APP_PORT}"
+    # Portas removidas - acesso via Caddy proxy
+    # ports:
+    #   - "${PRODUCT_SERVICE_APP_PORT}:${PRODUCT_SERVICE_APP_PORT}"
     networks:
       - order
       - frontend
@@ -230,8 +267,9 @@ services:
         VITE_AUTHENTICATION_SERVICE_URL: http://localhost:${AUTH_SERVICE_APP_PORT}
     container_name: ${UI_SERVICE_HOST}
     restart: always
-    ports:
-      - "${UI_SERVICE_PORT}:80"
+    # Portas removidas - acesso via Caddy proxy
+    # ports:
+    #   - "${UI_SERVICE_PORT}:80"
     networks:
       - frontend
     depends_on:
@@ -250,6 +288,9 @@ volumes:
   postgres_data:
   mongodb_data:
   rabbitmq_data:
+  caddy_data:
+  caddy_config:
+  caddy_logs:
 
 networks:
   auth:

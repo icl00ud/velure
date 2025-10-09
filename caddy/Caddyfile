@@ -1,0 +1,247 @@
+# Caddyfile para Velure
+# Proxy reverso com TLS automático
+
+# Configuração global
+{
+	# Email para Let's Encrypt
+	email admin@velure.local
+	
+	# Modo de desenvolvimento: usa certificados internos
+	# Para produção, remover esta linha e configurar domínio real
+	local_certs
+	
+	# Logs estruturados
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 100mb
+			roll_keep 5
+		}
+		format json
+		level INFO
+	}
+}
+
+# Domínio local (desenvolvimento)
+velure.local {
+	# Logs por domínio
+	log {
+		output file /var/log/caddy/velure.log {
+			roll_size 50mb
+			roll_keep 3
+		}
+		format json
+	}
+
+	# Headers de segurança
+	header {
+		# HSTS
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		# XSS Protection
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		X-XSS-Protection "1; mode=block"
+		# Referrer Policy
+		Referrer-Policy "strict-origin-when-cross-origin"
+		
+		# Permissions Policy
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		
+		# CSP (Content Security Policy) - ajustar conforme necessário
+		Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; img-src 'self' https: data: blob: unsplash.com *.unsplash.com;"
+		# Remove headers que expõem info
+		-Server
+		-X-Powered-By
+	}
+
+	# CORS headers
+	@options {
+		method OPTIONS
+	}
+	handle @options {
+		header Access-Control-Allow-Origin "*"
+		header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+		header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+		header Access-Control-Max-Age "3600"
+		respond 204
+	}
+
+	# Health check agregado de todos os serviços
+	handle /health {
+		respond `{
+			"status": "healthy",
+			"timestamp": "{time.now.unix}",
+			"proxy": "caddy v2.8",
+			"services": {
+				"auth": "/api/auth/health",
+				"product": "/api/product/health",
+				"orders": "/api/order/health"
+			}
+		}` 200 {
+			header Content-Type "application/json"
+		}
+	}
+
+	# API Gateway - Auth Service
+	handle_path /api/auth* {
+		reverse_proxy auth-service:3001 {
+			# Health check
+			health_uri /health
+			health_interval 10s
+			health_timeout 5s
+			health_status 2xx
+			
+			# Headers para preservar client info
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host {host}
+			
+			# CORS
+			header_down Access-Control-Allow-Origin "*"
+			header_down Access-Control-Allow-Credentials "true"
+			
+			# Timeout aumentado para operações de autenticação
+			transport http {
+				dial_timeout 10s
+				response_header_timeout 30s
+			}
+		}
+	}
+
+	# API Gateway - Product Service
+	handle_path /api/product* {
+		reverse_proxy product-service:3010 {
+			health_uri /health
+			health_interval 10s
+			health_timeout 5s
+			health_status 2xx
+			
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host {host}
+			
+			header_down Access-Control-Allow-Origin "*"
+			header_down Access-Control-Allow-Credentials "true"
+			
+			# Cache headers para produtos (5 minutos)
+			header_down Cache-Control "public, max-age=300"
+		}
+	}
+
+	# API Gateway - Order Service (REST)
+	handle_path /api/order* {
+		reverse_proxy publish-order-service:3002 {
+			health_uri /health
+			health_interval 10s
+			health_timeout 5s
+			health_status 2xx
+			
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host {host}
+			
+			header_down Access-Control-Allow-Origin "*"
+			header_down Access-Control-Allow-Credentials "true"
+		}
+	}
+
+	# API Gateway - SSE (Server-Sent Events)
+	handle_path /api/sse* {
+		reverse_proxy publish-order-service:3002 {
+			# SSE requer configurações especiais
+			flush_interval -1  # Flush imediato
+			
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host {host}
+			header_up Connection "keep-alive"
+			header_up Cache-Control "no-cache"
+			
+			header_down Access-Control-Allow-Origin "*"
+			header_down Access-Control-Allow-Credentials "true"
+			header_down Cache-Control "no-cache"
+			header_down Connection "keep-alive"
+			header_down X-Accel-Buffering "no"
+			
+			# Timeout muito longo para SSE (2 horas)
+			transport http {
+				read_timeout 7200s
+				write_timeout 7200s
+			}
+		}
+	}
+
+	# Frontend - UI Service (SPA)
+	handle /* {
+		reverse_proxy ui-service:80 {
+			health_uri /
+			health_interval 30s
+			health_timeout 5s
+			health_status 2xx
+			
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Host {host}
+		}
+	}
+
+	# Compressão automática (gzip, zstd, brotli)
+	encode gzip zstd
+
+	# Error pages customizadas com JSON
+	handle_errors {
+		@5xx expression `{http.error.status_code} >= 500`
+		handle @5xx {
+			respond `{
+				"error": "Erro interno do servidor",
+				"message": "Por favor, tente novamente mais tarde",
+				"status": {http.error.status_code}
+			}` {http.error.status_code} {
+				header Content-Type "application/json"
+			}
+		}
+		
+		@4xx expression `{http.error.status_code} >= 400 && {http.error.status_code} < 500`
+		handle @4xx {
+			respond `{
+				"error": "Requisição inválida",
+				"message": "Verifique os dados e tente novamente",
+				"status": {http.error.status_code}
+			}` {http.error.status_code} {
+				header Content-Type "application/json"
+			}
+		}
+	}
+}
+
+# Configuração para produção (comentado)
+# api.velure.com.br {
+# 	log {
+# 		output file /var/log/caddy/api-velure.log
+# 		format json
+# 	}
+#
+# 	# Mesmos handles de /api/* acima, mas sem o prefixo /api
+# 	handle /auth* {
+# 		reverse_proxy auth-service:3001 { ... }
+# 	}
+# 	# ... outros serviços
+# }
+
+# velure.com.br, www.velure.com.br {
+# 	log {
+# 		output file /var/log/caddy/www-velure.log
+# 		format json
+# 	}
+#
+# 	# Redirect www to non-www
+# 	@www host www.velure.com.br
+# 	redir @www https://velure.com.br{uri} permanent
+#
+# 	# Frontend
+# 	reverse_proxy ui-service:80 { ... }
+# }
