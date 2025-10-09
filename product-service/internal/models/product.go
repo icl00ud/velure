@@ -11,6 +11,7 @@ type Product struct {
 	Name              string             `json:"name" bson:"name" validate:"required"`
 	Description       string             `json:"description,omitempty" bson:"description"`
 	Price             float64            `json:"price" bson:"price" validate:"required"`
+	Rating            float64            `json:"rating,omitempty" bson:"rating"`
 	Category          string             `json:"category,omitempty" bson:"category"`
 	Disponibility     bool               `json:"disponibility" bson:"disponibility"`
 	QuantityWarehouse int                `json:"quantity_warehouse" bson:"quantity_warehouse"`
@@ -34,6 +35,7 @@ type CreateProductRequest struct {
 	Name              string     `json:"name" validate:"required"`
 	Description       string     `json:"description,omitempty"`
 	Price             float64    `json:"price" validate:"required"`
+	Rating            float64    `json:"rating,omitempty"`
 	Category          string     `json:"category,omitempty"`
 	Disponibility     bool       `json:"disponibility"`
 	QuantityWarehouse int        `json:"quantity_warehouse"`
@@ -49,6 +51,7 @@ type ProductResponse struct {
 	Name              string     `json:"name"`
 	Description       string     `json:"description,omitempty"`
 	Price             float64    `json:"price"`
+	Rating            float64    `json:"rating,omitempty"`
 	Category          string     `json:"category,omitempty"`
 	Disponibility     bool       `json:"disponibility"`
 	QuantityWarehouse int        `json:"quantity_warehouse"`

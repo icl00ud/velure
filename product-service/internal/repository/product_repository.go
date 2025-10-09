@@ -304,6 +304,7 @@ func (r *productRepository) toProductResponse(product models.Product) models.Pro
 		Name:              product.Name,
 		Description:       product.Description,
 		Price:             product.Price,
+		Rating:            product.Rating,
 		Category:          product.Category,
 		Disponibility:     product.Disponibility,
 		QuantityWarehouse: product.QuantityWarehouse,
