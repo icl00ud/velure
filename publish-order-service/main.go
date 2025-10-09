@@ -55,7 +55,10 @@ func main() {
 	svc := service.NewOrderService(repo, service.NewPricingCalculator())
 	oh := handler.NewOrderHandler(svc, pub)
 
+	sseHandler := handler.NewSSEHandler(svc)
 	eventHandler := handler.NewEventHandler(svc, logger)
+	eventHandler.SetSSEHandler(sseHandler)
+
 	cons, err := consumer.NewRabbitMQConsumer(
 		cfg.RabbitURL,
 		cfg.Exchange,
@@ -69,10 +72,16 @@ func main() {
 	}
 	defer cons.Close()
 
+	authMiddleware := middleware.Auth(cfg.JWTSecret)
+	sseAuthMiddleware := middleware.SSEAuth(cfg.JWTSecret)
+
 	mux := http.NewServeMux()
-	mux.Handle("/create-order", middleware.CORS(middleware.Timeout(5*time.Second)(middleware.Logging(http.HandlerFunc(oh.CreateOrder)))))
-	mux.Handle("/update-order-status", middleware.CORS(middleware.Timeout(5*time.Second)(middleware.Logging(http.HandlerFunc(oh.UpdateStatus)))))
-	mux.Handle("/orders", middleware.CORS(middleware.Timeout(3*time.Second)(middleware.Logging(http.HandlerFunc(oh.GetOrdersByPage)))))
+	mux.Handle("/create-order", middleware.CORS(middleware.Logging(middleware.Timeout(5*time.Second)(authMiddleware(http.HandlerFunc(oh.CreateOrder))))))
+	mux.Handle("/update-order-status", middleware.CORS(middleware.Logging(middleware.Timeout(5*time.Second)(http.HandlerFunc(oh.UpdateStatus)))))
+	mux.Handle("/orders", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(http.HandlerFunc(oh.GetOrdersByPage)))))
+	mux.Handle("/user/orders", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrders))))))
+	mux.Handle("/user/order", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrderByID))))))
+	mux.Handle("/user/order/status", middleware.CORS(middleware.Logging(sseAuthMiddleware(http.HandlerFunc(sseHandler.StreamOrderStatus)))))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
