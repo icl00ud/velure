@@ -53,20 +53,28 @@ const Cart = () => {
   };
 
   const handleCheckout = async () => {
+    const tokenString = localStorage.getItem("token");
+    if (!tokenString) {
+      toast({
+        title: "Autenticação necessária",
+        description: "Você precisa estar logado para finalizar a compra",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const order = await orderService.createOrder(cartItems);
 
       toast({
         title: "Pedido criado com sucesso!",
-        description: `Seu pedido #${order.order_id} foi criado. Total: R$ ${(order.total / 100).toFixed(2)}`,
+        description: `Seu pedido #${order.order_id} foi criado. Total: R$ ${order.total.toFixed(2)}`,
       });
 
-      // Limpar carrinho após criar pedido
       clearCart();
-
-      // Redirecionar para página de sucesso (você pode criar essa página depois)
-      navigate("/");
+      navigate("/orders");
     } catch (error) {
       toast({
         title: "Erro ao processar pedido",
