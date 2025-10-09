@@ -1,18 +1,35 @@
 import { ChevronDown, Heart, LogOut, ShoppingCart, User } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
+import { productService } from "@/services/product.service";
 
 const Header = () => {
   const { itemsCount } = useCart();
   const { isAuthenticated, logout } = useAuth();
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const data = await productService.getCategories();
+      setCategories(data);
+    } catch (error) {
+      console.error("Failed to load categories:", error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -20,6 +37,19 @@ const Header = () => {
     } catch (error) {
       console.error("Logout failed:", error);
     }
+  };
+
+  const formatCategoryName = (category: string): string => {
+    const nameMap: Record<string, string> = {
+      dogs: "Cães",
+      cats: "Gatos",
+      birds: "Pássaros",
+      fish: "Peixes",
+      "small-pets": "Pets pequenos",
+      reptiles: "Répteis",
+      rabbits: "Coelhos",
+    };
+    return nameMap[category.toLowerCase()] || category;
   };
 
   return (
@@ -35,41 +65,29 @@ const Header = () => {
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-1">
-                <span>Produtos</span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-background border border-border shadow-soft">
-              <DropdownMenuItem asChild>
-                <Link to="/products/dogs" className="w-full">
-                  🐕 Cães
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/products/cats" className="w-full">
-                  🐱 Gatos
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/products/birds" className="w-full">
-                  🦜 Pássaros
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/products/fish" className="w-full">
-                  🐠 Peixes
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/products/small-pets" className="w-full">
-                  🐹 Pets pequenos
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center">
+            <Link to="/products" className="text-foreground hover:text-primary transition-colors">
+              Produtos
+            </Link>
+            {categories.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 ml-1">
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-background border border-border shadow-soft">
+                  {categories.map((category) => (
+                    <DropdownMenuItem key={category} asChild>
+                      <Link to={`/products/${category}`} className="w-full">
+                        {formatCategoryName(category)}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
 
           <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
             Contato
@@ -99,6 +117,12 @@ const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 bg-background border border-border shadow-soft">
+                <DropdownMenuItem asChild>
+                  <Link to="/orders" className="w-full">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Meus Pedidos
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Sair
