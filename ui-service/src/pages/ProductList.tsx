@@ -236,12 +236,20 @@ const ProductList = () => {
 
                       <div className="flex items-center space-x-1 mb-2">
                         <div className="flex items-center">
-                          {[1, 2, 3, 4].map((star) => (
-                            <Star key={star} className="h-3 w-3 text-accent fill-current" />
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star 
+                              key={star} 
+                              className={`h-3 w-3 ${
+                                star <= Math.round(product.rating || 0)
+                                  ? "text-accent fill-current"
+                                  : "text-muted-foreground"
+                              }`}
+                            />
                           ))}
-                          <Star key={5} className="h-3 w-3 text-muted-foreground" />
                         </div>
-                        <span className="text-xs text-muted-foreground">(4.0)</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({(product.rating || 0).toFixed(1)})
+                        </span>
                       </div>
 
                       <div className="flex flex-wrap gap-1 mb-2">
