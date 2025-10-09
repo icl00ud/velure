@@ -14,6 +14,7 @@ import (
 type EventHandler struct {
 	orderService *service.OrderService
 	logger       *zap.Logger
+	sseHandler   *SSEHandler
 }
 
 func NewEventHandler(orderService *service.OrderService, logger *zap.Logger) *EventHandler {
@@ -23,16 +24,50 @@ func NewEventHandler(orderService *service.OrderService, logger *zap.Logger) *Ev
 	}
 }
 
+func (h *EventHandler) SetSSEHandler(sseHandler *SSEHandler) {
+	h.sseHandler = sseHandler
+}
+
 func (h *EventHandler) HandleEvent(ctx context.Context, evt model.Event) error {
-	switch evt.Type {
-	case model.OrderProcessing:
-		return h.handleOrderProcessing(ctx, evt.Payload)
-	case model.OrderCompleted:
-		return h.handleOrderCompleted(ctx, evt.Payload)
-	default:
-		h.logger.Warn("unhandled event type", zap.String("type", evt.Type))
-		return nil
+	zap.L().Info("event received", zap.String("type", evt.Type))
+
+	if evt.Type == model.OrderProcessing || evt.Type == model.OrderCompleted {
+		var payload struct {
+			ID      string `json:"id"`
+			OrderID string `json:"order_id"`
+		}
+		if err := json.Unmarshal(evt.Payload, &payload); err != nil {
+			return fmt.Errorf("unmarshal event payload: %w", err)
+		}
+
+		// Use OrderID if available, otherwise use ID
+		orderID := payload.OrderID
+		if orderID == "" {
+			orderID = payload.ID
+		}
+
+		if orderID == "" {
+			return fmt.Errorf("order id is empty in event payload")
+		}
+
+		// Map event type to status
+		status := model.StatusProcessing
+		if evt.Type == model.OrderCompleted {
+			status = model.StatusCompleted
+		}
+
+		order, err := h.orderService.UpdateStatus(ctx, orderID, status)
+		if err != nil {
+			return fmt.Errorf("update status: %w", err)
+		}
+		zap.L().Info("order status updated", zap.String("order_id", orderID), zap.String("status", status))
+
+		if h.sseHandler != nil {
+			h.sseHandler.NotifyOrderUpdate(order)
+		}
 	}
+
+	return nil
 }
 
 func (h *EventHandler) handleOrderProcessing(ctx context.Context, payload json.RawMessage) error {
