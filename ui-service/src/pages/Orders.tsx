@@ -23,9 +23,10 @@ const Orders = () => {
     setIsLoading(true);
     try {
       const result = await orderService.getUserOrders(page, pageSize);
-      setOrders(result.orders);
-      setTotalPages(result.totalPages);
+      setOrders(result?.orders || []);
+      setTotalPages(result?.totalPages || 1);
     } catch (error) {
+      setOrders([]);
       toast({
         title: "Erro ao carregar pedidos",
         description: error instanceof Error ? error.message : "Tente novamente mais tarde",
@@ -78,7 +79,7 @@ const Orders = () => {
           <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : orders.length === 0 ? (
+        ) : !orders || orders.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
