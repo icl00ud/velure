@@ -21,7 +21,7 @@ func NewOrderService(r repository.OrderRepository, pc PricingCalculator) *OrderS
 	return &OrderService{repo: r, pricing: pc}
 }
 
-func (s *OrderService) Create(ctx context.Context, items []model.CartItem) (model.Order, error) {
+func (s *OrderService) Create(ctx context.Context, userID string, items []model.CartItem) (model.Order, error) {
 	if len(items) == 0 {
 		return model.Order{}, ErrNoItems
 	}
@@ -29,6 +29,7 @@ func (s *OrderService) Create(ctx context.Context, items []model.CartItem) (mode
 	now := time.Now()
 	o := model.Order{
 		ID:        uuid.NewString(),
+		UserID:    userID,
 		Items:     items,
 		Total:     total,
 		Status:    model.StatusCreated,
@@ -56,4 +57,12 @@ func (s *OrderService) UpdateStatus(ctx context.Context, id, status string) (mod
 
 func (s *OrderService) GetOrdersByPage(ctx context.Context, page, pageSize int) (*model.PaginatedOrdersResponse, error) {
 	return s.repo.GetOrdersByPage(ctx, page, pageSize)
+}
+
+func (s *OrderService) GetOrdersByUserID(ctx context.Context, userID string, page, pageSize int) (*model.PaginatedOrdersResponse, error) {
+	return s.repo.GetOrdersByUserID(ctx, userID, page, pageSize)
+}
+
+func (s *OrderService) GetOrderByID(ctx context.Context, userID, orderID string) (model.Order, error) {
+	return s.repo.FindByUserID(ctx, userID, orderID)
 }

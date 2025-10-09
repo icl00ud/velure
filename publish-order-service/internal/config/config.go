@@ -14,6 +14,7 @@ type Config struct {
 	Exchange    string
 	Queue       string
 	Workers     int
+	JWTSecret   string
 }
 
 func Load() (Config, error) {
@@ -55,6 +56,12 @@ func Load() (Config, error) {
 		if w, err := strconv.Atoi(v); err == nil && w > 0 {
 			c.Workers = w
 		}
+	}
+
+	if v, ok := os.LookupEnv("JWT_SECRET"); ok && strings.TrimSpace(v) != "" {
+		c.JWTSecret = v
+	} else {
+		missing = append(missing, "JWT_SECRET")
 	}
 
 	if len(missing) > 0 {
