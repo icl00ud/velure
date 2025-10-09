@@ -88,7 +88,10 @@ func (r *PostgresOrderRepository) Find(ctx context.Context, id string) (model.Or
 	if err := row.Scan(&o.ID, &o.UserID, &data, &o.Total, &o.Status, &o.CreatedAt, &o.UpdatedAt); err != nil {
 		return o, err
 	}
-	_ = json.Unmarshal(data, &o.Items)
+	o.Items = []model.CartItem{}
+	if len(data) > 0 {
+		_ = json.Unmarshal(data, &o.Items)
+	}
 	return o, nil
 }
 
@@ -104,7 +107,10 @@ func (r *PostgresOrderRepository) FindByUserID(ctx context.Context, userID, orde
 	if err := row.Scan(&o.ID, &o.UserID, &data, &o.Total, &o.Status, &o.CreatedAt, &o.UpdatedAt); err != nil {
 		return o, err
 	}
-	_ = json.Unmarshal(data, &o.Items)
+	o.Items = []model.CartItem{}
+	if len(data) > 0 {
+		_ = json.Unmarshal(data, &o.Items)
+	}
 	return o, nil
 }
 
@@ -171,7 +177,12 @@ func (r *PostgresOrderRepository) GetOrdersByUserID(ctx context.Context, userID 
 			zap.L().Error("scan order failed", zap.Error(err))
 			continue
 		}
-		_ = json.Unmarshal(data, &o.Items)
+		o.Items = []model.CartItem{} // Initialize with empty array
+		if len(data) > 0 {
+			if err := json.Unmarshal(data, &o.Items); err != nil {
+				zap.L().Warn("failed to unmarshal items", zap.String("order_id", o.ID), zap.Error(err))
+			}
+		}
 		orders = append(orders, o)
 	}
 
