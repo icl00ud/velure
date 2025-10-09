@@ -25,6 +25,7 @@ func TestPostgresOrderRepository_Save(t *testing.T) {
 	items := []model.CartItem{{ProductID: "p1", Name: "n1", Quantity: 2, Price: 10.0}}
 	order := model.Order{
 		ID:        "o1",
+		UserID:    "user123",
 		Items:     items,
 		Total:     20,
 		Status:    model.OrderCreated,
@@ -34,7 +35,7 @@ func TestPostgresOrderRepository_Save(t *testing.T) {
 
 	itemsJSON, _ := json.Marshal(items)
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO TBLOrders")).
-		WithArgs(order.ID, itemsJSON, order.Total, order.Status, order.CreatedAt, order.UpdatedAt).
+		WithArgs(order.ID, order.UserID, itemsJSON, order.Total, order.Status, order.CreatedAt, order.UpdatedAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if err := repo.Save(context.Background(), order); err != nil {
@@ -59,6 +60,7 @@ func TestPostgresOrderRepository_Find(t *testing.T) {
 	itemsJSON, _ := json.Marshal(items)
 	order := model.Order{
 		ID:        "o2",
+		UserID:    "user123",
 		Items:     items,
 		Total:     20,
 		Status:    model.OrderCreated,
@@ -67,13 +69,13 @@ func TestPostgresOrderRepository_Find(t *testing.T) {
 	}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "items", "total", "status", "created_at", "updated_at",
+		"id", "user_id", "items", "total", "status", "created_at", "updated_at",
 	}).AddRow(
-		order.ID, itemsJSON, order.Total, order.Status, order.CreatedAt, order.UpdatedAt,
+		order.ID, order.UserID, itemsJSON, order.Total, order.Status, order.CreatedAt, order.UpdatedAt,
 	)
 
 	mock.ExpectQuery(regexp.QuoteMeta(
-		"SELECT id, items, total, status, created_at, updated_at")).
+		"SELECT id, user_id, items, total, status, created_at, updated_at")).
 		WithArgs(order.ID).
 		WillReturnRows(rows)
 
