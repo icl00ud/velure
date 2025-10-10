@@ -17,44 +17,50 @@ jobs:
       ui-service: ${{ steps.filter.outputs.ui-service }}
       publish-order-service: ${{ steps.filter.outputs.publish-order-service }}
       process-order-service: ${{ steps.filter.outputs.process-order-service }}
+      infrastructure: ${{ steps.filter.outputs.infrastructure }}
+      shared: ${{ steps.filter.outputs.shared }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Determine changed services
         id: filter
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         with:
           filters: |
             auth-service:
-              - 'auth-service/**'
+              - 'services/auth-service/**'
             product-service:
-              - 'product-service/**'
+              - 'services/product-service/**'
             ui-service:
-              - 'ui-service/**'
+              - 'services/ui-service/**'
             publish-order-service:
-              - 'publish-order-service/**'
+              - 'services/publish-order-service/**'
             process-order-service:
-              - 'process-order-service/**'
+              - 'services/process-order-service/**'
+            infrastructure:
+              - 'infrastructure/**'
+            shared:
+              - 'shared/**'
 
   auth-service:
     needs: determine-changes
-    if: needs.determine-changes.outputs.auth-service == 'true'
+    if: needs.determine-changes.outputs.auth-service == 'true' || needs.determine-changes.outputs.shared == 'true'
     uses: ./.github/workflows/go-service.yml
     with:
       service-name: auth
-      service-path: auth-service
+      service-path: services/auth-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   product-service:
     needs: determine-changes
-    if: needs.determine-changes.outputs.product-service == 'true'
+    if: needs.determine-changes.outputs.product-service == 'true' || needs.determine-changes.outputs.shared == 'true'
     uses: ./.github/workflows/go-service.yml
     with:
       service-name: product
-      service-path: product-service
+      service-path: services/product-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -65,29 +71,61 @@ jobs:
     uses: ./.github/workflows/node-service.yml
     with:
       service-name: ui
-      service-path: ui-service
+      service-path: services/ui-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   publish-order-service:
     needs: determine-changes
-    if: needs.determine-changes.outputs.publish-order-service == 'true'
+    if: needs.determine-changes.outputs.publish-order-service == 'true' || needs.determine-changes.outputs.shared == 'true'
     uses: ./.github/workflows/go-service.yml
     with:
       service-name: publish-order
-      service-path: publish-order-service
+      service-path: services/publish-order-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   process-order-service:
     needs: determine-changes
-    if: needs.determine-changes.outputs.process-order-service == 'true'
+    if: needs.determine-changes.outputs.process-order-service == 'true' || needs.determine-changes.outputs.shared == 'true'
     uses: ./.github/workflows/go-service.yml
     with:
       service-name: process-order
-      service-path: process-order-service
+      service-path: services/process-order-service
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  infrastructure-validation:
+    needs: determine-changes
+    if: needs.determine-changes.outputs.infrastructure == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.6
+
+      - name: Terraform Format Check
+        run: |
+          cd infrastructure/terraform
+          terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: |
+          cd infrastructure/terraform
+          terraform init -backend=false
+          terraform validate
+
+      - name: Helm Lint
+        run: |
+          helm lint infrastructure/kubernetes/charts/velure-auth
+          helm lint infrastructure/kubernetes/charts/velure-product
+          helm lint infrastructure/kubernetes/charts/velure-publish-order
+          helm lint infrastructure/kubernetes/charts/velure-process-order
+          helm lint infrastructure/kubernetes/charts/velure-ui
