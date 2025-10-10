@@ -19,6 +19,8 @@ spec:
         - name: postgres
           image: postgres:14
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
           env:
             - name: POSTGRES_USER
               value: postgres
@@ -76,6 +78,8 @@ spec:
         - name: mongodb
           image: mongo:6
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
               value: velure_user
@@ -131,6 +135,8 @@ spec:
         - name: redis
           image: redis:7
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
           args: ["--appendonly", "yes"]
           ports:
             - containerPort: 6379

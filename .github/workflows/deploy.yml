@@ -40,11 +40,16 @@ jobs:
     steps:
       - name: Determine deployment parameters
         id: determine
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
+          INPUT_SERVICES: ${{ github.event.inputs.services }}
+          GITHUB_REF: ${{ github.ref }}
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
-            services="${{ github.event.inputs.services }}"
-          elif [[ "${{ github.ref }}" =~ ^refs/tags/v.* ]]; then
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "environment=$INPUT_ENVIRONMENT" >> $GITHUB_OUTPUT
+            services="$INPUT_SERVICES"
+          elif [[ "$GITHUB_REF" =~ ^refs/tags/v.* ]]; then
             echo "environment=production" >> $GITHUB_OUTPUT
             services="all"
           else

@@ -19,6 +19,8 @@ spec:
         - name: rabbitmq
           image: rabbitmq:3.13-management
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
           env:
             - name: RABBITMQ_DEFAULT_USER
               value: publisher

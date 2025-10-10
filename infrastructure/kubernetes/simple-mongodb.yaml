@@ -1,3 +1,5 @@
+# WARNING: This file contains hardcoded secrets for LOCAL DEVELOPMENT ONLY
+# DO NOT use these secrets in production environments
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,6 +18,8 @@ spec:
       containers:
       - name: mongodb
         image: mongo:6.0
+        securityContext:
+          allowPrivilegeEscalation: false
         ports:
         - containerPort: 27017
         env:

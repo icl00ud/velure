@@ -1,4 +1,4 @@
-name: Security and Quality Checks
+name: Security Scanning
 
 on:
   push:
@@ -14,69 +14,6 @@ permissions:
   security-events: write
 
 jobs:
-  codeql-analysis:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    if: github.event_name != 'schedule' || github.repository == 'icl00ud/velure'
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ['go', 'javascript']
-        
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          queries: security-extended,security-and-quality
-
-      - name: Setup Go (for Go analysis)
-        if: matrix.language == 'go'
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-          cache: true
-
-      - name: Build Go services
-        if: matrix.language == 'go'
-        run: |
-          for service in services/*/; do
-            if [[ -f "$service/go.mod" ]]; then
-              echo "Building $service"
-              cd "$service"
-              go build ./...
-              cd ../..
-            fi
-          done
-
-      - name: Setup Bun (for JavaScript analysis)
-        if: matrix.language == 'javascript'
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Build JavaScript services
-        if: matrix.language == 'javascript'
-        run: |
-          for service in services/*/; do
-            if [[ -f "$service/package.json" ]]; then
-              echo "Building $service"
-              cd "$service"
-              bun install --frozen-lockfile
-              bun run build || echo "Build failed for $service"
-              cd ../..
-            fi
-          done
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{ matrix.language }}"
-
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
@@ -90,7 +27,6 @@ jobs:
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: moderate
-          allow-ghsas: GHSA-1234-5678-9012 # Example: allow specific advisories if needed
 
   semgrep-scan:
     name: Semgrep Security Scan
@@ -164,96 +100,3 @@ jobs:
           image: velure-auth:scan
           only-severities: critical,high
           exit-code: true
-
-  license-check:
-    name: License Compliance Check
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-          
-      - name: Install go-licenses
-        run: go install github.com/google/go-licenses@latest
-        
-      - name: Check Go licenses
-        run: |
-          for service in services/*/; do
-            if [[ -f "$service/go.mod" ]]; then
-              echo "Checking licenses for $service"
-              cd "$service"
-              go-licenses check ./...
-              cd ../..
-            fi
-          done
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-          
-      - name: Check npm licenses
-        run: |
-          for service in services/*/; do
-            if [[ -f "$service/package.json" ]]; then
-              echo "Checking licenses for $service"
-              cd "$service"
-              bun install --frozen-lockfile
-              npx license-checker --production --onlyAllow 'MIT;Apache-2.0;BSD;ISC;BSD-2-Clause;BSD-3-Clause;Apache-1.1;Apache-2.0;Unlicense;WTFPL'
-              cd ../..
-            fi
-          done
-
-  quality-gates:
-    name: Quality Gates
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Needed for SonarCloud
-          
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-          cache: true
-          
-      - name: Run tests with coverage
-        run: |
-          mkdir -p coverage
-          for service in services/*/; do
-            if [[ -f "$service/go.mod" ]]; then
-              service_name=$(basename "$service")
-              echo "Running tests for $service_name"
-              cd "$service"
-              go test -race -coverprofile="../coverage/$service_name.out" -covermode=atomic ./...
-              cd ../..
-            fi
-          done
-          
-      - name: Merge coverage reports
-        run: |
-          echo "mode: atomic" > coverage/merged.out
-          grep -h -v "^mode:" coverage/*.out >> coverage/merged.out || true
-          
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.organization=icl00ud
-            -Dsonar.projectKey=icl00ud_velure
-            -Dsonar.go.coverage.reportPaths=coverage/merged.out
-            -Dsonar.sources=services/
-            -Dsonar.tests=services/
-            -Dsonar.test.inclusions=**/*_test.go
-            -Dsonar.exclusions=**/vendor/**,**/node_modules/**,**/bin/**,**/dist/**

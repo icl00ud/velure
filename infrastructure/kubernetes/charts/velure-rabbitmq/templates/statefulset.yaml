@@ -18,6 +18,8 @@ spec:
         - name: rabbitmq
           image: "{{ .Values.image.repository }}{{ if .Values.image.tag }}:{{ .Values.image.tag }}{{ end }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
             - name: amqp
               containerPort: {{ .Values.service.amqpPort }}

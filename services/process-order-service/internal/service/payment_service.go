@@ -1,9 +1,10 @@
 package service
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"time"
 
 	"github.com/icl00ud/process-order-service/internal/model"
@@ -35,7 +36,12 @@ func (s *paymentService) Process(orderID string, amount int) error {
 		return fmt.Errorf("publish processing: %w", err)
 	}
 
-	sleepTime := time.Duration(rand.Uint32()%3+2) * time.Second
+	// Generate cryptographically secure random sleep time (2-4 seconds)
+	randomDuration, err := rand.Int(rand.Reader, big.NewInt(3))
+	if err != nil {
+		return fmt.Errorf("generate random duration: %w", err)
+	}
+	sleepTime := time.Duration(randomDuration.Int64()+2) * time.Second
 	time.Sleep(sleepTime)
 
 	compEvt := model.Event{
