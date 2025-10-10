@@ -32,14 +32,18 @@ jobs:
           cache: true
 
       - name: Install dependencies
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           go mod download
           go mod verify
 
       - name: Format check
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           if [ "$(gofmt -l . | wc -l)" -gt 0 ]; then
             echo "Code formatting issues found:"
             gofmt -l .
@@ -47,13 +51,17 @@ jobs:
           fi
 
       - name: Vet check
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           go vet ./...
 
       - name: Run tests
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           go test -v -race -coverprofile=coverage.out ./...
 
       - name: Upload coverage to Codecov
@@ -65,20 +73,26 @@ jobs:
           fail_ci_if_error: false
 
       - name: Run security scan
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
       - name: Run gosec security scanner
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
           gosec ./...
 
       - name: Build
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
       - name: Set up Docker Buildx

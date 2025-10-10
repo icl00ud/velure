@@ -39,33 +39,45 @@ jobs:
             bun-${{ runner.os }}-
 
       - name: Install dependencies
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           bun install --frozen-lockfile
 
       - name: Run type checking
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           bun run type-check || echo "Type checking failed - review required"
 
       - name: Run linting
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           bun run lint
 
       - name: Run tests
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           bun run test || echo "Tests failed or not found - review required"
 
       - name: Run security audit
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           bun audit || echo "Security issues found - review required"
 
       - name: Build
+        env:
+          SERVICE_PATH: ${{ inputs.service-path }}
         run: |
-          cd ${{ inputs.service-path }}
+          cd "$SERVICE_PATH"
           bun run build
 
       - name: Set up Docker Buildx
