@@ -1,0 +1,121 @@
+# ===========================
+# AWS Configuration
+# ===========================
+aws_region        = "us-east-1"
+availability_zone = "us-east-1a"
+
+# ===========================
+# Project Configuration
+# ===========================
+project_name = "velure"
+environment  = "production"
+
+# ===========================
+# VPC Configuration
+# ===========================
+vpc_cidr           = "10.0.0.0/16"
+public_subnet_cidr = "10.0.1.0/24"
+private_subnet_cidr = "10.0.10.0/24"
+
+# Para criar uma segunda subnet privada na mesma AZ (requisito RDS)
+# Você pode adicionar mais subnets se quiser expandir futuramente
+private_subnet_secondary_cidr = "10.0.11.0/24"
+
+# Enable VPC Flow Logs? (costs ~$0.50/GB)
+# Recomendado para produção, mas pode desabilitar para economizar
+enable_flow_logs = true
+
+# ===========================
+# EKS Configuration
+# ===========================
+cluster_version = "1.28"
+
+# Node Group Configuration
+# ATENÇÃO: t3.small é o MÍNIMO para EKS, t3.micro não é suportado
+node_instance_type = "t3.small"
+node_disk_size     = 20
+
+# Scaling
+node_min_size     = 1
+node_desired_size = 2
+node_max_size     = 2
+
+# Para economizar ainda mais, considere Spot Instances:
+# node_capacity_type = "SPOT"  # Economiza ~70%, mas pode ser interrompido
+
+# ===========================
+# RDS Configuration - Auth Service
+# ===========================
+rds_auth_allocated_storage = 20  # Free Tier: 20GB
+rds_auth_instance_class    = "db.t4g.micro"  # Free Tier
+rds_auth_database_name     = "velure_auth"
+rds_auth_username          = "postgres"
+
+# 🔐 IMPORTANTE: Altere esta senha!
+# Use um gerenciador de senhas para gerar uma senha forte
+# Exemplo: openssl rand -base64 32
+rds_auth_password = "CHANGE_ME_AUTH_PASSWORD_HERE"
+
+# ===========================
+# RDS Configuration - Orders Service
+# (Compartilhado entre publish-order e process-order)
+# ===========================
+rds_orders_allocated_storage = 20
+rds_orders_instance_class    = "db.t4g.micro"
+rds_orders_database_name     = "velure_orders"
+rds_orders_username          = "postgres"
+
+# 🔐 IMPORTANTE: Altere esta senha!
+rds_orders_password = "CHANGE_ME_ORDERS_PASSWORD_HERE"
+
+# ===========================
+# RDS Engine Version
+# ===========================
+rds_engine_version = "16.3"  # PostgreSQL 16.3
+
+# ===========================
+# Tags Comuns
+# ===========================
+# Todas as tags serão aplicadas a todos os recursos
+# Útil para cost tracking e organização
+tags = {
+  Project     = "velure"
+  Environment = "production"
+  ManagedBy   = "terraform"
+  Owner       = "seu-nome-aqui"
+  CostCenter  = "personal-project"
+}
+
+# ===========================
+# Observações Importantes
+# ===========================
+#
+# 1. CUSTOS:
+#    - EKS Cluster: $72/mês
+#    - 2x t3.small: ~$30/mês
+#    - 1x NAT Gateway: ~$32/mês + data transfer
+#    - RDS Free Tier: $0 (primeiro ano, 750h/mês)
+#    - Total: ~$140-150/mês
+#
+# 2. FREE TIER RDS:
+#    - db.t4g.micro: 750h/mês (suficiente para 1 instância 24/7)
+#    - 20GB storage
+#    - Se você tiver 2 instâncias, apenas uma estará no Free Tier
+#
+# 3. SINGLE AZ:
+#    - Esta configuração usa apenas 1 Availability Zone
+#    - Não é recomendado para produção real
+#    - Economiza ~$64/mês em NAT Gateways
+#
+# 4. SEGURANÇA:
+#    - Nunca commite este arquivo com senhas reais
+#    - Use um gerenciador de senhas
+#    - Considere AWS Secrets Manager + External Secrets Operator
+#
+# 5. MONGODB:
+#    - Você já tem MongoDB no Atlas
+#    - Não incluímos DocumentDB para economizar custos
+#
+# 6. REDIS & RABBITMQ:
+#    - Serão deployados IN-CLUSTER via Helm
+#    - Não usamos ElastiCache ou Amazon MQ para economizar
