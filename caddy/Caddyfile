@@ -83,9 +83,6 @@ velure.local {
 			
 			# Headers para preservar client info
 			header_up X-Real-IP {remote_host}
-			header_up X-Forwarded-For {remote_host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Forwarded-Host {host}
 			
 			# CORS
 			header_down Access-Control-Allow-Origin "*"
@@ -110,9 +107,6 @@ velure.local {
 			health_status 2xx
 			
 			header_up X-Real-IP {remote_host}
-			header_up X-Forwarded-For {remote_host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Forwarded-Host {host}
 			
 			header_down Access-Control-Allow-Origin "*"
 			header_down Access-Control-Allow-Credentials "true"
@@ -126,7 +120,7 @@ velure.local {
 	@order_routes path /api/order/*
 	handle @order_routes {
 		uri strip_prefix /api/order
-		reverse_proxy publish-order-service:3030 {
+		reverse_proxy publish-order-service:8080 {
 			health_uri /health
 			health_interval 10s
 			health_timeout 5s
@@ -136,9 +130,6 @@ velure.local {
 			flush_interval -1
 			
 			header_up X-Real-IP {remote_host}
-			header_up X-Forwarded-For {remote_host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Forwarded-Host {host}
 			
 			header_down Access-Control-Allow-Origin "*"
 			header_down Access-Control-Allow-Credentials "true"
@@ -156,16 +147,13 @@ velure.local {
 
 	# Frontend - UI Service (SPA)
 	handle /* {
-		reverse_proxy ui-service:80 {
-			health_uri /
+		reverse_proxy ui-service:8080 {
+			health_uri /health
 			health_interval 30s
 			health_timeout 5s
 			health_status 2xx
 			
 			header_up X-Real-IP {remote_host}
-			header_up X-Forwarded-For {remote_host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Forwarded-Host {host}
 		}
 	}
 
