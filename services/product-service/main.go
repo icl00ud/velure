@@ -8,13 +8,16 @@ import (
 
 	"product-service/internal/config"
 	"product-service/internal/handlers"
+	"product-service/internal/middleware"
 	"product-service/internal/repository"
 	"product-service/internal/services"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -75,9 +78,13 @@ func main() {
 		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
+	app.Use(middleware.PrometheusMiddleware())
 
 	// Routes
 	api := app.Group("/")
+
+	// Prometheus metrics endpoint
+	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
 
 	// Health routes
 	api.Get("/health", healthHandler.Check)
@@ -91,6 +98,7 @@ func main() {
 	products.Get("/getProductsCount", handler.GetProductsCount)
 	products.Get("/categories", handler.GetCategories)
 	products.Post("/", handler.CreateProduct)
+	products.Post("/updateQuantity", handler.UpdateProductQuantity)
 	products.Delete("/deleteProductsByName/:name", handler.DeleteProductsByName)
 	products.Delete("/deleteProductById/:id", handler.DeleteProductById)
 
