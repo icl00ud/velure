@@ -61,7 +61,7 @@ const ProductCatalog = () => {
     const matchesFilter =
       filterBy === "all" ||
       (filterBy === "on-sale" && product.price) ||
-      (filterBy === "in-stock" && product.disponibility);
+      (filterBy === "in-stock" && product.quantity > 0);
     return matchesSearch && matchesFilter;
   });
 
@@ -243,7 +243,7 @@ const ProductCatalog = () => {
                             className={`h-4 w-4 ${favorites.includes(parseInt(product._id)) ? "fill-current" : ""}`}
                           />
                         </Button>
-                        {!product.disponibility && (
+                        {product.quantity === 0 && (
                           <div className="absolute inset-0 bg-background/80 rounded-t-lg flex items-center justify-center">
                             <Badge variant="destructive">Sem Estoque</Badge>
                           </div>
@@ -289,9 +289,9 @@ const ProductCatalog = () => {
                             <div className="font-bold text-primary">
                               ${product.price.toFixed(2)}
                             </div>
-                            {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
+                            {product.quantity < 10 && product.quantity > 0 && (
                               <div className="text-xs text-orange-500">
-                                Apenas {product.quantity_warehouse} restantes
+                                Apenas {product.quantity} restantes
                               </div>
                             )}
                           </div>
@@ -299,7 +299,7 @@ const ProductCatalog = () => {
                             size="sm"
                             className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
                             onClick={() => handleAdicionarToCart(product)}
-                            disabled={!product.disponibility || product.quantity_warehouse === 0}
+                            disabled={product.quantity === 0}
                           >
                             <ShoppingCart className="h-3 w-3 mr-1" />
                             {(() => {
@@ -365,10 +365,10 @@ const ProductCatalog = () => {
                             <span className="text-sm font-medium ml-1">{product.rating}</span>
                           </div>
                           <span className="text-sm text-muted-foreground">(avaliações)</span>
-                          {!product.disponibility && (
+                          {product.quantity === 0 && (
                             <Badge variant="destructive">Sem estoque</Badge>
                           )}
-                          {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
+                          {product.quantity < 10 && product.quantity > 0 && (
                             <Badge variant="outline" className="text-orange-500">
                               Estoque baixo
                             </Badge>
@@ -399,16 +399,16 @@ const ProductCatalog = () => {
                             <div className="text-xl font-bold text-primary">
                               ${product.price.toFixed(2)}
                             </div>
-                            {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
+                            {product.quantity < 10 && product.quantity > 0 && (
                               <span className="text-sm text-orange-500">
-                                Apenas {product.quantity_warehouse} restantes
+                                Apenas {product.quantity} restantes
                               </span>
                             )}
                           </div>
                           <Button
                             className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
                             onClick={() => handleAdicionarToCart(product)}
-                            disabled={!product.disponibility || product.quantity_warehouse === 0}
+                            disabled={product.quantity === 0}
                           >
                             <ShoppingCart className="h-4 w-4 mr-2" />
                             {(() => {

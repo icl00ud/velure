@@ -228,7 +228,7 @@ const ProductList = () => {
                           15% OFF
                         </Badge>
                       )}
-                      {!product.disponibility && (
+                      {product.quantity === 0 && (
                         <div className="absolute inset-0 bg-background/90 backdrop-blur-sm rounded-t-lg flex items-center justify-center">
                           <Badge variant="secondary" className="text-base px-4 py-2">Sem Estoque</Badge>
                         </div>
@@ -283,18 +283,18 @@ const ProductList = () => {
                             </span>
                           )}
                         </div>
-                        {product.quantity_warehouse < 10 && product.quantity_warehouse > 0 && (
+                        {product.quantity < 10 && product.quantity > 0 && (
                           <div className="flex items-center gap-1">
                             <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
                             <span className="text-xs font-medium text-orange-600">
-                              Apenas {product.quantity_warehouse} em estoque
+                              Apenas {product.quantity} em estoque
                             </span>
                           </div>
                         )}
                         <Button
                           size="sm"
                           onClick={() => handleAddToCart(product)}
-                          disabled={!product.disponibility}
+                          disabled={product.quantity === 0}
                           className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium"
                         >
                           <ShoppingCart className="h-4 w-4 mr-2" />

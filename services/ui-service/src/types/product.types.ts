@@ -5,8 +5,7 @@ export interface Product {
   price: number;
   rating: number;
   category?: string;
-  disponibility: boolean;
-  quantity_warehouse: number;
+  quantity: number;
   images: string[];
   dimensions: {
     height?: number;

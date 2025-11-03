@@ -158,7 +158,7 @@ const Cart = () => {
                               {item.product.brand || "Marca"} •{" "}
                               {item.product.category || "Categoria"}
                             </p>
-                            {!item.product.disponibility && (
+                            {item.product.quantity === 0 && (
                               <p className="text-sm text-destructive mt-1">Sem estoque</p>
                             )}
                           </div>
