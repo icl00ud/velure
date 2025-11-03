@@ -1,0 +1,200 @@
+# Velure Datastores - Unified Configuration
+# This chart deploys MongoDB, Redis, and RabbitMQ for local/dev Kubernetes environments
+# For production, use managed services (DocumentDB, ElastiCache, Amazon MQ)
+
+# MongoDB Configuration
+mongodb:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    rootUser: admin
+    rootPassword: "admin_password"
+    usernames:
+      - productuser
+    passwords:
+      - "product_password"
+    databases:
+      - productdb
+
+  persistence:
+    enabled: true
+    storageClass: "gp3"
+    size: 10Gi
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: datastores
+
+# Redis Configuration
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: "redis_password"
+
+  master:
+    persistence:
+      enabled: true
+      storageClass: "gp3"
+      size: 5Gi
+
+    resources:
+      limits:
+        cpu: 300m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: datastores
+
+# RabbitMQ Configuration
+rabbitmq:
+  enabled: true
+  auth:
+    username: admin
+    password: "admin_password"
+    erlangCookie: "secretcookie123456"
+
+  # RabbitMQ users for services
+  extraConfiguration: |-
+    default_vhost = /
+    default_user = admin
+    default_pass = admin_password
+
+  persistence:
+    enabled: true
+    storageClass: "gp3"
+    size: 8Gi
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      namespace: datastores
+
+  # Enable management plugin
+  plugins: "rabbitmq_management rabbitmq_prometheus"
+
+  # Load definitions (exchanges, queues, users)
+  loadDefinition:
+    enabled: true
+    existingSecret: rabbitmq-load-definition
+
+  extraSecrets:
+    rabbitmq-load-definition:
+      load_definition.json: |
+        {
+          "users": [
+            {
+              "name": "admin",
+              "password": "admin_password",
+              "tags": "administrator"
+            },
+            {
+              "name": "publisher-order",
+              "password": "publisher_password",
+              "tags": "management"
+            },
+            {
+              "name": "process-payment",
+              "password": "process_password",
+              "tags": "management"
+            }
+          ],
+          "vhosts": [
+            {
+              "name": "/"
+            }
+          ],
+          "permissions": [
+            {
+              "user": "admin",
+              "vhost": "/",
+              "configure": ".*",
+              "write": ".*",
+              "read": ".*"
+            },
+            {
+              "user": "publisher-order",
+              "vhost": "/",
+              "configure": "orders.*",
+              "write": "orders.*",
+              "read": "orders.*"
+            },
+            {
+              "user": "process-payment",
+              "vhost": "/",
+              "configure": "orders.*",
+              "write": "orders.*",
+              "read": "orders.*"
+            }
+          ],
+          "exchanges": [
+            {
+              "name": "orders",
+              "vhost": "/",
+              "type": "topic",
+              "durable": true,
+              "auto_delete": false
+            }
+          ],
+          "queues": [
+            {
+              "name": "process-order-queue",
+              "vhost": "/",
+              "durable": true,
+              "auto_delete": false,
+              "arguments": {}
+            },
+            {
+              "name": "publish-order-status-updates",
+              "vhost": "/",
+              "durable": true,
+              "auto_delete": false,
+              "arguments": {}
+            }
+          ],
+          "bindings": [
+            {
+              "source": "orders",
+              "vhost": "/",
+              "destination": "process-order-queue",
+              "destination_type": "queue",
+              "routing_key": "order.created",
+              "arguments": {}
+            },
+            {
+              "source": "orders",
+              "vhost": "/",
+              "destination": "publish-order-status-updates",
+              "destination_type": "queue",
+              "routing_key": "order.status.*",
+              "arguments": {}
+            }
+          ]
+        }

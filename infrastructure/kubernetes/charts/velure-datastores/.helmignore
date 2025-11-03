@@ -1,0 +1,13 @@
+# Ignore downloaded dependencies
+charts/
+Chart.lock
+
+# Development files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
