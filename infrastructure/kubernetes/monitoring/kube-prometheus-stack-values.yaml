@@ -1,0 +1,305 @@
+# kube-prometheus-stack values for Velure
+# Prometheus + Grafana + Alertmanager
+
+# Prometheus Configuration
+prometheus:
+  enabled: true
+
+  prometheusSpec:
+    # Retention period
+    retention: 15d
+    retentionSize: "20GB"
+
+    # Storage
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp3
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 25Gi
+
+    # Resources
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+
+    # Scrape interval
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+
+    # ServiceMonitor selector (scrape all namespaces)
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+
+    # PodMonitor selector
+    podMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelector: {}
+    podMonitorNamespaceSelector: {}
+
+    # External labels
+    externalLabels:
+      cluster: velure-prod
+      environment: production
+
+    # Additional scrape configs for custom targets
+    additionalScrapeConfigs: []
+
+# Grafana Configuration
+grafana:
+  enabled: true
+
+  adminPassword: "admin"  # CHANGE IN PRODUCTION!
+
+  # Persistence
+  persistence:
+    enabled: true
+    storageClassName: gp3
+    size: 10Gi
+
+  # Resources
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Service
+  service:
+    type: LoadBalancer
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+
+  # Datasources
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://{{ .Release.Name }}-prometheus:9090
+          access: proxy
+          isDefault: true
+          editable: false
+
+  # Dashboard providers
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'velure-dashboards'
+          orgId: 1
+          folder: 'Velure'
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/velure
+
+  # Import dashboards
+  dashboardsConfigMaps:
+    velure: "velure-grafana-dashboards"
+
+  # Grafana.ini configuration
+  grafana.ini:
+    server:
+      root_url: "%(protocol)s://%(domain)s/grafana"
+    analytics:
+      check_for_updates: false
+    security:
+      admin_user: admin
+      admin_password: admin
+    auth.anonymous:
+      enabled: false
+
+# Alertmanager Configuration
+alertmanager:
+  enabled: true
+
+  alertmanagerSpec:
+    # Storage
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: gp3
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+    # Resources
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+  # Alertmanager config
+  config:
+    global:
+      resolve_timeout: 5m
+
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+      receiver: 'null'
+      routes:
+        - match:
+            alertname: Watchdog
+          receiver: 'null'
+
+    receivers:
+      - name: 'null'
+
+    # Add Slack, PagerDuty, etc. here
+    # receivers:
+    #   - name: 'slack'
+    #     slack_configs:
+    #       - api_url: 'YOUR_SLACK_WEBHOOK'
+    #         channel: '#alerts'
+    #         title: 'Alert: {{ .GroupLabels.alertname }}'
+
+# Node Exporter
+nodeExporter:
+  enabled: true
+
+# Kube State Metrics
+kubeStateMetrics:
+  enabled: true
+
+# Prometheus Operator
+prometheusOperator:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# Default rules (alerts)
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: false
+    configReloaders: true
+    general: true
+    k8s: true
+    kubeApiserverAvailability: true
+    kubeApiserverSlos: true
+    kubelet: true
+    kubeProxy: true
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeScheduler: true
+    kubeStateMetrics: true
+    network: true
+    node: true
+    nodeExporterAlerting: true
+    nodeExporterRecording: true
+    prometheus: true
+    prometheusOperator: true
+
+# Additional custom PrometheusRules
+additionalPrometheusRulesMap:
+  velure-alerts:
+    groups:
+      - name: velure.auth
+        interval: 30s
+        rules:
+          - alert: HighLoginFailureRate
+            expr: rate(auth_login_attempts_total{status="failure"}[5m]) > 10
+            for: 2m
+            labels:
+              severity: warning
+              service: auth
+            annotations:
+              summary: "Alta taxa de falhas de login"
+              description: "Mais de 10 falhas de login por segundo nos últimos 5 minutos"
+
+          - alert: AuthServiceDown
+            expr: up{job="velure-auth"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: auth
+            annotations:
+              summary: "Auth service está down"
+              description: "O serviço de autenticação não está respondendo"
+
+      - name: velure.product
+        interval: 30s
+        rules:
+          - alert: LowCacheHitRate
+            expr: |
+              rate(product_cache_hits_total[5m]) /
+              (rate(product_cache_hits_total[5m]) + rate(product_cache_misses_total[5m])) < 0.5
+            for: 5m
+            labels:
+              severity: warning
+              service: product
+            annotations:
+              summary: "Cache hit rate baixo"
+              description: "Taxa de cache hit abaixo de 50% nos últimos 5 minutos"
+
+          - alert: ProductServiceDown
+            expr: up{job="velure-product"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: product
+            annotations:
+              summary: "Product service está down"
+
+      - name: velure.orders
+        interval: 30s
+        rules:
+          - alert: HighPaymentFailureRate
+            expr: |
+              rate(process_order_payment_attempts_total{result="failure"}[5m]) /
+              rate(process_order_payment_attempts_total[5m]) > 0.1
+            for: 3m
+            labels:
+              severity: warning
+              service: orders
+            annotations:
+              summary: "Alta taxa de falhas de pagamento"
+              description: "Mais de 10% dos pagamentos falhando"
+
+          - alert: OrderProcessingErrors
+            expr: rate(process_order_errors_total[5m]) > 5
+            for: 2m
+            labels:
+              severity: warning
+              service: orders
+            annotations:
+              summary: "Erros no processamento de pedidos"
+
+          - alert: RabbitMQQueueGrowing
+            expr: process_order_queue_size > 100
+            for: 5m
+            labels:
+              severity: warning
+              service: orders
+            annotations:
+              summary: "Fila de pedidos crescendo"
+              description: "Mais de 100 mensagens na fila"
