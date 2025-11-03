@@ -1,0 +1,103 @@
+# Prometheus Configuration for Velure Microservices
+# Coleta métricas de todos os serviços da aplicação
+
+global:
+  scrape_interval: 15s      # Coleta métricas a cada 15 segundos
+  evaluation_interval: 15s  # Avalia regras a cada 15 segundos
+  scrape_timeout: 10s
+  external_labels:
+    cluster: 'velure-local'
+    environment: 'development'
+
+# Configuração de scraping dos serviços
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Auth Service
+  - job_name: 'auth-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['auth-service:3020']
+        labels:
+          service: 'auth-service'
+          team: 'authentication'
+
+  # Product Service
+  - job_name: 'product-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['product-service:3010']
+        labels:
+          service: 'product-service'
+          team: 'catalog'
+
+  # Publish Order Service
+  - job_name: 'publish-order-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['publish-order-service:8080']
+        labels:
+          service: 'publish-order-service'
+          team: 'orders'
+
+  # Process Order Service
+  - job_name: 'process-order-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['process-order-service:8081']
+        labels:
+          service: 'process-order-service'
+          team: 'orders'
+
+  # PostgreSQL (se exportar métricas)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+        labels:
+          service: 'postgresql'
+          team: 'infrastructure'
+
+  # MongoDB (se exportar métricas)
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongodb:27017']
+        labels:
+          service: 'mongodb'
+          team: 'infrastructure'
+
+  # Redis (se exportar métricas)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+        labels:
+          service: 'redis'
+          team: 'infrastructure'
+
+  # RabbitMQ Management Metrics
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']
+        labels:
+          service: 'rabbitmq'
+          team: 'infrastructure'
+
+  # Node Exporter - Host metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'node-exporter'
+          team: 'infrastructure'
+
+  # cAdvisor - Container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          service: 'cadvisor'
+          team: 'infrastructure'
