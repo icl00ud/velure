@@ -4,17 +4,27 @@ import { Rate } from 'k6/metrics';
 
 const errorRate = new Rate('errors');
 
+// Environment configuration
+// Can be set via: k6 run -e ORDER_URL=https://velure.local/api/order publish-order-service-test.js
+const ORDER_URL = __ENV.ORDER_URL || __ENV.BASE_URL || 'http://localhost:3030';
+const WARMUP_DURATION = __ENV.WARMUP_DURATION || '30s';
+const TEST_DURATION = __ENV.TEST_DURATION || '5s';
+
+console.log(`🎯 Target URL: ${ORDER_URL}`);
+console.log(`⏱️  Warmup: ${WARMUP_DURATION}, Test stages: ${TEST_DURATION} each`);
+
 export const options = {
   stages: [
-    { duration: '5s', target: 10 },   // Ramp up to 10 users
-    { duration: '5s', target: 50 },   // Ramp up to 50 users
-    { duration: '5s', target: 100 },  // Ramp up to 100 users
-    { duration: '5s', target: 200 },  // Ramp up to 200 users
-    { duration: '5s', target: 500 },  // Ramp up to 500 users
-    { duration: '5s', target: 1000 }, // Peak load
-    { duration: '5s', target: 500 },  // Ramp down
-    { duration: '5s', target: 100 },  // Ramp down
-    { duration: '5s', target: 0 },    // Ramp down to 0
+    { duration: WARMUP_DURATION, target: 5 },    // Warmup phase
+    { duration: TEST_DURATION, target: 10 },     // Ramp up to 10 users
+    { duration: TEST_DURATION, target: 50 },     // Ramp up to 50 users
+    { duration: TEST_DURATION, target: 100 },    // Ramp up to 100 users
+    { duration: TEST_DURATION, target: 200 },    // Ramp up to 200 users
+    { duration: TEST_DURATION, target: 500 },    // Ramp up to 500 users
+    { duration: TEST_DURATION, target: 1000 },   // Peak load
+    { duration: TEST_DURATION, target: 500 },    // Ramp down
+    { duration: TEST_DURATION, target: 100 },    // Ramp down
+    { duration: TEST_DURATION, target: 0 },      // Ramp down to 0
   ],
   thresholds: {
     http_req_duration: ['p(95)<2000'], // 95% of requests must complete below 2000ms
@@ -22,7 +32,7 @@ export const options = {
   },
 };
 
-const BASE_URL = 'http://localhost:3030';
+const BASE_URL = ORDER_URL;
 
 export default function () {
   const scenarios = [

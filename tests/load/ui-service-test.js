@@ -4,17 +4,27 @@ import { Rate } from 'k6/metrics';
 
 const errorRate = new Rate('errors');
 
+// Environment configuration
+// Can be set via: k6 run -e UI_URL=https://velure.local ui-service-test.js
+const UI_URL = __ENV.UI_URL || __ENV.BASE_URL || 'http://localhost:80';
+const WARMUP_DURATION = __ENV.WARMUP_DURATION || '30s';
+const TEST_DURATION = __ENV.TEST_DURATION || '15s';
+
+console.log(`🎯 Target URL: ${UI_URL}`);
+console.log(`⏱️  Warmup: ${WARMUP_DURATION}, Test stages: ${TEST_DURATION} each`);
+
 export const options = {
   stages: [
-    { duration: '15s', target: 15 },   // Ramp up to 15 users
-    { duration: '15s', target: 40 },   // Ramp up to 40 users
-    { duration: '15s', target: 80 },   // Ramp up to 80 users
-    { duration: '15s', target: 120 },  // Ramp up to 120 users
-    { duration: '15s', target: 180 },  // Ramp up to 180 users
-    { duration: '15s', target: 250 },  // Peak load
-    { duration: '15s', target: 150 },  // Ramp down
-    { duration: '15s', target: 75 },   // Ramp down
-    { duration: '15s', target: 0 },    // Ramp down to 0
+    { duration: WARMUP_DURATION, target: 10 },   // Warmup phase
+    { duration: TEST_DURATION, target: 15 },     // Ramp up to 15 users
+    { duration: TEST_DURATION, target: 40 },     // Ramp up to 40 users
+    { duration: TEST_DURATION, target: 80 },     // Ramp up to 80 users
+    { duration: TEST_DURATION, target: 120 },    // Ramp up to 120 users
+    { duration: TEST_DURATION, target: 180 },    // Ramp up to 180 users
+    { duration: TEST_DURATION, target: 250 },    // Peak load
+    { duration: TEST_DURATION, target: 150 },    // Ramp down
+    { duration: TEST_DURATION, target: 75 },     // Ramp down
+    { duration: TEST_DURATION, target: 0 },      // Ramp down to 0
   ],
   thresholds: {
     http_req_duration: ['p(95)<3000'], // 95% of requests must complete below 3000ms
@@ -22,7 +32,7 @@ export const options = {
   },
 };
 
-const BASE_URL = 'http://localhost:80'; // Adjust port based on your UI service config
+const BASE_URL = UI_URL;
 
 export default function () {
   const scenarios = [

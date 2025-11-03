@@ -4,17 +4,27 @@ import { Rate } from 'k6/metrics';
 
 const errorRate = new Rate('errors');
 
+// Environment configuration
+// Can be set via: k6 run -e PRODUCT_URL=https://velure.local/api/product product-service-test.js
+const PRODUCT_URL = __ENV.PRODUCT_URL || __ENV.BASE_URL || 'http://localhost:3010';
+const WARMUP_DURATION = __ENV.WARMUP_DURATION || '30s';
+const TEST_DURATION = __ENV.TEST_DURATION || '15s';
+
+console.log(`🎯 Target URL: ${PRODUCT_URL}`);
+console.log(`⏱️  Warmup: ${WARMUP_DURATION}, Test stages: ${TEST_DURATION} each`);
+
 export const options = {
   stages: [
-    { duration: '15s', target: 20 },   // Ramp up to 20 users
-    { duration: '15s', target: 50 },   // Ramp up to 50 users
-    { duration: '15s', target: 100 },  // Ramp up to 100 users
-    { duration: '15s', target: 200 },  // Ramp up to 200 users
-    { duration: '15s', target: 300 },  // Ramp up to 300 users
-    { duration: '15s', target: 400 },  // Peak load
-    { duration: '15s', target: 200 },  // Ramp down
-    { duration: '15s', target: 100 },  // Ramp down
-    { duration: '15s', target: 0 },    // Ramp down to 0
+    { duration: WARMUP_DURATION, target: 10 },   // Warmup phase
+    { duration: TEST_DURATION, target: 20 },     // Ramp up to 20 users
+    { duration: TEST_DURATION, target: 50 },     // Ramp up to 50 users
+    { duration: TEST_DURATION, target: 100 },    // Ramp up to 100 users
+    { duration: TEST_DURATION, target: 200 },    // Ramp up to 200 users
+    { duration: TEST_DURATION, target: 300 },    // Ramp up to 300 users
+    { duration: TEST_DURATION, target: 400 },    // Peak load
+    { duration: TEST_DURATION, target: 200 },    // Ramp down
+    { duration: TEST_DURATION, target: 100 },    // Ramp down
+    { duration: TEST_DURATION, target: 0 },      // Ramp down to 0
   ],
   thresholds: {
     http_req_duration: ['p(95)<1000'], // 95% of requests must complete below 1000ms
@@ -22,7 +32,7 @@ export const options = {
   },
 };
 
-const BASE_URL = 'http://localhost:3010';
+const BASE_URL = PRODUCT_URL;
 
 export function setup() {
   // Create some test products first
