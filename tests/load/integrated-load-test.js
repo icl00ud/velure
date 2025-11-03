@@ -8,17 +8,35 @@ const productRequests = new Counter('product_requests');
 const orderRequests = new Counter('order_requests');
 const uiRequests = new Counter('ui_requests');
 
+// Environment configuration
+// Can be set via: k6 run -e BASE_URL=https://velure.local integrated-load-test.js
+const BASE_URL = __ENV.BASE_URL || 'http://localhost';
+const AUTH_URL = __ENV.AUTH_URL || `${BASE_URL}:3020`;
+const PRODUCT_URL = __ENV.PRODUCT_URL || `${BASE_URL}:3010`;
+const ORDER_URL = __ENV.ORDER_URL || `${BASE_URL}:3030`;
+const UI_URL = __ENV.UI_URL || `${BASE_URL}:80`;
+const WARMUP_DURATION = __ENV.WARMUP_DURATION || '30s';
+const TEST_DURATION = __ENV.TEST_DURATION || '15s';
+
+console.log(`🎯 Target URLs:`);
+console.log(`   Auth:    ${AUTH_URL}`);
+console.log(`   Product: ${PRODUCT_URL}`);
+console.log(`   Order:   ${ORDER_URL}`);
+console.log(`   UI:      ${UI_URL}`);
+console.log(`⏱️  Warmup: ${WARMUP_DURATION}, Test stages: ${TEST_DURATION} each`);
+
 export const options = {
   stages: [
-    { duration: '15s', target: 25 },   // Ramp up to 25 users
-    { duration: '15s', target: 75 },   // Ramp up to 75 users
-    { duration: '15s', target: 150 },  // Ramp up to 150 users
-    { duration: '15s', target: 250 },  // Ramp up to 250 users
-    { duration: '15s', target: 400 },  // Ramp up to 400 users
-    { duration: '15s', target: 500 },  // Peak load
-    { duration: '15s', target: 300 },  // Ramp down
-    { duration: '15s', target: 150 },  // Ramp down
-    { duration: '15s', target: 0 },    // Ramp down to 0
+    { duration: WARMUP_DURATION, target: 10 },   // Warmup phase
+    { duration: TEST_DURATION, target: 25 },     // Ramp up to 25 users
+    { duration: TEST_DURATION, target: 75 },     // Ramp up to 75 users
+    { duration: TEST_DURATION, target: 150 },    // Ramp up to 150 users
+    { duration: TEST_DURATION, target: 250 },    // Ramp up to 250 users
+    { duration: TEST_DURATION, target: 400 },    // Ramp up to 400 users
+    { duration: TEST_DURATION, target: 500 },    // Peak load
+    { duration: TEST_DURATION, target: 300 },    // Ramp down
+    { duration: TEST_DURATION, target: 150 },    // Ramp down
+    { duration: TEST_DURATION, target: 0 },      // Ramp down to 0
   ],
   thresholds: {
     http_req_duration: ['p(95)<2000'], // 95% of requests must complete below 2000ms
@@ -31,10 +49,10 @@ export const options = {
 };
 
 const services = {
-  auth: 'http://localhost:3020',
-  product: 'http://localhost:3010',
-  order: 'http://localhost:3030',
-  ui: 'http://localhost:80'
+  auth: AUTH_URL,
+  product: PRODUCT_URL,
+  order: ORDER_URL,
+  ui: UI_URL
 };
 
 let authToken = '';
