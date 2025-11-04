@@ -82,6 +82,12 @@ variable "node_max_size" {
   default     = 2
 }
 
+variable "node_disk_size" {
+  description = "Disk size in GB for EKS nodes"
+  type        = number
+  default     = 20
+}
+
 variable "rds_instance_class" {
   description = "RDS instance class (Free Tier: db.t4g.micro or db.t3.micro)"
   type        = string

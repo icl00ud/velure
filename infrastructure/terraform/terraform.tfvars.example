@@ -21,14 +21,10 @@ private_subnet_cidr = "10.0.10.0/24"
 # Você pode adicionar mais subnets se quiser expandir futuramente
 private_subnet_secondary_cidr = "10.0.11.0/24"
 
-# Enable VPC Flow Logs? (costs ~$0.50/GB)
-# Recomendado para produção, mas pode desabilitar para economizar
-enable_flow_logs = true
-
 # ===========================
 # EKS Configuration
 # ===========================
-cluster_version = "1.28"
+eks_cluster_version = "1.28"
 
 # Node Group Configuration
 # ATENÇÃO: t3.small é o MÍNIMO para EKS, t3.micro não é suportado
@@ -44,12 +40,17 @@ node_max_size     = 2
 # node_capacity_type = "SPOT"  # Economiza ~70%, mas pode ser interrompido
 
 # ===========================
-# RDS Configuration - Auth Service
+# RDS Configuration (Comum para Auth e Orders)
 # ===========================
-rds_auth_allocated_storage = 20  # Free Tier: 20GB
-rds_auth_instance_class    = "db.t4g.micro"  # Free Tier
-rds_auth_database_name     = "velure_auth"
-rds_auth_username          = "postgres"
+rds_instance_class    = "db.t4g.micro"  # Free Tier
+rds_allocated_storage = 20              # Free Tier: 20GB
+rds_engine_version    = "16.3"          # PostgreSQL 16.3
+
+# ===========================
+# RDS Auth Service
+# ===========================
+rds_auth_db_name   = "velure_auth"
+rds_auth_username  = "postgres"
 
 # 🔐 IMPORTANTE: Altere esta senha!
 # Use um gerenciador de senhas para gerar uma senha forte
@@ -57,21 +58,14 @@ rds_auth_username          = "postgres"
 rds_auth_password = "CHANGE_ME_AUTH_PASSWORD_HERE"
 
 # ===========================
-# RDS Configuration - Orders Service
+# RDS Orders Service
 # (Compartilhado entre publish-order e process-order)
 # ===========================
-rds_orders_allocated_storage = 20
-rds_orders_instance_class    = "db.t4g.micro"
-rds_orders_database_name     = "velure_orders"
-rds_orders_username          = "postgres"
+rds_orders_db_name   = "velure_orders"
+rds_orders_username  = "postgres"
 
 # 🔐 IMPORTANTE: Altere esta senha!
 rds_orders_password = "CHANGE_ME_ORDERS_PASSWORD_HERE"
-
-# ===========================
-# RDS Engine Version
-# ===========================
-rds_engine_version = "16.3"  # PostgreSQL 16.3
 
 # ===========================
 # Tags Comuns
