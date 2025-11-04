@@ -37,18 +37,23 @@ service:
 
 ingress:
   enabled: true
-  className: "nginx"
+  className: "alb"
   annotations:
-    kubernetes.io/ingress.class: "nginx"
+    # ALB Controller annotations
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: "internet-facing"
+    alb.ingress.kubernetes.io/target-type: "ip"
+    alb.ingress.kubernetes.io/healthcheck-path: "/"
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/success-codes: "200"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
   hosts:
-    - host: velure-ui.local
+    - host: ""
       paths:
         - path: /
           pathType: Prefix
-  tls:
-    - secretName: velure-ui-tls
-      hosts:
-        - velure-ui.local
+  tls: []
 
 resources:
   limits:

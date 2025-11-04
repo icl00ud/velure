@@ -7,21 +7,20 @@ import (
 )
 
 type Product struct {
-	ID                primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Name              string             `json:"name" bson:"name" validate:"required"`
-	Description       string             `json:"description,omitempty" bson:"description"`
-	Price             float64            `json:"price" bson:"price" validate:"required"`
-	Rating            float64            `json:"rating,omitempty" bson:"rating"`
-	Category          string             `json:"category,omitempty" bson:"category"`
-	Disponibility     bool               `json:"disponibility" bson:"disponibility"`
-	QuantityWarehouse int                `json:"quantity_warehouse" bson:"quantity_warehouse"`
-	Images            []string           `json:"images" bson:"images"`
-	Dimensions        Dimensions         `json:"dimensions" bson:"dimensions"`
-	Brand             string             `json:"brand,omitempty" bson:"brand"`
-	Colors            []string           `json:"colors" bson:"colors"`
-	SKU               string             `json:"sku,omitempty" bson:"sku"`
-	DateCreated       time.Time          `json:"dt_created" bson:"dt_created"`
-	DateUpdated       time.Time          `json:"dt_updated" bson:"dt_updated"`
+	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Name        string             `json:"name" bson:"name" validate:"required"`
+	Description string             `json:"description,omitempty" bson:"description"`
+	Price       float64            `json:"price" bson:"price" validate:"required"`
+	Rating      float64            `json:"rating,omitempty" bson:"rating"`
+	Category    string             `json:"category,omitempty" bson:"category"`
+	Quantity    int                `json:"quantity" bson:"quantity"`
+	Images      []string           `json:"images" bson:"images"`
+	Dimensions  Dimensions         `json:"dimensions" bson:"dimensions"`
+	Brand       string             `json:"brand,omitempty" bson:"brand"`
+	Colors      []string           `json:"colors" bson:"colors"`
+	SKU         string             `json:"sku,omitempty" bson:"sku"`
+	DateCreated time.Time          `json:"dt_created" bson:"dt_created"`
+	DateUpdated time.Time          `json:"dt_updated" bson:"dt_updated"`
 }
 
 type Dimensions struct {
@@ -32,36 +31,34 @@ type Dimensions struct {
 }
 
 type CreateProductRequest struct {
-	Name              string     `json:"name" validate:"required"`
-	Description       string     `json:"description,omitempty"`
-	Price             float64    `json:"price" validate:"required"`
-	Rating            float64    `json:"rating,omitempty"`
-	Category          string     `json:"category,omitempty"`
-	Disponibility     bool       `json:"disponibility"`
-	QuantityWarehouse int        `json:"quantity_warehouse"`
-	Images            []string   `json:"images"`
-	Dimensions        Dimensions `json:"dimensions"`
-	Brand             string     `json:"brand,omitempty"`
-	Colors            []string   `json:"colors"`
-	SKU               string     `json:"sku,omitempty"`
+	Name        string     `json:"name" validate:"required"`
+	Description string     `json:"description,omitempty"`
+	Price       float64    `json:"price" validate:"required"`
+	Rating      float64    `json:"rating,omitempty"`
+	Category    string     `json:"category,omitempty"`
+	Quantity    int        `json:"quantity"`
+	Images      []string   `json:"images"`
+	Dimensions  Dimensions `json:"dimensions"`
+	Brand       string     `json:"brand,omitempty"`
+	Colors      []string   `json:"colors"`
+	SKU         string     `json:"sku,omitempty"`
 }
 
 type ProductResponse struct {
-	ID                string     `json:"id"`
-	Name              string     `json:"name"`
-	Description       string     `json:"description,omitempty"`
-	Price             float64    `json:"price"`
-	Rating            float64    `json:"rating,omitempty"`
-	Category          string     `json:"category,omitempty"`
-	Disponibility     bool       `json:"disponibility"`
-	QuantityWarehouse int        `json:"quantity_warehouse"`
-	Images            []string   `json:"images"`
-	Dimensions        Dimensions `json:"dimensions"`
-	Brand             string     `json:"brand,omitempty"`
-	Colors            []string   `json:"colors"`
-	SKU               string     `json:"sku,omitempty"`
-	DateCreated       time.Time  `json:"dt_created"`
-	DateUpdated       time.Time  `json:"dt_updated"`
+	ID          string     `json:"_id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description,omitempty"`
+	Price       float64    `json:"price"`
+	Rating      float64    `json:"rating,omitempty"`
+	Category    string     `json:"category,omitempty"`
+	Quantity    int        `json:"quantity"`
+	Images      []string   `json:"images"`
+	Dimensions  Dimensions `json:"dimensions"`
+	Brand       string     `json:"brand,omitempty"`
+	Colors      []string   `json:"colors"`
+	SKU         string     `json:"sku,omitempty"`
+	DateCreated time.Time  `json:"dt_created"`
+	DateUpdated time.Time  `json:"dt_updated"`
 }
 
 type CountResponse struct {
@@ -74,4 +71,9 @@ type PaginatedProductsResponse struct {
 	Page       int               `json:"page"`
 	PageSize   int               `json:"pageSize"`
 	TotalPages int               `json:"totalPages"`
+}
+
+type UpdateQuantityRequest struct {
+	ProductID      string `json:"product_id" validate:"required"`
+	QuantityChange int    `json:"quantity_change" validate:"required"`
 }
