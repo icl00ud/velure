@@ -53,6 +53,12 @@ variable "node_max_size" {
   type        = number
 }
 
+variable "node_disk_size" {
+  description = "Disk size in GB for EKS nodes"
+  type        = number
+  default     = 20
+}
+
 variable "tags" {
   description = "Common tags"
   type        = map(string)

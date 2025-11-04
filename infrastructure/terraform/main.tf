@@ -31,11 +31,11 @@ module "vpc" {
 module "security_groups" {
   source = "./modules/security-groups"
 
-  project_name  = var.project_name
-  environment   = var.environment
-  vpc_id        = module.vpc.vpc_id
-  vpc_cidr      = var.vpc_cidr
-  tags          = var.tags
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_id       = module.vpc.vpc_id
+  vpc_cidr     = var.vpc_cidr
+  tags         = var.tags
 }
 
 # EKS Module
@@ -53,6 +53,7 @@ module "eks" {
   node_desired_size      = var.node_desired_size
   node_min_size          = var.node_min_size
   node_max_size          = var.node_max_size
+  node_disk_size         = var.node_disk_size
   tags                   = var.tags
 
   depends_on = [
@@ -65,20 +66,20 @@ module "eks" {
 module "rds_auth" {
   source = "./modules/rds"
 
-  project_name         = var.project_name
-  environment          = var.environment
-  identifier           = "${var.project_name}-${var.environment}-auth"
-  database_name        = var.rds_auth_db_name
-  master_username      = var.rds_auth_username
-  master_password      = var.rds_auth_password
-  instance_class       = var.rds_instance_class
-  allocated_storage    = var.rds_allocated_storage
-  engine_version       = var.rds_engine_version
-  vpc_id               = module.vpc.vpc_id
-  subnet_ids           = module.vpc.private_subnet_ids
-  availability_zone    = var.availability_zone
-  security_group_id    = module.security_groups.rds_sg_id
-  tags                 = merge(var.tags, { Service = "auth" })
+  project_name      = var.project_name
+  environment       = var.environment
+  identifier        = "${var.project_name}-${var.environment}-auth"
+  database_name     = var.rds_auth_db_name
+  master_username   = var.rds_auth_username
+  master_password   = var.rds_auth_password
+  instance_class    = var.rds_instance_class
+  allocated_storage = var.rds_allocated_storage
+  engine_version    = var.rds_engine_version
+  vpc_id            = module.vpc.vpc_id
+  subnet_ids        = module.vpc.private_subnet_ids
+  availability_zone = var.availability_zone
+  security_group_id = module.security_groups.rds_sg_id
+  tags              = merge(var.tags, { Service = "auth" })
 
   depends_on = [
     module.vpc,
@@ -90,20 +91,20 @@ module "rds_auth" {
 module "rds_orders" {
   source = "./modules/rds"
 
-  project_name         = var.project_name
-  environment          = var.environment
-  identifier           = "${var.project_name}-${var.environment}-orders"
-  database_name        = var.rds_orders_db_name
-  master_username      = var.rds_orders_username
-  master_password      = var.rds_orders_password
-  instance_class       = var.rds_instance_class
-  allocated_storage    = var.rds_allocated_storage
-  engine_version       = var.rds_engine_version
-  vpc_id               = module.vpc.vpc_id
-  subnet_ids           = module.vpc.private_subnet_ids
-  availability_zone    = var.availability_zone
-  security_group_id    = module.security_groups.rds_sg_id
-  tags                 = merge(var.tags, { Service = "orders" })
+  project_name      = var.project_name
+  environment       = var.environment
+  identifier        = "${var.project_name}-${var.environment}-orders"
+  database_name     = var.rds_orders_db_name
+  master_username   = var.rds_orders_username
+  master_password   = var.rds_orders_password
+  instance_class    = var.rds_instance_class
+  allocated_storage = var.rds_allocated_storage
+  engine_version    = var.rds_engine_version
+  vpc_id            = module.vpc.vpc_id
+  subnet_ids        = module.vpc.private_subnet_ids
+  availability_zone = var.availability_zone
+  security_group_id = module.security_groups.rds_sg_id
+  tags              = merge(var.tags, { Service = "orders" })
 
   depends_on = [
     module.vpc,

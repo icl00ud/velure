@@ -58,7 +58,7 @@ resource "aws_db_instance" "main" {
   # Storage
   allocated_storage     = var.allocated_storage
   max_allocated_storage = var.allocated_storage + 10 # Auto-scaling limitado
-  storage_type          = "gp3" # gp3 é mais barato que gp2
+  storage_type          = "gp3"                      # gp3 é mais barato que gp2
   storage_encrypted     = true
 
   # Database
@@ -74,16 +74,16 @@ resource "aws_db_instance" "main" {
   availability_zone      = var.availability_zone
 
   # Maintenance
-  parameter_group_name   = aws_db_parameter_group.main.name
-  apply_immediately      = true
+  parameter_group_name       = aws_db_parameter_group.main.name
+  apply_immediately          = true
   auto_minor_version_upgrade = true
-  maintenance_window     = "sun:03:00-sun:04:00"
+  maintenance_window         = "sun:03:00-sun:04:00"
 
   # Backup
-  backup_retention_period = 7 # Mínimo para Free Tier
-  backup_window          = "02:00-03:00"
+  backup_retention_period  = 7 # Mínimo para Free Tier
+  backup_window            = "02:00-03:00"
   delete_automated_backups = true
-  skip_final_snapshot    = true # CUIDADO: Em produção, sempre fazer snapshot final
+  skip_final_snapshot      = true # CUIDADO: Em produção, sempre fazer snapshot final
   # final_snapshot_identifier = "${var.identifier}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
   # Monitoring

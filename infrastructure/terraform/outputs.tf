@@ -151,12 +151,12 @@ output "alb_security_group_id" {
 # ALB Controller IAM Role
 output "alb_controller_role_arn" {
   description = "ARN of IAM role for AWS Load Balancer Controller"
-  value       = module.eks.alb_controller_role_arn
+  value       = module.eks.aws_load_balancer_controller_role_arn
 }
 
-output "alb_controller_role_name" {
-  description = "Name of IAM role for AWS Load Balancer Controller"
-  value       = module.eks.alb_controller_role_name
+output "ebs_csi_driver_role_arn" {
+  description = "ARN of IAM role for EBS CSI Driver"
+  value       = module.eks.ebs_csi_driver_role_arn
 }
 
 # Kubeconfig command
@@ -168,7 +168,7 @@ output "kubeconfig_command" {
 # Quick setup commands
 output "setup_commands" {
   description = "Commands to set up kubectl and verify cluster"
-  value = <<-EOT
+  value       = <<-EOT
     # Update kubeconfig
     aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}
     

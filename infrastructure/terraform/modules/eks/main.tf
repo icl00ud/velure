@@ -47,7 +47,7 @@ resource "aws_eks_cluster" "main" {
   vpc_config {
     subnet_ids              = concat(var.private_subnet_ids, var.public_subnet_ids)
     endpoint_private_access = true
-    endpoint_public_access  = true # Necessário para acesso via kubectl
+    endpoint_public_access  = true          # Necessário para acesso via kubectl
     public_access_cidrs     = ["0.0.0.0/0"] # Restringir em produção
   }
 
@@ -122,7 +122,7 @@ resource "aws_eks_node_group" "main" {
   node_role_arn   = aws_iam_role.node.arn
   subnet_ids      = var.private_subnet_ids
   instance_types  = [var.node_instance_type]
-  disk_size       = 20 # GB - mínimo recomendado
+  disk_size       = var.node_disk_size
   capacity_type   = "ON_DEMAND" # ou "SPOT" para economizar mais
 
   scaling_config {
@@ -296,9 +296,9 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
 
 # EKS Addon - VPC CNI
 resource "aws_eks_addon" "vpc_cni" {
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "vpc-cni"
-  addon_version            = "v1.15.1-eksbuild.1" # Verificar versão compatível
+  cluster_name                = aws_eks_cluster.main.name
+  addon_name                  = "vpc-cni"
+  addon_version               = "v1.15.1-eksbuild.1" # Verificar versão compatível
   resolve_conflicts_on_update = "PRESERVE"
 
   tags = var.tags
@@ -306,9 +306,9 @@ resource "aws_eks_addon" "vpc_cni" {
 
 # EKS Addon - CoreDNS
 resource "aws_eks_addon" "coredns" {
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "coredns"
-  addon_version            = "v1.10.1-eksbuild.6" # Verificar versão compatível
+  cluster_name                = aws_eks_cluster.main.name
+  addon_name                  = "coredns"
+  addon_version               = "v1.10.1-eksbuild.6" # Verificar versão compatível
   resolve_conflicts_on_update = "PRESERVE"
 
   tags = var.tags
@@ -320,9 +320,9 @@ resource "aws_eks_addon" "coredns" {
 
 # EKS Addon - kube-proxy
 resource "aws_eks_addon" "kube_proxy" {
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "kube-proxy"
-  addon_version            = "v1.28.2-eksbuild.2" # Verificar versão compatível
+  cluster_name                = aws_eks_cluster.main.name
+  addon_name                  = "kube-proxy"
+  addon_version               = "v1.28.2-eksbuild.2" # Verificar versão compatível
   resolve_conflicts_on_update = "PRESERVE"
 
   tags = var.tags
@@ -330,10 +330,10 @@ resource "aws_eks_addon" "kube_proxy" {
 
 # EKS Addon - EBS CSI Driver
 resource "aws_eks_addon" "ebs_csi_driver" {
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "aws-ebs-csi-driver"
-  addon_version            = "v1.25.0-eksbuild.1" # Verificar versão compatível
-  service_account_role_arn = aws_iam_role.ebs_csi_driver.arn
+  cluster_name                = aws_eks_cluster.main.name
+  addon_name                  = "aws-ebs-csi-driver"
+  addon_version               = "v1.25.0-eksbuild.1" # Verificar versão compatível
+  service_account_role_arn    = aws_iam_role.ebs_csi_driver.arn
   resolve_conflicts_on_update = "PRESERVE"
 
   tags = var.tags
