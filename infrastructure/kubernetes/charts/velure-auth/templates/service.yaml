@@ -5,6 +5,12 @@ metadata:
   namespace: {{ .Values.namespace | quote }}
   labels:
     app: velure-auth
+    app.kubernetes.io/name: velure-auth
+    app.kubernetes.io/component: backend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.service.port }}"
+    prometheus.io/path: "/metrics"
 spec:
   type: {{ .Values.service.type }}
   ports:

@@ -4,6 +4,12 @@ metadata:
   name: {{ include "velure-product-chart.fullname" . }}
   labels:
     {{- include "velure-product-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/name: velure-product
+    app.kubernetes.io/component: backend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.service.port }}"
+    prometheus.io/path: "/metrics"
 spec:
   type: {{ .Values.service.type }}
   ports:

@@ -53,8 +53,6 @@ fi
 # Detectar ambiente
 KUBECTL_AVAILABLE=false
 K6_AVAILABLE=false
-KIND_AVAILABLE=false
-KIND_CLUSTER_EXISTS=false
 
 if command -v kubectl &> /dev/null && kubectl cluster-info &> /dev/null 2>&1; then
     KUBECTL_AVAILABLE=true
@@ -63,13 +61,6 @@ fi
 
 if command -v k6 &> /dev/null; then
     K6_AVAILABLE=true
-fi
-
-if command -v kind &> /dev/null; then
-    KIND_AVAILABLE=true
-    if kind get clusters 2>/dev/null | grep -q "^velure$"; then
-        KIND_CLUSTER_EXISTS=true
-    fi
 fi
 
 # Menu de opções
@@ -82,26 +73,15 @@ echo "  3) 📊 Rodar apenas Monitoramento (Grafana + Prometheus)"
 echo "  4) 🛑 Parar tudo (Docker)"
 echo "  5) 🧹 Limpar tudo (remove containers e volumes)"
 echo ""
-echo -e "${BOLD}${BLUE}━━━ Kubernetes ━━━${NC}"
+echo -e "${BOLD}${BLUE}━━━ Kubernetes (AWS EKS) ━━━${NC}"
 if [ "$KUBECTL_AVAILABLE" = true ]; then
     echo -e "  ${GREEN}✓${NC} Cluster: ${CLUSTER_NAME}"
     echo "  10) ☸️  Deploy no Kubernetes (completo)"
     echo "  11) 🗑️  Remover do Kubernetes"
     echo "  12) 📊 Ver status do Kubernetes"
-    if [ "$KIND_CLUSTER_EXISTS" = true ]; then
-        echo "  13) 🧹 Deletar cluster kind local"
-    fi
 else
     echo -e "  ${YELLOW}✗ kubectl não disponível ou cluster não conectado${NC}"
-    echo ""
-    if [ "$KIND_AVAILABLE" = true ]; then
-        echo -e "  ${GREEN}✓${NC} kind está instalado"
-        echo "  10) 🚀 Criar cluster Kubernetes local (kind) + Deploy completo"
-        echo "  11) 📖 Ver instruções para configurar Kubernetes local"
-    else
-        echo -e "  ${YELLOW}ℹ️  Deseja rodar no Kubernetes localmente?${NC}"
-        echo "  10) 📖 Ver como instalar kind (Kubernetes local)"
-    fi
+    echo "  10) 📖 Ver instruções para configurar AWS EKS"
 fi
 echo ""
 echo -e "${BOLD}${BLUE}━━━ Testes de Carga & HPA ━━━${NC}"
@@ -203,7 +183,7 @@ case $choice in
         ;;
     10)
         echo ""
-        # Quando kubectl disponível: Deploy normal
+        # Quando kubectl disponível: Deploy normal (AWS EKS)
         if [ "$KUBECTL_AVAILABLE" = true ]; then
             echo -e "${BLUE}☸️  Deploy completo no Kubernetes...${NC}"
             echo ""
@@ -215,14 +195,14 @@ case $choice in
             echo -e "${YELLOW}📦 2/4 - Deploy datastores (MongoDB, Redis, RabbitMQ)...${NC}"
             helm repo add bitnami https://charts.bitnami.com/bitnami 2>/dev/null || true
             helm repo update
-            echo -e "${YELLOW}Baixando dependências do chart...${NC}"
-            cd infrastructure/kubernetes/charts/velure-datastores
-            helm dependency build .
-            cd - > /dev/null
-            helm upgrade --install velure-datastores infrastructure/kubernetes/charts/velure-datastores -n datastores
 
-            echo -e "${YELLOW}⏳ Aguardando datastores ficarem prontos (30s)...${NC}"
-            sleep 30
+            # Usar --dependency-update para resolver dependências automaticamente
+            helm upgrade --install velure-datastores \
+              infrastructure/kubernetes/charts/velure-datastores \
+              -n datastores \
+              --dependency-update \
+              --wait \
+              --timeout=5m
 
             echo -e "${YELLOW}📦 3/4 - Deploy serviços...${NC}"
             helm upgrade --install velure-auth infrastructure/kubernetes/charts/velure-auth -n velure
@@ -236,51 +216,41 @@ case $choice in
             echo ""
             echo -e "${GREEN}✅ Deploy concluído!${NC}"
             echo ""
-            echo -e "${YELLOW}Para acessar, use port-forward:${NC}"
-            echo "  kubectl port-forward -n velure svc/velure-ui 8080:80"
-            echo ""
 
-        # Quando kind disponível mas sem cluster: Criar cluster kind + Deploy
-        elif [ "$KIND_AVAILABLE" = true ]; then
-            echo -e "${BLUE}🚀 Criando cluster Kubernetes local (kind) + Deploy completo${NC}"
-            echo ""
-            ./scripts/k8s/setup-kind-cluster.sh
-
-        # Quando nem kubectl nem kind: Mostrar instruções
+        # Quando kubectl não disponível: Mostrar instruções AWS EKS
         else
-            echo -e "${BLUE}📖 Como instalar kind (Kubernetes local)${NC}"
+            echo -e "${BLUE}📖 Instruções para Deploy no AWS EKS${NC}"
             echo ""
-            echo -e "${BOLD}kind${NC} permite rodar Kubernetes localmente usando Docker."
+            echo -e "${BOLD}Pré-requisitos:${NC}"
+            echo "  • Conta AWS configurada"
+            echo "  • terraform instalado (brew install terraform)"
+            echo "  • aws-cli instalado (brew install awscli)"
+            echo "  • kubectl instalado (brew install kubectl)"
+            echo "  • helm instalado (brew install helm)"
             echo ""
-            echo -e "${YELLOW}Instalação (macOS):${NC}"
-            echo "  brew install kind"
-            echo "  brew install kubectl"
-            echo "  brew install helm"
+            echo -e "${BOLD}Passos para Deploy:${NC}"
             echo ""
-            echo -e "${YELLOW}Instalação (Linux):${NC}"
-            echo "  # kind"
-            echo "  curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64"
-            echo "  chmod +x ./kind"
-            echo "  sudo mv ./kind /usr/local/bin/kind"
+            echo -e "${YELLOW}1. Deploy da infraestrutura AWS:${NC}"
+            echo "     cd infrastructure/terraform"
+            echo "     terraform init"
+            echo "     terraform plan"
+            echo "     terraform apply"
             echo ""
-            echo "  # kubectl"
-            echo "  curl -LO https://dl.k8s.io/release/\$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-            echo "  chmod +x kubectl"
-            echo "  sudo mv kubectl /usr/local/bin/"
+            echo -e "${YELLOW}2. Configurar kubectl para EKS:${NC}"
+            echo "     aws eks update-kubeconfig --region us-east-1 --name velure-prod"
             echo ""
-            echo "  # helm"
-            echo "  curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
+            echo -e "${YELLOW}3. Deploy completo:${NC}"
+            echo "     make eks-deploy-full"
             echo ""
-            echo -e "${YELLOW}Após instalar, execute novamente este script!${NC}"
-            echo ""
-            echo -e "${BLUE}Mais informações:${NC}"
-            echo "  https://kind.sigs.k8s.io/docs/user/quick-start/"
+            echo -e "${BOLD}Documentação completa:${NC}"
+            echo "  • docs/DEPLOY_GUIDE.md"
+            echo "  • infrastructure/terraform/README.md"
             echo ""
         fi
         ;;
     11)
         echo ""
-        # Quando kubectl disponível: Remover do K8s
+        # Remover do Kubernetes
         if [ "$KUBECTL_AVAILABLE" = true ]; then
             echo -e "${RED}⚠️  ATENÇÃO: Isso irá remover todos os recursos do Kubernetes!${NC}"
             read -p "Tem certeza? (s/n) " -n 1 -r
@@ -304,30 +274,9 @@ case $choice in
             else
                 echo -e "${BLUE}Operação cancelada${NC}"
             fi
-
-        # Quando kind disponível mas sem cluster: Mostrar instruções
         else
-            echo -e "${BLUE}📖 Instruções para Kubernetes Local (kind)${NC}"
-            echo ""
-            echo -e "${BOLD}Pré-requisitos:${NC}"
-            echo "  • Docker Desktop rodando"
-            echo "  • kind instalado (brew install kind)"
-            echo "  • kubectl instalado (brew install kubectl)"
-            echo "  • helm instalado (brew install helm)"
-            echo ""
-            echo -e "${BOLD}Como usar:${NC}"
-            echo "  1. Execute a opção 10 para criar cluster + deploy automático"
-            echo "  2. Ou siga os passos manuais:"
-            echo ""
-            echo "     # Criar cluster"
-            echo "     kind create cluster --config=infrastructure/kubernetes/kind-config.yaml"
-            echo ""
-            echo "     # Deploy completo"
-            echo "     ./scripts/k8s/setup-kind-cluster.sh"
-            echo ""
-            echo -e "${BOLD}Documentação:${NC}"
-            echo "  • https://kind.sigs.k8s.io/docs/user/quick-start/"
-            echo ""
+            echo -e "${YELLOW}❌ kubectl não disponível${NC}"
+            echo -e "${YELLOW}Configure o acesso ao cluster primeiro (opção 10)${NC}"
         fi
         echo ""
         ;;
@@ -345,39 +294,6 @@ case $choice in
         echo ""
         echo -e "${BOLD}━━━ HPAs ━━━${NC}"
         kubectl get hpa -n velure 2>/dev/null || echo "Nenhum HPA encontrado"
-        echo ""
-        ;;
-    13)
-        echo ""
-        echo -e "${BLUE}🧹 Deletar cluster kind local${NC}"
-        echo ""
-        if [ "$KIND_CLUSTER_EXISTS" = false ]; then
-            echo -e "${YELLOW}⚠️  Nenhum cluster kind 'velure' encontrado${NC}"
-            echo ""
-            if kind get clusters 2>/dev/null | grep -q .; then
-                echo -e "${YELLOW}Clusters kind disponíveis:${NC}"
-                kind get clusters
-            else
-                echo -e "${YELLOW}Nenhum cluster kind encontrado${NC}"
-            fi
-            echo ""
-        else
-            echo -e "${RED}⚠️  ATENÇÃO: Isso irá deletar completamente o cluster kind 'velure'!${NC}"
-            echo -e "${YELLOW}Todos os dados e configurações serão perdidos.${NC}"
-            echo ""
-            read -p "Tem certeza? (s/n) " -n 1 -r
-            echo ""
-            if [[ $REPLY =~ ^[Ss]$ ]]; then
-                echo -e "${YELLOW}🗑️  Deletando cluster kind 'velure'...${NC}"
-                kind delete cluster --name velure
-                echo ""
-                echo -e "${GREEN}✅ Cluster deletado com sucesso!${NC}"
-                echo ""
-                echo -e "${YELLOW}Para criar novamente, execute a opção 10${NC}"
-            else
-                echo -e "${BLUE}Operação cancelada${NC}"
-            fi
-        fi
         echo ""
         ;;
     20)
@@ -400,7 +316,7 @@ case $choice in
         read -p "Pressione ENTER para iniciar o teste..."
 
         cd tests/load
-        ./run-k8s-local.sh integrated
+        ./run-all-tests.sh
         ;;
     21)
         echo ""
@@ -425,14 +341,18 @@ case $choice in
         fi
 
         echo -e "${YELLOW}Escolha o ambiente:${NC}"
-        echo "  1) Kubernetes local"
+        echo "  1) Kubernetes (AWS EKS)"
         echo "  2) Docker local (https://velure.local)"
         read -p "Digite sua escolha: " env_choice
 
         case $env_choice in
             1)
+                if [ "$KUBECTL_AVAILABLE" = false ]; then
+                    echo -e "${RED}❌ kubectl não disponível${NC}"
+                    exit 1
+                fi
                 cd tests/load
-                ./run-k8s-local.sh integrated
+                ./run-all-tests.sh
                 ;;
             2)
                 if [ -f tests/load/.env.local ]; then

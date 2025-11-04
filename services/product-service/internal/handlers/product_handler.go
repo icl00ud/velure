@@ -143,3 +143,22 @@ func (h *ProductHandler) DeleteProductById(c *fiber.Ctx) error {
 	}
 	return c.SendStatus(fiber.StatusNoContent)
 }
+
+func (h *ProductHandler) UpdateProductQuantity(c *fiber.Ctx) error {
+	var req models.UpdateQuantityRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	if req.ProductID == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Product ID is required")
+	}
+
+	if err := h.service.UpdateProductQuantity(c.Context(), req.ProductID, req.QuantityChange); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Product quantity updated successfully",
+	})
+}

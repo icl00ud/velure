@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"velure-auth-service/internal/config"
+	"velure-auth-service/internal/metrics"
 	"velure-auth-service/internal/models"
 	"velure-auth-service/internal/repositories"
 
@@ -37,18 +38,28 @@ func NewAuthService(
 }
 
 func (s *AuthService) CreateUser(req models.CreateUserRequest) (*models.UserResponse, error) {
+	start := time.Now()
+	defer func() {
+		metrics.RegistrationDuration.Observe(time.Since(start).Seconds())
+	}()
+
 	// Check if user already exists
 	existingUser, err := s.userRepo.GetByEmail(req.Email)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		metrics.RegistrationAttempts.WithLabelValues("failure").Inc()
+		metrics.Errors.WithLabelValues("database").Inc()
 		return nil, fmt.Errorf("error checking existing user: %w", err)
 	}
 	if existingUser != nil {
+		metrics.RegistrationAttempts.WithLabelValues("conflict").Inc()
 		return nil, errors.New("user already exists")
 	}
 
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
+		metrics.RegistrationAttempts.WithLabelValues("failure").Inc()
+		metrics.Errors.WithLabelValues("internal").Inc()
 		return nil, fmt.Errorf("error hashing password: %w", err)
 	}
 
@@ -60,34 +71,51 @@ func (s *AuthService) CreateUser(req models.CreateUserRequest) (*models.UserResp
 	}
 
 	if err := s.userRepo.Create(user); err != nil {
+		metrics.RegistrationAttempts.WithLabelValues("failure").Inc()
+		metrics.Errors.WithLabelValues("database").Inc()
 		return nil, fmt.Errorf("error creating user: %w", err)
 	}
 
+	metrics.RegistrationAttempts.WithLabelValues("success").Inc()
+	metrics.TotalUsers.Inc()
 	response := user.ToResponse()
 	return &response, nil
 }
 
 func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, error) {
+	start := time.Now()
+	var status string
+	defer func() {
+		metrics.LoginDuration.WithLabelValues(status).Observe(time.Since(start).Seconds())
+		metrics.LoginAttempts.WithLabelValues(status).Inc()
+	}()
+
 	// Get user by email
 	user, err := s.userRepo.GetByEmail(req.Email)
 	if err != nil {
+		status = "failure"
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("invalid credentials")
 		}
+		metrics.Errors.WithLabelValues("database").Inc()
 		return nil, fmt.Errorf("error getting user: %w", err)
 	}
 
 	// Check password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		status = "failure"
 		return nil, errors.New("invalid credentials")
 	}
 
 	// Create or update session
 	session, err := s.updateOrCreateSession(user.ID)
 	if err != nil {
+		status = "failure"
+		metrics.Errors.WithLabelValues("internal").Inc()
 		return nil, fmt.Errorf("error creating session: %w", err)
 	}
 
+	status = "success"
 	return &models.LoginResponse{
 		AccessToken:  session.AccessToken,
 		RefreshToken: session.RefreshToken,
@@ -105,25 +133,32 @@ func (s *AuthService) ValidateAccessToken(token string) (*models.User, error) {
 	})
 
 	if err != nil || !parsedToken.Valid {
+		metrics.TokenValidations.WithLabelValues("invalid").Inc()
 		return nil, errors.New("invalid token")
 	}
 
 	userID, err := strconv.ParseUint(claims.Subject, 10, 32)
 	if err != nil {
+		metrics.TokenValidations.WithLabelValues("invalid").Inc()
 		return nil, errors.New("invalid user ID in token")
 	}
 
 	user, err := s.userRepo.GetByID(uint(userID))
 	if err != nil {
+		metrics.TokenValidations.WithLabelValues("invalid").Inc()
 		return nil, errors.New("user not found")
 	}
 
+	metrics.TokenValidations.WithLabelValues("valid").Inc()
 	return user, nil
 }
 
 func (s *AuthService) GetUsers() ([]models.UserResponse, error) {
+	metrics.UserQueries.WithLabelValues("list").Inc()
+
 	users, err := s.userRepo.GetAll()
 	if err != nil {
+		metrics.Errors.WithLabelValues("database").Inc()
 		return nil, fmt.Errorf("error getting users: %w", err)
 	}
 
@@ -150,11 +185,14 @@ func (s *AuthService) GetUsersByPage(page, pageSize int) (*models.PaginatedUsers
 }
 
 func (s *AuthService) GetUserByID(id uint) (*models.UserResponse, error) {
+	metrics.UserQueries.WithLabelValues("by_id").Inc()
+
 	user, err := s.userRepo.GetByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
 		}
+		metrics.Errors.WithLabelValues("database").Inc()
 		return nil, fmt.Errorf("error getting user: %w", err)
 	}
 
@@ -163,11 +201,14 @@ func (s *AuthService) GetUserByID(id uint) (*models.UserResponse, error) {
 }
 
 func (s *AuthService) GetUserByEmail(email string) (*models.UserResponse, error) {
+	metrics.UserQueries.WithLabelValues("by_email").Inc()
+
 	user, err := s.userRepo.GetByEmail(email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")
 		}
+		metrics.Errors.WithLabelValues("database").Inc()
 		return nil, fmt.Errorf("error getting user: %w", err)
 	}
 
@@ -176,7 +217,10 @@ func (s *AuthService) GetUserByEmail(email string) (*models.UserResponse, error)
 }
 
 func (s *AuthService) Logout(refreshToken string) error {
+	metrics.LogoutRequests.Inc()
+
 	if err := s.sessionRepo.InvalidateByRefreshToken(refreshToken); err != nil {
+		metrics.Errors.WithLabelValues("database").Inc()
 		return fmt.Errorf("error invalidating session: %w", err)
 	}
 	return nil
@@ -230,6 +274,11 @@ func (s *AuthService) updateOrCreateSession(userID uint) (*models.Session, error
 }
 
 func (s *AuthService) generateAccessToken(userID uint) (string, error) {
+	start := time.Now()
+	defer func() {
+		metrics.TokenGenerationDuration.Observe(time.Since(start).Seconds())
+	}()
+
 	claims := jwt.RegisteredClaims{
 		Subject:   strconv.FormatUint(uint64(userID), 10),
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
@@ -237,7 +286,11 @@ func (s *AuthService) generateAccessToken(userID uint) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.config.JWT.Secret))
+	tokenString, err := token.SignedString([]byte(s.config.JWT.Secret))
+	if err == nil {
+		metrics.TokenGenerations.Inc()
+	}
+	return tokenString, err
 }
 
 func (s *AuthService) generateRefreshToken(userID uint) (string, error) {

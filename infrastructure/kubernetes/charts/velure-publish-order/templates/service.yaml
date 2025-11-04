@@ -4,6 +4,12 @@ metadata:
   name: velure-publish-order
   labels:
     app: velure-publish-order
+    app.kubernetes.io/name: velure-publish-order
+    app.kubernetes.io/component: backend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.service.port }}"
+    prometheus.io/path: "/metrics"
 spec:
   type: {{ .Values.service.type }}
   ports:

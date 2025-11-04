@@ -114,22 +114,22 @@ docker-build: ## Build de todas as imagens Docker
 	@echo "🐳 Building imagens Docker..."
 	@for service in auth-service product-service publish-order-service process-order-service ui-service; do \
 		echo "Building docker image for $$service..."; \
-		cd services/$$service && docker build -t velure/$$service:latest . && cd ../..; \
+		docker build -t velure-$$service:latest ./services/$$service || exit 1; \
 	done
 	@echo "✅ Imagens Docker criadas."
 
 docker-push: ## Push das imagens para registry
 	@echo "📤 Pushing imagens para registry..."
 	@for service in auth-service product-service publish-order-service process-order-service ui-service; do \
-		docker push velure/$$service:latest; \
+		docker push velure-$$service:latest; \
 	done
 	@echo "✅ Push concluído."
 
 # =============================================================================
-# KUBERNETES LOCAL
+# KUBERNETES (AWS EKS)
 # =============================================================================
 
-k8s-setup: ## Configurar Kubernetes local (namespaces, secrets)
+k8s-setup: ## Configurar Kubernetes (namespaces, secrets)
 	@echo "☸️ Configurando Kubernetes local..."
 	kubectl create namespace database || true
 	kubectl create namespace order || true
@@ -139,10 +139,17 @@ k8s-setup: ## Configurar Kubernetes local (namespaces, secrets)
 
 k8s-deploy-infra: ## Deploy da infraestrutura (bancos, cache, filas)
 	@echo "☸️ Deploying infraestrutura..."
-	helm upgrade --install postgres infrastructure/kubernetes/charts/postgresql -n database
-	helm upgrade --install mongodb infrastructure/kubernetes/charts/mongodb -n database
-	helm upgrade --install redis infrastructure/kubernetes/charts/redis -n database
-	helm upgrade --install rabbitmq infrastructure/kubernetes/charts/velure-rabbitmq -n order
+	@echo "Adicionando repositório Bitnami..."
+	helm repo add bitnami https://charts.bitnami.com/bitnami || true
+	helm repo update
+	kubectl create namespace datastores || true
+	@echo "Deploying datastores com dependências..."
+	helm upgrade --install velure-datastores infrastructure/kubernetes/charts/velure-datastores \
+		-n datastores \
+		--create-namespace \
+		--dependency-update \
+		--wait \
+		--timeout=5m
 	@echo "✅ Infraestrutura deployada."
 
 k8s-deploy-services: ## Deploy dos microserviços
@@ -154,23 +161,21 @@ k8s-deploy-services: ## Deploy dos microserviços
 	helm upgrade --install velure-ui infrastructure/kubernetes/charts/velure-ui -n frontend
 	@echo "✅ Serviços deployados."
 
-k8s-deploy: k8s-setup k8s-deploy-infra k8s-deploy-services ## Deploy completo no Kubernetes local
+k8s-deploy: k8s-setup k8s-deploy-infra k8s-deploy-services ## Deploy completo no Kubernetes
 
-k8s-destroy: ## Remover tudo do Kubernetes local
+k8s-destroy: ## Remover tudo do Kubernetes
 	@echo "🗑️ Removendo deployment Kubernetes..."
 	helm uninstall velure-ui -n frontend || true
 	helm uninstall velure-auth -n authentication || true
 	helm uninstall velure-product -n order || true
 	helm uninstall velure-publish-order -n order || true
 	helm uninstall velure-process-order -n order || true
-	helm uninstall rabbitmq -n order || true
-	helm uninstall postgres -n database || true
-	helm uninstall mongodb -n database || true
-	helm uninstall redis -n database || true
+	helm uninstall velure-datastores -n datastores || true
+	kubectl delete pvc --all -n datastores || true
 	kubectl delete namespace frontend || true
 	kubectl delete namespace authentication || true
 	kubectl delete namespace order || true
-	kubectl delete namespace database || true
+	kubectl delete namespace datastores || true
 	@echo "✅ Kubernetes limpo."
 
 k8s-status: ## Verificar status dos pods
@@ -208,20 +213,133 @@ aws-kubeconfig: ## Configurar kubectl para EKS
 	@echo "✅ kubectl configurado."
 
 # =============================================================================
+# EKS PRODUCTION DEPLOYMENT
+# =============================================================================
+
+eks-deploy-full: ## Deploy production completo (controllers + datastores + monitoring + services)
+	@echo "🚀 Starting full EKS deployment..."
+	@echo "Step 1/4: Installing controllers..."
+	bash scripts/deploy/01-install-controllers.sh
+	@echo "Step 2/4: Installing datastores..."
+	bash scripts/deploy/02-install-datastores.sh
+	@echo "Step 3/4: Installing monitoring..."
+	bash scripts/deploy/03-install-monitoring.sh
+	@echo "Step 4/4: Deploying services..."
+	bash scripts/deploy/04-deploy-services.sh
+	@echo "✅ Full deployment completed!"
+	@echo "🌐 Access your application:"
+	@kubectl get ingress velure-ui -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+	@echo ""
+
+eks-install-controllers: ## Instalar ALB Controller e metrics-server
+	@echo "🎛️  Installing Kubernetes controllers..."
+	bash scripts/deploy/01-install-controllers.sh
+
+eks-install-datastores: ## Deploy datastores (MongoDB, Redis, RabbitMQ)
+	@echo "💾 Installing datastores..."
+	bash scripts/deploy/02-install-datastores.sh
+
+eks-install-monitoring: ## Instalar Prometheus + Grafana
+	@echo "📊 Installing monitoring stack..."
+	bash scripts/deploy/03-install-monitoring.sh
+
+eks-deploy-services: ## Deploy dos microserviços Velure
+	@echo "🚢 Deploying Velure services..."
+	bash scripts/deploy/04-deploy-services.sh
+
+eks-cleanup: ## Limpar todos os recursos do EKS (destructive!)
+	@echo "⚠️  WARNING: This will delete all resources!"
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		helm uninstall velure-auth velure-product velure-publish-order velure-process-order velure-ui -n default || true; \
+		helm uninstall kube-prometheus-stack -n monitoring || true; \
+		kubectl delete namespace monitoring || true; \
+		helm uninstall velure-datastores -n datastores || true; \
+		kubectl delete pvc --all -n datastores || true; \
+		kubectl delete namespace datastores || true; \
+		helm uninstall aws-load-balancer-controller -n kube-system || true; \
+		echo "✅ Cleanup completed!"; \
+	fi
+
+eks-grafana: ## Port-forward Grafana (http://localhost:3000, admin/admin)
+	@echo "🎨 Opening Grafana on http://localhost:3000"
+	@echo "Credentials: admin / admin"
+	kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+
+eks-prometheus: ## Port-forward Prometheus (http://localhost:9090)
+	@echo "📊 Opening Prometheus on http://localhost:9090"
+	kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
+
+eks-alertmanager: ## Port-forward Alertmanager (http://localhost:9093)
+	@echo "🔔 Opening Alertmanager on http://localhost:9093"
+	kubectl port-forward -n monitoring svc/kube-prometheus-stack-alertmanager 9093:9093
+
+eks-rabbitmq: ## Port-forward RabbitMQ Management (http://localhost:15672, admin/admin_password)
+	@echo "🐰 Opening RabbitMQ Management on http://localhost:15672"
+	@echo "Credentials: admin / admin_password"
+	kubectl port-forward -n datastores svc/velure-datastores-rabbitmq 15672:15672
+
+eks-status: ## Verificar status completo do deployment EKS
+	@echo "📊 EKS Deployment Status:"
+	@echo ""
+	@echo "=== Cluster Info ==="
+	kubectl cluster-info
+	@echo ""
+	@echo "=== Nodes ==="
+	kubectl get nodes
+	@echo ""
+	@echo "=== Datastores ==="
+	kubectl get pods -n datastores
+	@echo ""
+	@echo "=== Monitoring ==="
+	kubectl get pods -n monitoring
+	@echo ""
+	@echo "=== Services ==="
+	kubectl get pods -n default | grep velure
+	@echo ""
+	@echo "=== Ingress ==="
+	kubectl get ingress
+
+# =============================================================================
 # MONITORAMENTO
 # =============================================================================
 
-monitoring-setup: ## Configurar stack de monitoramento
-	@echo "📊 Configurando monitoramento..."
-	cd tools/monitoring && docker-compose up -d
+monitoring-setup: ## Configurar aplicação + Grafana + Prometheus
+	@echo "📊 Iniciando aplicação com monitoramento completo..."
+	cd infrastructure/local && docker-compose -f docker-compose.yaml -f docker-compose.monitoring.yaml up -d
+	@echo ""
+	@echo "✅ Velure iniciado com monitoramento!"
+	@echo ""
+	@echo "🌐 Acessos disponíveis:"
+	@echo "  Aplicação:    https://velure.local"
+	@echo "  Grafana:      http://localhost:3000 (admin/admin)"
+	@echo "  Prometheus:   http://localhost:9090"
+	@echo "  RabbitMQ:     http://localhost:15672 (admin/admin_password)"
+	@echo "  cAdvisor:     http://localhost:8080"
+	@echo ""
+	@echo "📊 Dashboard Grafana: http://localhost:3000/d/velure-overview"
+	@echo "📖 Guia completo: infrastructure/local/MONITORING.md"
+
+monitoring-only: ## Iniciar apenas stack de monitoramento (sem aplicação)
+	@echo "📊 Iniciando apenas monitoramento..."
+	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml up -d
 	@echo "✅ Prometheus e Grafana disponíveis:"
 	@echo "  Prometheus: http://localhost:9090"
 	@echo "  Grafana: http://localhost:3000 (admin/admin)"
 
 monitoring-stop: ## Parar stack de monitoramento
 	@echo "🛑 Parando monitoramento..."
-	cd tools/monitoring && docker-compose down
+	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml down
 	@echo "✅ Monitoramento parado."
+
+monitoring-logs: ## Ver logs do monitoramento
+	@echo "📋 Logs do monitoramento:"
+	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml logs -f
+
+monitoring-status: ## Status dos containers de monitoramento
+	@echo "📊 Status do monitoramento:"
+	@docker ps --filter "name=velure-prometheus" --filter "name=velure-grafana" --filter "name=velure-node-exporter" --filter "name=velure-cadvisor" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 logs: ## Verificar logs dos serviços (Kubernetes)
 	@echo "📋 Logs dos serviços:"

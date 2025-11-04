@@ -237,9 +237,9 @@ Planned in `tests/integration/` (not yet implemented)
 - `/README.md` - Main project overview
 - `/Makefile` - All available commands
 - `/infrastructure/local/README.md` - Local development guide
-- `/infrastructure/local/ACESSO.md` - Access troubleshooting (Portuguese)
+- `/infrastructure/terraform/README.md` - AWS EKS deployment guide
 - `/docs/architecture/ARCHITECTURE.md` - Detailed architecture
-- `/REORGANIZATION_SUMMARY.md` - Recent structural changes
+- `/docs/DEPLOY_GUIDE.md` - Complete deployment guide
 
 ## Common Pitfalls
 

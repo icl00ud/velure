@@ -8,34 +8,46 @@ Este repositório contém um sistema de e-commerce completo construído com arqu
 
 ```
 velure/
-├── services/                    # Microserviços
-│   ├── auth-service/           # Autenticação (Go)
-│   ├── product-service/        # Catálogo (Go + MongoDB)
-│   ├── publish-order-service/  # Criação de pedidos (Go)
-│   ├── process-order-service/  # Processamento (Go)
-│   └── ui-service/            # Frontend (React)
-├── 
-├── infrastructure/             # Toda infraestrutura como código
-│   ├── terraform/             # AWS EKS deployment
-│   ├── kubernetes/            # Helm charts e manifests
-│   └── local/                 # Docker Compose local
-├── 
-├── shared/                    # Código compartilhado
-│   └── models/               # Modelos de dados
-├── 
-├── docs/                     # Documentação
-│   ├── architecture/         # Diagramas e arquitetura
-│   ├── api/                  # Documentação das APIs
-│   └── deployment/           # Guias de deploy
-├── 
-├── tests/                    # Testes integrados
-│   ├── load/                 # Testes de carga (k6)
-│   └── integration/          # Testes de integração
-├── 
-├── tools/                    # Ferramentas e utilitários
-│   └── monitoring/           # Prometheus, Grafana
-└── 
-└── scripts/                  # Scripts de automação
+├── services/                          # Microserviços
+│   ├── auth-service/                 # Autenticação (Go + PostgreSQL + Redis)
+│   ├── product-service/              # Catálogo (Go + MongoDB + Redis)
+│   ├── publish-order-service/        # Criação de pedidos (Go + PostgreSQL + RabbitMQ)
+│   ├── process-order-service/        # Processamento (Go + PostgreSQL + RabbitMQ)
+│   └── ui-service/                   # Frontend (React + TypeScript + Vite)
+│
+├── infrastructure/                    # Infraestrutura como código
+│   ├── terraform/                    # AWS EKS (VPC, RDS, EKS cluster)
+│   ├── kubernetes/
+│   │   ├── charts/                   # Helm charts
+│   │   │   ├── velure-datastores/   # MongoDB, Redis, RabbitMQ (unified)
+│   │   │   ├── velure-auth/         # Auth service chart
+│   │   │   ├── velure-product/      # Product service chart
+│   │   │   ├── velure-publish-order/
+│   │   │   ├── velure-process-order/
+│   │   │   └── velure-ui/
+│   │   └── monitoring/              # Prometheus + Grafana (K8s)
+│   └── local/                       # Docker Compose
+│       ├── docker-compose.yaml      # Aplicação
+│       ├── docker-compose.monitoring.yaml  # Grafana + Prometheus
+│       └── monitoring/              # Configs Prometheus/Grafana
+│
+├── docs/                            # Documentação
+│   ├── architecture/                # Diagramas AWS + arquitetura
+│   ├── DEPLOY_GUIDE.md             # Guia de deploy AWS/EKS
+│   ├── MONITORING.md               # Guia de monitoramento K8s
+│   ├── PROMETHEUS_METRICS.md       # Referência de métricas
+│   └── TROUBLESHOOTING.md          # Solução de problemas
+│
+├── tests/                          # Testes
+│   ├── load/                       # k6 load tests
+│   └── integration/                # Testes de integração
+│
+├── scripts/                        # Scripts de automação
+│   └── deploy/                     # Scripts de deploy AWS/EKS
+│
+├── START_HERE.sh                   # Script interativo para iniciar
+├── Makefile                        # Comandos de automação
+└── CLAUDE.md                       # Guia completo de desenvolvimento
 ```
 
 ## 🏗️ Arquitetura dos Serviços
@@ -102,134 +114,196 @@ velure/
 - **Proxy reverso**: Caddy (com TLS automático)
 - **Testes**: k6 (load testing)
 
-## 🚀 Como Executar
+## 🚀 Quick Start
 
-### 🐳 Desenvolvimento Local (Docker Compose)
+### ⚡ Modo Mais Rápido (Recomendado)
 
 ```bash
 # 1. Clonar o repositório
 git clone https://github.com/icl00ud/velure.git
 cd velure
 
-# 2. Subir dependências (bancos, cache, filas)
+# 2. Configurar /etc/hosts
+echo "127.0.0.1 velure.local" | sudo tee -a /etc/hosts
+
+# 3. Copiar variáveis de ambiente
+cp infrastructure/local/.env.example infrastructure/local/.env
+
+# 4. Rodar aplicação completa com monitoramento
+./START_HERE.sh
+# OU usando Makefile:
+make monitoring-setup
+```
+
+**Acessos após iniciar:**
+- 🌐 Aplicação: https://velure.local
+- 📊 Grafana (dashboards): http://localhost:3000 (admin/admin)
+- 📈 Prometheus: http://localhost:9090
+- 🐰 RabbitMQ Management: http://localhost:15672 (admin/admin_password)
+
+---
+
+## 🛠️ Modos de Execução
+
+### 🐳 Desenvolvimento Local (Docker Compose)
+
+**Opção 1: Aplicação + Monitoramento (Recomendado)**
+```bash
+cd infrastructure/local
+docker-compose -f docker-compose.yaml -f docker-compose.monitoring.yaml up -d
+```
+
+**Opção 2: Apenas Aplicação**
+```bash
 cd infrastructure/local
 docker-compose up -d
-
-# 3. Executar cada serviço individualmente para desenvolvimento
-# Auth Service
-cd services/auth-service
-go run main.go
-
-# Product Service
-cd services/product-service
-go run main.go
-
-# Publish Order Service
-cd services/publish-order-service
-go run main.go
-
-# Process Order Service
-cd services/process-order-service
-go run main.go
-
-# UI Service
-cd services/ui-service
-npm install && npm run dev
 ```
 
-**URLs Locais**:
-- Frontend: https://localhost:3000
-- Auth API: https://localhost:3020
-- Product API: https://localhost:3010
-- Order APIs: https://localhost:3030, https://localhost:3040
-
-### ☸️ Kubernetes Local
-
+**Opção 3: Serviços Individuais (Hot Reload)**
 ```bash
-# Pré-requisitos: kubectl, helm, mkcert
-# Ver docs/deployment/kubernetes-local-guide.md para setup completo
+# Subir infraestrutura primeiro
+make dev
 
-# 1. Criar namespaces
-kubectl create namespace database
-kubectl create namespace order
-kubectl create namespace authentication
-kubectl create namespace frontend
-
-# 2. Deploy databases
-helm upgrade --install postgres infrastructure/kubernetes/charts/postgresql -n database
-helm upgrade --install mongodb infrastructure/kubernetes/charts/mongodb -n database
-helm upgrade --install redis infrastructure/kubernetes/charts/redis -n database
-
-# 3. Deploy serviços
-helm upgrade --install velure-auth infrastructure/kubernetes/charts/velure-auth -n authentication
-helm upgrade --install velure-product infrastructure/kubernetes/charts/velure-product -n order
-# ... outros serviços
+# Em terminais separados, executar cada serviço
+cd services/auth-service && go run main.go
+cd services/product-service && go run main.go
+cd services/publish-order-service && go run main.go
+cd services/process-order-service && go run main.go
+cd services/ui-service && npm install && npm run dev
 ```
+
+**Acesso via Proxy Reverso (Caddy):**
+- 🌐 **Aplicação**: https://velure.local
+- 🔐 **Auth API**: https://velure.local/api/auth/*
+- 📦 **Product API**: https://velure.local/api/product/*
+- 📤 **Order API**: https://velure.local/api/order/*
+
+> ⚠️ **IMPORTANTE**: Sempre use `https://velure.local` - nunca acesse containers diretamente
+
+---
 
 ### ☁️ AWS EKS (Produção)
 
 ```bash
-# Pré-requisitos: terraform, aws-cli, kubectl
-# Ver docs/deployment/terraform-guide.md para setup completo
+# Pré-requisitos: terraform, aws-cli, kubectl, helm
+# Ver docs/DEPLOY_GUIDE.md para guia completo
 
+# 1. Deploy da infraestrutura AWS (VPC, EKS, RDS)
 cd infrastructure/terraform
-
-# 1. Configurar variáveis
-cp terraform.tfvars.example terraform.tfvars
-# Editar senhas e configurações
-
-# 2. Deploy da infraestrutura
 terraform init
 terraform plan
 terraform apply
 
-# 3. Configurar kubectl
+# 2. Configurar kubectl
 aws eks update-kubeconfig --region us-east-1 --name velure-prod
 
-# 4. Deploy dos serviços via Helm
-# Ver docs/deployment/terraform-guide.md
+# 3. Deploy completo (controllers + datastores + monitoring + services)
+make eks-deploy-full
+
+# OU passo a passo:
+make eks-install-controllers    # ALB Controller, metrics-server
+make eks-install-datastores     # MongoDB, Redis, RabbitMQ
+make eks-install-monitoring     # Prometheus + Grafana
+make eks-deploy-services        # Velure microservices
 ```
 
-**Custo estimado AWS**: ~$143/mês (com Spot instances e Free Tier RDS)
+**Custo estimado AWS**: ~$100-150/mês (com Free Tier RDS)
+**Documentação completa**: Ver [docs/DEPLOY_GUIDE.md](docs/DEPLOY_GUIDE.md)
 
 ## 📊 Monitoramento
+
+### **Grafana + Prometheus (Local)**
+
+O stack de monitoramento está integrado no Docker Compose:
+
+```bash
+# Iniciar com monitoramento
+make monitoring-setup
+
+# Acessar dashboards
+open http://localhost:3000  # Grafana (admin/admin)
+open http://localhost:9090  # Prometheus
+```
+
+**Dashboard principal**: http://localhost:3000/d/velure-overview
+
+Métricas disponíveis:
+- Request rate por serviço
+- Response time (p95)
+- Error rate (5xx)
+- Memory usage
+- RabbitMQ queue depth
+
+Ver guia completo: [infrastructure/local/MONITORING.md](infrastructure/local/MONITORING.md)
 
 ### **Health Checks**
 Todos os serviços expõem `/health` endpoint:
 ```bash
-curl http://localhost:3020/health  # Auth
-curl http://localhost:3010/health  # Product
-curl http://localhost:3030/health  # Publish Order
-curl http://localhost:3040/health  # Process Order
+curl https://velure.local/api/auth/health
+curl https://velure.local/api/product/health
+curl https://velure.local/api/order/health
 ```
 
 ### **Métricas (Prometheus)**
 ```bash
-curl http://localhost:3020/metrics  # Métricas do Auth Service
-# Grafana dashboard disponível em tools/monitoring/
+# Através do proxy
+curl https://velure.local/api/auth/metrics -k
+curl https://velure.local/api/product/metrics -k
+
+# Ou diretamente (desenvolvimento)
+curl http://localhost:3020/metrics
+curl http://localhost:3010/metrics
 ```
 
 ### **Logs**
 Todos os serviços usam structured logging (JSON) com:
-- `timestamp`, `level`, `message`
+- `timestamp`, `level`, `message`, `service`
 - `trace_id`, `user_id` (quando aplicável)
-- Integração com ELK Stack (planejado)
+- Agregação com CloudWatch (AWS) ou stdout (local)
 
 ## 🧪 Testes
 
-### **Testes de Carga (k6)**
+### **Testes de Carga & Escalonamento Horizontal (k6 + HPA)**
+
+A aplicação está preparada para testes de carga com observação de escalonamento horizontal automático (HPA) no ambiente Kubernetes (AWS EKS).
+
+**Quick Start - Kubernetes:**
 ```bash
 cd tests/load
 
-# Teste individual de um serviço
-k6 run auth-service-test.js
-
-# Teste integrado de todo o fluxo
-k6 run integrated-load-test.js
-
-# Todos os testes
+# 1. Rodar teste integrado
 ./run-all-tests.sh
+
+# 2. Monitorar escalonamento em tempo real (em outro terminal)
+./monitor-scaling.sh
 ```
+
+**Testes Disponíveis:**
+- `auth` - Auth service (200 VUs max)
+- `product` - Product service (400 VUs max)
+- `order` - Order service (1000 VUs max)
+- `ui` - UI service (250 VUs max)
+- `integrated` - Todos os serviços (500 VUs max) **← Recomendado**
+
+**Observar Escalonamento:**
+```bash
+# Terminal 1: Executar teste
+./run-all-tests.sh
+
+# Terminal 2: Monitorar pods escalando
+./monitor-scaling.sh
+
+# Terminal 3: Watch HPA
+kubectl get hpa -w
+```
+
+**O que você verá:**
+- 🚀 Pods escalando de 2 → 5-10 replicas quando CPU > 80%
+- 📈 Métricas em tempo real no dashboard Grafana
+- ⏱️  Response time se mantendo estável mesmo com carga alta
+- 📉 Scale-down automático após teste (5 min de estabilização)
+
+**Documentação completa:** [docs/LOAD_TESTING.md](docs/LOAD_TESTING.md)
 
 ### **Testes Unitários**
 ```bash
@@ -279,11 +353,14 @@ npm test
 
 | Documento | Descrição |
 |-----------|-----------|
-| [Arquitetura](docs/architecture/ARCHITECTURE_DIAGRAM.md) | Diagramas e fluxos do sistema |
-| [Deploy AWS](docs/deployment/terraform-guide.md) | Guia completo para AWS EKS |
-| [Deploy Local](docs/deployment/kubernetes-local-guide.md) | Kubernetes local com Helm |
-| [Estimativa de Custos](docs/deployment/COST_ESTIMATION.md) | Análise detalhada de custos AWS |
-| [API Reference](docs/api/) | Documentação das APIs |
+| [START_HERE.sh](START_HERE.sh) | Script interativo - ponto de entrada único |
+| [CLAUDE.md](CLAUDE.md) | Guia completo para desenvolvimento |
+| [Arquitetura AWS](docs/architecture/ARCHITECTURE.md) | Diagramas e infraestrutura completa |
+| [Deploy AWS/EKS](docs/DEPLOY_GUIDE.md) | Guia passo-a-passo para produção |
+| [Monitoramento](docs/MONITORING.md) | Grafana + Prometheus (local e K8s) |
+| [Load Testing & HPA](docs/LOAD_TESTING.md) | Testes de carga e escalonamento horizontal |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Solução de problemas comuns |
+| [Prometheus Metrics](docs/PROMETHEUS_METRICS.md) | Referência de métricas |
 
 ## 🤝 Contribuindo
 

@@ -11,11 +11,13 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/icl00ud/process-order-service/internal/client"
 	"github.com/icl00ud/process-order-service/internal/config"
 	"github.com/icl00ud/process-order-service/internal/handler"
 	"github.com/icl00ud/process-order-service/internal/queue"
 	"github.com/icl00ud/process-order-service/internal/service"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -59,7 +61,14 @@ func main() {
 	}
 	defer publisher.Close()
 
-	paySvc := service.NewPaymentService(publisher)
+	// Initialize product client
+	productServiceURL := os.Getenv("PRODUCT_SERVICE_URL")
+	if productServiceURL == "" {
+		productServiceURL = "http://product-service:3010"
+	}
+	productClient := client.NewProductClient(productServiceURL)
+
+	paySvc := service.NewPaymentService(publisher, productClient)
 	oc := handler.NewOrderConsumer(consumer, paySvc, cfg.Workers, logger)
 
 	g, ctx := errgroup.WithContext(ctx)
@@ -70,6 +79,8 @@ func main() {
 			port = "3040"
 		}
 		mux := http.NewServeMux()
+		// Prometheus metrics endpoint
+		mux.Handle("/metrics", promhttp.Handler())
 		mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("ok"))

@@ -26,6 +26,8 @@ type ProductRepository interface {
 	CreateProduct(ctx context.Context, product models.CreateProductRequest) (*models.ProductResponse, error)
 	DeleteProductsByName(ctx context.Context, name string) error
 	DeleteProductById(ctx context.Context, id string) error
+	UpdateProductQuantity(ctx context.Context, productID string, quantityChange int) error
+	GetProductQuantity(ctx context.Context, productID string) (int, error)
 }
 
 type productRepository struct {
@@ -243,20 +245,19 @@ func (r *productRepository) GetCategories(ctx context.Context) ([]string, error)
 
 func (r *productRepository) CreateProduct(ctx context.Context, req models.CreateProductRequest) (*models.ProductResponse, error) {
 	product := models.Product{
-		ID:                primitive.NewObjectID(),
-		Name:              req.Name,
-		Description:       req.Description,
-		Price:             req.Price,
-		Category:          req.Category,
-		Disponibility:     req.Disponibility,
-		QuantityWarehouse: req.QuantityWarehouse,
-		Images:            req.Images,
-		Dimensions:        req.Dimensions,
-		Brand:             req.Brand,
-		Colors:            req.Colors,
-		SKU:               req.SKU,
-		DateCreated:       time.Now(),
-		DateUpdated:       time.Now(),
+		ID:          primitive.NewObjectID(),
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		Category:    req.Category,
+		Quantity:    req.Quantity,
+		Images:      req.Images,
+		Dimensions:  req.Dimensions,
+		Brand:       req.Brand,
+		Colors:      req.Colors,
+		SKU:         req.SKU,
+		DateCreated: time.Now(),
+		DateUpdated: time.Now(),
 	}
 
 	_, err := r.collection.InsertOne(ctx, product)
@@ -300,20 +301,79 @@ func (r *productRepository) DeleteProductById(ctx context.Context, id string) er
 
 func (r *productRepository) toProductResponse(product models.Product) models.ProductResponse {
 	return models.ProductResponse{
-		ID:                product.ID.Hex(),
-		Name:              product.Name,
-		Description:       product.Description,
-		Price:             product.Price,
-		Rating:            product.Rating,
-		Category:          product.Category,
-		Disponibility:     product.Disponibility,
-		QuantityWarehouse: product.QuantityWarehouse,
-		Images:            product.Images,
-		Dimensions:        product.Dimensions,
-		Brand:             product.Brand,
-		Colors:            product.Colors,
-		SKU:               product.SKU,
-		DateCreated:       product.DateCreated,
-		DateUpdated:       product.DateUpdated,
+		ID:          product.ID.Hex(),
+		Name:        product.Name,
+		Description: product.Description,
+		Price:       product.Price,
+		Rating:      product.Rating,
+		Category:    product.Category,
+		Quantity:    product.Quantity,
+		Images:      product.Images,
+		Dimensions:  product.Dimensions,
+		Brand:       product.Brand,
+		Colors:      product.Colors,
+		SKU:         product.SKU,
+		DateCreated: product.DateCreated,
+		DateUpdated: product.DateUpdated,
+	}
+}
+
+func (r *productRepository) UpdateProductQuantity(ctx context.Context, productID string, quantityChange int) error {
+	objectID, err := primitive.ObjectIDFromHex(productID)
+	if err != nil {
+		return fmt.Errorf("invalid product ID: %w", err)
+	}
+
+	// Use $inc to atomically increment/decrement the quantity
+	update := bson.M{
+		"$inc": bson.M{"quantity": quantityChange},
+		"$set": bson.M{"dt_updated": time.Now()},
+	}
+
+	result, err := r.collection.UpdateOne(ctx, bson.M{"_id": objectID}, update)
+	if err != nil {
+		return fmt.Errorf("failed to update quantity: %w", err)
+	}
+
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("product not found")
+	}
+
+	// Clear all product-related caches
+	r.clearProductCaches(ctx)
+
+	return nil
+}
+
+func (r *productRepository) GetProductQuantity(ctx context.Context, productID string) (int, error) {
+	objectID, err := primitive.ObjectIDFromHex(productID)
+	if err != nil {
+		return 0, fmt.Errorf("invalid product ID: %w", err)
+	}
+
+	var product models.Product
+	err = r.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&product)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return 0, fmt.Errorf("product not found")
+		}
+		return 0, fmt.Errorf("failed to get product: %w", err)
+	}
+
+	return product.Quantity, nil
+}
+
+func (r *productRepository) clearProductCaches(ctx context.Context) {
+	// Clear all products cache
+	r.redis.Del(ctx, "allProducts")
+
+	// Clear categories cache
+	r.redis.Del(ctx, "productCategories")
+
+	// Clear all pagination caches (pattern delete)
+	// Note: This is a simple approach. For production, consider using Redis SCAN
+	keys, err := r.redis.Keys(ctx, "productsPage:*").Result()
+	if err == nil && len(keys) > 0 {
+		r.redis.Del(ctx, keys...)
 	}
 }
