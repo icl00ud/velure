@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"crypto/tls"
 	"os"
 	"time"
 
