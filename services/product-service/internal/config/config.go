@@ -59,21 +59,17 @@ func getEnv(key, defaultValue string) string {
 }
 
 func NewMongoDB(uri string) (*mongo.Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Configure client options with TLS for MongoDB Atlas
+	// Configure client options
 	clientOptions := options.Client().ApplyURI(uri)
 
-	// For mongodb+srv:// URIs (MongoDB Atlas), configure TLS explicitly
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: false, // Always verify certificates in production
-		MinVersion:         tls.VersionTLS12,
+	// Only set ServerAPI for mongodb+srv:// URIs (MongoDB Atlas)
+	// Let the driver handle TLS automatically
+	if len(uri) > 13 && uri[:13] == "mongodb+srv://" {
+		clientOptions.SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1))
 	}
-	clientOptions.SetTLSConfig(tlsConfig)
-
-	// Set server API version for MongoDB Atlas compatibility
-	clientOptions.SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1))
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
