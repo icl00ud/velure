@@ -46,28 +46,40 @@ func main() {
 	log.Println("Database migrations completed successfully")
 
 	// Initialize repositories
+	log.Println("Initializing repositories...")
 	userRepo := repositories.NewUserRepository(db)
 	sessionRepo := repositories.NewSessionRepository(db)
 	passwordResetRepo := repositories.NewPasswordResetRepository(db)
+	log.Println("Repositories initialized successfully")
 
 	// Initialize services
+	log.Println("Initializing services...")
 	authService := services.NewAuthService(userRepo, sessionRepo, passwordResetRepo, cfg)
+	log.Println("Services initialized successfully")
 
 	// Initialize handlers
+	log.Println("Initializing handlers...")
 	authHandler := handlers.NewAuthHandler(authService)
+	log.Println("Handlers initialized successfully")
 
 	// Set gin mode
 	if cfg.Environment == "production" {
+		log.Println("Setting Gin to release mode...")
 		gin.SetMode(gin.ReleaseMode)
+	} else {
+		log.Println("Running in development mode...")
 	}
 
 	// Initialize router
+	log.Println("Initializing HTTP router...")
 	router := gin.Default()
 
 	// Middleware
+	log.Println("Configuring middleware...")
 	router.Use(middleware.CORS())
 	router.Use(middleware.Logger())
 	router.Use(middleware.PrometheusMiddleware())
+	log.Println("Middleware configured successfully")
 
 	// Prometheus metrics endpoint
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
@@ -78,7 +90,9 @@ func main() {
 	})
 
 	// Routes
+	log.Println("Setting up API routes...")
 	setupRoutes(router, authHandler)
+	log.Println("API routes configured successfully")
 
 	// Start server
 	port := os.Getenv("AUTH_SERVICE_APP_PORT")
@@ -86,7 +100,8 @@ func main() {
 		port = "3020"
 	}
 
-	log.Printf("Authentication service is running on port %s", port)
+	log.Printf("Starting HTTP server on port %s...", port)
+	log.Println("Authentication service initialization completed successfully")
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
