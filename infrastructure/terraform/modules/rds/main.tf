@@ -20,29 +20,37 @@ resource "aws_db_parameter_group" "main" {
   family = "postgres16"
 
   # Otimizações para free tier / low resource
+  # Valores em formato numérico conforme requisito do AWS RDS
+  # shared_buffers e effective_cache_size: 8KB blocks
+  # work_mem e maintenance_work_mem: kilobytes
   parameter {
-    name  = "shared_buffers"
-    value = "128MB"
+    name         = "shared_buffers"
+    value        = "16384" # 128MB = 16384 blocks de 8KB
+    apply_method = "pending-reboot"
   }
 
   parameter {
-    name  = "max_connections"
-    value = "100"
+    name         = "max_connections"
+    value        = "100"
+    apply_method = "pending-reboot"
   }
 
   parameter {
-    name  = "work_mem"
-    value = "4MB"
+    name         = "work_mem"
+    value        = "4096" # 4MB = 4096 KB
+    apply_method = "immediate"
   }
 
   parameter {
-    name  = "maintenance_work_mem"
-    value = "64MB"
+    name         = "maintenance_work_mem"
+    value        = "65536" # 64MB = 65536 KB
+    apply_method = "immediate"
   }
 
   parameter {
-    name  = "effective_cache_size"
-    value = "512MB"
+    name         = "effective_cache_size"
+    value        = "65536" # 512MB = 65536 blocks de 8KB
+    apply_method = "pending-reboot"
   }
 
   tags = var.tags

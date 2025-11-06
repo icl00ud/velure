@@ -122,8 +122,8 @@ resource "aws_eks_node_group" "main" {
   node_role_arn   = aws_iam_role.node.arn
   subnet_ids      = var.private_subnet_ids
   instance_types  = [var.node_instance_type]
+  capacity_type   = "ON_DEMAND"
   disk_size       = var.node_disk_size
-  capacity_type   = "ON_DEMAND" # ou "SPOT" para economizar mais
 
   scaling_config {
     desired_size = var.node_desired_size
@@ -133,12 +133,6 @@ resource "aws_eks_node_group" "main" {
 
   update_config {
     max_unavailable = 1
-  }
-
-  # Launch template para customizações
-  launch_template {
-    id      = aws_launch_template.node.id
-    version = "$Latest"
   }
 
   tags = merge(
@@ -160,53 +154,7 @@ resource "aws_eks_node_group" "main" {
   }
 }
 
-# Launch Template para EKS Nodes
-resource "aws_launch_template" "node" {
-  name_prefix = "${var.project_name}-${var.environment}-node-"
-  description = "Launch template for EKS nodes"
 
-  vpc_security_group_ids = [var.node_security_group_id]
-
-  metadata_options {
-    http_endpoint               = "enabled"
-    http_tokens                 = "required" # IMDSv2 obrigatório
-    http_put_response_hop_limit = 1
-    instance_metadata_tags      = "enabled"
-  }
-
-  monitoring {
-    enabled = true
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = merge(
-      var.tags,
-      {
-        Name = "${var.project_name}-${var.environment}-eks-node"
-      }
-    )
-  }
-
-  tag_specifications {
-    resource_type = "volume"
-    tags = merge(
-      var.tags,
-      {
-        Name = "${var.project_name}-${var.environment}-eks-node-volume"
-      }
-    )
-  }
-
-  user_data = base64encode(templatefile("${path.module}/user-data.sh", {
-    cluster_name        = aws_eks_cluster.main.name
-    cluster_endpoint    = aws_eks_cluster.main.endpoint
-    cluster_ca          = aws_eks_cluster.main.certificate_authority[0].data
-    bootstrap_arguments = "--kubelet-extra-args '--max-pods=29'"
-  }))
-
-  tags = var.tags
-}
 
 # OIDC Provider para IRSA (IAM Roles for Service Accounts)
 data "tls_certificate" "cluster" {
@@ -298,7 +246,7 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
 resource "aws_eks_addon" "vpc_cni" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "vpc-cni"
-  addon_version               = "v1.15.1-eksbuild.1" # Verificar versão compatível
+  addon_version               = "v1.16.0-eksbuild.1"
   resolve_conflicts_on_update = "PRESERVE"
 
   tags = var.tags
@@ -308,7 +256,7 @@ resource "aws_eks_addon" "vpc_cni" {
 resource "aws_eks_addon" "coredns" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "coredns"
-  addon_version               = "v1.10.1-eksbuild.6" # Verificar versão compatível
+  addon_version               = "v1.11.1-eksbuild.9"
   resolve_conflicts_on_update = "PRESERVE"
 
   tags = var.tags
@@ -322,7 +270,7 @@ resource "aws_eks_addon" "coredns" {
 resource "aws_eks_addon" "kube_proxy" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "kube-proxy"
-  addon_version               = "v1.28.2-eksbuild.2" # Verificar versão compatível
+  addon_version               = "v1.29.3-eksbuild.2"
   resolve_conflicts_on_update = "PRESERVE"
 
   tags = var.tags
@@ -332,7 +280,7 @@ resource "aws_eks_addon" "kube_proxy" {
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "aws-ebs-csi-driver"
-  addon_version               = "v1.25.0-eksbuild.1" # Verificar versão compatível
+  addon_version               = "v1.30.0-eksbuild.1"
   service_account_role_arn    = aws_iam_role.ebs_csi_driver.arn
   resolve_conflicts_on_update = "PRESERVE"
 

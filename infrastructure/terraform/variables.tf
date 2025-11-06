@@ -55,7 +55,7 @@ variable "availability_zone_secondary" {
 variable "eks_cluster_version" {
   description = "Kubernetes version for EKS cluster"
   type        = string
-  default     = "1.28"
+  default     = "1.29"
 }
 
 variable "node_instance_type" {
