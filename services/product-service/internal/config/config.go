@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"crypto/tls"
 	"os"
 	"time"
 
@@ -64,8 +65,14 @@ func NewMongoDB(uri string) (*mongo.Client, error) {
 	// Configure client options with TLS for MongoDB Atlas
 	clientOptions := options.Client().ApplyURI(uri)
 
-	// For mongodb+srv:// URIs (MongoDB Atlas), TLS is automatically enabled
-	// We just need to ensure TLS configuration is properly set
+	// For mongodb+srv:// URIs (MongoDB Atlas), configure TLS explicitly
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: false, // Always verify certificates in production
+		MinVersion:         tls.VersionTLS12,
+	}
+	clientOptions.SetTLSConfig(tlsConfig)
+
+	// Set server API version for MongoDB Atlas compatibility
 	clientOptions.SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1))
 
 	client, err := mongo.Connect(ctx, clientOptions)
