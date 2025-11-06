@@ -47,4 +47,4 @@ secrets:
   rabbitmq:
     url: "amqps://admin:Velure12345678@b-ad95cf62-9809-4292-b928-4f97d1b63661.mq.us-east-1.on.aws:5671"
   postgres:
-    url: "postgresql://velure_admin:Velure123@velure-production-orders.cufc2wsg0tnq.us-east-1.rds.amazonaws.com:5432/velure_orders?sslmode=require"
+    url: "postgresql://postgres:Velure123@velure-production-orders.cufc2wsg0tnq.us-east-1.rds.amazonaws.com:5432/velure_orders?sslmode=require"
