@@ -24,7 +24,7 @@ private_subnet_secondary_cidr = "10.0.11.0/24"
 # ===========================
 # EKS Configuration
 # ===========================
-eks_cluster_version = "1.28"
+eks_cluster_version = "1.29"
 
 # Node Group Configuration
 # ATENÇÃO: t3.small é o MÍNIMO para EKS, t3.micro não é suportado

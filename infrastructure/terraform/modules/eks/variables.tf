@@ -28,11 +28,6 @@ variable "public_subnet_ids" {
   type        = list(string)
 }
 
-variable "node_security_group_id" {
-  description = "Security group ID for EKS nodes"
-  type        = string
-}
-
 variable "node_instance_type" {
   description = "Instance type for EKS nodes"
   type        = string
