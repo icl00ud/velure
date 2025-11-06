@@ -68,6 +68,17 @@ rds_orders_username  = "postgres"
 rds_orders_password = "CHANGE_ME_ORDERS_PASSWORD_HERE"
 
 # ===========================
+# Amazon MQ (RabbitMQ) Configuration
+# ===========================
+amazonmq_instance_type  = "mq.t3.micro"      # Custo: ~$60-70/mês
+amazonmq_deployment_mode = "SINGLE_INSTANCE"  # Para produção: ACTIVE_STANDBY_MULTI_AZ
+
+rabbitmq_admin_username = "admin"
+
+# 🔐 IMPORTANTE: Altere esta senha!
+rabbitmq_admin_password = "CHANGE_ME_RABBITMQ_PASSWORD_HERE"
+
+# ===========================
 # Tags Comuns
 # ===========================
 # Todas as tags serão aplicadas a todos os recursos
@@ -110,6 +121,11 @@ tags = {
 #    - Você já tem MongoDB no Atlas
 #    - Não incluímos DocumentDB para economizar custos
 #
-# 6. REDIS & RABBITMQ:
-#    - Serão deployados IN-CLUSTER via Helm
-#    - Não usamos ElastiCache ou Amazon MQ para economizar
+# 6. REDIS:
+#    - Será deployado IN-CLUSTER via Helm
+#    - Não usamos ElastiCache para economizar
+#
+# 7. RABBITMQ:
+#    - Amazon MQ (RabbitMQ gerenciado): ~$60-70/mês (mq.t3.micro)
+#    - Mais confiável que RabbitMQ in-cluster
+#    - Não precisa de manutenção ou troubleshooting

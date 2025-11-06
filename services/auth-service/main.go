@@ -20,22 +20,30 @@ import (
 func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+		log.Println("No .env file found, using environment variables")
 	}
 
 	// Load configuration
+	log.Println("Loading configuration...")
 	cfg := config.Load()
+	log.Printf("Configuration loaded successfully")
+	log.Printf("Database config - Host: %s, Port: %d, Database: %s, User: %s",
+		cfg.Database.Host, cfg.Database.Port, cfg.Database.Database, cfg.Database.Username)
 
 	// Initialize database
+	log.Println("Connecting to database...")
 	db, err := database.Connect(cfg.Database)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
+	log.Println("Database connection established successfully")
 
 	// Auto migrate
+	log.Println("Running database migrations...")
 	if err := database.Migrate(db); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
+	log.Println("Database migrations completed successfully")
 
 	// Initialize repositories
 	userRepo := repositories.NewUserRepository(db)

@@ -144,6 +144,32 @@ variable "rds_orders_password" {
   sensitive   = true
 }
 
+# Amazon MQ (RabbitMQ) Variables
+variable "amazonmq_instance_type" {
+  description = "Amazon MQ instance type (mq.t3.micro for cost optimization)"
+  type        = string
+  default     = "mq.t3.micro"
+}
+
+variable "amazonmq_deployment_mode" {
+  description = "Amazon MQ deployment mode (SINGLE_INSTANCE or ACTIVE_STANDBY_MULTI_AZ)"
+  type        = string
+  default     = "SINGLE_INSTANCE"
+}
+
+variable "rabbitmq_admin_username" {
+  description = "RabbitMQ admin username"
+  type        = string
+  sensitive   = true
+  default     = "admin"
+}
+
+variable "rabbitmq_admin_password" {
+  description = "RabbitMQ admin password"
+  type        = string
+  sensitive   = true
+}
+
 variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)

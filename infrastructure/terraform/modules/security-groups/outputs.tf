@@ -12,3 +12,8 @@ output "alb_sg_id" {
   description = "Security group ID for Application Load Balancer"
   value       = aws_security_group.alb.id
 }
+
+output "amazonmq_sg_id" {
+  description = "Security group ID for Amazon MQ RabbitMQ broker"
+  value       = aws_security_group.amazonmq.id
+}

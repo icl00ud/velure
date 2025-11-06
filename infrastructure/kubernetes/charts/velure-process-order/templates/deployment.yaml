@@ -36,6 +36,13 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-conn
                   key: url
+            - name: PRODUCT_SERVICE_URL
+              value: "http://velure-product.velure.svc.cluster.local:3010"
+            - name: POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: order-database
+                  key: url
           livenessProbe:
             httpGet:
               path: /health

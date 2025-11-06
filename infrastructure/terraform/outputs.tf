@@ -159,6 +159,45 @@ output "ebs_csi_driver_role_arn" {
   value       = module.eks.ebs_csi_driver_role_arn
 }
 
+# Amazon MQ Outputs
+output "amazonmq_broker_id" {
+  description = "Amazon MQ Broker ID"
+  value       = module.amazonmq.broker_id
+}
+
+output "amazonmq_broker_arn" {
+  description = "Amazon MQ Broker ARN"
+  value       = module.amazonmq.broker_arn
+}
+
+output "amazonmq_amqp_endpoint" {
+  description = "Amazon MQ AMQP endpoint (host:port)"
+  value       = module.amazonmq.amqp_endpoint
+}
+
+output "amazonmq_amqp_ssl_endpoint" {
+  description = "Amazon MQ AMQP SSL full connection string"
+  value       = module.amazonmq.amqp_ssl_endpoint
+  sensitive   = true
+}
+
+output "amazonmq_console_url" {
+  description = "Amazon MQ Management Console URL"
+  value       = module.amazonmq.console_url
+}
+
+output "amazonmq_connection_string_publisher" {
+  description = "RabbitMQ connection string for publisher service (with credentials)"
+  value       = replace(module.amazonmq.amqp_ssl_endpoint, "amqps://", "amqps://${var.rabbitmq_admin_username}:${var.rabbitmq_admin_password}@")
+  sensitive   = true
+}
+
+output "amazonmq_connection_string_processor" {
+  description = "RabbitMQ connection string for processor service (with credentials)"
+  value       = replace(module.amazonmq.amqp_ssl_endpoint, "amqps://", "amqps://${var.rabbitmq_admin_username}:${var.rabbitmq_admin_password}@")
+  sensitive   = true
+}
+
 # Kubeconfig command
 output "kubeconfig_command" {
   description = "Command to update kubeconfig for EKS cluster"
