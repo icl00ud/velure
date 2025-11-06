@@ -61,7 +61,14 @@ func NewMongoDB(uri string) (*mongo.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	// Configure client options with TLS for MongoDB Atlas
+	clientOptions := options.Client().ApplyURI(uri)
+
+	// For mongodb+srv:// URIs (MongoDB Atlas), TLS is automatically enabled
+	// We just need to ensure TLS configuration is properly set
+	clientOptions.SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1))
+
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		return nil, err
 	}
