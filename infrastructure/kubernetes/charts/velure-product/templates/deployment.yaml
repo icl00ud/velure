@@ -41,6 +41,13 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
+            # MongoDB URI (priority - for MongoDB Atlas with mongodb+srv://)
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: uri
+            # MongoDB individual components (fallback - for local/self-hosted)
             - name: MONGODB_DBNAME
               valueFrom:
                 secretKeyRef:

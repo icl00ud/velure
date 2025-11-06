@@ -110,3 +110,23 @@ module "rds_orders" {
     module.security_groups
   ]
 }
+
+# Amazon MQ (RabbitMQ) for Message Queue
+module "amazonmq" {
+  source = "./modules/amazonmq"
+
+  project_name            = var.project_name
+  environment             = var.environment
+  host_instance_type      = var.amazonmq_instance_type
+  deployment_mode         = var.amazonmq_deployment_mode
+  rabbitmq_admin_username = var.rabbitmq_admin_username
+  rabbitmq_admin_password = var.rabbitmq_admin_password
+  private_subnet_ids      = module.vpc.private_subnet_ids
+  security_group_id       = module.security_groups.amazonmq_sg_id
+  tags                    = merge(var.tags, { Service = "messaging" })
+
+  depends_on = [
+    module.vpc,
+    module.security_groups
+  ]
+}

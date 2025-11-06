@@ -131,3 +131,44 @@ resource "aws_security_group_rule" "eks_node_from_alb" {
   security_group_id        = aws_security_group.eks_node.id
   source_security_group_id = aws_security_group.alb.id
 }
+
+# Security Group para Amazon MQ (RabbitMQ)
+resource "aws_security_group" "amazonmq" {
+  name        = "${var.project_name}-${var.environment}-amazonmq-sg"
+  description = "Security group for Amazon MQ RabbitMQ broker"
+  vpc_id      = var.vpc_id
+
+  # Permite AMQP over TLS (5671) dos EKS nodes
+  ingress {
+    description     = "Allow AMQP TLS from EKS nodes"
+    from_port       = 5671
+    to_port         = 5671
+    protocol        = "tcp"
+    security_groups = [aws_security_group.eks_node.id]
+  }
+
+  # Permite HTTPS (443) para Management Console dos EKS nodes
+  ingress {
+    description     = "Allow HTTPS for Management Console from EKS nodes"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.eks_node.id]
+  }
+
+  # Permite todo tráfego de saída
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.project_name}-${var.environment}-amazonmq-sg"
+    }
+  )
+}

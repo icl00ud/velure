@@ -1,4 +1,4 @@
-replicaCount: 2
+replicaCount: 1
 image:
   repository: icl00ud/velure-publish-order
   tag: "latest"
@@ -14,7 +14,7 @@ resources:
     cpu: 200m
     memory: 256Mi
 autoscaling:
-  enabled: true
+  enabled: false
   minReplicas: 2
   maxReplicas: 5
   targetCPUUtilizationPercentage: 80
@@ -45,6 +45,6 @@ securityContext:
 secrets:
   create: true
   rabbitmq:
-    url: "amqp://admin:admin@rabbitmq.datastores.svc.cluster.local:5672/"
+    url: "amqps://admin:Velure12345678@b-ad95cf62-9809-4292-b928-4f97d1b63661.mq.us-east-1.on.aws:5671"
   postgres:
-    url: "postgresql://postgres:postgres@postgresql.datastores.svc.cluster.local:5432/velure"
+    url: "postgresql://velure_admin:Velure123@velure-production-orders.cufc2wsg0tnq.us-east-1.rds.amazonaws.com:5432/velure_orders?sslmode=require"

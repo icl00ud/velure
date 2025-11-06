@@ -19,17 +19,22 @@ type Config struct {
 }
 
 func New() *Config {
-	mongoHost := getEnv("MONGODB_HOST", "localhost")
-	mongoPort := getEnv("MONGODB_PORT", "27017")
-	mongoUser := getEnv("MONGODB_NORMAL_USER", "")
-	mongoPassword := getEnv("MONGODB_NORMAL_PASSWORD", "")
-	mongoAuthDB := getEnv("MONGODB_AUTH_DATABASE", "admin")
+	// Priority 1: Check if full MONGODB_URI is provided (for MongoDB Atlas with mongodb+srv://)
+	mongoURI := getEnv("MONGODB_URI", "")
 
-	var mongoURI string
-	if mongoUser != "" && mongoPassword != "" {
-		mongoURI = "mongodb://" + mongoUser + ":" + mongoPassword + "@" + mongoHost + ":" + mongoPort + "/?authSource=" + mongoAuthDB
-	} else {
-		mongoURI = "mongodb://" + mongoHost + ":" + mongoPort
+	// Priority 2: If not provided, construct from individual components (for local/self-hosted MongoDB)
+	if mongoURI == "" {
+		mongoHost := getEnv("MONGODB_HOST", "localhost")
+		mongoPort := getEnv("MONGODB_PORT", "27017")
+		mongoUser := getEnv("MONGODB_NORMAL_USER", "")
+		mongoPassword := getEnv("MONGODB_NORMAL_PASSWORD", "")
+		mongoAuthDB := getEnv("MONGODB_AUTH_DATABASE", "admin")
+
+		if mongoUser != "" && mongoPassword != "" {
+			mongoURI = "mongodb://" + mongoUser + ":" + mongoPassword + "@" + mongoHost + ":" + mongoPort + "/?authSource=" + mongoAuthDB
+		} else {
+			mongoURI = "mongodb://" + mongoHost + ":" + mongoPort
+		}
 	}
 
 	redisHost := getEnv("REDIS_HOST", "localhost")
