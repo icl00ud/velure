@@ -1,3 +1,4 @@
+// Environment configuration for production deployment
 export const environment = {
   production: true,
   PRODUCT_SERVICE_URL: import.meta.env.VITE_PRODUCT_SERVICE_URL || "/api/product",
