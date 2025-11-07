@@ -1,0 +1,322 @@
+name: Deploy to Environments
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      services:
+        description: 'Services to deploy (comma-separated, or "all")'
+        required: true
+        default: 'all'
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  determine-deployment:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.determine.outputs.environment }}
+      deploy-auth: ${{ steps.determine.outputs.deploy-auth }}
+      deploy-product: ${{ steps.determine.outputs.deploy-product }}
+      deploy-ui: ${{ steps.determine.outputs.deploy-ui }}
+      deploy-publish-order: ${{ steps.determine.outputs.deploy-publish-order }}
+      deploy-process-order: ${{ steps.determine.outputs.deploy-process-order }}
+      
+    steps:
+      - name: Determine deployment parameters
+        id: determine
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
+          INPUT_SERVICES: ${{ github.event.inputs.services }}
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "environment=$INPUT_ENVIRONMENT" >> $GITHUB_OUTPUT
+            services="$INPUT_SERVICES"
+          elif [[ "$GITHUB_REF" =~ ^refs/tags/v.* ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            services="all"
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            services="all"
+          fi
+          
+          if [[ "$services" == "all" ]]; then
+            echo "deploy-auth=true" >> $GITHUB_OUTPUT
+            echo "deploy-product=true" >> $GITHUB_OUTPUT
+            echo "deploy-ui=true" >> $GITHUB_OUTPUT
+            echo "deploy-publish-order=true" >> $GITHUB_OUTPUT
+            echo "deploy-process-order=true" >> $GITHUB_OUTPUT
+          else
+            IFS=',' read -ra ADDR <<< "$services"
+            for service in "${ADDR[@]}"; do
+              case $service in
+                auth|auth-service)
+                  echo "deploy-auth=true" >> $GITHUB_OUTPUT
+                  ;;
+                product|product-service)
+                  echo "deploy-product=true" >> $GITHUB_OUTPUT
+                  ;;
+                ui|ui-service)
+                  echo "deploy-ui=true" >> $GITHUB_OUTPUT
+                  ;;
+                publish-order|publish-order-service)
+                  echo "deploy-publish-order=true" >> $GITHUB_OUTPUT
+                  ;;
+                process-order|process-order-service)
+                  echo "deploy-process-order=true" >> $GITHUB_OUTPUT
+                  ;;
+              esac
+            done
+          fi
+
+  deploy-kubernetes:
+    needs: determine-deployment
+    runs-on: ubuntu-latest
+    environment: ${{ needs.determine-deployment.outputs.environment }}
+    if: needs.determine-deployment.outputs.environment == 'staging'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+          
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+          
+      - name: Deploy to Kubernetes
+        run: |
+          # Deploy infrastructure first
+          if [[ "${{ needs.determine-deployment.outputs.deploy-auth }}" == "true" ]] || 
+             [[ "${{ needs.determine-deployment.outputs.deploy-publish-order }}" == "true" ]] ||
+             [[ "${{ needs.determine-deployment.outputs.deploy-process-order }}" == "true" ]]; then
+            echo "Deploying PostgreSQL..."
+            helm upgrade --install postgres infrastructure/kubernetes/charts/postgresql -n database --create-namespace
+          fi
+          
+          if [[ "${{ needs.determine-deployment.outputs.deploy-product }}" == "true" ]]; then
+            echo "Deploying MongoDB and Redis..."
+            helm upgrade --install mongodb infrastructure/kubernetes/charts/mongodb -n database --create-namespace
+            helm upgrade --install redis infrastructure/kubernetes/charts/redis -n database --create-namespace
+          fi
+          
+          if [[ "${{ needs.determine-deployment.outputs.deploy-publish-order }}" == "true" ]] ||
+             [[ "${{ needs.determine-deployment.outputs.deploy-process-order }}" == "true" ]]; then
+            echo "Deploying RabbitMQ..."
+            helm upgrade --install rabbitmq infrastructure/kubernetes/charts/velure-rabbitmq -n order --create-namespace
+          fi
+          
+          # Deploy services
+          if [[ "${{ needs.determine-deployment.outputs.deploy-auth }}" == "true" ]]; then
+            echo "Deploying auth-service..."
+            helm upgrade --install velure-auth infrastructure/kubernetes/charts/velure-auth -n authentication --create-namespace \
+              --set image.tag=${{ github.sha }}
+          fi
+          
+          if [[ "${{ needs.determine-deployment.outputs.deploy-product }}" == "true" ]]; then
+            echo "Deploying product-service..."
+            helm upgrade --install velure-product infrastructure/kubernetes/charts/velure-product -n order --create-namespace \
+              --set image.tag=${{ github.sha }}
+          fi
+          
+          if [[ "${{ needs.determine-deployment.outputs.deploy-ui }}" == "true" ]]; then
+            echo "Deploying ui-service..."
+            helm upgrade --install velure-ui infrastructure/kubernetes/charts/velure-ui -n frontend --create-namespace \
+              --set image.tag=${{ github.sha }}
+          fi
+          
+          if [[ "${{ needs.determine-deployment.outputs.deploy-publish-order }}" == "true" ]]; then
+            echo "Deploying publish-order-service..."
+            helm upgrade --install velure-publish-order infrastructure/kubernetes/charts/velure-publish-order -n order --create-namespace \
+              --set image.tag=${{ github.sha }}
+          fi
+          
+          if [[ "${{ needs.determine-deployment.outputs.deploy-process-order }}" == "true" ]]; then
+            echo "Deploying process-order-service..."
+            helm upgrade --install velure-process-order infrastructure/kubernetes/charts/velure-process-order -n order --create-namespace \
+              --set image.tag=${{ github.sha }}
+          fi
+
+  deploy-aws:
+    needs: determine-deployment
+    runs-on: ubuntu-latest
+    environment: ${{ needs.determine-deployment.outputs.environment }}
+    if: needs.determine-deployment.outputs.environment == 'production'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+          
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.6
+          
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+          
+      - name: Deploy infrastructure
+        run: |
+          cd infrastructure/terraform
+          terraform init
+          terraform plan -out=tfplan
+          terraform apply tfplan
+          
+      - name: Configure kubectl for EKS
+        run: |
+          aws eks update-kubeconfig --region ${{ vars.AWS_REGION || 'us-east-1' }} --name velure-prod
+          
+      - name: Install AWS Load Balancer Controller
+        run: |
+          # Create ServiceAccount with IRSA
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: aws-load-balancer-controller
+            namespace: kube-system
+            annotations:
+              eks.amazonaws.com/role-arn: $(terraform -chdir=infrastructure/terraform output -raw alb_controller_role_arn)
+          EOF
+          
+          # Install via Helm
+          helm repo add eks https://aws.github.io/eks-charts
+          helm repo update
+          
+          helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+            -n kube-system \
+            --set clusterName=velure-prod \
+            --set serviceAccount.create=false \
+            --set serviceAccount.name=aws-load-balancer-controller
+            
+      - name: Deploy Redis and RabbitMQ
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo update
+          
+          # Deploy Redis
+          helm upgrade --install redis bitnami/redis \
+            --set architecture=standalone \
+            --set auth.password="$(openssl rand -base64 32)" \
+            --set master.persistence.size=1Gi \
+            --set master.resources.requests.memory=256Mi \
+            --set master.resources.requests.cpu=100m \
+            --set master.resources.limits.memory=512Mi \
+            --set master.resources.limits.cpu=200m
+            
+          # Deploy RabbitMQ
+          helm upgrade --install rabbitmq bitnami/rabbitmq \
+            --set auth.username=admin \
+            --set auth.password="$(openssl rand -base64 32)" \
+            --set persistence.size=2Gi \
+            --set resources.requests.memory=256Mi \
+            --set resources.requests.cpu=100m \
+            --set resources.limits.memory=512Mi \
+            --set resources.limits.cpu=200m
+            
+      - name: Configure database secrets
+        run: |
+          # RDS Auth Service
+          kubectl create secret generic auth-db-secret \
+            --from-literal=username=postgres \
+            --from-literal=password="$(terraform -chdir=infrastructure/terraform output -raw rds_auth_password)" \
+            --from-literal=host="$(terraform -chdir=infrastructure/terraform output -raw rds_auth_address)" \
+            --from-literal=port=5432 \
+            --from-literal=database=velure_auth \
+            --dry-run=client -o yaml | kubectl apply -f -
+            
+          # RDS Orders Service
+          kubectl create secret generic orders-db-secret \
+            --from-literal=username=postgres \
+            --from-literal=password="$(terraform -chdir=infrastructure/terraform output -raw rds_orders_password)" \
+            --from-literal=host="$(terraform -chdir=infrastructure/terraform output -raw rds_orders_address)" \
+            --from-literal=port=5432 \
+            --from-literal=database=velure_orders \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+  health-check:
+    needs: [determine-deployment, deploy-kubernetes, deploy-aws]
+    if: always() && (needs.deploy-kubernetes.result == 'success' || needs.deploy-aws.result == 'success')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Wait for deployment to stabilize
+        run: sleep 60
+        
+      - name: Health check services
+        run: |
+          # This would need to be customized based on your ingress/load balancer setup
+          echo "Performing health checks..."
+          
+          services=("auth" "product" "ui" "publish-order" "process-order")
+          
+          for service in "${services[@]}"; do
+            if [[ "${{ format('needs.determine-deployment.outputs.deploy-{0}', service) }}" == "true" ]]; then
+              echo "Checking health of $service..."
+              # Add actual health check logic here
+              # curl -f "https://your-domain.com/$service/health" || exit 1
+            fi
+          done
+          
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          # Add smoke test logic here
+          # cd tests/integration && npm test || exit 1
+
+  rollback:
+    needs: [determine-deployment, deploy-kubernetes, deploy-aws, health-check]
+    if: failure() && (needs.deploy-kubernetes.result == 'success' || needs.deploy-aws.result == 'success')
+    runs-on: ubuntu-latest
+    environment: ${{ needs.determine-deployment.outputs.environment }}
+    
+    steps:
+      - name: Rollback deployment
+        run: |
+          echo "Deployment failed, initiating rollback..."
+          
+          if [[ "${{ needs.determine-deployment.outputs.environment }}" == "staging" ]]; then
+            # Kubernetes rollback
+            kubectl rollout undo deployment/velure-auth -n authentication || true
+            kubectl rollout undo deployment/velure-product -n order || true
+            kubectl rollout undo deployment/velure-ui -n frontend || true
+            kubectl rollout undo deployment/velure-publish-order -n order || true
+            kubectl rollout undo deployment/velure-process-order -n order || true
+          else
+            # AWS rollback would be more complex, potentially involving Terraform
+            echo "Production rollback requires manual intervention"
+            exit 1
+          fi

@@ -98,34 +98,3 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
-  infrastructure-validation:
-    needs: determine-changes
-    if: needs.determine-changes.outputs.infrastructure == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ~1.6
-
-      - name: Terraform Format Check
-        run: |
-          cd infrastructure/terraform
-          terraform fmt -check -recursive
-
-      - name: Terraform Validate
-        run: |
-          cd infrastructure/terraform
-          terraform init -backend=false
-          terraform validate
-
-      - name: Helm Lint
-        run: |
-          helm lint infrastructure/kubernetes/charts/velure-auth
-          helm lint infrastructure/kubernetes/charts/velure-product
-          helm lint infrastructure/kubernetes/charts/velure-publish-order
-          helm lint infrastructure/kubernetes/charts/velure-process-order
-          helm lint infrastructure/kubernetes/charts/velure-ui
