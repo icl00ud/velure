@@ -107,6 +107,7 @@ func (r *productRepository) GetProductsByPage(ctx context.Context, page, pageSiz
 	if err == nil {
 		var response models.PaginatedProductsResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
+			fmt.Printf("DEBUG: Returning from cache: %d products\n", len(response.Products))
 			return &response, nil
 		}
 	}
@@ -114,23 +115,29 @@ func (r *productRepository) GetProductsByPage(ctx context.Context, page, pageSiz
 	// Get total count
 	totalCount, err := r.GetProductsCount(ctx)
 	if err != nil {
+		fmt.Printf("DEBUG: Error getting count: %v\n", err)
 		return nil, err
 	}
+	fmt.Printf("DEBUG: Total count: %d\n", totalCount)
 
 	skip := int64((page - 1) * pageSize)
 	limit := int64(pageSize)
+	fmt.Printf("DEBUG: Skip: %d, Limit: %d\n", skip, limit)
 
 	opts := options.Find().SetSkip(skip).SetLimit(limit)
 	cursor, err := r.collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
+		fmt.Printf("DEBUG: Error finding products: %v\n", err)
 		return nil, err
 	}
 	defer cursor.Close(ctx)
 
 	var products []models.Product
 	if err := cursor.All(ctx, &products); err != nil {
+		fmt.Printf("DEBUG: Error decoding products: %v\n", err)
 		return nil, err
 	}
+	fmt.Printf("DEBUG: Found %d products\n", len(products))
 
 	productResponses := make([]models.ProductResponse, len(products))
 	for i, product := range products {
