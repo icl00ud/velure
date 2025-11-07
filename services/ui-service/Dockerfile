@@ -12,10 +12,10 @@ RUN bun install
 # Copy source code
 COPY . .
 
-# Create .env file with build-time variables
-ARG VITE_PRODUCT_SERVICE_URL=http://localhost:3010
-ARG VITE_AUTHENTICATION_SERVICE_URL=http://localhost:3020
-ARG VITE_ORDER_SERVICE_URL=http://localhost:3030
+# Create .env file with build-time variables (using relative paths for production)
+ARG VITE_PRODUCT_SERVICE_URL=/api/product
+ARG VITE_AUTHENTICATION_SERVICE_URL=/api/auth
+ARG VITE_ORDER_SERVICE_URL=/api/order
 
 RUN echo "VITE_PRODUCT_SERVICE_URL=${VITE_PRODUCT_SERVICE_URL}" > .env
 RUN echo "VITE_AUTHENTICATION_SERVICE_URL=${VITE_AUTHENTICATION_SERVICE_URL}" >> .env
