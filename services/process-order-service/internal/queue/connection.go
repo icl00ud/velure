@@ -34,6 +34,19 @@ func (r *RabbitMQConnection) NewConsumer(queueName string) (Consumer, error) {
 		return nil, err
 	}
 
+	// Bind queue to exchange with routing key pattern for order events
+	err = ch.QueueBind(
+		queueName,      // queue name
+		"order.*",      // routing key pattern (matches order.created, order.completed, etc.)
+		"orders",       // exchange name
+		false,          // no-wait
+		nil,            // arguments
+	)
+	if err != nil {
+		ch.Close()
+		return nil, fmt.Errorf("queue bind: %w", err)
+	}
+
 	if err := ch.Qos(1, 0, false); err != nil {
 		ch.Close()
 		return nil, err
