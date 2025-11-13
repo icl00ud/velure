@@ -17,16 +17,16 @@ import (
 )
 
 type AuthService struct {
-	userRepo          *repositories.UserRepository
-	sessionRepo       *repositories.SessionRepository
-	passwordResetRepo *repositories.PasswordResetRepository
+	userRepo          repositories.UserRepositoryInterface
+	sessionRepo       repositories.SessionRepositoryInterface
+	passwordResetRepo repositories.PasswordResetRepositoryInterface
 	config            *config.Config
 }
 
 func NewAuthService(
-	userRepo *repositories.UserRepository,
-	sessionRepo *repositories.SessionRepository,
-	passwordResetRepo *repositories.PasswordResetRepository,
+	userRepo repositories.UserRepositoryInterface,
+	sessionRepo repositories.SessionRepositoryInterface,
+	passwordResetRepo repositories.PasswordResetRepositoryInterface,
 	config *config.Config,
 ) *AuthService {
 	return &AuthService{
