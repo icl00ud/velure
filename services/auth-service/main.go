@@ -62,37 +62,10 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authService)
 	log.Println("Handlers initialized successfully")
 
-	// Set gin mode
-	if cfg.Environment == "production" {
-		log.Println("Setting Gin to release mode...")
-		gin.SetMode(gin.ReleaseMode)
-	} else {
-		log.Println("Running in development mode...")
-	}
-
-	// Initialize router
+	// Set up router with all middleware and routes
 	log.Println("Initializing HTTP router...")
-	router := gin.Default()
-
-	// Middleware
-	log.Println("Configuring middleware...")
-	router.Use(middleware.CORS())
-	router.Use(middleware.Logger())
-	router.Use(middleware.PrometheusMiddleware())
-	log.Println("Middleware configured successfully")
-
-	// Prometheus metrics endpoint
-	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
-
-	// Health endpoint
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
-	})
-
-	// Routes
-	log.Println("Setting up API routes...")
-	setupRoutes(router, authHandler)
-	log.Println("API routes configured successfully")
+	router := setupRouter(cfg, authHandler)
+	log.Println("HTTP router initialized successfully")
 
 	// Start server
 	port := os.Getenv("AUTH_SERVICE_APP_PORT")
@@ -118,4 +91,32 @@ func setupRoutes(router *gin.Engine, authHandler *handlers.AuthHandler) {
 		auth.GET("/user/email/:email", authHandler.GetUserByEmail)
 		auth.DELETE("/logout/:refreshToken", authHandler.Logout)
 	}
+}
+
+func setupRouter(cfg *config.Config, authHandler *handlers.AuthHandler) *gin.Engine {
+	// Set gin mode
+	if cfg.Environment == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	// Initialize router
+	router := gin.Default()
+
+	// Middleware
+	router.Use(middleware.CORS())
+	router.Use(middleware.Logger())
+	router.Use(middleware.PrometheusMiddleware())
+
+	// Prometheus metrics endpoint
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	// Health endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
+	// Routes
+	setupRoutes(router, authHandler)
+
+	return router
 }
