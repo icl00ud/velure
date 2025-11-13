@@ -3,7 +3,9 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
+	"velure-auth-service/internal/metrics"
 	"velure-auth-service/internal/models"
 	"velure-auth-service/internal/services"
 
@@ -11,16 +13,19 @@ import (
 )
 
 type AuthHandler struct {
-	authService *services.AuthService
+	authService services.AuthServiceInterface
 }
 
-func NewAuthHandler(authService *services.AuthService) *AuthHandler {
+func NewAuthHandler(authService services.AuthServiceInterface) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
+	start := time.Now()
+
 	var req models.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		metrics.RegistrationAttempts.WithLabelValues("invalid_request").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -28,19 +33,29 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	user, err := h.authService.CreateUser(req)
 	if err != nil {
 		if err.Error() == "user already exists" {
+			metrics.RegistrationAttempts.WithLabelValues("conflict").Inc()
+			metrics.RegistrationDuration.Observe(time.Since(start).Seconds())
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 			return
 		}
+		metrics.RegistrationAttempts.WithLabelValues("failure").Inc()
+		metrics.RegistrationDuration.Observe(time.Since(start).Seconds())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	metrics.RegistrationAttempts.WithLabelValues("success").Inc()
+	metrics.RegistrationDuration.Observe(time.Since(start).Seconds())
 	c.JSON(http.StatusCreated, user)
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
+	start := time.Now()
+
 	var req models.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		metrics.LoginAttempts.WithLabelValues("invalid_request").Inc()
+		metrics.LoginDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -48,25 +63,39 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	response, err := h.authService.Login(req)
 	if err != nil {
 		if err.Error() == "invalid credentials" {
+			metrics.LoginAttempts.WithLabelValues("invalid_credentials").Inc()
+			metrics.LoginDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
+		metrics.LoginAttempts.WithLabelValues("failure").Inc()
+		metrics.LoginDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	metrics.LoginAttempts.WithLabelValues("success").Inc()
+	metrics.LoginDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
+	metrics.TokenGenerations.Inc()
 	c.JSON(http.StatusOK, response)
 }
 
 func (h *AuthHandler) ValidateToken(c *gin.Context) {
 	var req models.ValidateTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		metrics.TokenValidations.WithLabelValues("invalid_request").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	user, err := h.authService.ValidateAccessToken(req.AccessToken)
 	isValid := err == nil && user != nil
+
+	if isValid {
+		metrics.TokenValidations.WithLabelValues("valid").Inc()
+	} else {
+		metrics.TokenValidations.WithLabelValues("invalid").Inc()
+	}
 
 	c.JSON(http.StatusOK, models.ValidateTokenResponse{IsValid: isValid})
 }
