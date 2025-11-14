@@ -27,12 +27,14 @@ func PrometheusMiddleware() fiber.Handler {
 		status := strconv.Itoa(c.Response().StatusCode())
 
 		metrics.HTTPRequests.WithLabelValues(
+			"product-service",
 			c.Method(),
 			path,
 			status,
 		).Inc()
 
 		metrics.HTTPRequestDuration.WithLabelValues(
+			"product-service",
 			c.Method(),
 			path,
 		).Observe(duration)

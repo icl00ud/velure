@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -11,19 +12,19 @@ import (
 var (
 	httpRequestsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "auth_http_requests_total",
+			Name: "http_requests_total",
 			Help: "Total number of HTTP requests",
 		},
-		[]string{"method", "endpoint", "status"},
+		[]string{"service", "method", "path", "status"},
 	)
 
 	httpRequestDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "auth_http_request_duration_seconds",
+			Name:    "http_request_duration_seconds",
 			Help:    "Duration of HTTP requests in seconds",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"method", "endpoint"},
+		[]string{"service", "method", "path"},
 	)
 )
 
@@ -37,20 +38,22 @@ func PrometheusMiddleware() gin.HandlerFunc {
 
 		// Record metrics
 		duration := time.Since(start).Seconds()
-		endpoint := c.FullPath()
-		if endpoint == "" {
-			endpoint = "unknown"
+		path := c.FullPath()
+		if path == "" {
+			path = "unknown"
 		}
 
 		httpRequestsTotal.WithLabelValues(
+			"auth-service",
 			c.Request.Method,
-			endpoint,
-			string(rune(c.Writer.Status())),
+			path,
+			strconv.Itoa(c.Writer.Status()),
 		).Inc()
 
 		httpRequestDuration.WithLabelValues(
+			"auth-service",
 			c.Request.Method,
-			endpoint,
+			path,
 		).Observe(duration)
 	}
 }

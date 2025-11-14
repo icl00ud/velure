@@ -81,8 +81,8 @@ services:
       SESSION_SECRET: ${SESSION_SECRET}
       SESSION_EXPIRES_IN: ${SESSION_EXPIRES_IN}
     # Portas removidas - acesso via Caddy proxy
-    # ports:
-    #   - "${AUTH_SERVICE_APP_PORT}:${AUTH_SERVICE_APP_PORT}"
+    ports:
+      - "${AUTH_SERVICE_APP_PORT}:${AUTH_SERVICE_APP_PORT}"
     networks:
       - auth
       - order
@@ -142,8 +142,8 @@ services:
       POSTGRES_URL: ${POSTGRES_URL}
       JWT_SECRET: ${JWT_SECRET}
     # Portas removidas - acesso via Caddy proxy
-    # ports:
-    #   - "${PUBLISHER_ORDER_SERVICE_APP_PORT}:${PUBLISHER_ORDER_SERVICE_APP_PORT}"
+    ports:
+      - "${PUBLISHER_ORDER_SERVICE_APP_PORT}:${PUBLISHER_ORDER_SERVICE_APP_PORT}"
     networks:
       - order
     deploy:
@@ -241,8 +241,8 @@ services:
       REDIS_PORT: ${REDIS_PORT}
       REDIS_URL: ${REDIS_URL}
     # Portas removidas - acesso via Caddy proxy
-    # ports:
-    #   - "${PRODUCT_SERVICE_APP_PORT}:${PRODUCT_SERVICE_APP_PORT}"
+    ports:
+      - "${PRODUCT_SERVICE_APP_PORT}:${PRODUCT_SERVICE_APP_PORT}"
     networks:
       - order
       - frontend

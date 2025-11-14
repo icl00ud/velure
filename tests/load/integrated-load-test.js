@@ -417,7 +417,7 @@ function htmlReport(data) {
 
     <div class="metric">
         <h3>Thresholds Status</h3>
-        <p>All thresholds: ${Object.values(data.thresholds).every(t => !t.violated) ? '✅ PASSED' : '❌ FAILED'}</p>
+        <p>All thresholds: ${data.thresholds && Object.values(data.thresholds).every(t => !t.violated) ? '✅ PASSED' : '❌ FAILED'}</p>
     </div>
 </body>
 </html>

@@ -1,0 +1,223 @@
+# Loki Stack Values for Kubernetes
+# Helm Chart: grafana/loki-stack
+# Installation: helm install loki grafana/loki-stack -f loki-stack-values.yaml -n monitoring
+
+loki:
+  enabled: true
+
+  # Persistence
+  persistence:
+    enabled: true
+    storageClassName: gp2  # AWS EBS GP2
+    size: 10Gi
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  # Configuration
+  config:
+    auth_enabled: false
+
+    server:
+      http_listen_port: 3100
+      grpc_listen_port: 9096
+      log_level: info
+
+    ingester:
+      chunk_idle_period: 3m
+      chunk_block_size: 262144
+      chunk_retain_period: 1m
+      max_transfer_retries: 0
+      lifecycler:
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+
+    limits_config:
+      retention_period: 30d
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+      ingestion_rate_mb: 10
+      ingestion_burst_size_mb: 20
+      max_query_series: 500
+      max_query_parallelism: 16
+
+    schema_config:
+      configs:
+        - from: 2024-01-01
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /loki/boltdb-shipper-active
+        cache_location: /loki/boltdb-shipper-cache
+        cache_ttl: 24h
+        shared_store: filesystem
+      filesystem:
+        directory: /loki/chunks
+
+    chunk_store_config:
+      max_look_back_period: 0s
+
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 30d
+
+    compactor:
+      working_directory: /loki/compactor
+      shared_store: filesystem
+      compaction_interval: 10m
+      retention_enabled: true
+      retention_delete_delay: 2h
+      retention_delete_worker_count: 150
+
+promtail:
+  enabled: true
+
+  # DaemonSet - runs on all nodes
+  daemonset:
+    enabled: true
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 64Mi
+
+  # Configuration
+  config:
+    serverPort: 3101
+    clients:
+      - url: http://loki:3100/loki/api/v1/push
+
+    positions:
+      filename: /run/promtail/positions.yaml
+
+    scrapeConfigs:
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+
+        relabel_configs:
+          # Only scrape pods in the velure namespace
+          - source_labels: [__meta_kubernetes_namespace]
+            action: keep
+            regex: velure|monitoring
+
+          # Container name
+          - source_labels: [__meta_kubernetes_pod_container_name]
+            target_label: container
+
+          # Pod name
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+
+          # Namespace
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+
+          # Service labels
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: app
+
+          - source_labels: [__meta_kubernetes_pod_label_service]
+            target_label: service
+
+          # Node name
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: node
+
+          # Add environment
+          - replacement: production
+            target_label: environment
+
+          # Add cluster
+          - replacement: velure-eks
+            target_label: cluster
+
+        pipeline_stages:
+          # Extract log level
+          - regex:
+              expression: '.*(?P<level>(INFO|ERROR|WARN|WARNING|DEBUG|FATAL|PANIC)).*'
+          - labels:
+              level:
+
+          # Extract timestamp
+          - timestamp:
+              source: time
+              format: RFC3339
+              fallback_formats:
+                - '2006-01-02T15:04:05Z07:00'
+                - '2006-01-02 15:04:05'
+
+          # Parse JSON logs
+          - json:
+              expressions:
+                level: level
+                msg: msg
+                message: message
+                error: error
+                service: service
+                method: method
+                path: path
+                status: status
+
+          # Map JSON fields to labels
+          - labels:
+              level:
+              service:
+              method:
+              status:
+
+grafana:
+  enabled: false  # Using existing Grafana from kube-prometheus-stack
+
+  # If enabling standalone Grafana, use these settings:
+  # enabled: true
+  # persistence:
+  #   enabled: true
+  #   storageClassName: gp2
+  #   size: 10Gi
+  #
+  # adminPassword: admin  # Change in production!
+  #
+  # datasources:
+  #   datasources.yaml:
+  #     apiVersion: 1
+  #     datasources:
+  #       - name: Loki
+  #         type: loki
+  #         access: proxy
+  #         url: http://loki:3100
+  #         isDefault: false
+  #         editable: true
+
+# Prometheus monitoring
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack
+
+# Fluent Bit (alternative to Promtail)
+fluent-bit:
+  enabled: false
+
+# Log Gateway
+loggateway:
+  enabled: false

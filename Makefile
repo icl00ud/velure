@@ -107,6 +107,90 @@ security: ## Verificar vulnerabilidades de segurança
 	@echo "✅ Verificação de segurança concluída."
 
 # =============================================================================
+# MONITORAMENTO E OBSERVABILIDADE
+# =============================================================================
+
+monitoring-start: ## Iniciar stack de monitoramento (Docker)
+	@echo "📊 Iniciando stack de monitoramento..."
+	cd infrastructure/local && docker-compose -f docker-compose.yaml -f docker-compose.monitoring.yaml up -d
+	@echo "✅ Monitoramento iniciado:"
+	@echo "   - Grafana:    http://localhost:3000 (admin/admin)"
+	@echo "   - Prometheus: http://localhost:9090"
+	@echo "   - Loki:       http://localhost:3100"
+
+monitoring-stop: ## Parar stack de monitoramento
+	@echo "🛑 Parando stack de monitoramento..."
+	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml down
+	@echo "✅ Monitoramento parado."
+
+monitoring-logs: ## Ver logs do monitoramento
+	@echo "📋 Logs do monitoramento:"
+	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml logs -f
+
+monitoring-status: ## Status dos serviços de monitoramento
+	@echo "📊 Status do monitoramento:"
+	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml ps
+
+k8s-monitoring-install: ## Instalar stack de monitoramento no Kubernetes
+	@echo "📊 Instalando stack de monitoramento no Kubernetes..."
+	@echo "Criando namespace monitoring..."
+	kubectl create namespace monitoring || true
+	@echo "Adicionando repositórios Helm..."
+	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+	helm repo add grafana https://grafana.github.io/helm-charts
+	helm repo update
+	@echo "Instalando kube-prometheus-stack..."
+	helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+		-f infrastructure/kubernetes/monitoring/kube-prometheus-stack-values.yaml \
+		-n monitoring \
+		--create-namespace
+	@echo "Instalando Loki stack..."
+	helm upgrade --install loki grafana/loki-stack \
+		-f infrastructure/kubernetes/monitoring/loki-stack-values.yaml \
+		-n monitoring
+	@echo "Aplicando exporters de banco de dados..."
+	kubectl apply -f infrastructure/kubernetes/monitoring/database-exporters-servicemonitors.yaml
+	@echo "Aplicando regras de alerta..."
+	kubectl apply -f infrastructure/kubernetes/monitoring/alert-rules.yaml
+	kubectl apply -f infrastructure/kubernetes/monitoring/recording-rules.yaml
+	@echo "✅ Stack de monitoramento instalada!"
+
+k8s-monitoring-uninstall: ## Desinstalar stack de monitoramento do Kubernetes
+	@echo "🗑️ Desinstalando stack de monitoramento..."
+	helm uninstall kube-prometheus-stack -n monitoring || true
+	helm uninstall loki -n monitoring || true
+	kubectl delete -f infrastructure/kubernetes/monitoring/database-exporters-servicemonitors.yaml || true
+	kubectl delete -f infrastructure/kubernetes/monitoring/alert-rules.yaml || true
+	kubectl delete -f infrastructure/kubernetes/monitoring/recording-rules.yaml || true
+	kubectl delete namespace monitoring || true
+	@echo "✅ Stack de monitoramento desinstalada."
+
+k8s-monitoring-grafana: ## Port-forward do Grafana
+	@echo "🔗 Port-forwarding Grafana..."
+	@echo "Grafana estará disponível em: http://localhost:3000"
+	@echo "Para obter a senha do admin:"
+	@echo "kubectl get secret -n monitoring kube-prometheus-stack-grafana -o jsonpath='{.data.admin-password}' | base64 --decode"
+	kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+
+k8s-monitoring-prometheus: ## Port-forward do Prometheus
+	@echo "🔗 Port-forwarding Prometheus..."
+	@echo "Prometheus estará disponível em: http://localhost:9090"
+	kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
+
+k8s-monitoring-alerts: ## Ver alertas ativos no Kubernetes
+	@echo "🚨 Alertas ativos:"
+	kubectl get prometheusrules -n monitoring
+
+k8s-monitoring-status: ## Status do monitoramento no Kubernetes
+	@echo "📊 Status do monitoramento:"
+	@echo "\nPods:"
+	kubectl get pods -n monitoring
+	@echo "\nServiceMonitors:"
+	kubectl get servicemonitors -n velure
+	@echo "\nPrometheusRules:"
+	kubectl get prometheusrules -n monitoring
+
+# =============================================================================
 # DOCKER
 # =============================================================================
 

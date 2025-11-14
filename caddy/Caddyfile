@@ -6,6 +6,9 @@
 	# Para produção, remover esta linha e configurar domínio real
 	local_certs
 	
+	# Disable automatic HTTPS for localhost
+	auto_https disable_redirects
+	
 	# Logs estruturados
 	log {
 		output file /var/log/caddy/access.log {

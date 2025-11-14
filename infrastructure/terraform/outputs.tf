@@ -198,6 +198,27 @@ output "amazonmq_connection_string_processor" {
   sensitive   = true
 }
 
+# Route53 Outputs
+output "route53_zone_id" {
+  description = "Route53 hosted zone ID"
+  value       = module.route53.zone_id
+}
+
+output "route53_zone_arn" {
+  description = "Route53 hosted zone ARN"
+  value       = module.route53.zone_arn
+}
+
+output "route53_name_servers" {
+  description = "Route53 name servers - Configure these in your domain registrar"
+  value       = module.route53.name_servers
+}
+
+output "route53_domain_name" {
+  description = "Configured domain name"
+  value       = module.route53.domain_name
+}
+
 # Kubeconfig command
 output "kubeconfig_command" {
   description = "Command to update kubeconfig for EKS cluster"

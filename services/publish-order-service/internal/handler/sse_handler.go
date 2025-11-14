@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/icl00ud/publish-order-service/internal/metrics"
 	"github.com/icl00ud/publish-order-service/internal/middleware"
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"github.com/icl00ud/publish-order-service/internal/service"
@@ -62,6 +63,9 @@ func (h *SSEHandler) StreamOrderStatus(w http.ResponseWriter, r *http.Request) {
 	h.registry.Register(orderID, events)
 	defer h.registry.Unregister(orderID, events)
 
+	metrics.SSEConnections.Inc()
+	defer metrics.SSEConnections.Dec()
+
 	sendEvent := func(o model.Order) error {
 		data, err := json.Marshal(o)
 		if err != nil {
@@ -72,6 +76,7 @@ func (h *SSEHandler) StreamOrderStatus(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 		flusher.Flush()
+		metrics.SSEMessagesSent.Inc()
 		return nil
 	}
 

@@ -1,0 +1,225 @@
+# Custom Alert Rules for Velure
+# These are PrometheusRule CRDs that define custom alerts
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: velure-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    # Application alerts
+    - name: velure-application
+      interval: 30s
+      rules:
+        # High error rate
+        - alert: HighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+              /
+              sum(rate(http_requests_total[5m])) by (service)
+            ) * 100 > 1
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "High error rate on {{ $labels.service }}"
+            description: "Service {{ $labels.service }} has error rate of {{ $value }}% (threshold: 1%)"
+
+        # Very high error rate (critical)
+        - alert: CriticalErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+              /
+              sum(rate(http_requests_total[5m])) by (service)
+            ) * 100 > 5
+          for: 2m
+          labels:
+            severity: critical
+            team: backend
+          annotations:
+            summary: "Critical error rate on {{ $labels.service }}"
+            description: "Service {{ $labels.service }} has critical error rate of {{ $value }}% (threshold: 5%)"
+
+        # High latency
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
+            ) > 1
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "High latency on {{ $labels.service }}"
+            description: "Service {{ $labels.service }} p99 latency is {{ $value }}s (threshold: 1s)"
+
+        # Service down
+        - alert: ServiceDown
+          expr: up{job=~"auth-service|product-service|publish-order-service|process-order-service"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            team: backend
+          annotations:
+            summary: "Service {{ $labels.job }} is down"
+            description: "Service {{ $labels.job }} has been down for more than 1 minute"
+
+    # Infrastructure alerts
+    - name: velure-infrastructure
+      interval: 30s
+      rules:
+        # High CPU usage
+        - alert: HighCPUUsage
+          expr: |
+            (
+              sum(rate(container_cpu_usage_seconds_total{namespace="velure",container!=""}[5m])) by (pod)
+              /
+              sum(container_spec_cpu_quota{namespace="velure",container!=""}/container_spec_cpu_period{namespace="velure",container!=""}) by (pod)
+            ) * 100 > 80
+          for: 10m
+          labels:
+            severity: warning
+            team: infrastructure
+          annotations:
+            summary: "High CPU usage on {{ $labels.pod }}"
+            description: "Pod {{ $labels.pod }} is using {{ $value }}% CPU (threshold: 80%)"
+
+        # High memory usage
+        - alert: HighMemoryUsage
+          expr: |
+            (
+              sum(container_memory_working_set_bytes{namespace="velure",container!=""}) by (pod)
+              /
+              sum(container_spec_memory_limit_bytes{namespace="velure",container!=""}) by (pod)
+            ) * 100 > 80
+          for: 10m
+          labels:
+            severity: warning
+            team: infrastructure
+          annotations:
+            summary: "High memory usage on {{ $labels.pod }}"
+            description: "Pod {{ $labels.pod }} is using {{ $value }}% memory (threshold: 80%)"
+
+        # Pod crashlooping
+        - alert: PodCrashLooping
+          expr: rate(kube_pod_container_status_restarts_total{namespace="velure"}[15m]) > 0
+          for: 5m
+          labels:
+            severity: critical
+            team: infrastructure
+          annotations:
+            summary: "Pod {{ $labels.pod }} is crash looping"
+            description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in the last 15 minutes"
+
+        # Disk space low
+        - alert: DiskSpaceLow
+          expr: |
+            (
+              node_filesystem_avail_bytes{mountpoint="/",fstype!="rootfs"}
+              /
+              node_filesystem_size_bytes{mountpoint="/",fstype!="rootfs"}
+            ) * 100 < 20
+          for: 5m
+          labels:
+            severity: warning
+            team: infrastructure
+          annotations:
+            summary: "Disk space low on {{ $labels.instance }}"
+            description: "Disk space is {{ $value }}% available (threshold: 20%)"
+
+    # Database alerts
+    - name: velure-database
+      interval: 30s
+      rules:
+        # PostgreSQL connection pool exhausted
+        - alert: PostgreSQLConnectionPoolHigh
+          expr: pg_stat_database_numbackends > 80
+          for: 5m
+          labels:
+            severity: warning
+            team: database
+          annotations:
+            summary: "PostgreSQL connection pool usage high"
+            description: "Database {{ $labels.datname }} has {{ $value }} active connections (threshold: 80)"
+
+        # PostgreSQL cache hit ratio low
+        - alert: PostgreSQLCacheHitRatioLow
+          expr: |
+            100 * (
+              pg_stat_database_blks_hit{datname="velure_db"}
+              /
+              (pg_stat_database_blks_hit{datname="velure_db"} + pg_stat_database_blks_read{datname="velure_db"})
+            ) < 90
+          for: 5m
+          labels:
+            severity: warning
+            team: database
+          annotations:
+            summary: "PostgreSQL cache hit ratio low"
+            description: "Database {{ $labels.datname }} cache hit ratio is {{ $value }}% (threshold: 90%)"
+
+        # MongoDB replication lag (if using replication)
+        - alert: MongoDBReplicationLag
+          expr: mongodb_mongod_replset_member_replication_lag > 10
+          for: 5m
+          labels:
+            severity: warning
+            team: database
+          annotations:
+            summary: "MongoDB replication lag detected"
+            description: "MongoDB replica {{ $labels.name }} has replication lag of {{ $value }}s (threshold: 10s)"
+
+        # Redis memory high
+        - alert: RedisMemoryHigh
+          expr: redis_memory_used_bytes > 1073741824  # 1GB
+          for: 10m
+          labels:
+            severity: warning
+            team: database
+          annotations:
+            summary: "Redis memory usage high"
+            description: "Redis is using {{ $value | humanize }}B of memory (threshold: 1GB)"
+
+    # RabbitMQ alerts
+    - name: velure-rabbitmq
+      interval: 30s
+      rules:
+        # Queue growing
+        - alert: RabbitMQQueueGrowing
+          expr: rate(rabbitmq_queue_messages[5m]) > 0
+          for: 10m
+          labels:
+            severity: warning
+            team: messaging
+          annotations:
+            summary: "RabbitMQ queue {{ $labels.queue }} is growing"
+            description: "Queue {{ $labels.queue }} has been growing for 10 minutes"
+
+        # High message count
+        - alert: RabbitMQHighMessageCount
+          expr: rabbitmq_queue_messages > 10000
+          for: 5m
+          labels:
+            severity: warning
+            team: messaging
+          annotations:
+            summary: "RabbitMQ queue {{ $labels.queue }} has high message count"
+            description: "Queue {{ $labels.queue }} has {{ $value }} messages (threshold: 10000)"
+
+        # No consumers
+        - alert: RabbitMQNoConsumers
+          expr: rabbitmq_queue_consumers == 0
+          for: 5m
+          labels:
+            severity: critical
+            team: messaging
+          annotations:
+            summary: "RabbitMQ queue {{ $labels.queue }} has no consumers"
+            description: "Queue {{ $labels.queue }} has no active consumers"

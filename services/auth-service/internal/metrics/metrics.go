@@ -122,4 +122,22 @@ var (
 		},
 		[]string{"type"}, // type: validation, database, auth, internal
 	)
+
+	// HTTP metrics
+	HTTPRequests = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "auth_http_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+		[]string{"method", "path", "status"},
+	)
+
+	HTTPRequestDuration = promauto.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "auth_http_request_duration_seconds",
+			Help:    "Duration of HTTP requests in seconds",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "path"},
+	)
 )

@@ -1,0 +1,146 @@
+# Promtail Configuration for Velure
+# Collects logs from Docker containers and sends to Loki
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: info
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Docker containers
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # Container name
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+
+      # Container ID (short)
+      - source_labels: ['__meta_docker_container_id']
+        regex: '(.{12})'
+        target_label: 'container_id'
+
+      # Image name
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+
+      # Project name from compose
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+
+      # Container image
+      - source_labels: ['__meta_docker_container_image']
+        target_label: 'image'
+
+      # Service type detection based on container name
+      - source_labels: ['container']
+        regex: '.*(auth-service).*'
+        target_label: 'service_type'
+        replacement: 'auth'
+
+      - source_labels: ['container']
+        regex: '.*(product-service).*'
+        target_label: 'service_type'
+        replacement: 'product'
+
+      - source_labels: ['container']
+        regex: '.*(publish-order-service).*'
+        target_label: 'service_type'
+        replacement: 'publish-order'
+
+      - source_labels: ['container']
+        regex: '.*(process-order-service).*'
+        target_label: 'service_type'
+        replacement: 'process-order'
+
+      - source_labels: ['container']
+        regex: '.*(ui-service).*'
+        target_label: 'service_type'
+        replacement: 'ui'
+
+      - source_labels: ['container']
+        regex: '.*(postgres).*'
+        target_label: 'service_type'
+        replacement: 'database'
+
+      - source_labels: ['container']
+        regex: '.*(mongodb).*'
+        target_label: 'service_type'
+        replacement: 'database'
+
+      - source_labels: ['container']
+        regex: '.*(redis).*'
+        target_label: 'service_type'
+        replacement: 'cache'
+
+      - source_labels: ['container']
+        regex: '.*(rabbitmq).*'
+        target_label: 'service_type'
+        replacement: 'messagequeue'
+
+      - source_labels: ['container']
+        regex: '.*(prometheus|grafana|loki|promtail).*'
+        target_label: 'service_type'
+        replacement: 'monitoring'
+
+      # Add environment
+      - replacement: 'development'
+        target_label: 'environment'
+
+      # Add cluster
+      - replacement: 'velure-local'
+        target_label: 'cluster'
+
+    # Pipeline stages to parse logs
+    pipeline_stages:
+      # Extract log level (INFO, ERROR, WARN, DEBUG)
+      - regex:
+          expression: '.*(?P<level>(INFO|ERROR|WARN|WARNING|DEBUG|FATAL|PANIC)).*'
+      - labels:
+          level:
+
+      # Extract timestamp if present
+      - timestamp:
+          source: time
+          format: RFC3339
+          fallback_formats:
+            - '2006-01-02T15:04:05Z07:00'
+            - '2006-01-02 15:04:05'
+
+      # Extract JSON logs
+      - json:
+          expressions:
+            level: level
+            msg: msg
+            message: message
+            error: error
+            service: service
+            method: method
+            path: path
+            status: status
+            duration: duration
+
+      # Map JSON fields to labels
+      - labels:
+          level:
+          service:
+          method:
+          status:
+
+      # Output formatting
+      - output:
+          source: output
+
+# Limits
+limits_config:
+  readline_rate: 100
+  readline_burst: 1000
