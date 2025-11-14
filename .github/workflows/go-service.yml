@@ -16,9 +16,55 @@ on:
         required: true
       DOCKER_PASSWORD:
         required: true
+      SONAR_TOKEN:
+        required: false
 
 jobs:
+  test-and-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+          cache-dependency-path: ${{ inputs.service-path }}/go.sum
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.service-path }}
+        run: go mod download
+
+      - name: Run tests with coverage
+        working-directory: ${{ inputs.service-path }}
+        run: |
+          go test ./... -coverprofile=coverage.out -covermode=atomic -v
+          go tool cover -func=coverage.out
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        if: secrets.SONAR_TOKEN != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: ${{ inputs.service-path }}
+          args: >
+            -Dsonar.verbose=true
+
+      - name: Upload coverage to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: ${{ inputs.service-path }}/coverage.out
+          retention-days: 30
+
   build-and-push:
+    needs: test-and-coverage
     runs-on: ubuntu-latest
 
     steps:
