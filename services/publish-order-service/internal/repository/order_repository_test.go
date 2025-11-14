@@ -186,3 +186,94 @@ func TestPostgresOrderRepository_GetOrdersCountByUserID(t *testing.T) {
 		t.Errorf("expectations não atendidas: %v", err)
 	}
 }
+
+func TestPostgresOrderRepository_GetOrdersByPage(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("erro sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresOrderRepository{db: db}
+
+	now := time.Now().Truncate(time.Second)
+	items1 := []model.CartItem{{ProductID: "p1", Name: "n1", Quantity: 2, Price: 10.0}}
+	items2 := []model.CartItem{{ProductID: "p2", Name: "n2", Quantity: 1, Price: 15.0}}
+	itemsJSON1, _ := json.Marshal(items1)
+	itemsJSON2, _ := json.Marshal(items2)
+
+	rows := sqlmock.NewRows([]string{
+		"id", "user_id", "items", "total", "status", "created_at", "updated_at",
+	}).AddRow(
+		"o1", "user1", itemsJSON1, 20.0, model.OrderCreated, now, now,
+	).AddRow(
+		"o2", "user2", itemsJSON2, 15.0, model.OrderProcessing, now, now,
+	)
+
+	mock.ExpectQuery(regexp.QuoteMeta(
+		"SELECT id, user_id, items, total, status, created_at, updated_at")).
+		WithArgs(10, 0).
+		WillReturnRows(rows)
+
+	countRows := sqlmock.NewRows([]string{"count"}).AddRow(25)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM TBLOrders")).
+		WillReturnRows(countRows)
+
+	result, err := repo.GetOrdersByPage(context.Background(), 1, 10)
+	if err != nil {
+		t.Errorf("GetOrdersByPage retornou erro: %v", err)
+	}
+	if result.TotalCount != 25 {
+		t.Errorf("TotalCount = %d, want 25", result.TotalCount)
+	}
+	if len(result.Orders) != 2 {
+		t.Errorf("Orders length = %d, want 2", len(result.Orders))
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations não atendidas: %v", err)
+	}
+}
+
+func TestPostgresOrderRepository_GetOrdersByUserID(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("erro sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresOrderRepository{db: db}
+
+	now := time.Now().Truncate(time.Second)
+	items := []model.CartItem{{ProductID: "p1", Name: "n1", Quantity: 2, Price: 10.0}}
+	itemsJSON, _ := json.Marshal(items)
+
+	rows := sqlmock.NewRows([]string{
+		"id", "user_id", "items", "total", "status", "created_at", "updated_at",
+	}).AddRow(
+		"o1", "user123", itemsJSON, 20.0, model.OrderCreated, now, now,
+	)
+
+	mock.ExpectQuery(regexp.QuoteMeta(
+		"SELECT id, user_id, items, total, status, created_at, updated_at")).
+		WithArgs("user123", 10, 0).
+		WillReturnRows(rows)
+
+	countRows := sqlmock.NewRows([]string{"count"}).AddRow(5)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM TBLOrders WHERE user_id = $1")).
+		WithArgs("user123").
+		WillReturnRows(countRows)
+
+	result, err := repo.GetOrdersByUserID(context.Background(), "user123", 1, 10)
+	if err != nil {
+		t.Errorf("GetOrdersByUserID retornou erro: %v", err)
+	}
+	if result.TotalCount != 5 {
+		t.Errorf("TotalCount = %d, want 5", result.TotalCount)
+	}
+	if len(result.Orders) != 1 {
+		t.Errorf("Orders length = %d, want 1", len(result.Orders))
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations não atendidas: %v", err)
+	}
+}
