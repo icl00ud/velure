@@ -44,6 +44,7 @@ logs/
 
 # Coverage files
 coverage.out
+coverage_full.out
 coverage.html
 
 # Node.js (in case any legacy files remain)
