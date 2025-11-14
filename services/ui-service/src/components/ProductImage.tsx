@@ -101,14 +101,18 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
   const getProductIcon = (productName: string): string => {
     const name = productName.toLowerCase();
 
-    if (name.includes("gato") || name.includes("cat") || name.includes("felino")) {
+    if (name.includes("cão") || name.includes("cães") || name.includes("dog") || name.includes("cachorro")) {
+      return "🐕";
+    } else if (name.includes("gato") || name.includes("cat") || name.includes("felino")) {
       return "🐱";
     } else if (name.includes("pássaro") || name.includes("bird") || name.includes("canário")) {
       return "🐦";
     } else if (name.includes("peixe") || name.includes("fish") || name.includes("aquário")) {
       return "🐟";
-    } else if (name.includes("hamster") || name.includes("coelho")) {
+    } else if (name.includes("hamster")) {
       return "🐹";
+    } else if (name.includes("coelho") || name.includes("rabbit")) {
+      return "🐰";
     }
 
     return "🐕"; // Padrão para cães

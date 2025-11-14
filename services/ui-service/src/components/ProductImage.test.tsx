@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import { ProductImage, ProductImageWithFallback, ProductImageGallery } from "./ProductImage";
 
 describe("ProductImage", () => {
@@ -30,7 +30,9 @@ describe("ProductImage", () => {
 
     const img = screen.getByRole("img");
     // Simulate image error
-    img.dispatchEvent(new Event("error"));
+    await act(async () => {
+      img.dispatchEvent(new Event("error"));
+    });
 
     await waitFor(() => {
       expect(screen.getByText("🐕")).toBeTruthy();
@@ -132,17 +134,24 @@ describe("ProductImageWithFallback", () => {
     const images = ["https://example.com/broken1.jpg", "https://example.com/broken2.jpg"];
     render(<ProductImageWithFallback images={images} alt="Test Product" fallbackIcon="🐕" />);
 
-    // Simulate all images failing
+    // Simulate first image failing
     let img = screen.getByRole("img");
-    img.dispatchEvent(new Event("error"));
-
-    await waitFor(() => {
-      img = screen.getByRole("img");
-      expect(img.tagName).toBe("IMG");
+    await act(async () => {
+      img.dispatchEvent(new Event("error"));
     });
 
-    img.dispatchEvent(new Event("error"));
+    // Wait for second image to be rendered
+    await waitFor(() => {
+      img = screen.getByRole("img");
+      expect(img).toHaveAttribute("src", images[1]);
+    });
 
+    // Simulate second image failing
+    await act(async () => {
+      img.dispatchEvent(new Event("error"));
+    });
+
+    // Now fallback should be shown
     await waitFor(() => {
       expect(screen.getByText("🐕")).toBeTruthy();
     });
