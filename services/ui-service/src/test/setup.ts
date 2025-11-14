@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
+import { afterEach, beforeEach, vi } from "vitest";
 
 // Cleanup after each test
 afterEach(() => {
@@ -49,3 +49,17 @@ global.Image = class {
     }, 0);
   }
 } as any;
+
+// Setup portal container for Radix UI components
+beforeEach(() => {
+  const portalRoot = document.createElement("div");
+  portalRoot.setAttribute("id", "radix-portal-root");
+  document.body.appendChild(portalRoot);
+});
+
+afterEach(() => {
+  const portalRoot = document.getElementById("radix-portal-root");
+  if (portalRoot) {
+    document.body.removeChild(portalRoot);
+  }
+});

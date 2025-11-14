@@ -28,16 +28,17 @@ class CartService {
   }
 
   addToCart(product: any, quantity: number = 1): void {
+    // Validar produto antes de normalizar
+    if (!product || (!product._id && !product.id)) {
+      console.error("Produto inválido:", product);
+      return;
+    }
+
     // Normalizar o produto para garantir que tenha _id
     const normalizedProduct = {
       ...product,
       _id: product._id || product.id, // Usar _id se existir, senão usar id
     };
-
-    if (!normalizedProduct || !normalizedProduct._id) {
-      console.error("Produto inválido:", normalizedProduct);
-      return;
-    }
 
     const existingItemIndex = this.cart.findIndex(
       (item) => item.product._id === normalizedProduct._id
