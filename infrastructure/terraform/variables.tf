@@ -170,6 +170,25 @@ variable "rabbitmq_admin_password" {
   sensitive   = true
 }
 
+# Route53 Variables
+variable "domain_name" {
+  description = "Domain name for the application (e.g., velure.app.br)"
+  type        = string
+  default     = "velure.app.br"
+}
+
+variable "enable_route53_health_check" {
+  description = "Enable Route53 health check for the domain"
+  type        = bool
+  default     = false
+}
+
+variable "route53_health_check_path" {
+  description = "Path for Route53 health check endpoint"
+  type        = string
+  default     = "/"
+}
+
 variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)

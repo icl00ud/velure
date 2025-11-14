@@ -3,7 +3,7 @@ replicaCount: 1
 
 image:
   repository: icl00ud/velure-ui
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   tag: "latest"
 
 imagePullSecrets: []
@@ -33,10 +33,10 @@ securityContext: {}
 service:
   type: LoadBalancer
   port: 80
-  targetPort: 80
+  targetPort: 8080
 
 ingress:
-  enabled: true
+  enabled: false
   className: "alb"
   annotations:
     # ALB Controller annotations
@@ -65,12 +65,16 @@ resources:
 
 livenessProbe:
   httpGet:
-    path: /
-    port: 80 
+    path: /health
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 10
 readinessProbe:
   httpGet:
-    path: /
-    port: 80 
+    path: /health
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5 
 
 autoscaling:
   enabled: false

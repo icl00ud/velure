@@ -1,5 +1,4 @@
 # Grafana Datasources - Auto-provisioning
-# Configura o Prometheus como datasource automaticamente
 
 apiVersion: 1
 
@@ -7,6 +6,7 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
+    uid: prometheus
     url: http://prometheus:9090
     isDefault: true
     editable: true
@@ -14,4 +14,13 @@ datasources:
       timeInterval: 15s
       queryTimeout: 60s
       httpMethod: POST
-    version: 1
+
+  - name: Loki
+    type: loki
+    access: proxy
+    uid: loki
+    url: http://loki:3100
+    isDefault: false
+    editable: true
+    jsonData:
+      maxLines: 1000

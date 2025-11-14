@@ -130,3 +130,15 @@ module "amazonmq" {
     module.security_groups
   ]
 }
+
+# Route53 Module for Domain Management
+module "route53" {
+  source = "./modules/route53"
+
+  project_name        = var.project_name
+  environment         = var.environment
+  domain_name         = var.domain_name
+  enable_health_check = var.enable_route53_health_check
+  health_check_path   = var.route53_health_check_path
+  tags                = var.tags
+}

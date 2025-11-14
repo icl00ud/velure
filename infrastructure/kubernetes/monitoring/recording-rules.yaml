@@ -1,0 +1,197 @@
+# Recording Rules for Velure
+# Pre-aggregate expensive queries for better performance
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: velure-recording-rules
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    # Application-level aggregations
+    - name: velure-application-recording
+      interval: 30s
+      rules:
+        # Request rate per service
+        - record: job:http_requests:rate5m
+          expr: sum(rate(http_requests_total[5m])) by (service)
+
+        # Error rate per service
+        - record: job:http_errors:rate5m
+          expr: sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+
+        # Error percentage per service
+        - record: job:http_error_percentage:rate5m
+          expr: |
+            (
+              job:http_errors:rate5m
+              /
+              job:http_requests:rate5m
+            ) * 100
+
+        # p99 latency per service
+        - record: job:http_request_duration:p99
+          expr: |
+            histogram_quantile(0.99,
+              sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
+            )
+
+        # p95 latency per service
+        - record: job:http_request_duration:p95
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
+            )
+
+        # p50 latency per service
+        - record: job:http_request_duration:p50
+          expr: |
+            histogram_quantile(0.50,
+              sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)
+            )
+
+    # Infrastructure-level aggregations
+    - name: velure-infrastructure-recording
+      interval: 30s
+      rules:
+        # CPU usage percentage per pod
+        - record: pod:cpu_usage:percentage
+          expr: |
+            (
+              sum(rate(container_cpu_usage_seconds_total{namespace="velure",container!=""}[5m])) by (pod)
+              /
+              sum(container_spec_cpu_quota{namespace="velure",container!=""}/container_spec_cpu_period{namespace="velure",container!=""}) by (pod)
+            ) * 100
+
+        # Memory usage percentage per pod
+        - record: pod:memory_usage:percentage
+          expr: |
+            (
+              sum(container_memory_working_set_bytes{namespace="velure",container!=""}) by (pod)
+              /
+              sum(container_spec_memory_limit_bytes{namespace="velure",container!=""}) by (pod)
+            ) * 100
+
+        # Total CPU usage for namespace
+        - record: namespace:cpu_usage:sum
+          expr: sum(rate(container_cpu_usage_seconds_total{namespace="velure",container!=""}[5m]))
+
+        # Total memory usage for namespace
+        - record: namespace:memory_usage:sum
+          expr: sum(container_memory_working_set_bytes{namespace="velure",container!=""})
+
+        # Pod restart rate
+        - record: pod:restart_rate:5m
+          expr: rate(kube_pod_container_status_restarts_total{namespace="velure"}[5m])
+
+    # Database-level aggregations
+    - name: velure-database-recording
+      interval: 30s
+      rules:
+        # PostgreSQL transaction rate
+        - record: postgres:transactions:rate5m
+          expr: rate(pg_stat_database_xact_commit{datname="velure_db"}[5m])
+
+        # PostgreSQL cache hit ratio
+        - record: postgres:cache_hit_ratio:percentage
+          expr: |
+            100 * (
+              pg_stat_database_blks_hit{datname="velure_db"}
+              /
+              (pg_stat_database_blks_hit{datname="velure_db"} + pg_stat_database_blks_read{datname="velure_db"})
+            )
+
+        # MongoDB operations per second
+        - record: mongodb:operations:rate5m
+          expr: sum(rate(mongodb_op_counters_total[5m])) by (type)
+
+        # Redis hit rate
+        - record: redis:hit_rate:percentage
+          expr: |
+            100 * (
+              redis_keyspace_hits_total
+              /
+              (redis_keyspace_hits_total + redis_keyspace_misses_total)
+            )
+
+        # Redis commands per second
+        - record: redis:commands:rate5m
+          expr: rate(redis_commands_processed_total[5m])
+
+    # RabbitMQ aggregations
+    - name: velure-rabbitmq-recording
+      interval: 30s
+      rules:
+        # Message publish rate per queue
+        - record: rabbitmq:messages_published:rate5m
+          expr: sum(rate(rabbitmq_queue_messages_published_total[5m])) by (queue)
+
+        # Message delivery rate per queue
+        - record: rabbitmq:messages_delivered:rate5m
+          expr: sum(rate(rabbitmq_queue_messages_delivered_total[5m])) by (queue)
+
+        # Queue growth rate
+        - record: rabbitmq:queue_growth:rate5m
+          expr: deriv(rabbitmq_queue_messages[5m])
+
+        # Total messages in all queues
+        - record: rabbitmq:messages_total:sum
+          expr: sum(rabbitmq_queue_messages)
+
+    # Business metrics
+    - name: velure-business-recording
+      interval: 30s
+      rules:
+        # Login rate
+        - record: auth:login_rate:5m
+          expr: sum(rate(auth_login_attempts_total[5m])) by (status)
+
+        # Successful login rate
+        - record: auth:successful_login_rate:5m
+          expr: sum(rate(auth_login_attempts_total{status="success"}[5m]))
+
+        # Product queries per second
+        - record: product:queries:rate5m
+          expr: sum(rate(product_queries_total[5m])) by (operation)
+
+        # Cache efficiency
+        - record: product:cache_efficiency:percentage
+          expr: |
+            100 * (
+              product_cache_hits_total
+              /
+              (product_cache_hits_total + product_cache_misses_total)
+            )
+
+    # SLI (Service Level Indicators)
+    - name: velure-sli-recording
+      interval: 30s
+      rules:
+        # Availability SLI (percentage of successful requests)
+        - record: sli:availability:rate5m
+          expr: |
+            (
+              sum(rate(http_requests_total{status!~"5.."}[5m])) by (service)
+              /
+              sum(rate(http_requests_total[5m])) by (service)
+            ) * 100
+
+        # Latency SLI (percentage of requests below 500ms)
+        - record: sli:latency_500ms:rate5m
+          expr: |
+            (
+              sum(rate(http_request_duration_seconds_bucket{le="0.5"}[5m])) by (service)
+              /
+              sum(rate(http_request_duration_seconds_count[5m])) by (service)
+            ) * 100
+
+        # Latency SLI (percentage of requests below 1s)
+        - record: sli:latency_1s:rate5m
+          expr: |
+            (
+              sum(rate(http_request_duration_seconds_bucket{le="1"}[5m])) by (service)
+              /
+              sum(rate(http_request_duration_seconds_count[5m])) by (service)
+            ) * 100

@@ -3,7 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
+	"github.com/icl00ud/publish-order-service/internal/metrics"
 	"github.com/icl00ud/publish-order-service/internal/middleware"
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"github.com/icl00ud/publish-order-service/internal/service"
@@ -24,9 +26,13 @@ func NewOrderHandler(svc *service.OrderService, pub Publisher) *OrderHandler {
 }
 
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
 	userID := middleware.GetUserID(r.Context())
 	if userID == "" {
 		zap.L().Warn("missing user_id in context")
+		metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", "401").Inc()
+		metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
 		writeJSON(w, http.StatusUnauthorized, response{"error": "unauthorized"})
 		return
 	}
@@ -34,6 +40,8 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	items, err := parseCreateOrder(r.Body)
 	if err != nil {
 		zap.L().Warn("invalid payload", zap.Error(err))
+		metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", "400").Inc()
+		metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
 		writeJSON(w, http.StatusBadRequest, response{"error": "invalid payload"})
 		return
 	}
@@ -45,15 +53,28 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 			code = http.StatusBadRequest
 		}
 		zap.L().Error("create order failed", zap.Error(err))
+		metrics.OrdersCreated.WithLabelValues("failure").Inc()
+		metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", http.StatusText(code)).Inc()
+		metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
 		writeJSON(w, code, response{"error": err.Error()})
 		return
 	}
 
+	metrics.OrdersCreated.WithLabelValues("success").Inc()
+	metrics.OrderCreationDuration.Observe(time.Since(start).Seconds())
+	metrics.OrderTotalValue.Observe(float64(o.Total))
+	metrics.OrderItemsCount.Observe(float64(len(o.Items)))
+
 	evt := model.Event{Type: model.OrderCreated, Payload: mustMarshal(o)}
 	if err := h.pub.Publish(evt); err != nil {
 		zap.L().Error("publish event failed", zap.Error(err))
+		metrics.Errors.WithLabelValues("rabbitmq").Inc()
+	} else {
+		metrics.OrdersPublished.WithLabelValues("order.created").Inc()
 	}
 
+	metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", "201").Inc()
+	metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
 	writeJSON(w, http.StatusCreated, response{
 		"order_id": o.ID,
 		"total":    o.Total,

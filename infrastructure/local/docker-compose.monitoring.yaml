@@ -129,9 +129,135 @@ services:
           cpus: '0.1'
           memory: 128M
 
+  # -------------------------
+  # Loki - Log Aggregation
+  # -------------------------
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: velure-loki
+    restart: always
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./monitoring/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # -------------------------
+  # Promtail - Log Collector
+  # -------------------------
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: velure-promtail
+    restart: always
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    volumes:
+      - ./monitoring/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks:
+      - monitoring
+      - auth
+      - order
+      - frontend
+    depends_on:
+      - loki
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # -------------------------
+  # PostgreSQL Exporter - Database Metrics
+  # -------------------------
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: velure-postgres-exporter
+    restart: always
+    environment:
+      DATA_SOURCE_NAME: "postgresql://velure_user:velure_password@postgres:5432/velure_db?sslmode=disable"
+    ports:
+      - "9187:9187"
+    networks:
+      - monitoring
+      - auth
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # -------------------------
+  # MongoDB Exporter - Database Metrics
+  # -------------------------
+  mongodb-exporter:
+    image: percona/mongodb_exporter:0.40
+    container_name: velure-mongodb-exporter
+    restart: always
+    environment:
+      MONGODB_URI: "mongodb://velure_user:velure_password@mongodb:27017"
+    command:
+      - '--mongodb.direct-connect=true'
+      - '--discovering-mode'
+      - '--compatible-mode'
+    ports:
+      - "9216:9216"
+    networks:
+      - monitoring
+      - frontend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # -------------------------
+  # Redis Exporter - Cache Metrics
+  # -------------------------
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: velure-redis-exporter
+    restart: always
+    environment:
+      REDIS_ADDR: "redis:6379"
+    ports:
+      - "9121:9121"
+    networks:
+      - monitoring
+      - frontend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
 volumes:
   prometheus_data:
   grafana_data:
+  loki_data:
 
 networks:
   monitoring:
