@@ -51,7 +51,8 @@ The `.github/workflows/go-service.yml` workflow includes:
 
 2. **Verify Workflow Configuration**:
    - Ensure `.github/workflows/ci-cd.yml` passes the `SONAR_TOKEN` secret to the Go service workflow
-   - The secret is marked as `required: false` so builds won't fail if it's not configured
+   - The SonarCloud step uses `continue-on-error: true` so builds succeed even without the token
+   - If token is not configured, SonarCloud step will be skipped silently
 
 ### SonarCloud Project Configuration
 
@@ -141,6 +142,7 @@ go tool cover -html=coverage.out
 2. Verify the path in `sonar-project.properties` matches the generated file
 3. Ensure `SONAR_TOKEN` secret is configured correctly
 4. Check workflow logs for SonarCloud scanner errors
+5. Note: The SonarCloud step uses `continue-on-error: true`, so check the step output even if the workflow succeeds
 
 ### Quality Gate Failing
 
