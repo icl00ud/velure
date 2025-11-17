@@ -315,7 +315,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(100 * (sum(rate(http_requests_total{service=\"process-order-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"process-order-service\"}[5m])))) or 0",
+          "expr": "(100 * (sum(rate(http_requests_total{service=\"process-order-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"process-order-service\"}[5m])))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -807,7 +807,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rabbitmq_queue_messages{queue=~\"orders.*\"}) or 0",
+          "expr": "sum(rabbitmq_queue_messages{queue=~\"orders.*\"}) or vector(0)",
           "legendFormat": "{{queue}}",
           "refId": "A"
         }
@@ -897,7 +897,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(rabbitmq_queue_messages_delivered_total{queue=~\"orders.*\"}[5m])) or 0",
+          "expr": "sum(rate(rabbitmq_queue_messages_delivered_total{queue=~\"orders.*\"}[5m])) or vector(0)",
           "legendFormat": "Messages Consumed",
           "refId": "A"
         }
