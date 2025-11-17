@@ -315,7 +315,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(100 * (sum(rate(http_requests_total{service=\"auth-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"auth-service\"}[5m])))) or 0",
+          "expr": "(100 * (sum(rate(http_requests_total{service=\"auth-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"auth-service\"}[5m])))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -709,7 +709,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "pg_stat_database_numbackends{datname=\"auth_db\"} or 0",
+          "expr": "pg_stat_database_numbackends{datname=\"auth_db\"} or vector(0)",
           "legendFormat": "Active Connections",
           "refId": "A"
         }
