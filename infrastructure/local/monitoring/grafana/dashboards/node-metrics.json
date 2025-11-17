@@ -416,7 +416,11 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["kubernetes", "nodes", "infrastructure"],
+  "tags": [
+    "kubernetes",
+    "nodes",
+    "infrastructure"
+  ],
   "templating": {
     "list": []
   },

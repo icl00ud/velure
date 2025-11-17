@@ -576,7 +576,11 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["kubernetes", "cluster", "overview"],
+  "tags": [
+    "kubernetes",
+    "cluster",
+    "overview"
+  ],
   "templating": {
     "list": []
   },

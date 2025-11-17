@@ -307,7 +307,11 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["logs", "loki", "velure"],
+  "tags": [
+    "logs",
+    "loki",
+    "velure"
+  ],
   "templating": {
     "list": [
       {
