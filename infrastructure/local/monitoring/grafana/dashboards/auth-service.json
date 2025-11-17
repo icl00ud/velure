@@ -249,7 +249,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(http_requests_total{service=\"auth-service\"}[5m])",
+          "expr": "sum(rate(http_requests_total{service=\"auth-service\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -315,7 +315,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * (sum(rate(http_requests_total{service=\"auth-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"auth-service\"}[5m])))",
+          "expr": "(100 * (sum(rate(http_requests_total{service=\"auth-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"auth-service\"}[5m])))) or 0",
           "refId": "A"
         }
       ],
@@ -683,105 +683,6 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 12
-      },
-      "id": 9,
-      "options": {
-        "legend": {
-          "calcs": [
-            "last",
-            "max",
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "rate(auth_jwt_generated_total[5m])",
-          "legendFormat": "JWT Generated",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "rate(auth_jwt_validated_total[5m])",
-          "legendFormat": "JWT Validated",
-          "refId": "B"
-        }
-      ],
-      "title": "JWT Operations",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "short"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
         "y": 20
       },
@@ -808,7 +709,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "pg_stat_database_numbackends{datname=\"auth_db\"}",
+          "expr": "pg_stat_database_numbackends{datname=\"auth_db\"} or 0",
           "legendFormat": "Active Connections",
           "refId": "A"
         }

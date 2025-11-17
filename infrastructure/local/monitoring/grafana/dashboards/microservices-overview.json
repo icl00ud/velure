@@ -439,7 +439,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * (product_cache_hits_total / (product_cache_hits_total + product_cache_misses_total))",
+          "expr": "(100 * (product_cache_hits_total / (product_cache_hits_total + product_cache_misses_total))) or 0",
           "refId": "A"
         }
       ],
@@ -497,7 +497,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rabbitmq_queue_messages{queue=~\"orders.*\"}",
+          "expr": "sum(rabbitmq_queue_messages{queue=~\"orders.*\"}) or 0",
           "refId": "A"
         }
       ],
@@ -796,7 +796,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * (sum(rate(http_requests_total{service=~\"auth-service|product-service|publish-order-service|process-order-service\",status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total{service=~\"auth-service|product-service|publish-order-service|process-order-service\"}[5m])) by (service))",
+          "expr": "(100 * (sum(rate(http_requests_total{service=~\"auth-service|product-service|publish-order-service|process-order-service\",status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total{service=~\"auth-service|product-service|publish-order-service|process-order-service\"}[5m])) by (service))) or 0",
           "legendFormat": "{{service}}",
           "refId": "A"
         }
