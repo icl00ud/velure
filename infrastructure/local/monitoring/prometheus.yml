@@ -19,7 +19,7 @@ scrape_configs:
           service: 'prometheus'
 
   # Auth Service
-  - job_name: 'auth-service'
+  - job_name: 'velure-auth'
     metrics_path: '/metrics'
     static_configs:
       - targets: ['auth-service:3020']
@@ -28,7 +28,7 @@ scrape_configs:
           team: 'authentication'
 
   # Product Service
-  - job_name: 'product-service'
+  - job_name: 'velure-product'
     metrics_path: '/metrics'
     static_configs:
       - targets: ['product-service:3010']
@@ -37,7 +37,7 @@ scrape_configs:
           team: 'catalog'
 
   # Publish Order Service
-  - job_name: 'publish-order-service'
+  - job_name: 'velure-publish-order'
     metrics_path: '/metrics'
     static_configs:
       - targets: ['publish-order-service:3030']
@@ -46,7 +46,7 @@ scrape_configs:
           team: 'orders'
 
   # Process Order Service
-  - job_name: 'process-order-service'
+  - job_name: 'velure-process-order'
     metrics_path: '/metrics'
     static_configs:
       - targets: ['process-order-service:8081']
