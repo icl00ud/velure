@@ -16,28 +16,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [
-    {
-      "title": "Auth Service Details",
-      "url": "/d/velure-auth-service/auth-service",
-      "type": "dashboards"
-    },
-    {
-      "title": "Product Service Details",
-      "url": "/d/velure-product-service/product-service",
-      "type": "dashboards"
-    },
-    {
-      "title": "Publish Order Service Details",
-      "url": "/d/velure-publish-order-service/publish-order-service",
-      "type": "dashboards"
-    },
-    {
-      "title": "Process Order Service Details",
-      "url": "/d/velure-process-order-service/process-order-service",
-      "type": "dashboards"
-    }
-  ],
+  "links": [],
   "liveNow": false,
   "panels": [
     {
@@ -80,7 +59,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -139,7 +120,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -198,7 +181,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -257,7 +242,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -313,7 +300,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -369,7 +358,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -433,7 +424,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -489,7 +482,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -592,7 +587,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(http_requests_total{service=~\"auth-service|product-service|publish-order-service|process-order-service\"}[5m])",
+          "expr": "sum by (service) (rate(http_requests_total{service=~\"auth-service|product-service|publish-order-service|process-order-service\"}[5m]))",
           "legendFormat": "{{service}}",
           "refId": "A"
         }
@@ -902,7 +897,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=~\"auth-service|product-service|publish-order-service|process-order-service\"}[5m]) * 100",
+          "expr": "sum by (container_label_com_docker_compose_service) (rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_service=~\"auth-service|product-service|publish-order-service|process-order-service\"}[5m]) * 100)",
           "legendFormat": "{{container_label_com_docker_compose_service}}",
           "refId": "A"
         }
@@ -993,7 +988,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "container_memory_usage_bytes{container_label_com_docker_compose_service=~\"auth-service|product-service|publish-order-service|process-order-service\"}",
+          "expr": "sum by (container_label_com_docker_compose_service) (container_memory_usage_bytes{container_label_com_docker_compose_service=~\"auth-service|product-service|publish-order-service|process-order-service\"})",
           "legendFormat": "{{container_label_com_docker_compose_service}}",
           "refId": "A"
         }
@@ -1104,7 +1099,11 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["velure", "microservices", "overview"],
+  "tags": [
+    "velure",
+    "microservices",
+    "overview"
+  ],
   "templating": {
     "list": []
   },

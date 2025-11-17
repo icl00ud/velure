@@ -6,13 +6,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [
-    {
-      "title": "Back to Overview",
-      "url": "/d/velure-microservices-overview/microservices-overview",
-      "type": "dashboards"
-    }
-  ],
+  "links": [],
   "liveNow": false,
   "panels": [
     {
@@ -66,7 +60,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -122,7 +118,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -186,7 +184,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -242,7 +242,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -306,7 +308,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -388,7 +392,11 @@
       "id": 6,
       "options": {
         "legend": {
-          "calcs": ["last", "max", "mean"],
+          "calcs": [
+            "last",
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -482,7 +490,11 @@
       "id": 7,
       "options": {
         "legend": {
-          "calcs": ["last", "max", "mean"],
+          "calcs": [
+            "last",
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -588,7 +600,11 @@
       "id": 8,
       "options": {
         "legend": {
-          "calcs": ["last", "max", "mean"],
+          "calcs": [
+            "last",
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -674,7 +690,11 @@
       "id": 9,
       "options": {
         "legend": {
-          "calcs": ["last", "max", "mean"],
+          "calcs": [
+            "last",
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -769,7 +789,11 @@
       "id": 10,
       "options": {
         "legend": {
-          "calcs": ["last", "max", "mean"],
+          "calcs": [
+            "last",
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -882,7 +906,11 @@
       "id": 11,
       "options": {
         "legend": {
-          "calcs": ["last", "max", "mean"],
+          "calcs": [
+            "last",
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -910,7 +938,11 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["velure", "product", "service"],
+  "tags": [
+    "velure",
+    "product",
+    "service"
+  ],
   "templating": {
     "list": []
   },

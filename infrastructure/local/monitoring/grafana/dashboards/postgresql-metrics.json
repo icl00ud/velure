@@ -468,7 +468,11 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["postgresql", "database", "infrastructure"],
+  "tags": [
+    "postgresql",
+    "database",
+    "infrastructure"
+  ],
   "templating": {
     "list": []
   },
