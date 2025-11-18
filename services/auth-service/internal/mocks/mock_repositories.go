@@ -10,6 +10,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 	models "velure-auth-service/internal/models"
 
@@ -143,6 +144,21 @@ func (mr *MockUserRepositoryInterfaceMockRecorder) Update(user any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepositoryInterface)(nil).Update), user)
 }
 
+// CountUsers mocks base method.
+func (m *MockUserRepositoryInterface) CountUsers(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountUsers", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountUsers indicates an expected call of CountUsers.
+func (mr *MockUserRepositoryInterfaceMockRecorder) CountUsers(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUsers", reflect.TypeOf((*MockUserRepositoryInterface)(nil).CountUsers), ctx)
+}
+
 // MockSessionRepositoryInterface is a mock of SessionRepositoryInterface interface.
 type MockSessionRepositoryInterface struct {
 	ctrl     *gomock.Controller
@@ -237,6 +253,21 @@ func (m *MockSessionRepositoryInterface) InvalidateByRefreshToken(refreshToken s
 func (mr *MockSessionRepositoryInterfaceMockRecorder) InvalidateByRefreshToken(refreshToken any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InvalidateByRefreshToken", reflect.TypeOf((*MockSessionRepositoryInterface)(nil).InvalidateByRefreshToken), refreshToken)
+}
+
+// CountActiveSessions mocks base method.
+func (m *MockSessionRepositoryInterface) CountActiveSessions(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountActiveSessions", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountActiveSessions indicates an expected call of CountActiveSessions.
+func (mr *MockSessionRepositoryInterfaceMockRecorder) CountActiveSessions(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountActiveSessions", reflect.TypeOf((*MockSessionRepositoryInterface)(nil).CountActiveSessions), ctx)
 }
 
 // Update mocks base method.

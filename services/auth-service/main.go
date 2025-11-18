@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -55,6 +56,8 @@ func main() {
 	// Initialize services
 	log.Println("Initializing services...")
 	authService := services.NewAuthService(userRepo, sessionRepo, passwordResetRepo, cfg)
+	authService.SyncActiveSessionsMetric(context.Background())
+	authService.SyncTotalUsersMetric(context.Background())
 	log.Println("Services initialized successfully")
 
 	// Initialize handlers
@@ -102,10 +105,14 @@ func setupRouter(cfg *config.Config, authHandler *handlers.AuthHandler) *gin.Eng
 	// Initialize router
 	router := gin.Default()
 
+	// Rate limiter global
+	rateLimiter := middleware.NewRateLimiter(100, 200) // 100 req/s, burst 200
+
 	// Middleware
 	router.Use(middleware.CORS())
 	router.Use(middleware.Logger())
 	router.Use(middleware.PrometheusMiddleware())
+	router.Use(rateLimiter.Middleware())
 
 	// Prometheus metrics endpoint
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))

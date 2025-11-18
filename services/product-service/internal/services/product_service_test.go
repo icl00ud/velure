@@ -413,6 +413,9 @@ func TestCreateProduct(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(MockProductRepository)
 			mockRepo.On("CreateProduct", mock.Anything, tt.request).Return(tt.mockReturn, tt.mockError)
+			if tt.mockError == nil {
+				mockRepo.On("GetProductsCount", mock.Anything).Return(int64(1), nil)
+			}
 
 			service := NewProductService(mockRepo)
 			result, err := service.CreateProduct(context.Background(), tt.request)
@@ -454,6 +457,9 @@ func TestDeleteProductsByName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(MockProductRepository)
 			mockRepo.On("DeleteProductsByName", mock.Anything, tt.productName).Return(tt.mockError)
+			if tt.mockError == nil {
+				mockRepo.On("GetProductsCount", mock.Anything).Return(int64(1), nil)
+			}
 
 			service := NewProductService(mockRepo)
 			err := service.DeleteProductsByName(context.Background(), tt.productName)
@@ -493,6 +499,9 @@ func TestDeleteProductById(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(MockProductRepository)
 			mockRepo.On("DeleteProductById", mock.Anything, tt.productID).Return(tt.mockError)
+			if tt.mockError == nil {
+				mockRepo.On("GetProductsCount", mock.Anything).Return(int64(1), nil)
+			}
 
 			service := NewProductService(mockRepo)
 			err := service.DeleteProductById(context.Background(), tt.productID)

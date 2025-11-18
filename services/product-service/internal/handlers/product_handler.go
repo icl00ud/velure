@@ -42,6 +42,53 @@ func (h *ProductHandler) GetProductsByName(c *fiber.Ctx) error {
 	return c.JSON(products)
 }
 
+// GetProductsREST is a REST-style endpoint that accepts both 'limit' and 'pageSize' query parameters
+func (h *ProductHandler) GetProductsREST(c *fiber.Ctx) error {
+	start := time.Now()
+
+	pageStr := c.Query("page")
+	// Accept both 'limit' (REST-style) and 'pageSize' (legacy) - prefer 'limit'
+	pageSizeStr := c.Query("limit")
+	if pageSizeStr == "" {
+		pageSizeStr = c.Query("pageSize")
+	}
+
+	if pageStr == "" || pageSizeStr == "" {
+		metrics.HTTPRequests.WithLabelValues("product-service", "GET", "/products", "400").Inc()
+		return fiber.NewError(fiber.StatusBadRequest, "Missing query parameters (page and limit/pageSize required)")
+	}
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		metrics.HTTPRequests.WithLabelValues("product-service", "GET", "/products", "400").Inc()
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter")
+	}
+
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil {
+		metrics.HTTPRequests.WithLabelValues("product-service", "GET", "/products", "400").Inc()
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid limit/pageSize parameter")
+	}
+
+	metrics.ProductQueries.WithLabelValues("list").Inc()
+	opStart := time.Now()
+
+	response, err := h.service.GetProductsByPage(c.Context(), page, pageSize)
+	if err != nil {
+		metrics.HTTPRequests.WithLabelValues("product-service", "GET", "/products", "500").Inc()
+		metrics.Errors.WithLabelValues("database").Inc()
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+
+	metrics.ProductOperationDuration.WithLabelValues("list").Observe(time.Since(opStart).Seconds())
+	metrics.SearchResultsReturned.Observe(float64(len(response.Products)))
+	metrics.HTTPRequests.WithLabelValues("product-service", "GET", "/products", "200").Inc()
+	metrics.HTTPRequestDuration.WithLabelValues("product-service", "GET", "/products").Observe(time.Since(start).Seconds())
+
+	return c.JSON(response)
+}
+
+// GetProductsByPage is the legacy endpoint that requires 'pageSize'
 func (h *ProductHandler) GetProductsByPage(c *fiber.Ctx) error {
 	start := time.Now()
 
@@ -81,6 +128,20 @@ func (h *ProductHandler) GetProductsByPage(c *fiber.Ctx) error {
 	metrics.HTTPRequestDuration.WithLabelValues("product-service", "GET", "/products").Observe(time.Since(start).Seconds())
 
 	return c.JSON(response)
+}
+
+// SearchProducts is a REST-style search endpoint that accepts 'q' query parameter
+func (h *ProductHandler) SearchProducts(c *fiber.Ctx) error {
+	query := c.Query("q")
+	if query == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Search query parameter 'q' is required")
+	}
+
+	products, err := h.service.GetProductsByName(c.Context(), query)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(products)
 }
 
 func (h *ProductHandler) GetProductsByPageAndCategory(c *fiber.Ctx) error {

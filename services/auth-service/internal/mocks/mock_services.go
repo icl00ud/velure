@@ -41,10 +41,10 @@ func (m *MockAuthServiceInterface) EXPECT() *MockAuthServiceInterfaceMockRecorde
 }
 
 // CreateUser mocks base method.
-func (m *MockAuthServiceInterface) CreateUser(req models.CreateUserRequest) (*models.UserResponse, error) {
+func (m *MockAuthServiceInterface) CreateUser(req models.CreateUserRequest) (*models.RegistrationResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", req)
-	ret0, _ := ret[0].(*models.UserResponse)
+	ret0, _ := ret[0].(*models.RegistrationResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

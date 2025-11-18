@@ -21,6 +21,8 @@ type MockProductService struct {
 	mock.Mock
 }
 
+func (m *MockProductService) SyncProductCatalogMetric(ctx context.Context) {}
+
 func (m *MockProductService) GetAllProducts(ctx context.Context) ([]models.ProductResponse, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {

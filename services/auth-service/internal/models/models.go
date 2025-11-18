@@ -9,7 +9,7 @@ import (
 type User struct {
 	ID        uint      `json:"id" gorm:"primaryKey"`
 	Name      string    `json:"name" gorm:"not null"`
-	Email     string    `json:"email" gorm:"unique;not null"`
+	Email     string    `json:"email" gorm:"unique;not null;index:idx_users_email"`
 	Password  string    `json:"-" gorm:"not null"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
@@ -20,7 +20,7 @@ type User struct {
 
 type Session struct {
 	ID           uint      `json:"id" gorm:"primaryKey"`
-	UserID       uint      `json:"userId" gorm:"not null"`
+	UserID       uint      `json:"userId" gorm:"not null;index"`
 	AccessToken  string    `json:"accessToken" gorm:"unique;not null"`
 	RefreshToken string    `json:"refreshToken" gorm:"unique;not null"`
 	ExpiresAt    time.Time `json:"expiresAt" gorm:"not null"`
@@ -54,6 +54,16 @@ type LoginRequest struct {
 type LoginResponse struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
+}
+
+type RegistrationResponse struct {
+	ID           uint      `json:"id"`
+	Name         string    `json:"name"`
+	Email        string    `json:"email"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+	AccessToken  string    `json:"accessToken"`
+	RefreshToken string    `json:"refreshToken"`
 }
 
 type ValidateTokenRequest struct {

@@ -44,16 +44,24 @@ func TestAuthHandler_Register(t *testing.T) {
 			setupMock: func() {
 				mockService.EXPECT().
 					CreateUser(gomock.Any()).
-					Return(&models.UserResponse{
-						ID:    1,
-						Name:  "Test User",
-						Email: "test@example.com",
+					Return(&models.RegistrationResponse{
+						ID:           1,
+						Name:         "Test User",
+						Email:        "test@example.com",
+						AccessToken:  "test-access-token",
+						RefreshToken: "test-refresh-token",
 					}, nil)
 			},
 			expectedStatus: http.StatusCreated,
 			checkResponse: func(t *testing.T, body map[string]interface{}) {
 				if body["email"] != "test@example.com" {
 					t.Errorf("Expected email test@example.com, got %v", body["email"])
+				}
+				if body["accessToken"] != "test-access-token" {
+					t.Errorf("Expected accessToken test-access-token, got %v", body["accessToken"])
+				}
+				if body["refreshToken"] != "test-refresh-token" {
+					t.Errorf("Expected refreshToken test-refresh-token, got %v", body["refreshToken"])
 				}
 			},
 		},

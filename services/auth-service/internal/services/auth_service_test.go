@@ -51,8 +51,33 @@ func TestAuthService_CreateUser(t *testing.T) {
 					Create(gomock.Any()).
 					DoAndReturn(func(u *models.User) error {
 						u.ID = 1
+						u.CreatedAt = time.Now()
+						u.UpdatedAt = time.Now()
 						return nil
 					})
+
+				// Session creation for token generation
+				mockSessionRepo.EXPECT().
+					GetByUserID(uint(1)).
+					Return(nil, gorm.ErrRecordNotFound)
+
+				mockSessionRepo.EXPECT().
+					Create(gomock.Any()).
+					DoAndReturn(func(s *models.Session) error {
+						s.ID = 1
+						s.AccessToken = "test-access-token"
+						s.RefreshToken = "test-refresh-token"
+						s.ExpiresAt = time.Now().Add(24 * time.Hour)
+						return nil
+					})
+
+				mockSessionRepo.EXPECT().
+					CountActiveSessions(gomock.Any()).
+					Return(int64(1), nil)
+
+				mockUserRepo.EXPECT().
+					CountUsers(gomock.Any()).
+					Return(int64(1), nil)
 			},
 			wantErr: false,
 		},
@@ -134,6 +159,12 @@ func TestAuthService_CreateUser(t *testing.T) {
 					if result.Name != tt.req.Name {
 						t.Errorf("CreateUser() name = %v, want %v", result.Name, tt.req.Name)
 					}
+					if result.AccessToken == "" {
+						t.Error("CreateUser() expected accessToken but got empty string")
+					}
+					if result.RefreshToken == "" {
+						t.Error("CreateUser() expected refreshToken but got empty string")
+					}
 				}
 			}
 		})
@@ -189,6 +220,10 @@ func TestAuthService_Login(t *testing.T) {
 						s.ID = 1
 						return nil
 					})
+
+				mockSessionRepo.EXPECT().
+					CountActiveSessions(gomock.Any()).
+					Return(int64(1), nil)
 			},
 			wantErr: false,
 		},
@@ -254,6 +289,10 @@ func TestAuthService_Login(t *testing.T) {
 				mockSessionRepo.EXPECT().
 					Update(gomock.Any()).
 					Return(nil)
+
+				mockSessionRepo.EXPECT().
+					CountActiveSessions(gomock.Any()).
+					Return(int64(1), nil)
 			},
 			wantErr: false,
 		},
@@ -671,6 +710,10 @@ func TestAuthService_Logout(t *testing.T) {
 				mockSessionRepo.EXPECT().
 					InvalidateByRefreshToken("valid-refresh-token").
 					Return(nil)
+
+				mockSessionRepo.EXPECT().
+					CountActiveSessions(gomock.Any()).
+					Return(int64(0), nil)
 			},
 			wantErr: false,
 		},
@@ -717,13 +760,13 @@ func TestAuthService_GetUsersByPage(t *testing.T) {
 	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg)
 
 	tests := []struct {
-		name       string
-		page       int
-		pageSize   int
-		setupMock  func()
-		wantErr    bool
-		wantTotal  int64
-		wantCount  int
+		name      string
+		page      int
+		pageSize  int
+		setupMock func()
+		wantErr   bool
+		wantTotal int64
+		wantCount int
 	}{
 		{
 			name:     "successful pagination",

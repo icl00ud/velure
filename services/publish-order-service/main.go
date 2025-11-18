@@ -54,7 +54,7 @@ func main() {
 	logger.Info("PostgreSQL database connection established successfully")
 
 	logger.Info("Running database migrations...")
-	if err := database.RunMigrations(repo.(*repository.PostgresOrderRepository).DB(), "./migrations"); err != nil {
+	if err := database.RunMigrations(repo.(*repository.PostgresOrderRepository).DB(), "./internal/migrations"); err != nil {
 		logger.Fatal("migration error", zap.Error(err))
 	}
 	logger.Info("Database migrations completed successfully")

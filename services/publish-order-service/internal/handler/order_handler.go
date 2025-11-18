@@ -69,8 +69,9 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	if err := h.pub.Publish(evt); err != nil {
 		zap.L().Error("publish event failed", zap.Error(err))
 		metrics.Errors.WithLabelValues("rabbitmq").Inc()
+		metrics.OrdersPublished.WithLabelValues("failure").Inc()
 	} else {
-		metrics.OrdersPublished.WithLabelValues("order.created").Inc()
+		metrics.OrdersPublished.WithLabelValues("success").Inc()
 	}
 
 	metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", "201").Inc()

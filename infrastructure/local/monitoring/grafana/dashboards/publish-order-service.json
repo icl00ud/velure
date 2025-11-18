@@ -133,7 +133,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "publish_order_total_orders",
+          "expr": "sum(publish_order_published_total{status=\"success\"})",
           "refId": "A"
         }
       ],
@@ -191,7 +191,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "publish_order_active_sse_connections",
+          "expr": "publish_order_sse_connections",
           "refId": "A"
         }
       ],
@@ -610,7 +610,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(publish_order_orders_published_total[5m])",
+          "expr": "sum(rate(publish_order_published_total{status=\"success\"}[5m]))",
           "legendFormat": "Orders Published",
           "refId": "A"
         }
@@ -700,7 +700,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "publish_order_active_sse_connections",
+          "expr": "publish_order_sse_connections",
           "legendFormat": "Active SSE Connections",
           "refId": "A"
         }
@@ -798,7 +798,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rabbitmq_queue_messages{queue=~\"orders.*\"}) or vector(0)",
+          "expr": "sum(rabbitmq_queue_messages_ready{queue=~\"(process-order-queue|publish-order-status-updates)\"}) or vector(0)",
           "legendFormat": "{{queue}}",
           "refId": "A"
         }

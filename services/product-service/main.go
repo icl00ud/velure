@@ -13,9 +13,9 @@ import (
 	"product-service/internal/services"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -54,6 +54,7 @@ func main() {
 
 	// Initialize services
 	service := services.NewProductService(repo)
+	service.SyncProductCatalogMetric(context.Background())
 
 	// Initialize handlers
 	handler := handlers.NewProductHandler(service)
@@ -92,6 +93,12 @@ func main() {
 	// Product routes
 	products := api.Group("/product")
 	products.Get("/", handler.GetAllProducts)
+
+	// REST-style routes (new)
+	products.Get("/products/search", handler.SearchProducts) // Must come before /products
+	products.Get("/products", handler.GetProductsREST)
+
+	// Legacy routes (kept for backward compatibility)
 	products.Get("/getProductsByName/:name", handler.GetProductsByName)
 	products.Get("/getProductsByPage", handler.GetProductsByPage)
 	products.Get("/getProductsByPageAndCategory", handler.GetProductsByPageAndCategory)

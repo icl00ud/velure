@@ -1,26 +1,25 @@
 FROM golang:1.24.6-alpine AS build
 
-WORKDIR /app
+RUN apk add --no-cache ca-certificates tzdata
 
-COPY internal/migrations ./internal/migrations
+WORKDIR /build
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
 
-RUN go build -o main ./main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o publish-order-service ./main.go
 
-FROM alpine:latest
+FROM scratch
 
 WORKDIR /app
 
-COPY --from=build /app/internal/migrations ./migrations
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build /build/publish-order-service ./publish-order-service
+COPY --from=build /build/internal/migrations ./internal/migrations
 
-COPY --from=build /app/main .
+USER 1000:1000
+EXPOSE 8080
 
-RUN addgroup -S app && adduser -S app -G app
-USER app
-EXPOSE 3030
-
-CMD ["./main"]
+ENTRYPOINT ["/app/publish-order-service"]

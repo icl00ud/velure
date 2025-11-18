@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"context"
+
 	"velure-auth-service/internal/models"
 
 	"gorm.io/gorm"
@@ -62,4 +64,17 @@ func (r *UserRepository) GetByPage(page, pageSize int) ([]models.User, int64, er
 
 	err := r.db.Limit(pageSize).Offset(offset).Find(&users).Error
 	return users, total, err
+}
+
+func (r *UserRepository) CountUsers(ctx context.Context) (int64, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	var total int64
+	if err := r.db.WithContext(ctx).
+		Model(&models.User{}).
+		Count(&total).Error; err != nil {
+		return 0, err
+	}
+	return total, nil
 }

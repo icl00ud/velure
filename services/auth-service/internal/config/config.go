@@ -11,6 +11,14 @@ type Config struct {
 	JWT         JWTConfig
 	Session     SessionConfig
 	Database    DatabaseConfig
+	Performance PerformanceConfig
+}
+
+type PerformanceConfig struct {
+	BcryptCost    int
+	BcryptWorkers int
+	TokenCacheTTL int // seconds
+	EnableCache   bool
 }
 
 type JWTConfig struct {
@@ -37,6 +45,10 @@ type DatabaseConfig struct {
 func Load() *Config {
 	port, _ := strconv.Atoi(getEnv("POSTGRES_PORT", "5432"))
 	sessionExpiresIn, _ := strconv.ParseInt(getEnv("SESSION_EXPIRES_IN", "86400000"), 10, 64)
+	bcryptCost, _ := strconv.Atoi(getEnv("BCRYPT_COST", "10"))
+	bcryptWorkers, _ := strconv.Atoi(getEnv("BCRYPT_WORKERS", "10"))
+	tokenCacheTTL, _ := strconv.Atoi(getEnv("TOKEN_CACHE_TTL", "300"))
+	enableCache := getEnv("ENABLE_TOKEN_CACHE", "true") == "true"
 
 	return &Config{
 		Environment: getEnv("ENVIRONMENT", "development"),
@@ -58,6 +70,12 @@ func Load() *Config {
 			Password: getEnv("POSTGRES_PASSWORD", "password"),
 			Database: getEnv("POSTGRES_DATABASE_NAME", "auth_db"),
 			URL:      getEnv("POSTGRES_URL", ""),
+		},
+		Performance: PerformanceConfig{
+			BcryptCost:    bcryptCost,
+			BcryptWorkers: bcryptWorkers,
+			TokenCacheTTL: tokenCacheTTL,
+			EnableCache:   enableCache,
 		},
 	}
 }

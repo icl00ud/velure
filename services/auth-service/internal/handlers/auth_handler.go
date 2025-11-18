@@ -30,6 +30,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	// Criar usuário (chamada direta, sem overhead de goroutine)
 	user, err := h.authService.CreateUser(req)
 	if err != nil {
 		if err.Error() == "user already exists" {
@@ -60,6 +61,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	// Fazer login (chamada direta, sem overhead de goroutine)
 	response, err := h.authService.Login(req)
 	if err != nil {
 		if err.Error() == "invalid credentials" {
