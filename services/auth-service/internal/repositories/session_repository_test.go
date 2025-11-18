@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -142,6 +143,35 @@ func TestSessionRepository_InvalidateByRefreshToken(t *testing.T) {
 	invalidated, _ := repo.GetByRefreshToken("token-to-invalidate")
 	if invalidated.ExpiresAt.After(time.Now()) {
 		t.Error("InvalidateByRefreshToken() session should be expired")
+	}
+}
+
+func TestSessionRepository_CountActiveSessions(t *testing.T) {
+	db := testutil.SetupTestDB(t)
+	repo := NewSessionRepository(db)
+	userRepo := NewUserRepository(db)
+
+	user := testutil.CreateTestUser()
+	user.ID = 0
+	userRepo.Create(user)
+
+	activeSession := testutil.CreateTestSession(user.ID)
+	activeSession.ID = 0
+	activeSession.ExpiresAt = time.Now().Add(24 * time.Hour)
+	repo.Create(activeSession)
+
+	expiredSession := testutil.CreateTestSession(user.ID)
+	expiredSession.ID = 0
+	expiredSession.ExpiresAt = time.Now().Add(-1 * time.Hour)
+	repo.Create(expiredSession)
+
+	count, err := repo.CountActiveSessions(context.Background())
+	if err != nil {
+		t.Fatalf("CountActiveSessions() error = %v", err)
+	}
+
+	if count != 1 {
+		t.Errorf("CountActiveSessions() = %d, want 1", count)
 	}
 }
 

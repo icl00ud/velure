@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"product-service/internal/metrics"
@@ -21,6 +22,7 @@ type ProductService interface {
 	DeleteProductsByName(ctx context.Context, name string) error
 	DeleteProductById(ctx context.Context, id string) error
 	UpdateProductQuantity(ctx context.Context, productID string, quantityChange int) error
+	SyncProductCatalogMetric(ctx context.Context)
 }
 
 type productService struct {
@@ -144,6 +146,7 @@ func (s *productService) CreateProduct(ctx context.Context, product models.Creat
 	}
 
 	metrics.ProductMutations.WithLabelValues("create", "success").Inc()
+	s.SyncProductCatalogMetric(ctx)
 	return result, nil
 }
 
@@ -161,6 +164,7 @@ func (s *productService) DeleteProductsByName(ctx context.Context, name string) 
 	}
 
 	metrics.ProductMutations.WithLabelValues("delete", "success").Inc()
+	s.SyncProductCatalogMetric(ctx)
 	return nil
 }
 
@@ -178,6 +182,7 @@ func (s *productService) DeleteProductById(ctx context.Context, id string) error
 	}
 
 	metrics.ProductMutations.WithLabelValues("delete", "success").Inc()
+	s.SyncProductCatalogMetric(ctx)
 	return nil
 }
 
@@ -213,4 +218,19 @@ func (s *productService) UpdateProductQuantity(ctx context.Context, productID st
 
 	status = "success"
 	return nil
+}
+
+func (s *productService) SyncProductCatalogMetric(ctx context.Context) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	count, err := s.repo.GetProductsCount(ctx)
+	if err != nil {
+		log.Printf("failed to sync product catalog metric: %v", err)
+		return
+	}
+	metrics.CurrentProductCount.Set(float64(count))
 }

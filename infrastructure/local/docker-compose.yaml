@@ -17,7 +17,7 @@ services:
       - caddy_logs:/var/log/caddy
     networks:
       - frontend
-      - auth
+      - local_auth
       - order
     depends_on:
       - auth-service
@@ -49,7 +49,7 @@ services:
     ports:
       - "${POSTGRES_PORT}:5432"
     networks:
-      - auth
+      - local_auth
       - order
     deploy:
       resources:
@@ -80,21 +80,26 @@ services:
       JWT_REFRESH_TOKEN_EXPIRES_IN: ${JWT_REFRESH_TOKEN_EXPIRES_IN}
       SESSION_SECRET: ${SESSION_SECRET}
       SESSION_EXPIRES_IN: ${SESSION_EXPIRES_IN}
+      # Performance optimizations
+      BCRYPT_COST: ${BCRYPT_COST:-10}
+      BCRYPT_WORKERS: ${BCRYPT_WORKERS:-10}
+      ENABLE_TOKEN_CACHE: ${ENABLE_TOKEN_CACHE:-true}
+      TOKEN_CACHE_TTL: ${TOKEN_CACHE_TTL:-300}
     # Portas removidas - acesso via Caddy proxy
     ports:
       - "${AUTH_SERVICE_APP_PORT}:${AUTH_SERVICE_APP_PORT}"
     networks:
-      - auth
+      - local_auth
       - order
       - frontend
     deploy:
       resources:
         limits:
+          cpus: '0.5'  # Aumentado para suportar bcrypt workers
+          memory: 256M
+        reservations:
           cpus: '0.25'
           memory: 128M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
 
   # -------------------------
   # Order Services
@@ -232,9 +237,12 @@ services:
     environment:
       PRODUCT_SERVICE_APP_PORT: ${PRODUCT_SERVICE_APP_PORT}
       PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL}
+      # MongoDB Cloud Configuration (priority over individual variables)
+      MONGODB_URI: ${MONGODB_URI}
+      MONGODB_DBNAME: ${MONGODB_DBNAME}
+      # Fallback to local MongoDB if MONGODB_URI is not set
       MONGODB_HOST: ${MONGODB_HOST}
       MONGODB_PORT: ${MONGODB_PORT}
-      MONGODB_DBNAME: ${MONGODB_DBNAME}
       MONGODB_NORMAL_USER: ${MONGODB_ROOT_USER}
       MONGODB_NORMAL_PASSWORD: ${MONGODB_ROOT_PASSWORD}
       REDIS_HOST: ${REDIS_HOST}
@@ -294,7 +302,7 @@ volumes:
   caddy_logs:
 
 networks:
-  auth:
+  local_auth:
     driver: bridge
   order:
     driver: bridge

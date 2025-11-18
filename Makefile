@@ -13,6 +13,36 @@ help: ## Mostrar esta mensagem de ajuda
 # DESENVOLVIMENTO LOCAL
 # =============================================================================
 
+dev-full: ## Subir TUDO de uma vez (infraestrutura + monitoramento + serviços em containers)
+	@echo "🚀 Iniciando ambiente COMPLETO de desenvolvimento..."
+	@echo ""
+	@echo "📦 Passo 1/3: Criando redes Docker..."
+	@docker network create local_auth 2>/dev/null || echo "  ✓ Rede local_auth já existe"
+	@docker network create local_order 2>/dev/null || echo "  ✓ Rede local_order já existe"
+	@docker network create local_frontend 2>/dev/null || echo "  ✓ Rede local_frontend já existe"
+	@echo ""
+	@echo "📦 Passo 2/3: Iniciando infraestrutura, monitoramento e serviços..."
+	cd infrastructure/local && docker-compose -f docker-compose.yaml -f docker-compose.monitoring.yaml up -d
+	@echo ""
+	@echo "⏳ Passo 3/3: Aguardando inicialização (20 segundos)..."
+	@sleep 20
+	@echo ""
+	@echo "✅ Ambiente completo iniciado!"
+	@echo ""
+	@echo "📊 Status dos containers:"
+	@docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "(auth|product|publish|process|ui-service|postgres|mongodb|redis|rabbitmq|caddy|grafana|prometheus)" || true
+	@echo ""
+	@echo "🌐 Acessos disponíveis:"
+	@echo "  Aplicação:    https://velure.local"
+	@echo "  Grafana:      http://localhost:3000 (admin/admin)"
+	@echo "  Prometheus:   http://localhost:9090"
+	@echo "  RabbitMQ:     http://localhost:15672 (admin/admin_password)"
+	@echo "  cAdvisor:     http://localhost:8080"
+	@echo ""
+	@echo "💡 Dica: Use 'make logs' para ver os logs dos serviços"
+	@echo "💡 Dica: Use 'make dev-stop-full' para parar tudo"
+	@echo ""
+
 dev: ## Iniciar ambiente de desenvolvimento completo
 	@echo "🚀 Iniciando ambiente de desenvolvimento..."
 	cd infrastructure/local && docker-compose up -d
@@ -33,11 +63,22 @@ dev-stop: ## Parar ambiente de desenvolvimento
 	cd infrastructure/local && docker-compose down
 	@echo "✅ Ambiente parado."
 
+dev-stop-full: ## Parar TUDO (infraestrutura + monitoramento)
+	@echo "🛑 Parando ambiente COMPLETO..."
+	cd infrastructure/local && docker-compose -f docker-compose.yaml -f docker-compose.monitoring.yaml down
+	@echo "✅ Tudo parado (infraestrutura + monitoramento)."
+
 dev-clean: ## Limpar volumes e dados do desenvolvimento
 	@echo "🧹 Limpando dados de desenvolvimento..."
 	cd infrastructure/local && docker-compose down -v --remove-orphans
 	docker system prune -f
 	@echo "✅ Limpeza concluída."
+
+dev-clean-full: ## Limpar TUDO (infraestrutura + monitoramento + volumes)
+	@echo "🧹 Limpando ambiente COMPLETO..."
+	cd infrastructure/local && docker-compose -f docker-compose.yaml -f docker-compose.monitoring.yaml down -v --remove-orphans
+	docker system prune -f
+	@echo "✅ Limpeza completa concluída."
 
 # =============================================================================
 # BUILD E TESTES
@@ -117,19 +158,6 @@ monitoring-start: ## Iniciar stack de monitoramento (Docker)
 	@echo "   - Grafana:    http://localhost:3000 (admin/admin)"
 	@echo "   - Prometheus: http://localhost:9090"
 	@echo "   - Loki:       http://localhost:3100"
-
-monitoring-stop: ## Parar stack de monitoramento
-	@echo "🛑 Parando stack de monitoramento..."
-	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml down
-	@echo "✅ Monitoramento parado."
-
-monitoring-logs: ## Ver logs do monitoramento
-	@echo "📋 Logs do monitoramento:"
-	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml logs -f
-
-monitoring-status: ## Status dos serviços de monitoramento
-	@echo "📊 Status do monitoramento:"
-	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml ps
 
 k8s-monitoring-install: ## Instalar stack de monitoramento no Kubernetes
 	@echo "📊 Instalando stack de monitoramento no Kubernetes..."
@@ -425,6 +453,19 @@ monitoring-status: ## Status dos containers de monitoramento
 	@echo "📊 Status do monitoramento:"
 	@docker ps --filter "name=velure-prometheus" --filter "name=velure-grafana" --filter "name=velure-node-exporter" --filter "name=velure-cadvisor" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
+monitoring-reload-dashboards: ## Recarregar dashboards do Grafana (após alterar JSONs)
+	@echo "🔄 Recarregando dashboards do Grafana..."
+	@curl -s -X POST http://localhost:3000/api/admin/provisioning/dashboards/reload \
+		-u admin:admin \
+		-H "Content-Type: application/json" | grep -o '"message":"[^"]*"' || echo "Erro ao recarregar"
+	@echo ""
+	@echo "✅ Dashboards atualizados! Acesse: http://localhost:3000"
+
+monitoring-restart-grafana: ## Reiniciar apenas o Grafana
+	@echo "🔄 Reiniciando Grafana..."
+	@docker restart velure-grafana
+	@echo "✅ Grafana reiniciado! Aguarde alguns segundos..."
+
 logs: ## Verificar logs dos serviços (Kubernetes)
 	@echo "📋 Logs dos serviços:"
 	@for ns in authentication order frontend; do \
@@ -460,6 +501,22 @@ update-deps: ## Atualizar dependências
 	done
 	cd services/ui-service && npm update
 	@echo "✅ Dependências atualizadas."
+
+logs-all: ## Ver logs de TODOS os containers
+	@echo "📋 Logs de todos os containers (Ctrl+C para sair):"
+	cd infrastructure/local && docker-compose -f docker-compose.yaml -f docker-compose.monitoring.yaml logs -f
+
+logs-services: ## Ver logs apenas dos serviços da aplicação
+	@echo "📋 Logs dos serviços (Ctrl+C para sair):"
+	@docker logs -f auth-service product-service publish-order-service process-order-service ui-service 2>&1
+
+logs-infra: ## Ver logs da infraestrutura (databases, cache, queue)
+	@echo "📋 Logs da infraestrutura (Ctrl+C para sair):"
+	@docker logs -f postgres mongodb redis rabbitmq 2>&1
+
+logs-monitoring: ## Ver logs do monitoramento (Grafana, Prometheus)
+	@echo "📋 Logs do monitoramento (Ctrl+C para sair):"
+	@docker logs -f velure-grafana velure-prometheus 2>&1
 
 docs: ## Servir documentação local
 	@echo "📚 Servindo documentação..."
@@ -504,7 +561,11 @@ backup-local: ## Backup dos dados locais
 # =============================================================================
 
 start: dev ## Alias para 'make dev'
+start-full: dev-full ## Alias para 'make dev-full' (subir tudo)
 stop: dev-stop ## Alias para 'make dev-stop'
+stop-full: dev-stop-full ## Alias para 'make dev-stop-full' (parar tudo)
 restart: dev-stop dev ## Reiniciar ambiente de desenvolvimento
+restart-full: dev-stop-full dev-full ## Reiniciar ambiente COMPLETO
+logs: logs-all ## Alias para 'make logs-all' (ver todos os logs)
 deploy: k8s-deploy ## Alias para 'make k8s-deploy'
-destroy: k8s-destroy ## Alias para 'make k8s-destroy'
+destroy: k8s-destroy ## Alias para 'make k8s-deploy'

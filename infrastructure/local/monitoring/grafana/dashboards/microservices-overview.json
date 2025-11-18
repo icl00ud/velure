@@ -497,7 +497,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rabbitmq_queue_messages{queue=~\"orders.*\"}) or vector(0)",
+          "expr": "sum(rabbitmq_queue_messages_ready{queue=~\"(process-order-queue|publish-order-status-updates)\"}) or vector(0)",
           "refId": "A"
         }
       ],
@@ -1087,7 +1087,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rabbitmq_queue_messages{queue=~\"orders.*\"}",
+          "expr": "rabbitmq_queue_messages_ready{queue=~\"(process-order-queue|publish-order-status-updates)\"}",
           "legendFormat": "{{queue}}",
           "refId": "A"
         }

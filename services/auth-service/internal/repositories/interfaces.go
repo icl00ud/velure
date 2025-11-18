@@ -1,6 +1,10 @@
 package repositories
 
-import "velure-auth-service/internal/models"
+import (
+	"context"
+
+	"velure-auth-service/internal/models"
+)
 
 // UserRepositoryInterface defines the interface for user repository operations
 type UserRepositoryInterface interface {
@@ -11,6 +15,7 @@ type UserRepositoryInterface interface {
 	Update(user *models.User) error
 	Delete(id uint) error
 	GetByPage(page, pageSize int) ([]models.User, int64, error)
+	CountUsers(ctx context.Context) (int64, error)
 }
 
 // SessionRepositoryInterface defines the interface for session repository operations
@@ -20,6 +25,7 @@ type SessionRepositoryInterface interface {
 	GetByRefreshToken(refreshToken string) (*models.Session, error)
 	Update(session *models.Session) error
 	InvalidateByRefreshToken(refreshToken string) error
+	CountActiveSessions(ctx context.Context) (int64, error)
 	Delete(id uint) error
 }
 
