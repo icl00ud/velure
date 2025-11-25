@@ -29,9 +29,11 @@
         "ec2:DescribeTags",
         "ec2:GetCoipPoolUsage",
         "ec2:DescribeCoipPools",
+        "ec2:GetSecurityGroupsForVpc",
         "elasticloadbalancing:DescribeLoadBalancers",
         "elasticloadbalancing:DescribeLoadBalancerAttributes",
         "elasticloadbalancing:DescribeListeners",
+        "elasticloadbalancing:DescribeListenerAttributes",
         "elasticloadbalancing:DescribeListenerCertificates",
         "elasticloadbalancing:DescribeSSLPolicies",
         "elasticloadbalancing:DescribeRules",
@@ -233,7 +235,8 @@
         "elasticloadbalancing:ModifyListener",
         "elasticloadbalancing:AddListenerCertificates",
         "elasticloadbalancing:RemoveListenerCertificates",
-        "elasticloadbalancing:ModifyRule"
+        "elasticloadbalancing:ModifyRule",
+        "elasticloadbalancing:SetRulePriorities"
       ],
       "Resource": "*"
     }

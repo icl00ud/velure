@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -46,6 +47,21 @@ func main() {
 	}
 	log.Println("Database migrations completed successfully")
 
+	// Initialize Redis
+	log.Println("Connecting to Redis...")
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     cfg.Redis.Addr,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+	})
+	defer redisClient.Close()
+
+	ctx := context.Background()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	log.Printf("Redis connection established successfully at %s", cfg.Redis.Addr)
+
 	// Initialize repositories
 	log.Println("Initializing repositories...")
 	userRepo := repositories.NewUserRepository(db)
@@ -55,7 +71,7 @@ func main() {
 
 	// Initialize services
 	log.Println("Initializing services...")
-	authService := services.NewAuthService(userRepo, sessionRepo, passwordResetRepo, cfg)
+	authService := services.NewAuthService(userRepo, sessionRepo, passwordResetRepo, cfg, redisClient)
 	authService.SyncActiveSessionsMetric(context.Background())
 	authService.SyncTotalUsersMetric(context.Background())
 	log.Println("Services initialized successfully")
@@ -84,6 +100,7 @@ func main() {
 }
 
 func setupRoutes(router *gin.Engine, authHandler *handlers.AuthHandler) {
+	// Support both /authentication (local dev with Caddy rewrite) and /api/auth (Kubernetes ALB)
 	auth := router.Group("/authentication")
 	{
 		auth.POST("/register", authHandler.Register)
@@ -93,6 +110,18 @@ func setupRoutes(router *gin.Engine, authHandler *handlers.AuthHandler) {
 		auth.GET("/user/id/:id", authHandler.GetUserByID)
 		auth.GET("/user/email/:email", authHandler.GetUserByEmail)
 		auth.DELETE("/logout/:refreshToken", authHandler.Logout)
+	}
+
+	// Kubernetes ALB routes (no path rewriting)
+	apiAuth := router.Group("/api/auth")
+	{
+		apiAuth.POST("/register", authHandler.Register)
+		apiAuth.POST("/login", authHandler.Login)
+		apiAuth.POST("/validateToken", authHandler.ValidateToken)
+		apiAuth.GET("/users", authHandler.GetUsers)
+		apiAuth.GET("/user/id/:id", authHandler.GetUserByID)
+		apiAuth.GET("/user/email/:email", authHandler.GetUserByEmail)
+		apiAuth.DELETE("/logout/:refreshToken", authHandler.Logout)
 	}
 }
 

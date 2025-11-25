@@ -1,0 +1,138 @@
+name: Deploy to EKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      services:
+        description: 'Services to deploy (comma-separated or "all")'
+        required: true
+        default: 'all'
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  EKS_CLUSTER_NAME: velure-production
+
+jobs:
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.13.0'
+
+      - name: Verify cluster connection
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Deploy Auth Service
+        if: contains(github.event.inputs.services, 'all') || contains(github.event.inputs.services, 'auth')
+        run: |
+          helm upgrade --install velure-auth \
+            ./infrastructure/kubernetes/charts/velure-auth \
+            -n authentication --create-namespace \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout 5m
+
+      - name: Deploy Product Service
+        if: contains(github.event.inputs.services, 'all') || contains(github.event.inputs.services, 'product')
+        run: |
+          helm upgrade --install velure-product \
+            ./infrastructure/kubernetes/charts/velure-product \
+            -n order --create-namespace \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout 5m
+
+      - name: Deploy Publish Order Service
+        if: contains(github.event.inputs.services, 'all') || contains(github.event.inputs.services, 'publish-order')
+        run: |
+          helm upgrade --install velure-publish-order \
+            ./infrastructure/kubernetes/charts/velure-publish-order \
+            -n order --create-namespace \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout 5m
+
+      - name: Deploy Process Order Service
+        if: contains(github.event.inputs.services, 'all') || contains(github.event.inputs.services, 'process-order')
+        run: |
+          helm upgrade --install velure-process-order \
+            ./infrastructure/kubernetes/charts/velure-process-order \
+            -n order --create-namespace \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout 5m
+
+      - name: Deploy UI Service
+        if: contains(github.event.inputs.services, 'all') || contains(github.event.inputs.services, 'ui')
+        run: |
+          helm upgrade --install velure-ui \
+            ./infrastructure/kubernetes/charts/velure-ui \
+            -n frontend --create-namespace \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout 5m
+
+      - name: Verify deployments
+        run: |
+          echo "=== Authentication namespace ==="
+          kubectl get pods -n authentication
+          echo ""
+          echo "=== Order namespace ==="
+          kubectl get pods -n order
+          echo ""
+          echo "=== Frontend namespace ==="
+          kubectl get pods -n frontend
+
+      - name: Get service endpoints
+        run: |
+          echo "=== Services ==="
+          kubectl get svc -A | grep velure
+          echo ""
+          echo "=== Ingress ==="
+          kubectl get ingress -A
+
+  notify:
+    name: Notify deployment status
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Deployment succeeded
+        if: needs.deploy.result == 'success'
+        run: |
+          echo "Deployment to ${{ github.event.inputs.environment }} succeeded!"
+          echo "Services deployed: ${{ github.event.inputs.services }}"
+          echo "Commit: ${{ github.sha }}"
+
+      - name: Deployment failed
+        if: needs.deploy.result == 'failure'
+        run: |
+          echo "Deployment to ${{ github.event.inputs.environment }} failed!"
+          echo "Please check the logs for more information."
+          exit 1
