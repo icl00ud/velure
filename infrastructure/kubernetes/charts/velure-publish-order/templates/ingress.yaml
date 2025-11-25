@@ -2,9 +2,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "velure-auth-chart.fullname" . }}
+  name: {{ include "velure-publish-order.fullname" . }}
   labels:
-    {{- include "velure-auth-chart.labels" . | nindent 4 }}
+    {{- include "velure-publish-order.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -35,7 +35,7 @@ spec:
             {{- end }}
             backend:
               service:
-                name: velure-auth
+                name: velure-publish-order
                 port:
                   number: {{ $.Values.service.port }}
           {{- end }}

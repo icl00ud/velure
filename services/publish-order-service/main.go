@@ -97,12 +97,22 @@ func main() {
 	logger.Info("Middleware configured successfully")
 
 	mux := http.NewServeMux()
+	// Support both root paths (local dev with Caddy rewrite) and /api/order (Kubernetes ALB)
 	mux.Handle("/create-order", middleware.CORS(middleware.Logging(middleware.Timeout(5*time.Second)(authMiddleware(http.HandlerFunc(oh.CreateOrder))))))
 	mux.Handle("/update-order-status", middleware.CORS(middleware.Logging(middleware.Timeout(5*time.Second)(http.HandlerFunc(oh.UpdateStatus)))))
 	mux.Handle("/orders", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(http.HandlerFunc(oh.GetOrdersByPage)))))
 	mux.Handle("/user/orders", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrders))))))
 	mux.Handle("/user/order", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrderByID))))))
 	mux.Handle("/user/order/status", middleware.CORS(middleware.Logging(sseAuthMiddleware(http.HandlerFunc(sseHandler.StreamOrderStatus)))))
+
+	// Kubernetes ALB routes (no path rewriting)
+	mux.Handle("/api/order/create-order", middleware.CORS(middleware.Logging(middleware.Timeout(5*time.Second)(authMiddleware(http.HandlerFunc(oh.CreateOrder))))))
+	mux.Handle("/api/order/update-order-status", middleware.CORS(middleware.Logging(middleware.Timeout(5*time.Second)(http.HandlerFunc(oh.UpdateStatus)))))
+	mux.Handle("/api/order/orders", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(http.HandlerFunc(oh.GetOrdersByPage)))))
+	mux.Handle("/api/order/user/orders", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrders))))))
+	mux.Handle("/api/order/user/order", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrderByID))))))
+	mux.Handle("/api/order/user/order/status", middleware.CORS(middleware.Logging(sseAuthMiddleware(http.HandlerFunc(sseHandler.StreamOrderStatus)))))
+
 	// Prometheus metrics endpoint
 	mux.Handle("/metrics", promhttp.Handler())
 
