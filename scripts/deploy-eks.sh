@@ -216,6 +216,7 @@ fi
 # Step 5: Create namespaces
 step "Creating namespaces..."
 kubectl create ns authentication --dry-run=client -o yaml | kubectl apply -f -
+kubectl create ns product --dry-run=client -o yaml | kubectl apply -f -
 kubectl create ns order --dry-run=client -o yaml | kubectl apply -f -
 kubectl create ns frontend --dry-run=client -o yaml | kubectl apply -f -
 kubectl create ns datastores --dry-run=client -o yaml | kubectl apply -f -
@@ -226,6 +227,7 @@ if [ -d "infrastructure/kubernetes/external-secrets" ]; then
     # Clean up old ExternalSecrets that may have different names
     echo "Cleaning up old ExternalSecrets..."
     kubectl delete externalsecret -n authentication --all 2>/dev/null || true
+    kubectl delete externalsecret -n product --all 2>/dev/null || true
     kubectl delete externalsecret -n order --all 2>/dev/null || true
 
     kubectl apply -f infrastructure/kubernetes/external-secrets/
@@ -234,7 +236,7 @@ if [ -d "infrastructure/kubernetes/external-secrets" ]; then
 
     # Force refresh all ExternalSecrets
     echo "Forcing refresh of ExternalSecrets..."
-    for ns in authentication order; do
+    for ns in authentication product order; do
         for es in $(kubectl get externalsecrets -n $ns -o name 2>/dev/null); do
             kubectl annotate $es -n $ns force-sync=$(date +%s) --overwrite 2>/dev/null || true
         done
@@ -259,7 +261,7 @@ fi
 step "Creating Redis secrets..."
 kubectl create secret generic redis \
     --from-literal=redis-password="" \
-    -n order --dry-run=client -o yaml | kubectl apply -f -
+    -n product --dry-run=client -o yaml | kubectl apply -f -
 
 # Step 7: Deploy services
 step "Deploying Velure services..."
@@ -290,7 +292,7 @@ deploy_service() {
 }
 
 deploy_service "velure-auth" "./infrastructure/kubernetes/charts/velure-auth" "authentication"
-deploy_service "velure-product" "./infrastructure/kubernetes/charts/velure-product" "order"
+deploy_service "velure-product" "./infrastructure/kubernetes/charts/velure-product" "product"
 deploy_service "velure-publish-order" "./infrastructure/kubernetes/charts/velure-publish-order" "order"
 deploy_service "velure-process-order" "./infrastructure/kubernetes/charts/velure-process-order" "order"
 deploy_service "velure-ui" "./infrastructure/kubernetes/charts/velure-ui" "frontend"

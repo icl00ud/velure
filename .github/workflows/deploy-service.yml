@@ -60,7 +60,7 @@ jobs:
               echo "chart=velure-auth" >> $GITHUB_OUTPUT
               ;;
             product)
-              echo "namespace=order" >> $GITHUB_OUTPUT
+              echo "namespace=product" >> $GITHUB_OUTPUT
               echo "chart=velure-product" >> $GITHUB_OUTPUT
               ;;
             publish-order)
