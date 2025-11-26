@@ -22,6 +22,7 @@ module "vpc" {
   availability_zone             = var.availability_zone
   availability_zone_secondary   = var.availability_zone_secondary
   public_subnet_cidr            = var.public_subnet_cidr
+  public_subnet_secondary_cidr  = var.public_subnet_secondary_cidr
   private_subnet_cidr           = var.private_subnet_cidr
   private_subnet_secondary_cidr = var.private_subnet_secondary_cidr
   tags                          = var.tags
@@ -141,4 +142,48 @@ module "route53" {
   enable_health_check = var.enable_route53_health_check
   health_check_path   = var.route53_health_check_path
   tags                = var.tags
+}
+
+# Secrets Manager Module for centralized secrets
+module "secrets_manager" {
+  source = "./modules/secrets-manager"
+
+  project_name = var.project_name
+  environment  = var.environment
+  tags         = var.tags
+
+  # RDS Auth credentials
+  rds_auth_username = var.rds_auth_username
+  rds_auth_password = var.rds_auth_password
+  rds_auth_endpoint = module.rds_auth.db_address
+  rds_auth_db_name  = var.rds_auth_db_name
+
+  # RDS Orders credentials
+  rds_orders_username = var.rds_orders_username
+  rds_orders_password = var.rds_orders_password
+  rds_orders_endpoint = module.rds_orders.db_address
+  rds_orders_db_name  = var.rds_orders_db_name
+
+  # RabbitMQ credentials
+  rabbitmq_username = var.rabbitmq_admin_username
+  rabbitmq_password = var.rabbitmq_admin_password
+  rabbitmq_endpoint = replace(replace(module.amazonmq.amqp_ssl_endpoint, "amqps://", ""), ":5671", "")
+
+  # JWT secrets
+  jwt_secret         = var.jwt_secret
+  jwt_refresh_secret = var.jwt_refresh_secret
+
+  # MongoDB Atlas
+  mongodb_connection_string = var.mongodb_connection_string
+
+  # Redis (optional)
+  redis_host     = var.redis_host
+  redis_port     = var.redis_port
+  redis_password = var.redis_password
+
+  depends_on = [
+    module.rds_auth,
+    module.rds_orders,
+    module.amazonmq
+  ]
 }

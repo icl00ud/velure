@@ -153,12 +153,15 @@ infrastructure/terraform/*.tfstate.backup
 infrastructure/terraform/.terraform/
 infrastructure/terraform/.terraform.lock.hcl
 infrastructure/terraform/terraform.tfvars
+infrastructure/terraform/secrets.auto.tfvars
 infrastructure/terraform/override.tf
 infrastructure/terraform/override.tf.json
 infrastructure/terraform/*_override.tf
 infrastructure/terraform/*_override.tf.json
 infrastructure/terraform/.terraformrc
 infrastructure/terraform/terraform.rc
+infrastructure/terraform/tfplan
+.terraform-outputs.json
 
 # Kubernetes secrets
 infrastructure/kubernetes/secrets/

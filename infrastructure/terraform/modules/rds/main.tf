@@ -88,14 +88,14 @@ resource "aws_db_instance" "main" {
   maintenance_window         = "sun:03:00-sun:04:00"
 
   # Backup
-  backup_retention_period  = 7 # Mínimo para Free Tier
+  backup_retention_period  = 1 # Free Tier limit
   backup_window            = "02:00-03:00"
   delete_automated_backups = true
   skip_final_snapshot      = true # CUIDADO: Em produção, sempre fazer snapshot final
   # final_snapshot_identifier = "${var.identifier}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
-  # Monitoring
-  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+  # Monitoring - CloudWatch logs disabled to avoid conflicts
+  enabled_cloudwatch_logs_exports = []
   monitoring_interval             = 0 # Desabilitar enhanced monitoring para economizar
   # monitoring_role_arn           = aws_iam_role.rds_monitoring.arn
 
@@ -122,17 +122,4 @@ resource "aws_db_instance" "main" {
   }
 }
 
-# CloudWatch Log Group para PostgreSQL logs
-resource "aws_cloudwatch_log_group" "postgresql" {
-  name              = "/aws/rds/instance/${var.identifier}/postgresql"
-  retention_in_days = 7 # Reduzir custos
-
-  tags = var.tags
-}
-
-resource "aws_cloudwatch_log_group" "upgrade" {
-  name              = "/aws/rds/instance/${var.identifier}/upgrade"
-  retention_in_days = 7
-
-  tags = var.tags
-}
+# CloudWatch Log Groups removed to avoid conflicts

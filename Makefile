@@ -5,9 +5,18 @@
 
 # Default target
 help: ## Mostrar esta mensagem de ajuda
-	@echo "Velure - Comandos disponíveis:"
+	@echo "╦  ╦┌─┐┬  ┬ ┬┬─┐┌─┐"
+	@echo "╚╗╔╝├┤ │  │ │├┬┘├┤ "
+	@echo " ╚╝ └─┘┴─┘└─┘┴└─└─┘"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo "Comandos disponíveis:"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "🚀 Quick Start:"
+	@echo "  make dev-full              # Subir tudo localmente"
+	@echo "  make aws-deploy-complete   # Deploy completo AWS (automático)"
+	@echo ""
 
 # =============================================================================
 # DESENVOLVIMENTO LOCAL
@@ -323,6 +332,38 @@ aws-kubeconfig: ## Configurar kubectl para EKS
 	@echo "⚙️ Configurando kubectl para EKS..."
 	aws eks update-kubeconfig --region us-east-1 --name velure-prod
 	@echo "✅ kubectl configurado."
+
+# =============================================================================
+# AUTOMAÇÃO COMPLETA (Secrets + Terraform + K8s + Deploy)
+# =============================================================================
+
+aws-check: ## Verificar ambiente (ferramentas + credenciais AWS)
+	@chmod +x scripts/check-environment.sh
+	./scripts/check-environment.sh
+
+aws-create-secrets: ## Criar secrets no AWS Secrets Manager
+	@echo "🔐 Criando secrets no AWS Secrets Manager..."
+	chmod +x scripts/secrets-manager.sh
+	./scripts/secrets-manager.sh create
+	@echo "✅ Secrets criados!"
+
+aws-list-secrets: ## Listar secrets no AWS Secrets Manager
+	@chmod +x scripts/secrets-manager.sh
+	./scripts/secrets-manager.sh list
+
+aws-deploy-complete: ## Deploy automático completo (secrets + infra + k8s + apps)
+	@echo "🚀 Iniciando deploy completo automatizado..."
+	chmod +x scripts/bootstrap.sh scripts/secrets-manager.sh scripts/quick-start.sh
+	./scripts/quick-start.sh
+
+aws-destroy-complete: ## Destruir tudo (infra + secrets + k8s)
+	@echo "⚠️ DESTRUINDO TUDO!"
+	chmod +x scripts/bootstrap.sh
+	./scripts/bootstrap.sh --destroy
+
+aws-rotate-secret: ## Rotacionar um secret específico (uso: make aws-rotate-secret SECRET=jwt)
+	@chmod +x scripts/secrets-manager.sh
+	./scripts/secrets-manager.sh rotate $(SECRET)
 
 # =============================================================================
 # EKS PRODUCTION DEPLOYMENT

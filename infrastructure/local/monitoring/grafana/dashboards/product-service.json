@@ -199,7 +199,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(100 * (product_cache_hits_total / (product_cache_hits_total + product_cache_misses_total))) or vector(0)",
+          "expr": "sum(rate(product_cache_hits_total[5m])) / (sum(rate(product_cache_hits_total[5m])) + sum(rate(product_cache_misses_total[5m]))) * 100",
           "refId": "A"
         }
       ],
@@ -620,7 +620,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(100 * (product_cache_hits_total / (product_cache_hits_total + product_cache_misses_total))) or vector(0)",
+          "expr": "sum(rate(product_cache_hits_total[5m])) / (sum(rate(product_cache_hits_total[5m])) + sum(rate(product_cache_misses_total[5m]))) * 100",
           "legendFormat": "Cache Hit Rate",
           "refId": "A"
         }

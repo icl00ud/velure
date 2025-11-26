@@ -4,6 +4,40 @@
 
 Este repositório contém um sistema de e-commerce completo construído com arquitetura de microserviços, seguindo padrões cloud-native e práticas DevSecOps. O projeto implementa funcionalidades essenciais como registro de usuários, autenticação, gestão de produtos e processamento de pedidos.
 
+## 🚀 Quick Start
+
+### Deploy Completo Automatizado (AWS)
+
+```bash
+# 1. Configurar AWS CLI
+aws configure
+
+# 2. Deploy completo (20-30 minutos)
+make aws-deploy-complete
+```
+
+Isso cria automaticamente:
+- ✅ Secrets seguros (AWS Secrets Manager)
+- ✅ Infraestrutura AWS (EKS, RDS, Amazon MQ)
+- ✅ Kubernetes controllers (ALB, External Secrets, Metrics)
+- ✅ Datastores (MongoDB, Redis)
+- ✅ Microserviços (Auth, Product, Orders, UI)
+- ✅ Monitoramento (Prometheus + Grafana)
+
+**Documentação completa:** [docs/AUTOMATION.md](docs/AUTOMATION.md)
+
+### Desenvolvimento Local
+
+```bash
+# Subir tudo localmente com Docker Compose
+make dev-full
+
+# Acessar
+# - Aplicação: https://velure.local
+# - Grafana: http://localhost:3000 (admin/admin)
+# - RabbitMQ: http://localhost:15672 (admin/admin_password)
+```
+
 ## 📁 Estrutura do Repositório
 
 ```
@@ -14,6 +48,12 @@ velure/
 │   ├── publish-order-service/        # Criação de pedidos (Go + PostgreSQL + RabbitMQ)
 │   ├── process-order-service/        # Processamento (Go + PostgreSQL + RabbitMQ)
 │   └── ui-service/                   # Frontend (React + TypeScript + Vite)
+│
+├── scripts/                          # 🆕 Scripts de automação
+│   ├── bootstrap.sh                 # Deploy completo automatizado
+│   ├── secrets-manager.sh           # Gestão de secrets (AWS)
+│   ├── quick-start.sh               # Deploy interativo
+│   └── README.md                    # Documentação dos scripts
 │
 ├── infrastructure/                    # Infraestrutura como código
 │   ├── terraform/                    # AWS EKS (VPC, RDS, EKS cluster)
@@ -32,6 +72,7 @@ velure/
 │       └── monitoring/              # Configs Prometheus/Grafana
 │
 ├── docs/                            # Documentação
+│   ├── AUTOMATION.md               # 🆕 Guia de automação completa
 │   ├── architecture/                # Diagramas AWS + arquitetura
 │   ├── DEPLOY_GUIDE.md             # Guia de deploy AWS/EKS
 │   ├── MONITORING.md               # Guia de monitoramento K8s
@@ -41,9 +82,6 @@ velure/
 ├── tests/                          # Testes
 │   ├── load/                       # k6 load tests
 │   └── integration/                # Testes de integração
-│
-├── scripts/                        # Scripts de automação
-│   └── deploy/                     # Scripts de deploy AWS/EKS
 │
 ├── START_HERE.sh                   # Script interativo para iniciar
 ├── Makefile                        # Comandos de automação

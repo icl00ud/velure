@@ -6,13 +6,34 @@ image:
 service:
   type: ClusterIP
   port: 3030
+
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/group.name: velure-public
+    alb.ingress.kubernetes.io/group.order: "30"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/success-codes: "200"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+  hosts:
+    - host: ""
+      paths:
+        - path: /api/order
+          pathType: Prefix
+  tls: []
+
 resources:
   requests:
     cpu: 100m
     memory: 128Mi
   limits:
-    cpu: 200m
-    memory: 256Mi
+    cpu: 100m
+    memory: 128Mi
 autoscaling:
   enabled: false
   minReplicas: 2
@@ -42,9 +63,27 @@ securityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
 
+# Secrets configuration
+# For production: use External Secrets Operator to sync from AWS Secrets Manager
+# Set secrets.create=false when using ExternalSecrets
 secrets:
-  create: true
+  create: false  # Set to true only for local development
+  # External secret names (used when secrets.create=false)
+  externalSecretName: "velure-publish-order-secrets"
+  # Placeholder values for local development (override with helm --set or separate values file)
   rabbitmq:
-    url: "amqps://admin:Velure12345678@b-ad95cf62-9809-4292-b928-4f97d1b63661.mq.us-east-1.on.aws:5671"
+    url: ""  # Will be populated from AWS Secrets Manager
   postgres:
-    url: "postgresql://postgres:Velure123@velure-production-orders.cufc2wsg0tnq.us-east-1.rds.amazonaws.com:5432/velure_orders?sslmode=require"
+    url: ""  # Will be populated from AWS Secrets Manager
+
+# External Secrets Operator configuration
+externalSecrets:
+  enabled: true
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: ClusterSecretStore
+  # AWS Secrets Manager secret names
+  awsSecrets:
+    rabbitmq: "velure/production/rabbitmq"
+    postgres: "velure/production/rds-orders"

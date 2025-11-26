@@ -82,18 +82,25 @@ function getHeaders(token = null) {
   return headers;
 }
 
-function getRandomProductIds(count = 2) {
-  // These are placeholder IDs - in production, you'd fetch real product IDs
-  const productIds = [
-    '67a2c1e5564dfbe318544ca7',
-    '67a2c1e5564dfbe318544ca8',
-    '67a2c1e5564dfbe318544ca9',
-    '67a2c1e5564dfbe318544caa',
-  ];
+function getRandomProductIds(availableProductIds, count = 2) {
+  if (!availableProductIds || availableProductIds.length === 0) {
+    // Fallback to placeholder IDs if no products available
+    const productIds = [
+      '67a2c1e5564dfbe318544ca7',
+      '67a2c1e5564dfbe318544ca8',
+      '67a2c1e5564dfbe318544ca9',
+      '67a2c1e5564dfbe318544caa',
+    ];
+    const selected = [];
+    for (let i = 0; i < Math.min(count, productIds.length); i++) {
+      selected.push(productIds[Math.floor(Math.random() * productIds.length)]);
+    }
+    return selected;
+  }
 
   const selected = [];
-  for (let i = 0; i < Math.min(count, productIds.length); i++) {
-    selected.push(productIds[Math.floor(Math.random() * productIds.length)]);
+  for (let i = 0; i < Math.min(count, availableProductIds.length); i++) {
+    selected.push(availableProductIds[Math.floor(Math.random() * availableProductIds.length)]);
   }
   return selected;
 }
@@ -102,10 +109,11 @@ function getRandomProductIds(count = 2) {
 // MAIN TEST SCENARIO
 // ============================================================================
 
-export default function() {
+export default function(data) {
   const journeyStart = Date.now();
   let journeyFailed = false;
   let authToken = null;
+  const availableProductIds = data && data.productIds ? data.productIds : [];
 
   const username = generateUsername();
   const email = `${username}@velure.test`;
@@ -294,7 +302,7 @@ export default function() {
     // STEP 5: Create Purchase Order
     // =======================================================================
     group('5. Create Purchase Order', function() {
-      const productIds = getRandomProductIds(2);
+      const productIds = getRandomProductIds(availableProductIds, 2);
 
       const orderPayload = JSON.stringify({
         items: [
@@ -406,6 +414,30 @@ export function setup() {
   console.log('   6. View Order History');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('');
+
+  // Fetch available products to use in tests
+  let productIds = [];
+  try {
+    const res = http.get(`${PRODUCT_URL}/products?page=1&limit=50`, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (res.status === 200) {
+      const body = res.json();
+      if (body.products && body.products.length > 0) {
+        productIds = body.products.map(p => p.id || p._id).filter(id => id);
+        console.log(`✅ Fetched ${productIds.length} real product IDs for testing`);
+      } else {
+        console.warn('⚠️ No products found in response, using fallback IDs');
+      }
+    } else {
+      console.warn(`⚠️ Failed to fetch products (Status ${res.status}), using fallback IDs`);
+    }
+  } catch (e) {
+    console.error(`❌ Error fetching products: ${e.message}`);
+  }
+
+  return { productIds: productIds };
 }
 
 export function teardown(data) {

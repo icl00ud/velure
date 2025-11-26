@@ -3,6 +3,7 @@ package service
 import (
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -42,6 +43,31 @@ func (s *paymentService) Process(orderID string, items []model.CartItem, amount 
 			metrics.InventoryCheckDuration.Observe(time.Since(checkStart).Seconds())
 			metrics.OrdersProcessed.WithLabelValues("failure").Inc()
 			metrics.OrderProcessingDuration.Observe(time.Since(start).Seconds())
+
+			// Check if it's a permanent error (e.g. product not found)
+			var permErr *client.PermanentError
+			if errors.As(err, &permErr) {
+				// Publish failure event
+				failEvt := model.Event{
+					Type: model.OrderFailed,
+					Payload: func() json.RawMessage {
+						p := struct {
+							ID      string `json:"id"`
+							OrderID string `json:"order_id"`
+							Reason  string `json:"reason"`
+						}{ID: orderID, OrderID: orderID, Reason: err.Error()}
+						b, _ := json.Marshal(p)
+						return json.RawMessage(b)
+					}(),
+				}
+				if pubErr := s.pub.Publish(failEvt); pubErr != nil {
+					// If we can't publish failure, return original error to let consumer handle it (DLQ)
+					return fmt.Errorf("deduct stock failed: %w; publish failure failed: %v", err, pubErr)
+				}
+				// Successfully published failure event, return nil to ACK the message
+				return nil
+			}
+
 			return fmt.Errorf("deduct stock for product %s: %w", item.ProductID, err)
 		}
 		metrics.InventoryCheckDuration.Observe(time.Since(checkStart).Seconds())

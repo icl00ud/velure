@@ -30,3 +30,9 @@ variable "health_check_path" {
   type        = string
   default     = "/"
 }
+
+variable "create_dns_record" {
+  description = "Create DNS A record pointing to the LoadBalancer (requires LB to exist)"
+  type        = bool
+  default     = false
+}

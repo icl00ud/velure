@@ -28,11 +28,9 @@ func (r *RabbitMQConnection) NewConsumer(queueName string) (Consumer, error) {
 		return nil, err
 	}
 
-	_, err = ch.QueueDeclare(queueName, true, false, false, false, nil)
-	if err != nil {
-		ch.Close()
-		return nil, err
-	}
+	// Não redeclarar a fila aqui - ela é criada pelo bootstrap.sh do RabbitMQ
+	// com argumentos específicos (DLX, etc). Redeclarar causaria PRECONDITION_FAILED.
+	// _, err = ch.QueueDeclare(queueName, true, false, false, false, nil)
 
 	// Bind queue to exchange with routing key pattern for order events
 	err = ch.QueueBind(

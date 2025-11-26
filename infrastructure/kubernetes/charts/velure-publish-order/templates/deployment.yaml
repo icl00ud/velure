@@ -39,6 +39,11 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-conn
                   key: url
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: order-jwt
+                  key: secret
           livenessProbe:
             httpGet:
               path: /health

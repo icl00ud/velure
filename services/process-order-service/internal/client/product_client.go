@@ -8,6 +8,26 @@ import (
 	"time"
 )
 
+// PermanentError indica erro permanente que não deve ser retryado (ex: produto não encontrado)
+type PermanentError struct {
+	Message    string
+	StatusCode int
+}
+
+func (e *PermanentError) Error() string {
+	return fmt.Sprintf("permanent error (%d): %s", e.StatusCode, e.Message)
+}
+
+// TransientError indica erro temporário que pode ser retryado (ex: timeout, 5xx)
+type TransientError struct {
+	Message    string
+	StatusCode int
+}
+
+func (e *TransientError) Error() string {
+	return fmt.Sprintf("transient error (%d): %s", e.StatusCode, e.Message)
+}
+
 type ProductClient interface {
 	UpdateQuantity(productID string, quantityChange int) error
 }
@@ -51,7 +71,11 @@ func (c *productClient) UpdateQuantity(productID string, quantityChange int) err
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
-		return fmt.Errorf("send request: %w", err)
+		// Erros de rede/timeout são temporários - podem ser retryados
+		return &TransientError{
+			Message:    err.Error(),
+			StatusCode: 0,
+		}
 	}
 	defer resp.Body.Close()
 
@@ -59,10 +83,38 @@ func (c *productClient) UpdateQuantity(productID string, quantityChange int) err
 		var errResp struct {
 			Error string `json:"error"`
 		}
+		errMsg := fmt.Sprintf("status %d", resp.StatusCode)
 		if err := json.NewDecoder(resp.Body).Decode(&errResp); err == nil && errResp.Error != "" {
-			return fmt.Errorf("product service error: %s", errResp.Error)
+			errMsg = errResp.Error
 		}
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+
+		// Classificar erro baseado no status code HTTP
+		switch {
+		// Erros permanentes 4xx (client errors) - NÃO devem ser retryados
+		case resp.StatusCode == http.StatusBadRequest,
+			resp.StatusCode == http.StatusNotFound,
+			resp.StatusCode == http.StatusConflict,
+			resp.StatusCode == http.StatusUnprocessableEntity:
+			return &PermanentError{
+				Message:    errMsg,
+				StatusCode: resp.StatusCode,
+			}
+
+		// Erros temporários 5xx ou 429 - PODEM ser retryados
+		case resp.StatusCode == http.StatusTooManyRequests,
+			resp.StatusCode >= 500:
+			return &TransientError{
+				Message:    errMsg,
+				StatusCode: resp.StatusCode,
+			}
+
+		// Outros erros não esperados - tratar como permanentes por segurança
+		default:
+			return &PermanentError{
+				Message:    errMsg,
+				StatusCode: resp.StatusCode,
+			}
+		}
 	}
 
 	return nil
