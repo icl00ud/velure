@@ -87,13 +87,21 @@ jobs:
             ./infrastructure/kubernetes/charts/${{ steps.vars.outputs.chart }} \
             -n ${{ steps.vars.outputs.namespace }} --create-namespace \
             --set image.tag=${{ inputs.image-tag }} \
-            --atomic --timeout 8m
+            --timeout 2m || true
 
       - name: Verify deployment
         run: |
           echo "=== Deployment status for ${{ inputs.service-name }} ==="
           kubectl get pods -n ${{ steps.vars.outputs.namespace }} -l app.kubernetes.io/name=${{ steps.vars.outputs.chart }}
-          kubectl rollout status deployment/${{ steps.vars.outputs.chart }} -n ${{ steps.vars.outputs.namespace }} --timeout=3m
+          echo ""
+          echo "=== Pod describe ==="
+          kubectl describe pods -n ${{ steps.vars.outputs.namespace }} -l app.kubernetes.io/name=${{ steps.vars.outputs.chart }} | tail -50 || true
+          echo ""
+          echo "=== Pod logs ==="
+          kubectl logs -n ${{ steps.vars.outputs.namespace }} -l app.kubernetes.io/name=${{ steps.vars.outputs.chart }} --tail=30 || true
+          echo ""
+          echo "=== Rollout status ==="
+          kubectl rollout status deployment/${{ steps.vars.outputs.chart }} -n ${{ steps.vars.outputs.namespace }} --timeout=30s
 
       - name: Get service info
         run: |
