@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "velure-product-chart.name" -}}
+{{- define "velure-product.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "velure-product-chart.fullname" -}}
+{{- define "velure-product.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "velure-product-chart.chart" -}}
+{{- define "velure-product.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "velure-product-chart.labels" -}}
-helm.sh/chart: {{ include "velure-product-chart.chart" . }}
-{{ include "velure-product-chart.selectorLabels" . }}
+{{- define "velure-product.labels" -}}
+helm.sh/chart: {{ include "velure-product.chart" . }}
+{{ include "velure-product.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "velure-product-chart.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "velure-product-chart.name" . }}
+{{- define "velure-product.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "velure-product.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "velure-product-chart.serviceAccountName" -}}
+{{- define "velure-product.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "velure-product-chart.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "velure-product.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}

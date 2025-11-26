@@ -1,6 +1,6 @@
 apiVersion: v2
-name: velure-product-chart
-description: A Helm chart for Kubernetes
+name: velure-product
+description: A Helm chart for Velure Product Service
 
 # A chart can be either an 'application' or a 'library' chart.
 #
