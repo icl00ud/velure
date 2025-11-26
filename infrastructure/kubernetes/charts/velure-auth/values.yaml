@@ -94,8 +94,12 @@ affinity: {}
 # Secrets configuration (use existing secrets or allow creating externally)
 secrets:
   postgres:
-    existingSecret: ""
+    url: "postgresql://auth_user:auth_password@postgres.datastores.svc.cluster.local:5432/velure_auth?sslmode=disable"
   jwt:
-    existingSecret: ""
+    secret: "velure-jwt-secret-key-change-in-production"
+    expiresIn: "24h"
+    refreshSecret: "velure-refresh-secret-key-change-in-production"
+    refreshExpiresIn: "168h"
   session:
-    existingSecret: ""
+    secret: "velure-session-secret-key-change-in-production"
+    expiresIn: "24h"
