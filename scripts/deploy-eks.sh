@@ -88,6 +88,31 @@ cleanup_stuck_release() {
     fi
 }
 
+# Function to adopt existing secrets into Helm release
+adopt_secrets_for_helm() {
+    local release_name=$1
+    local namespace=$2
+    
+    echo "Adopting existing secrets for Helm release: $release_name..."
+    
+    # Get all secrets in namespace that might conflict
+    for secret in $(kubectl get secrets -n "$namespace" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
+        # Check if secret has Helm labels already
+        HAS_HELM_LABEL=$(kubectl get secret "$secret" -n "$namespace" -o jsonpath='{.metadata.labels.app\.kubernetes\.io/managed-by}' 2>/dev/null || echo "")
+        
+        if [ -z "$HAS_HELM_LABEL" ]; then
+            # Add Helm ownership labels and annotations
+            kubectl label secret "$secret" -n "$namespace" \
+                "app.kubernetes.io/managed-by=Helm" \
+                --overwrite 2>/dev/null || true
+            kubectl annotate secret "$secret" -n "$namespace" \
+                "meta.helm.sh/release-name=$release_name" \
+                "meta.helm.sh/release-namespace=$namespace" \
+                --overwrite 2>/dev/null || true
+        fi
+    done
+}
+
 # Check prerequisites
 step "Checking prerequisites..."
 check_command aws
@@ -249,6 +274,9 @@ deploy_service() {
     if [ -d "$chart" ]; then
         # Clean up any stuck releases before deploying
         cleanup_stuck_release "$name" "$namespace"
+        
+        # Adopt existing secrets so Helm can manage them
+        adopt_secrets_for_helm "$name" "$namespace"
         
         helm upgrade --install $name $chart \
             -n $namespace \
