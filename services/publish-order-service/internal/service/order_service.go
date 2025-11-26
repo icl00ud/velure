@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,6 +12,7 @@ import (
 )
 
 var ErrNoItems = errors.New("no items in the cart")
+var ErrInvalidItem = errors.New("invalid item in the cart")
 
 type OrderService struct {
 	repo    repository.OrderRepository
@@ -25,6 +27,16 @@ func (s *OrderService) Create(ctx context.Context, userID string, items []model.
 	if len(items) == 0 {
 		return model.Order{}, ErrNoItems
 	}
+
+	for _, item := range items {
+		if item.ProductID == "" {
+			return model.Order{}, fmt.Errorf("%w: missing product_id", ErrInvalidItem)
+		}
+		if item.Quantity <= 0 {
+			return model.Order{}, fmt.Errorf("%w: quantity must be positive", ErrInvalidItem)
+		}
+	}
+
 	total := s.pricing.Calculate(items)
 	now := time.Now()
 	o := model.Order{

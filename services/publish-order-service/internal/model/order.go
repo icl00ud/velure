@@ -7,6 +7,7 @@ const (
 	StatusCreated    = "CREATED"
 	StatusProcessing = "PROCESSING"
 	StatusCompleted  = "COMPLETED"
+	StatusFailed     = "FAILED"
 )
 
 type Order struct {

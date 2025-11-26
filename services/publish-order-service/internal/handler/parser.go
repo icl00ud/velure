@@ -19,16 +19,20 @@ func parseCreateOrder(r io.Reader) ([]model.CartItem, error) {
 		return nil, err
 	}
 
+	// Try parsing as { "items": [...] } first
+	var dto createOrderDTO
+	if err := json.Unmarshal(body, &dto); err == nil && len(dto.Items) > 0 {
+		return dto.Items, nil
+	}
+
+	// Fallback: try parsing as [...]
 	var items []model.CartItem
 	if err := json.Unmarshal(body, &items); err == nil {
 		return items, nil
 	}
 
-	var dto createOrderDTO
-	if err := json.Unmarshal(body, &dto); err != nil {
-		return nil, err
-	}
-	return dto.Items, nil
+	// If both fail, return the error from the first attempt (or a generic one)
+	return nil, json.Unmarshal(body, &dto)
 }
 
 func parsePagination(r *http.Request) (page, pageSize int) {

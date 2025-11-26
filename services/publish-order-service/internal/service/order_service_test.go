@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/icl00ud/publish-order-service/internal/model"
@@ -10,12 +11,12 @@ import (
 
 // Mock repository for testing
 type mockOrderRepository struct {
-	saveFunc         func(ctx context.Context, order model.Order) error
-	findFunc         func(ctx context.Context, id string) (model.Order, error)
-	findByUserIDFunc func(ctx context.Context, userID, orderID string) (model.Order, error)
-	getOrdersByPageFunc func(ctx context.Context, page, pageSize int) (*model.PaginatedOrdersResponse, error)
-	getOrdersByUserIDFunc func(ctx context.Context, userID string, page, pageSize int) (*model.PaginatedOrdersResponse, error)
-	getOrdersCountFunc func(ctx context.Context) (int64, error)
+	saveFunc                   func(ctx context.Context, order model.Order) error
+	findFunc                   func(ctx context.Context, id string) (model.Order, error)
+	findByUserIDFunc           func(ctx context.Context, userID, orderID string) (model.Order, error)
+	getOrdersByPageFunc        func(ctx context.Context, page, pageSize int) (*model.PaginatedOrdersResponse, error)
+	getOrdersByUserIDFunc      func(ctx context.Context, userID string, page, pageSize int) (*model.PaginatedOrdersResponse, error)
+	getOrdersCountFunc         func(ctx context.Context) (int64, error)
 	getOrdersCountByUserIDFunc func(ctx context.Context, userID string) (int64, error)
 }
 
@@ -120,6 +121,26 @@ func TestOrderService_Create(t *testing.T) {
 			expectedErr: ErrNoItems,
 		},
 		{
+			name:   "invalid item - missing product_id",
+			userID: "user123",
+			items: []model.CartItem{
+				{ProductID: "", Name: "Product 1", Quantity: 1, Price: 15.0},
+			},
+			pricing:     0.0,
+			saveErr:     nil,
+			expectedErr: fmt.Errorf("%w: missing product_id", ErrInvalidItem),
+		},
+		{
+			name:   "invalid item - non-positive quantity",
+			userID: "user123",
+			items: []model.CartItem{
+				{ProductID: "p1", Name: "Product 1", Quantity: 0, Price: 15.0},
+			},
+			pricing:     0.0,
+			saveErr:     nil,
+			expectedErr: fmt.Errorf("%w: quantity must be positive", ErrInvalidItem),
+		},
+		{
 			name:   "repository save error",
 			userID: "user123",
 			items: []model.CartItem{
@@ -176,12 +197,12 @@ func TestOrderService_Create(t *testing.T) {
 
 func TestOrderService_UpdateStatus(t *testing.T) {
 	tests := []struct {
-		name         string
-		orderID      string
-		newStatus    string
-		findErr      error
-		saveErr      error
-		expectedErr  error
+		name        string
+		orderID     string
+		newStatus   string
+		findErr     error
+		saveErr     error
+		expectedErr error
 	}{
 		{
 			name:        "successful status update",
