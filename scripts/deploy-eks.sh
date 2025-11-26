@@ -54,6 +54,40 @@ namespace_exists() {
     kubectl get namespace "$1" &>/dev/null
 }
 
+# Function to clean up stuck Helm releases and pods
+cleanup_stuck_release() {
+    local name=$1
+    local namespace=$2
+    
+    echo "Checking for stuck release: $name in namespace $namespace..."
+    
+    # Check if there are pods in ImagePullBackOff or ErrImagePull state
+    STUCK_PODS=$(kubectl get pods -n "$namespace" -l "app.kubernetes.io/name=$name" -o jsonpath='{.items[?(@.status.phase!="Running")].metadata.name}' 2>/dev/null)
+    
+    if [ -n "$STUCK_PODS" ]; then
+        echo -e "${YELLOW}Found stuck pods for $name, cleaning up...${NC}"
+        
+        # Force delete stuck pods
+        kubectl delete pods -n "$namespace" -l "app.kubernetes.io/name=$name" --force --grace-period=0 2>/dev/null || true
+        
+        # Check if helm release is in a bad state
+        RELEASE_STATUS=$(helm status "$name" -n "$namespace" -o json 2>/dev/null | jq -r '.info.status' 2>/dev/null || echo "")
+        
+        if [ "$RELEASE_STATUS" = "failed" ] || [ "$RELEASE_STATUS" = "pending-install" ] || [ "$RELEASE_STATUS" = "pending-upgrade" ]; then
+            echo -e "${YELLOW}Helm release $name is in '$RELEASE_STATUS' state, uninstalling...${NC}"
+            helm uninstall "$name" -n "$namespace" 2>/dev/null || true
+            
+            # Delete any remaining resources
+            kubectl delete deployment "$name" -n "$namespace" 2>/dev/null || true
+            kubectl delete service "$name" -n "$namespace" 2>/dev/null || true
+            kubectl delete ingress "$name" -n "$namespace" 2>/dev/null || true
+            
+            # Wait a moment for cleanup
+            sleep 3
+        fi
+    fi
+}
+
 # Check prerequisites
 step "Checking prerequisites..."
 check_command aws
@@ -157,9 +191,9 @@ fi
 # Step 5: Create namespaces
 step "Creating namespaces..."
 kubectl create ns authentication --dry-run=client -o yaml | kubectl apply -f -
-kubectl create ns product --dry-run=client -o yaml | kubectl apply -f -
 kubectl create ns order --dry-run=client -o yaml | kubectl apply -f -
 kubectl create ns frontend --dry-run=client -o yaml | kubectl apply -f -
+kubectl create ns datastores --dry-run=client -o yaml | kubectl apply -f -
 
 # Step 6: Apply External Secrets
 step "Applying External Secrets configurations..."
@@ -175,7 +209,7 @@ if [ -d "infrastructure/kubernetes/external-secrets" ]; then
 
     # Force refresh all ExternalSecrets
     echo "Forcing refresh of ExternalSecrets..."
-    for ns in authentication product order; do
+    for ns in authentication order; do
         for es in $(kubectl get externalsecrets -n $ns -o name 2>/dev/null); do
             kubectl annotate $es -n $ns force-sync=$(date +%s) --overwrite 2>/dev/null || true
         done
@@ -200,9 +234,6 @@ fi
 step "Creating Redis secrets..."
 kubectl create secret generic redis \
     --from-literal=redis-password="" \
-    -n product --dry-run=client -o yaml | kubectl apply -f -
-kubectl create secret generic redis \
-    --from-literal=redis-password="" \
     -n order --dry-run=client -o yaml | kubectl apply -f -
 
 # Step 7: Deploy services
@@ -216,8 +247,13 @@ deploy_service() {
     echo "Deploying $name..."
 
     if [ -d "$chart" ]; then
+        # Clean up any stuck releases before deploying
+        cleanup_stuck_release "$name" "$namespace"
+        
         helm upgrade --install $name $chart \
             -n $namespace \
+            --set image.tag=latest \
+            --set image.pullPolicy=Always \
             --wait --timeout 5m
     else
         echo -e "${RED}Error: Chart not found at $chart${NC}"
@@ -226,7 +262,7 @@ deploy_service() {
 }
 
 deploy_service "velure-auth" "./infrastructure/kubernetes/charts/velure-auth" "authentication"
-deploy_service "velure-product" "./infrastructure/kubernetes/charts/velure-product" "product"
+deploy_service "velure-product" "./infrastructure/kubernetes/charts/velure-product" "order"
 deploy_service "velure-publish-order" "./infrastructure/kubernetes/charts/velure-publish-order" "order"
 deploy_service "velure-process-order" "./infrastructure/kubernetes/charts/velure-process-order" "order"
 deploy_service "velure-ui" "./infrastructure/kubernetes/charts/velure-ui" "frontend"
