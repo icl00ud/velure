@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -49,7 +50,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	o, err := h.svc.Create(r.Context(), userID, items)
 	if err != nil {
 		code := http.StatusInternalServerError
-		if err == service.ErrNoItems {
+		if errors.Is(err, service.ErrNoItems) || errors.Is(err, service.ErrInvalidItem) {
 			code = http.StatusBadRequest
 		}
 		zap.L().Error("create order failed", zap.Error(err))

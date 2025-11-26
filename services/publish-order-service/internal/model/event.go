@@ -6,6 +6,7 @@ const (
 	OrderCreated    string = "order.created"
 	OrderProcessing string = "order.processing"
 	OrderCompleted  string = "order.completed"
+	OrderFailed     string = "order.failed"
 )
 
 type Event struct {

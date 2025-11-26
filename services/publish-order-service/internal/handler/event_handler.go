@@ -31,7 +31,7 @@ func (h *EventHandler) SetSSEHandler(sseHandler *SSEHandler) {
 func (h *EventHandler) HandleEvent(ctx context.Context, evt model.Event) error {
 	zap.L().Info("event received", zap.String("type", evt.Type))
 
-	if evt.Type == model.OrderProcessing || evt.Type == model.OrderCompleted {
+	if evt.Type == model.OrderProcessing || evt.Type == model.OrderCompleted || evt.Type == model.OrderFailed {
 		var payload struct {
 			ID      string `json:"id"`
 			OrderID string `json:"order_id"`
@@ -51,9 +51,14 @@ func (h *EventHandler) HandleEvent(ctx context.Context, evt model.Event) error {
 		}
 
 		// Map event type to status
-		status := model.StatusProcessing
-		if evt.Type == model.OrderCompleted {
+		var status string
+		switch evt.Type {
+		case model.OrderProcessing:
+			status = model.StatusProcessing
+		case model.OrderCompleted:
 			status = model.StatusCompleted
+		case model.OrderFailed:
+			status = model.StatusFailed
 		}
 
 		order, err := h.orderService.UpdateStatus(ctx, orderID, status)
