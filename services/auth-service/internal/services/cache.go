@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"velure-auth-service/internal/metrics"
 	"velure-auth-service/internal/models"
 )
 
@@ -61,15 +62,18 @@ func (dc *DistributedCache) Set(key string, value interface{}, ttl time.Duration
 func (dc *DistributedCache) Get(key string) (interface{}, bool) {
 	value, ok := dc.data.Load(key)
 	if !ok {
+		metrics.CacheMisses.Inc()
 		return nil, false
 	}
 
 	entry, ok := value.(*CacheEntry)
 	if !ok || time.Now().After(entry.ExpiresAt) {
 		dc.data.Delete(key)
+		metrics.CacheMisses.Inc()
 		return nil, false
 	}
 
+	metrics.CacheHits.Inc()
 	return entry.Data, true
 }
 

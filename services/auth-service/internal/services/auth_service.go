@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 	"velure-auth-service/internal/repositories"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -25,7 +27,8 @@ type AuthService struct {
 	passwordResetRepo repositories.PasswordResetRepositoryInterface
 	config            *config.Config
 	bcryptWorkerPool  chan struct{}
-	tokenCache        sync.Map // cache de tokens validados
+	redis             *redis.Client
+	tokenCache        sync.Map // fallback cache se redis falhar
 }
 
 func NewAuthService(
@@ -33,6 +36,7 @@ func NewAuthService(
 	sessionRepo repositories.SessionRepositoryInterface,
 	passwordResetRepo repositories.PasswordResetRepositoryInterface,
 	config *config.Config,
+	redisClient *redis.Client,
 ) *AuthService {
 	// Worker pool limita operações bcrypt concorrentes (CPU-bound)
 	workerPoolSize := config.Performance.BcryptWorkers
@@ -47,6 +51,7 @@ func NewAuthService(
 		passwordResetRepo: passwordResetRepo,
 		config:            config,
 		bcryptWorkerPool:  bcryptWorkerPool,
+		redis:             redisClient,
 	}
 }
 
@@ -250,6 +255,23 @@ func (s *AuthService) GetUsersByPage(page, pageSize int) (*models.PaginatedUsers
 func (s *AuthService) GetUserByID(id uint) (*models.UserResponse, error) {
 	metrics.UserQueries.WithLabelValues("by_id").Inc()
 
+	ctx := context.Background()
+	cacheKey := fmt.Sprintf("user:id:%d", id)
+
+	// Try Redis cache first
+	if s.redis != nil {
+		cachedJSON, err := s.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			var cachedUser models.User
+			if json.Unmarshal([]byte(cachedJSON), &cachedUser) == nil {
+				metrics.CacheHits.Inc()
+				response := cachedUser.ToResponse()
+				return &response, nil
+			}
+		}
+		metrics.CacheMisses.Inc()
+	}
+
 	user, err := s.userRepo.GetByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -259,12 +281,36 @@ func (s *AuthService) GetUserByID(id uint) (*models.UserResponse, error) {
 		return nil, fmt.Errorf("error getting user: %w", err)
 	}
 
+	// Cache in Redis
+	if s.redis != nil {
+		if userJSON, err := json.Marshal(user); err == nil {
+			s.redis.Set(ctx, cacheKey, userJSON, time.Duration(s.config.Performance.TokenCacheTTL)*time.Second)
+		}
+	}
+
 	response := user.ToResponse()
 	return &response, nil
 }
 
 func (s *AuthService) GetUserByEmail(email string) (*models.UserResponse, error) {
 	metrics.UserQueries.WithLabelValues("by_email").Inc()
+
+	ctx := context.Background()
+	cacheKey := fmt.Sprintf("user:email:%s", email)
+
+	// Try Redis cache first
+	if s.redis != nil {
+		cachedJSON, err := s.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			var cachedUser models.User
+			if json.Unmarshal([]byte(cachedJSON), &cachedUser) == nil {
+				metrics.CacheHits.Inc()
+				response := cachedUser.ToResponse()
+				return &response, nil
+			}
+		}
+		metrics.CacheMisses.Inc()
+	}
 
 	user, err := s.userRepo.GetByEmail(email)
 	if err != nil {
@@ -273,6 +319,13 @@ func (s *AuthService) GetUserByEmail(email string) (*models.UserResponse, error)
 		}
 		metrics.Errors.WithLabelValues("database").Inc()
 		return nil, fmt.Errorf("error getting user: %w", err)
+	}
+
+	// Cache in Redis
+	if s.redis != nil {
+		if userJSON, err := json.Marshal(user); err == nil {
+			s.redis.Set(ctx, cacheKey, userJSON, time.Duration(s.config.Performance.TokenCacheTTL)*time.Second)
+		}
 	}
 
 	response := user.ToResponse()

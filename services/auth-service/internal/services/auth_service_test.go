@@ -24,7 +24,7 @@ func TestAuthService_CreateUser(t *testing.T) {
 	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
 	cfg := testutil.CreateTestConfig()
 
-	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg)
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
 
 	tests := []struct {
 		name      string
@@ -180,7 +180,7 @@ func TestAuthService_Login(t *testing.T) {
 	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
 	cfg := testutil.CreateTestConfig()
 
-	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg)
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
 
 	// Hash a test password
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
@@ -352,7 +352,7 @@ func TestAuthService_ValidateAccessToken(t *testing.T) {
 	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
 	cfg := testutil.CreateTestConfig()
 
-	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg)
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
 
 	// Generate a valid token
 	validToken := generateTestToken(t, cfg.JWT.Secret, 1, time.Now().Add(1*time.Hour))
@@ -455,7 +455,7 @@ func TestAuthService_GetUsers(t *testing.T) {
 	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
 	cfg := testutil.CreateTestConfig()
 
-	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg)
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
 
 	tests := []struct {
 		name      string
@@ -529,7 +529,7 @@ func TestAuthService_GetUserByID(t *testing.T) {
 	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
 	cfg := testutil.CreateTestConfig()
 
-	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg)
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
 
 	tests := []struct {
 		name      string
@@ -612,7 +612,7 @@ func TestAuthService_GetUserByEmail(t *testing.T) {
 	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
 	cfg := testutil.CreateTestConfig()
 
-	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg)
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
 
 	tests := []struct {
 		name      string
@@ -695,7 +695,7 @@ func TestAuthService_Logout(t *testing.T) {
 	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
 	cfg := testutil.CreateTestConfig()
 
-	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg)
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
 
 	tests := []struct {
 		name         string
@@ -757,7 +757,7 @@ func TestAuthService_GetUsersByPage(t *testing.T) {
 	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
 	cfg := testutil.CreateTestConfig()
 
-	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg)
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
 
 	tests := []struct {
 		name      string

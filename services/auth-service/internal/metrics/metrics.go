@@ -140,4 +140,19 @@ var (
 		},
 		[]string{"method", "path"},
 	)
+
+	// Cache metrics
+	CacheHits = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "auth_cache_hits_total",
+			Help: "Total number of cache hits",
+		},
+	)
+
+	CacheMisses = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "auth_cache_misses_total",
+			Help: "Total number of cache misses",
+		},
+	)
 )
