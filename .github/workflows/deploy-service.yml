@@ -1,0 +1,104 @@
+name: Deploy Service to EKS
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        description: "Service name (auth, product, ui, publish-order, process-order)"
+        required: true
+        type: string
+      image-tag:
+        description: "Docker image tag to deploy"
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+
+env:
+  AWS_REGION: us-east-1
+  EKS_CLUSTER_NAME: velure-production
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.service-name }} to EKS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.13.0'
+
+      - name: Verify cluster connection
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Set deployment variables
+        id: vars
+        run: |
+          case "${{ inputs.service-name }}" in
+            auth)
+              echo "namespace=authentication" >> $GITHUB_OUTPUT
+              echo "chart=velure-auth" >> $GITHUB_OUTPUT
+              ;;
+            product)
+              echo "namespace=order" >> $GITHUB_OUTPUT
+              echo "chart=velure-product" >> $GITHUB_OUTPUT
+              ;;
+            publish-order)
+              echo "namespace=order" >> $GITHUB_OUTPUT
+              echo "chart=velure-publish-order" >> $GITHUB_OUTPUT
+              ;;
+            process-order)
+              echo "namespace=order" >> $GITHUB_OUTPUT
+              echo "chart=velure-process-order" >> $GITHUB_OUTPUT
+              ;;
+            ui)
+              echo "namespace=frontend" >> $GITHUB_OUTPUT
+              echo "chart=velure-ui" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "Unknown service: ${{ inputs.service-name }}"
+              exit 1
+              ;;
+          esac
+
+      - name: Deploy ${{ inputs.service-name }}
+        run: |
+          helm upgrade --install ${{ steps.vars.outputs.chart }} \
+            ./infrastructure/kubernetes/charts/${{ steps.vars.outputs.chart }} \
+            -n ${{ steps.vars.outputs.namespace }} --create-namespace \
+            --set image.tag=${{ inputs.image-tag }} \
+            --wait --timeout 5m
+
+      - name: Verify deployment
+        run: |
+          echo "=== Deployment status for ${{ inputs.service-name }} ==="
+          kubectl get pods -n ${{ steps.vars.outputs.namespace }} -l app.kubernetes.io/name=${{ steps.vars.outputs.chart }}
+          kubectl rollout status deployment/${{ steps.vars.outputs.chart }} -n ${{ steps.vars.outputs.namespace }} --timeout=3m
+
+      - name: Get service info
+        run: |
+          echo "=== Service info ==="
+          kubectl get svc -n ${{ steps.vars.outputs.namespace }} | grep ${{ steps.vars.outputs.chart }} || true
+          echo ""
+          echo "=== Ingress info ==="
+          kubectl get ingress -n ${{ steps.vars.outputs.namespace }} | grep ${{ steps.vars.outputs.chart }} || true

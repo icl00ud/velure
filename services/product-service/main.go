@@ -90,24 +90,29 @@ func main() {
 	// Health routes
 	api.Get("/health", healthHandler.Check)
 
-	// Product routes
+	// Helper function to register product routes on a group
+	registerProductRoutes := func(g fiber.Router) {
+		g.Get("/", handler.GetAllProducts)
+		g.Get("/products/search", handler.SearchProducts)
+		g.Get("/products", handler.GetProductsREST)
+		g.Get("/getProductsByName/:name", handler.GetProductsByName)
+		g.Get("/getProductsByPage", handler.GetProductsByPage)
+		g.Get("/getProductsByPageAndCategory", handler.GetProductsByPageAndCategory)
+		g.Get("/getProductsCount", handler.GetProductsCount)
+		g.Get("/categories", handler.GetCategories)
+		g.Post("/", handler.CreateProduct)
+		g.Post("/updateQuantity", handler.UpdateProductQuantity)
+		g.Delete("/deleteProductsByName/:name", handler.DeleteProductsByName)
+		g.Delete("/deleteProductById/:id", handler.DeleteProductById)
+	}
+
+	// Product routes - local dev with Caddy rewrite
 	products := api.Group("/product")
-	products.Get("/", handler.GetAllProducts)
+	registerProductRoutes(products)
 
-	// REST-style routes (new)
-	products.Get("/products/search", handler.SearchProducts) // Must come before /products
-	products.Get("/products", handler.GetProductsREST)
-
-	// Legacy routes (kept for backward compatibility)
-	products.Get("/getProductsByName/:name", handler.GetProductsByName)
-	products.Get("/getProductsByPage", handler.GetProductsByPage)
-	products.Get("/getProductsByPageAndCategory", handler.GetProductsByPageAndCategory)
-	products.Get("/getProductsCount", handler.GetProductsCount)
-	products.Get("/categories", handler.GetCategories)
-	products.Post("/", handler.CreateProduct)
-	products.Post("/updateQuantity", handler.UpdateProductQuantity)
-	products.Delete("/deleteProductsByName/:name", handler.DeleteProductsByName)
-	products.Delete("/deleteProductById/:id", handler.DeleteProductById)
+	// Kubernetes ALB routes (no path rewriting)
+	apiProducts := api.Group("/api/product")
+	registerProductRoutes(apiProducts)
 
 	port := os.Getenv("PRODUCT_SERVICE_APP_PORT")
 	if port == "" {
