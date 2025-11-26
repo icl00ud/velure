@@ -2,7 +2,7 @@ replicaCount: 1
 image:
   repository: icl00ud/velure-publish-order
   tag: "latest"
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 service:
   type: ClusterIP
   port: 3030
