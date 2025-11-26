@@ -159,6 +159,11 @@ output "ebs_csi_driver_role_arn" {
   value       = module.eks.ebs_csi_driver_role_arn
 }
 
+output "external_secrets_role_arn" {
+  description = "ARN of IAM role for External Secrets Operator"
+  value       = module.eks.external_secrets_role_arn
+}
+
 # Amazon MQ Outputs
 output "amazonmq_broker_id" {
   description = "Amazon MQ Broker ID"
@@ -231,12 +236,56 @@ output "setup_commands" {
   value       = <<-EOT
     # Update kubeconfig
     aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}
-    
+
     # Verify cluster
     kubectl get nodes
     kubectl get pods -A
-    
+
     # Install AWS Load Balancer Controller (after configuring OIDC)
     # See docs/eks-load-balancer-controller-setup.md
   EOT
+}
+
+# Secrets Manager Outputs
+output "secrets_manager_rds_auth_arn" {
+  description = "ARN of RDS auth secret in Secrets Manager"
+  value       = module.secrets_manager.rds_auth_secret_arn
+}
+
+output "secrets_manager_rds_orders_arn" {
+  description = "ARN of RDS orders secret in Secrets Manager"
+  value       = module.secrets_manager.rds_orders_secret_arn
+}
+
+output "secrets_manager_rabbitmq_arn" {
+  description = "ARN of RabbitMQ secret in Secrets Manager"
+  value       = module.secrets_manager.rabbitmq_secret_arn
+}
+
+output "secrets_manager_jwt_arn" {
+  description = "ARN of JWT secret in Secrets Manager"
+  value       = module.secrets_manager.jwt_secret_arn
+}
+
+output "secrets_manager_mongodb_arn" {
+  description = "ARN of MongoDB secret in Secrets Manager"
+  value       = module.secrets_manager.mongodb_secret_arn
+}
+
+output "secrets_manager_redis_arn" {
+  description = "ARN of Redis secret in Secrets Manager"
+  value       = module.secrets_manager.redis_secret_arn
+}
+
+# Secret names for External Secrets Operator
+output "secrets_manager_names" {
+  description = "Secret names for External Secrets Operator configuration"
+  value = {
+    rds_auth   = module.secrets_manager.rds_auth_secret_name
+    rds_orders = module.secrets_manager.rds_orders_secret_name
+    rabbitmq   = module.secrets_manager.rabbitmq_secret_name
+    jwt        = module.secrets_manager.jwt_secret_name
+    mongodb    = module.secrets_manager.mongodb_secret_name
+    redis      = module.secrets_manager.redis_secret_name
+  }
 }

@@ -9,8 +9,18 @@ output "vpc_cidr" {
 }
 
 output "public_subnet_id" {
-  description = "Public subnet ID"
+  description = "Primary public subnet ID"
   value       = aws_subnet.public.id
+}
+
+output "public_subnet_secondary_id" {
+  description = "Secondary public subnet ID"
+  value       = aws_subnet.public_secondary.id
+}
+
+output "public_subnet_ids" {
+  description = "List of public subnet IDs"
+  value       = [aws_subnet.public.id, aws_subnet.public_secondary.id]
 }
 
 output "private_subnet_id" {

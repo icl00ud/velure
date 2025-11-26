@@ -501,15 +501,15 @@
               },
               {
                 "color": "yellow",
-                "value": 0.8
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 0.9
+                "value": 90
               }
             ]
           },
-          "unit": "percentunit"
+          "unit": "percent"
         }
       },
       "gridPos": {
@@ -532,7 +532,7 @@
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "expr": "rate(product_cache_hits_total[5m]) / (rate(product_cache_hits_total[5m]) + rate(product_cache_misses_total[5m]))",
+          "expr": "sum(rate(product_cache_hits_total[5m])) / (sum(rate(product_cache_hits_total[5m])) + sum(rate(product_cache_misses_total[5m]))) * 100",
           "refId": "A"
         }
       ],

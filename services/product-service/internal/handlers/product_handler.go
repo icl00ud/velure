@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"strconv"
 	"time"
 
@@ -226,11 +227,16 @@ func (h *ProductHandler) DeleteProductById(c *fiber.Ctx) error {
 func (h *ProductHandler) UpdateProductQuantity(c *fiber.Ctx) error {
 	start := time.Now()
 
+	// Log raw body for debugging
+	log.Printf("UpdateProductQuantity received body: %s", string(c.Body()))
+
 	var req models.UpdateQuantityRequest
 	if err := c.BodyParser(&req); err != nil {
 		metrics.HTTPRequests.WithLabelValues("product-service", "PUT", "/products/quantity", "400").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
+
+	log.Printf("Parsed UpdateQuantityRequest: %+v", req)
 
 	if req.ProductID == "" {
 		metrics.HTTPRequests.WithLabelValues("product-service", "PUT", "/products/quantity", "400").Inc()

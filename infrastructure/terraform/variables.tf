@@ -29,9 +29,15 @@ variable "vpc_cidr" {
 }
 
 variable "public_subnet_cidr" {
-  description = "CIDR block for public subnet"
+  description = "CIDR block for primary public subnet"
   type        = string
   default     = "10.0.1.0/24"
+}
+
+variable "public_subnet_secondary_cidr" {
+  description = "CIDR block for secondary public subnet (required for ALB multi-AZ)"
+  type        = string
+  default     = "10.0.11.0/24"
 }
 
 variable "private_subnet_cidr" {
@@ -43,11 +49,11 @@ variable "private_subnet_cidr" {
 variable "private_subnet_secondary_cidr" {
   description = "CIDR block for second private subnet (required for RDS subnet group)"
   type        = string
-  default     = "10.0.11.0/24"
+  default     = "10.0.12.0/24"
 }
 
 variable "availability_zone_secondary" {
-  description = "Second AZ for RDS subnet group requirement"
+  description = "Second AZ for multi-AZ requirements (ALB, RDS)"
   type        = string
   default     = "us-east-1b"
 }
@@ -198,4 +204,44 @@ variable "tags" {
     CostCenter  = "personal-project"
     Environment = "prod"
   }
+}
+
+# JWT Secrets
+variable "jwt_secret" {
+  description = "JWT signing secret for auth service"
+  type        = string
+  sensitive   = true
+}
+
+variable "jwt_refresh_secret" {
+  description = "JWT refresh token secret for auth service"
+  type        = string
+  sensitive   = true
+}
+
+# MongoDB Atlas
+variable "mongodb_connection_string" {
+  description = "MongoDB Atlas connection string"
+  type        = string
+  sensitive   = true
+}
+
+# Redis (optional - for ElastiCache or in-cluster)
+variable "redis_host" {
+  description = "Redis host"
+  type        = string
+  default     = ""
+}
+
+variable "redis_port" {
+  description = "Redis port"
+  type        = number
+  default     = 6379
+}
+
+variable "redis_password" {
+  description = "Redis password"
+  type        = string
+  sensitive   = true
+  default     = ""
 }

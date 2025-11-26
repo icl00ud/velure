@@ -439,11 +439,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(100 * (product_cache_hits_total / (product_cache_hits_total + product_cache_misses_total))) or vector(0)",
+          "expr": "(100 * (sum(product_cache_hits_total) / (sum(product_cache_hits_total) + sum(product_cache_misses_total)))) or vector(0)",
           "refId": "A"
         }
       ],
-      "title": "Cache Hit Rate",
+      "title": "Product Cache Hit Rate",
       "type": "stat"
     },
     {

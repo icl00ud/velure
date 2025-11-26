@@ -51,8 +51,22 @@ rabbitmqctl delete_user guest || true
 echo "[bootstrap] Declarando exchange 'orders'..."
 rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare exchange name=orders type=topic durable=true
 
-echo "[bootstrap] Declarando fila 'process-order-queue'..."
-rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare queue name=process-order-queue durable=true
+# Dead Letter Exchange (DLX) para mensagens que falharam permanentemente
+echo "[bootstrap] Declarando Dead Letter Exchange 'orders.dlx'..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare exchange name=orders.dlx type=fanout durable=true
+
+# Dead Letter Queue (DLQ) para armazenar mensagens rejeitadas
+echo "[bootstrap] Declarando Dead Letter Queue 'process-order-queue.dlq'..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare queue name=process-order-queue.dlq durable=true
+
+# Bind DLQ ao DLX
+echo "[bootstrap] Binding DLQ ao DLX..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare binding source=orders.dlx destination=process-order-queue.dlq
+
+# Fila principal com DLX configurado para enviar mensagens rejeitadas para DLQ
+echo "[bootstrap] Declarando fila 'process-order-queue' com DLX..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare queue name=process-order-queue durable=true \
+  arguments='{"x-dead-letter-exchange":"orders.dlx","x-max-length":10000}'
 
 echo "[bootstrap] Criando binding entre exchange 'orders' e fila 'process-order-queue'..."
 rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare binding source=orders destination=process-order-queue routing_key=order.created

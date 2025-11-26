@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"product-service/internal/metrics"
 	"product-service/internal/models"
 
 	"github.com/redis/go-redis/v9"
@@ -48,11 +49,13 @@ func (r *productRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 	// Try to get from cache
 	cached, err := r.redis.Get(ctx, cacheKey).Result()
 	if err == nil {
+		metrics.CacheHits.Inc()
 		var products []models.ProductResponse
 		if err := json.Unmarshal([]byte(cached), &products); err == nil {
 			return products, nil
 		}
 	}
+	metrics.CacheMisses.Inc()
 
 	cursor, err := r.collection.Find(ctx, bson.M{})
 	if err != nil {
@@ -105,11 +108,13 @@ func (r *productRepository) GetProductsByPage(ctx context.Context, page, pageSiz
 	// Try to get from cache
 	cached, err := r.redis.Get(ctx, cacheKey).Result()
 	if err == nil {
+		metrics.CacheHits.Inc()
 		var response models.PaginatedProductsResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
 		}
 	}
+	metrics.CacheMisses.Inc()
 
 	// Get total count
 	totalCount, err := r.GetProductsCount(ctx)
@@ -215,11 +220,13 @@ func (r *productRepository) GetCategories(ctx context.Context) ([]string, error)
 	// Try to get from cache
 	cached, err := r.redis.Get(ctx, cacheKey).Result()
 	if err == nil {
+		metrics.CacheHits.Inc()
 		var categories []string
 		if err := json.Unmarshal([]byte(cached), &categories); err == nil {
 			return categories, nil
 		}
 	}
+	metrics.CacheMisses.Inc()
 
 	// Get distinct categories from MongoDB
 	categories, err := r.collection.Distinct(ctx, "category", bson.M{})

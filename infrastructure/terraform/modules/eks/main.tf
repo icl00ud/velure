@@ -51,13 +51,8 @@ resource "aws_eks_cluster" "main" {
     public_access_cidrs     = ["0.0.0.0/0"] # Restringir em produção
   }
 
-  enabled_cluster_log_types = [
-    "api",
-    "audit",
-    "authenticator",
-    "controllerManager",
-    "scheduler"
-  ]
+  # CloudWatch logs disabled to avoid conflicts
+  enabled_cluster_log_types = []
 
   tags = var.tags
 
@@ -65,14 +60,6 @@ resource "aws_eks_cluster" "main" {
     aws_iam_role_policy_attachment.cluster_amazon_eks_cluster_policy,
     aws_iam_role_policy_attachment.cluster_amazon_eks_vpc_resource_controller
   ]
-}
-
-# CloudWatch Log Group para EKS logs (com retenção curta para economizar)
-resource "aws_cloudwatch_log_group" "eks" {
-  name              = "/aws/eks/${var.project_name}-${var.environment}/cluster"
-  retention_in_days = 7
-
-  tags = var.tags
 }
 
 # IAM Role para EKS Nodes
@@ -242,11 +229,70 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
 
+# IAM Role para External Secrets Operator
+resource "aws_iam_role" "external_secrets" {
+  name = "${var.project_name}-${var.environment}-external-secrets"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.cluster.arn
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")}:aud" = "sts.amazonaws.com"
+          "${replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")}:sub" = "system:serviceaccount:external-secrets:external-secrets-sa"
+        }
+      }
+    }]
+  })
+
+  tags = var.tags
+}
+
+# IAM Policy para External Secrets (ler secrets do Secrets Manager)
+resource "aws_iam_policy" "external_secrets" {
+  name        = "${var.project_name}-${var.environment}-external-secrets"
+  description = "IAM policy for External Secrets Operator to read from Secrets Manager"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetResourcePolicy",
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:ListSecretVersionIds"
+        ]
+        Resource = "arn:aws:secretsmanager:*:*:secret:velure/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:ListSecrets"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "external_secrets" {
+  role       = aws_iam_role.external_secrets.name
+  policy_arn = aws_iam_policy.external_secrets.arn
+}
+
 # EKS Addon - VPC CNI
 resource "aws_eks_addon" "vpc_cni" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "vpc-cni"
-  addon_version               = "v1.16.0-eksbuild.1"
   resolve_conflicts_on_update = "PRESERVE"
 
   tags = var.tags
@@ -256,7 +302,6 @@ resource "aws_eks_addon" "vpc_cni" {
 resource "aws_eks_addon" "coredns" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "coredns"
-  addon_version               = "v1.11.1-eksbuild.9"
   resolve_conflicts_on_update = "PRESERVE"
 
   tags = var.tags
@@ -270,7 +315,6 @@ resource "aws_eks_addon" "coredns" {
 resource "aws_eks_addon" "kube_proxy" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "kube-proxy"
-  addon_version               = "v1.29.3-eksbuild.2"
   resolve_conflicts_on_update = "PRESERVE"
 
   tags = var.tags
@@ -280,7 +324,6 @@ resource "aws_eks_addon" "kube_proxy" {
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name                = aws_eks_cluster.main.name
   addon_name                  = "aws-ebs-csi-driver"
-  addon_version               = "v1.30.0-eksbuild.1"
   service_account_role_arn    = aws_iam_role.ebs_csi_driver.arn
   resolve_conflicts_on_update = "PRESERVE"
 

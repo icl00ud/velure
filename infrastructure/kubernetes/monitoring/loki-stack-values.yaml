@@ -62,12 +62,12 @@ loki:
 
     storage_config:
       boltdb_shipper:
-        active_index_directory: /loki/boltdb-shipper-active
-        cache_location: /loki/boltdb-shipper-cache
+        active_index_directory: /data/boltdb-shipper-active
+        cache_location: /data/boltdb-shipper-cache
         cache_ttl: 24h
         shared_store: filesystem
       filesystem:
-        directory: /loki/chunks
+        directory: /data/chunks
 
     chunk_store_config:
       max_look_back_period: 0s
@@ -77,7 +77,7 @@ loki:
       retention_period: 30d
 
     compactor:
-      working_directory: /loki/compactor
+      working_directory: /data/compactor
       shared_store: filesystem
       compaction_interval: 10m
       retention_enabled: true

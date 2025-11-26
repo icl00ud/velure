@@ -11,8 +11,8 @@ resources:
     cpu: 100m
     memory: 128Mi
   limits:
-    cpu: 200m
-    memory: 256Mi
+    cpu: 100m
+    memory: 128Mi
 autoscaling:
   enabled: true
   minReplicas: 2
@@ -42,3 +42,24 @@ securityContext:
   runAsGroup: 65532
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
+
+# Secrets configuration
+# For production: use External Secrets Operator to sync from AWS Secrets Manager
+secrets:
+  create: false  # Set to true only for local development
+  externalSecretName: "velure-process-order-secrets"
+  rabbitmq:
+    url: ""  # Will be populated from AWS Secrets Manager
+  postgres:
+    url: ""  # Will be populated from AWS Secrets Manager
+
+# External Secrets Operator configuration
+externalSecrets:
+  enabled: true
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: ClusterSecretStore
+  awsSecrets:
+    rabbitmq: "velure/production/rabbitmq"
+    postgres: "velure/production/rds-orders"

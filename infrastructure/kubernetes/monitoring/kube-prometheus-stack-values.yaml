@@ -10,24 +10,24 @@ prometheus:
     retention: 15d
     retentionSize: "20GB"
 
-    # Storage
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: gp3
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 25Gi
+    # Storage (using emptyDir for faster deployment)
+    # storageSpec:
+    #   volumeClaimTemplate:
+    #     spec:
+    #       storageClassName: gp2
+    #       accessModes: ["ReadWriteOnce"]
+    #       resources:
+    #         requests:
+    #           storage: 25Gi
 
-    # Resources
+    # Resources (optimized for t3.small nodes)
     resources:
       requests:
-        cpu: 500m
-        memory: 2Gi
+        cpu: 100m
+        memory: 512Mi
       limits:
-        cpu: 2000m
-        memory: 4Gi
+        cpu: 500m
+        memory: 1Gi
 
     # Scrape interval
     scrapeInterval: 30s
@@ -55,40 +55,28 @@ prometheus:
 grafana:
   enabled: true
 
-  adminPassword: "admin"  # CHANGE IN PRODUCTION!
+  # Admin password will be auto-generated and stored in a Secret
+  # Retrieve with: kubectl get secret -n monitoring kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
 
-  # Persistence
+  # Persistence (disabled for faster deployment on t3.small)
   persistence:
-    enabled: true
-    storageClassName: gp3
-    size: 10Gi
+    enabled: false
 
-  # Resources
+  # Resources (optimized for t3.small nodes)
   resources:
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 50m
+      memory: 128Mi
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 200m
+      memory: 256Mi
 
   # Service
   service:
-    type: LoadBalancer
-    annotations:
-      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    type: ClusterIP
+    port: 80
 
-  # Datasources
-  datasources:
-    datasources.yaml:
-      apiVersion: 1
-      datasources:
-        - name: Prometheus
-          type: prometheus
-          url: http://{{ .Release.Name }}-prometheus:9090
-          access: proxy
-          isDefault: true
-          editable: false
+  # Datasources are configured automatically by kube-prometheus-stack
 
   # Dashboard providers
   dashboardProviders:
@@ -111,12 +99,9 @@ grafana:
   # Grafana.ini configuration
   grafana.ini:
     server:
-      root_url: "%(protocol)s://%(domain)s/grafana"
+      root_url: "%(protocol)s://%(domain)s"
     analytics:
       check_for_updates: false
-    security:
-      admin_user: admin
-      admin_password: admin
     auth.anonymous:
       enabled: false
 
@@ -125,24 +110,24 @@ alertmanager:
   enabled: true
 
   alertmanagerSpec:
-    # Storage
-    storage:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: gp3
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 5Gi
+    # Storage (using emptyDir for faster deployment)
+    # storage:
+    #   volumeClaimTemplate:
+    #     spec:
+    #       storageClassName: gp2
+    #       accessModes: ["ReadWriteOnce"]
+    #       resources:
+    #         requests:
+    #           storage: 5Gi
 
-    # Resources
+    # Resources (optimized for t3.small nodes)
     resources:
       requests:
-        cpu: 50m
-        memory: 128Mi
+        cpu: 25m
+        memory: 64Mi
       limits:
-        cpu: 200m
-        memory: 256Mi
+        cpu: 100m
+        memory: 128Mi
 
   # Alertmanager config
   config:
@@ -182,6 +167,12 @@ kubeStateMetrics:
 # Prometheus Operator
 prometheusOperator:
   enabled: true
+
+  # Disable admission webhooks to speed up deployment on small clusters
+  admissionWebhooks:
+    enabled: false
+    patch:
+      enabled: false
 
   resources:
     requests:

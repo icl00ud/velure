@@ -80,6 +80,10 @@ services:
       JWT_REFRESH_TOKEN_EXPIRES_IN: ${JWT_REFRESH_TOKEN_EXPIRES_IN}
       SESSION_SECRET: ${SESSION_SECRET}
       SESSION_EXPIRES_IN: ${SESSION_EXPIRES_IN}
+      # Redis Configuration
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       # Performance optimizations
       BCRYPT_COST: ${BCRYPT_COST:-10}
       BCRYPT_WORKERS: ${BCRYPT_WORKERS:-10}
@@ -92,6 +96,9 @@ services:
       - local_auth
       - order
       - frontend
+    depends_on:
+      - postgres
+      - redis
     deploy:
       resources:
         limits:
@@ -219,6 +226,7 @@ services:
       - "${REDIS_PORT}:${REDIS_PORT}"
     networks:
       - order
+      - local_auth
     deploy:
       resources:
         limits:
