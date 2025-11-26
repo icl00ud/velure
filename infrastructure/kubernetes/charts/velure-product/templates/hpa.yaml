@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "velure-product-chart.fullname" . }}
+  name: {{ include "velure-product.fullname" . }}
   labels:
-    {{- include "velure-product-chart.labels" . | nindent 4 }}
+    {{- include "velure-product.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "velure-product-chart.fullname" . }}
+    name: {{ include "velure-product.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
