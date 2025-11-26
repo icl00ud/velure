@@ -11,6 +11,7 @@ type Config struct {
 	JWT         JWTConfig
 	Session     SessionConfig
 	Database    DatabaseConfig
+	Redis       RedisConfig
 	Performance PerformanceConfig
 }
 
@@ -42,6 +43,12 @@ type DatabaseConfig struct {
 	URL      string
 }
 
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
+}
+
 func Load() *Config {
 	port, _ := strconv.Atoi(getEnv("POSTGRES_PORT", "5432"))
 	sessionExpiresIn, _ := strconv.ParseInt(getEnv("SESSION_EXPIRES_IN", "86400000"), 10, 64)
@@ -49,6 +56,10 @@ func Load() *Config {
 	bcryptWorkers, _ := strconv.Atoi(getEnv("BCRYPT_WORKERS", "10"))
 	tokenCacheTTL, _ := strconv.Atoi(getEnv("TOKEN_CACHE_TTL", "300"))
 	enableCache := getEnv("ENABLE_TOKEN_CACHE", "true") == "true"
+
+	redisHost := getEnv("REDIS_HOST", "localhost")
+	redisPort := getEnv("REDIS_PORT", "6379")
+	redisAddr := redisHost + ":" + redisPort
 
 	return &Config{
 		Environment: getEnv("ENVIRONMENT", "development"),
@@ -70,6 +81,11 @@ func Load() *Config {
 			Password: getEnv("POSTGRES_PASSWORD", "password"),
 			Database: getEnv("POSTGRES_DATABASE_NAME", "auth_db"),
 			URL:      getEnv("POSTGRES_URL", ""),
+		},
+		Redis: RedisConfig{
+			Addr:     redisAddr,
+			Password: getEnv("REDIS_PASSWORD", ""),
+			DB:       0,
 		},
 		Performance: PerformanceConfig{
 			BcryptCost:    bcryptCost,

@@ -3,7 +3,6 @@ package metrics
 import (
 	"testing"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
@@ -85,8 +84,8 @@ func TestTokenValidations(t *testing.T) {
 }
 
 func TestTokenGenerations(t *testing.T) {
-	// Reset the counter
-	TokenGenerations.(prometheus.Counter).Add(-testutil.ToFloat64(TokenGenerations))
+	// Reset the counter - TokenGenerations is already a Counter, no need for type assertion
+	TokenGenerations.Add(-testutil.ToFloat64(TokenGenerations))
 
 	TokenGenerations.Inc()
 	TokenGenerations.Inc()
