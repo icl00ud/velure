@@ -53,8 +53,9 @@ func TestProductClient_UpdateQuantity_ErrorResponse(t *testing.T) {
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
-	if err.Error() != "product service error: insufficient stock" {
-		t.Errorf("unexpected error message: %v", err)
+	// Expect PermanentError for 400 Bad Request
+	if _, ok := err.(*PermanentError); !ok {
+		t.Errorf("expected PermanentError, got %T: %v", err, err)
 	}
 }
 
@@ -72,8 +73,9 @@ func TestProductClient_UpdateQuantity_NonJSONError(t *testing.T) {
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
-	if err.Error() != "unexpected status code: 500" {
-		t.Errorf("unexpected error message: %v", err)
+	// Expect TransientError for 500 Internal Server Error
+	if _, ok := err.(*TransientError); !ok {
+		t.Errorf("expected TransientError, got %T: %v", err, err)
 	}
 }
 
