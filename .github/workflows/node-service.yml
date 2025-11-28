@@ -74,6 +74,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
+          # Single arch keeps build time low; multi-arch can be re-enabled if needed
+          platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
