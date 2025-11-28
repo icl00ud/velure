@@ -18,11 +18,11 @@ type Publisher interface {
 }
 
 type OrderHandler struct {
-	svc *service.OrderService
+	svc OrderService
 	pub Publisher
 }
 
-func NewOrderHandler(svc *service.OrderService, pub Publisher) *OrderHandler {
+func NewOrderHandler(svc OrderService, pub Publisher) *OrderHandler {
 	return &OrderHandler{svc: svc, pub: pub}
 }
 
