@@ -12,15 +12,18 @@ import (
 )
 
 type stubAcknowledger struct {
-	acked       bool
-	nacked      bool
-	requeueFlag bool
-	tag         uint64
+	acked        bool
+	nacked       bool
+	requeueFlag  bool
+	tag          uint64
+	multipleAck  bool
+	multipleNack bool
 }
 
 func (s *stubAcknowledger) Ack(tag uint64, multiple bool) error {
 	s.acked = true
 	s.tag = tag
+	s.multipleAck = multiple
 	return nil
 }
 
@@ -28,6 +31,7 @@ func (s *stubAcknowledger) Nack(tag uint64, multiple bool, requeue bool) error {
 	s.nacked = true
 	s.requeueFlag = requeue
 	s.tag = tag
+	s.multipleNack = multiple
 	return nil
 }
 
@@ -147,6 +151,9 @@ func TestWorker_NackOnError(t *testing.T) {
 	}
 	if ack.tag != 9 {
 		t.Fatalf("expected nack tag 9, got %d", ack.tag)
+	}
+	if ack.multipleNack {
+		t.Fatal("did not expect multiple nack")
 	}
 }
 
