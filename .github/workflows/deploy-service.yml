@@ -83,11 +83,37 @@ jobs:
 
       - name: Deploy ${{ inputs.service-name }}
         run: |
-          helm upgrade --install ${{ steps.vars.outputs.chart }} \
-            ./infrastructure/kubernetes/charts/${{ steps.vars.outputs.chart }} \
-            -n ${{ steps.vars.outputs.namespace }} --create-namespace \
-            --set image.tag=${{ inputs.image-tag }} \
-            --wait --timeout 5m
+          release="${{ steps.vars.outputs.chart }}"
+          chart_dir="./infrastructure/kubernetes/charts/${{ steps.vars.outputs.chart }}"
+          namespace="${{ steps.vars.outputs.namespace }}"
+          retries=3
+          attempt=1
+
+          while true; do
+            echo "Attempt ${attempt}/${retries} deploying ${release}..."
+            if helm upgrade --install "${release}" "${chart_dir}" \
+              -n "${namespace}" --create-namespace \
+              --set image.tag="${{ inputs.image-tag }}" \
+              --atomic --wait --timeout 10m; then
+              echo "Deployment succeeded."
+              break
+            fi
+
+            # If another operation is in progress, wait and retry
+            if helm status "${release}" -n "${namespace}" 2>&1 | grep -qi "pending"; then
+              if [ "${attempt}" -ge "${retries}" ]; then
+                echo "Deployment is still locked after ${retries} attempts."
+                exit 1
+              fi
+              echo "Another Helm operation is in progress for ${release}. Waiting 60s before retry..."
+              sleep 60
+              attempt=$((attempt + 1))
+              continue
+            fi
+
+            echo "Helm upgrade failed for ${release}. See logs above."
+            exit 1
+          done
 
       - name: Verify deployment
         run: |
