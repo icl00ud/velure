@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: velure-db
-  labels:
-    name: velure-db
-    component: database
-    managed-by: kubectl
