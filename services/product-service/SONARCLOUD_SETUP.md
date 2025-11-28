@@ -13,7 +13,7 @@ The Product Service is configured to automatically send test coverage reports an
 Located in the root of the product-service directory, this file contains the SonarCloud project configuration:
 
 - **Project Key**: `velure-product-service`
-- **Organization**: `velure`
+- **Organization**: `israel_schroeder_moreira`
 - **Coverage Report Path**: `coverage.out`
 - **Source Exclusions**: Test files, vendor directory, generated code
 
