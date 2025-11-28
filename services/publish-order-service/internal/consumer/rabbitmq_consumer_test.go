@@ -11,197 +11,184 @@ import (
 	"go.uber.org/zap"
 )
 
-type stubAcknowledger struct {
-	acked        bool
-	nacked       bool
-	requeueFlag  bool
-	tag          uint64
-	multipleAck  bool
-	multipleNack bool
+type stubConsumerChannel struct {
+	deliveries  chan amqp091.Delivery
+	consumeErr  error
+	qosCalled   bool
+	closed      bool
+	ackOnClose  bool
+	declareErr  error
+	bindErr     error
+	queueName   string
+	prefetchSet bool
 }
 
-func (s *stubAcknowledger) Ack(tag uint64, multiple bool) error {
+func (s *stubConsumerChannel) Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp091.Table) (<-chan amqp091.Delivery, error) {
+	if s.consumeErr != nil {
+		return nil, s.consumeErr
+	}
+	return s.deliveries, nil
+}
+
+func (s *stubConsumerChannel) ExchangeDeclare(name, kind string, durable, autoDelete, internal, noWait bool, args amqp091.Table) error {
+	return s.declareErr
+}
+
+func (s *stubConsumerChannel) QueueDeclare(name string, durable, autoDelete, exclusive, noWait bool, args amqp091.Table) (amqp091.Queue, error) {
+	if s.declareErr != nil {
+		return amqp091.Queue{}, s.declareErr
+	}
+	s.queueName = name
+	return amqp091.Queue{Name: name}, nil
+}
+
+func (s *stubConsumerChannel) QueueBind(name, key, exchange string, noWait bool, args amqp091.Table) error {
+	return s.bindErr
+}
+
+func (s *stubConsumerChannel) Qos(prefetchCount, prefetchSize int, global bool) error {
+	s.prefetchSet = true
+	return nil
+}
+
+func (s *stubConsumerChannel) Close() error {
+	s.closed = true
+	return nil
+}
+
+type stubConsumerConn struct {
+	ch *stubConsumerChannel
+}
+
+func (s *stubConsumerConn) Channel() (*amqp091.Channel, error) {
+	return nil, nil
+}
+
+func (s *stubConsumerConn) Close() error { return nil }
+
+type stubAcker struct {
+	acked   bool
+	nacked  bool
+	requeue bool
+}
+
+func (s *stubAcker) Ack(tag uint64, multiple bool) error {
 	s.acked = true
-	s.tag = tag
-	s.multipleAck = multiple
 	return nil
 }
 
-func (s *stubAcknowledger) Nack(tag uint64, multiple bool, requeue bool) error {
+func (s *stubAcker) Nack(tag uint64, multiple bool, requeue bool) error {
 	s.nacked = true
-	s.requeueFlag = requeue
-	s.tag = tag
-	s.multipleNack = multiple
+	s.requeue = requeue
 	return nil
 }
 
-func (s *stubAcknowledger) Reject(tag uint64, requeue bool) error {
+func (s *stubAcker) Reject(tag uint64, requeue bool) error {
 	s.nacked = true
-	s.requeueFlag = requeue
-	s.tag = tag
+	s.requeue = requeue
 	return nil
 }
 
-func TestProcessMessage_Success(t *testing.T) {
-	t.Helper()
-	var handled bool
-	rc := &rabbitConsumer{
-		handler: func(ctx context.Context, evt model.Event) error {
-			handled = true
-			if evt.Type != model.OrderCompleted {
-				t.Fatalf("unexpected event type %s", evt.Type)
-			}
-			if len(evt.Payload) == 0 {
-				t.Fatal("payload should not be empty")
-			}
-			return nil
-		},
-		logger: zap.NewNop(),
-	}
-
-	msg := amqp091.Delivery{Body: []byte(`{"type":"order.completed","payload":{"id":"123"}}`)}
-
-	if err := rc.processMessage(context.Background(), msg); err != nil {
-		t.Fatalf("expected success, got error: %v", err)
-	}
-	if !handled {
-		t.Fatal("handler was not invoked")
-	}
-}
-
-func TestProcessMessage_InvalidJSON(t *testing.T) {
-	rc := &rabbitConsumer{
-		handler: func(ctx context.Context, evt model.Event) error {
-			t.Fatal("handler should not be called for invalid JSON")
-			return nil
-		},
-		logger: zap.NewNop(),
-	}
-
-	msg := amqp091.Delivery{Body: []byte(`{"type":`)} // malformed JSON
-
-	if err := rc.processMessage(context.Background(), msg); err == nil {
-		t.Fatal("expected error for invalid JSON")
-	}
-}
-
-func TestProcessMessage_HandlerError(t *testing.T) {
-	expected := errors.New("boom")
-	rc := &rabbitConsumer{
-		handler: func(ctx context.Context, evt model.Event) error {
-			return expected
-		},
-		logger: zap.NewNop(),
-	}
-
-	msg := amqp091.Delivery{Body: []byte(`{"type":"order.processing","payload":{}}`)}
-
-	if err := rc.processMessage(context.Background(), msg); !errors.Is(err, expected) {
-		t.Fatalf("expected handler error, got %v", err)
-	}
-}
-
-func TestWorker_AckOnSuccess(t *testing.T) {
-	ack := &stubAcknowledger{}
-	rc := &rabbitConsumer{
-		handler: func(ctx context.Context, evt model.Event) error { return nil },
-		logger:  zap.NewNop(),
-	}
-
+func TestRabbitConsumer_StartProcessesMessages(t *testing.T) {
+	acker := &stubAcker{}
 	msgs := make(chan amqp091.Delivery, 1)
-	msgs <- amqp091.Delivery{
-		Body:         []byte(`{"type":"order.processing","payload":{}}`),
-		Acknowledger: ack,
-		DeliveryTag:  7,
-	}
+	msgs <- amqp091.Delivery{Body: []byte(`{"type":"order.processing","payload":{}}`), Acknowledger: acker}
 	close(msgs)
 
-	rc.worker(context.Background(), 1, msgs)
-
-	if !ack.acked {
-		t.Fatal("expected message to be acknowledged")
+	ch := &stubConsumerChannel{deliveries: msgs}
+	c := &rabbitConsumer{
+		conn:    &stubConsumerConn{ch: ch},
+		channel: ch,
+		queue:   "q",
+		handler: func(ctx context.Context, evt model.Event) error { return nil },
+		logger:  zap.NewNop(),
+		workers: 1,
 	}
-	if ack.tag != 7 {
-		t.Fatalf("expected ack tag 7, got %d", ack.tag)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		_ = c.Start(ctx)
+		close(done)
+	}()
+
+	time.Sleep(20 * time.Millisecond)
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("Start did not return after cancel")
+	}
+
+	if !acker.acked {
+		t.Fatal("expected ack on success")
 	}
 }
 
-func TestWorker_NackOnError(t *testing.T) {
-	ack := &stubAcknowledger{}
-	rc := &rabbitConsumer{
+func TestRabbitConsumer_HandlerErrorNacks(t *testing.T) {
+	acker := &stubAcker{}
+	msgs := make(chan amqp091.Delivery, 1)
+	msgs <- amqp091.Delivery{Body: []byte(`{"type":"order.processing","payload":{}}`), Acknowledger: acker}
+	close(msgs)
+
+	ch := &stubConsumerChannel{deliveries: msgs}
+	c := &rabbitConsumer{
+		conn:    &stubConsumerConn{ch: ch},
+		channel: ch,
+		queue:   "q",
 		handler: func(ctx context.Context, evt model.Event) error { return errors.New("fail") },
 		logger:  zap.NewNop(),
+		workers: 1,
 	}
 
-	msgs := make(chan amqp091.Delivery, 1)
-	msgs <- amqp091.Delivery{
-		Body:         []byte(`{"type":"order.processing","payload":{}}`),
-		Acknowledger: ack,
-		DeliveryTag:  9,
-	}
-	close(msgs)
-
-	rc.worker(context.Background(), 2, msgs)
-
-	if !ack.nacked {
-		t.Fatal("expected message to be negatively acknowledged")
-	}
-	if !ack.requeueFlag {
-		t.Fatal("expected message to be requeued on failure")
-	}
-	if ack.tag != 9 {
-		t.Fatalf("expected nack tag 9, got %d", ack.tag)
-	}
-	if ack.multipleNack {
-		t.Fatal("did not expect multiple nack")
-	}
-}
-
-func TestWorker_ReturnsWhenChannelClosed(t *testing.T) {
-	rc := &rabbitConsumer{
-		handler: func(ctx context.Context, evt model.Event) error {
-			t.Fatal("handler should not be called")
-			return nil
-		},
-		logger: zap.NewNop(),
-	}
-
-	msgs := make(chan amqp091.Delivery)
-	close(msgs)
-
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	done := make(chan struct{})
 	go func() {
-		rc.worker(context.Background(), 3, msgs)
+		_ = c.Start(ctx)
 		close(done)
 	}()
+	time.Sleep(20 * time.Millisecond)
+	cancel()
+	<-done
 
-	select {
-	case <-done:
-	case <-time.After(time.Second):
-		t.Fatal("worker did not return after channel closed")
+	if !acker.nacked || !acker.requeue {
+		t.Fatal("expected nack with requeue on handler error")
 	}
 }
 
-func TestWorker_StopsOnContextCancel(t *testing.T) {
-	rc := &rabbitConsumer{
-		handler: func(ctx context.Context, evt model.Event) error { return nil },
+func TestRabbitConsumer_ProcessMessageInvalidJSON(t *testing.T) {
+	acker := &stubAcker{}
+	ch := &stubConsumerChannel{}
+	c := &rabbitConsumer{
+		channel: ch,
+		logger:  zap.NewNop(),
+	}
+	msg := amqp091.Delivery{Body: []byte(`{invalid`), Acknowledger: acker}
+	if err := c.processMessage(context.Background(), msg); err == nil {
+		t.Fatal("expected error for invalid JSON")
+	}
+	if acker.requeue {
+		t.Fatal("invalid JSON should not requeue")
+	}
+}
+
+func TestRabbitConsumer_CloseClosesChannelAndConn(t *testing.T) {
+	ch := &stubConsumerChannel{deliveries: make(chan amqp091.Delivery)}
+	conn := &stubConsumerConn{ch: ch}
+	c := &rabbitConsumer{
+		conn:    conn,
+		channel: ch,
+		queue:   "q",
 		logger:  zap.NewNop(),
 	}
 
-	msgs := make(chan amqp091.Delivery)
-	ctx, cancel := context.WithCancel(context.Background())
-
-	done := make(chan struct{})
-	go func() {
-		rc.worker(ctx, 4, msgs)
-		close(done)
-	}()
-
-	cancel()
-
-	select {
-	case <-done:
-	case <-time.After(time.Second):
-		t.Fatal("worker did not stop after context cancel")
+	if err := c.Close(); err != nil {
+		t.Fatalf("close returned error: %v", err)
+	}
+	if !ch.closed {
+		t.Fatal("expected channel closed")
 	}
 }

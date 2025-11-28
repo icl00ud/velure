@@ -18,9 +18,23 @@ type Consumer interface {
 	Close() error
 }
 
+type amqpConn interface {
+	Channel() (*amqp091.Channel, error)
+	Close() error
+}
+
+type amqpChan interface {
+	Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp091.Table) (<-chan amqp091.Delivery, error)
+	ExchangeDeclare(name, kind string, durable, autoDelete, internal, noWait bool, args amqp091.Table) error
+	QueueDeclare(name string, durable, autoDelete, exclusive, noWait bool, args amqp091.Table) (amqp091.Queue, error)
+	QueueBind(name, key, exchange string, noWait bool, args amqp091.Table) error
+	Qos(prefetchCount, prefetchSize int, global bool) error
+	Close() error
+}
+
 type rabbitConsumer struct {
-	conn    *amqp091.Connection
-	channel *amqp091.Channel
+	conn    amqpConn
+	channel amqpChan
 	queue   string
 	handler EventHandler
 	logger  *zap.Logger
