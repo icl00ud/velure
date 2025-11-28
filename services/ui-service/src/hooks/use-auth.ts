@@ -38,7 +38,7 @@ export function useAuth() {
     }
   };
 
-  const register = async (user: IRegisterUser): Promise<ILoginResponse> => {
+  const register = async (user: IRegisterUser): Promise<boolean> => {
     setIsLoading(true);
     try {
       return await authenticationService.register(user);

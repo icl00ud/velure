@@ -124,7 +124,7 @@ class AuthenticationService {
     }
   }
 
-  async register(user: IRegisterUser): Promise<ILoginResponse> {
+  async register(user: IRegisterUser): Promise<boolean> {
     try {
       const response = await fetch(`${configService.authenticationServiceUrl}/register`, {
         method: "POST",
@@ -138,12 +138,13 @@ class AuthenticationService {
         throw new Error("Erro no registro");
       }
 
-      const loginResponse: ILoginResponse = await response.json();
-      localStorage.setItem("token", JSON.stringify(loginResponse));
-      this.setLastValidationTime(Date.now());
-      this.notifyAuthStatusChange(true);
+      const result = await response.json();
+      const isSuccess = Boolean(result?.success);
+      // Registration should not authenticate the user or store tokens
+      localStorage.removeItem("token");
+      this.notifyAuthStatusChange(false);
       console.log("Registro realizado com sucesso.");
-      return loginResponse;
+      return isSuccess;
     } catch (error) {
       console.error("Erro no registro", error);
       throw error;

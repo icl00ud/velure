@@ -17,12 +17,12 @@ export default defineConfig(({ mode }) => ({
   },
   test: {
     globals: true,
-    environment: "jsdom",
+    environment: "happy-dom",
     setupFiles: ["./src/test/setup.ts"],
     css: true,
     coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html"],
+      provider: "istanbul",
+      reporter: ["text", "json", "html", "lcov"],
       exclude: [
         "node_modules/",
         "src/test/",
