@@ -14,9 +14,19 @@ type Publisher interface {
 	Close() error
 }
 
+type amqpConnection interface {
+	Channel() (*amqp091.Channel, error)
+	Close() error
+}
+
+type amqpChannel interface {
+	Publish(exchange, key string, mandatory, immediate bool, msg amqp091.Publishing) error
+	Close() error
+}
+
 type rabbitPublisher struct {
-	conn     *amqp091.Connection
-	channel  *amqp091.Channel
+	conn     amqpConnection
+	channel  amqpChannel
 	exchange string
 	logger   *zap.Logger
 }
