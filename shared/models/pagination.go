@@ -12,6 +12,7 @@ type PaginatedResponse[T any] struct {
 
 // NewPaginatedResponse cria uma nova resposta paginada
 func NewPaginatedResponse[T any](data []T, totalCount int64, page, pageSize int) *PaginatedResponse[T] {
+	// totalPages arredonda para cima quando há itens restantes
 	totalPages := int(totalCount) / pageSize
 	if int(totalCount)%pageSize > 0 {
 		totalPages++
