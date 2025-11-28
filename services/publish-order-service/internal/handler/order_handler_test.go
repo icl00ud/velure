@@ -183,6 +183,25 @@ func TestCreateOrder_ServiceError(t *testing.T) {
 	}
 }
 
+func TestCreateOrder_PublishErrorStillReturnsCreated(t *testing.T) {
+	repo := &fakeRepo{}
+	pub := &fakePublisher{err: errors.New("publish failed")}
+	h := newTestHandler(repo, pub, 5)
+
+	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"items":[{"product_id":"p1","quantity":1,"price":2}]}`))
+	req = req.WithContext(withUser(req.Context()))
+	w := httptest.NewRecorder()
+
+	h.CreateOrder(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("expected status 201 even when publish fails, got %d", w.Code)
+	}
+	if len(pub.events) != 1 {
+		t.Fatalf("expected publish to be attempted once, got %d", len(pub.events))
+	}
+}
+
 func TestUpdateStatus_PublishesEvent(t *testing.T) {
 	now := time.Now()
 	repo := &fakeRepo{
@@ -213,6 +232,39 @@ func TestUpdateStatus_PublishesEvent(t *testing.T) {
 	}
 }
 
+func TestUpdateStatus_InvalidPayload(t *testing.T) {
+	repo := &fakeRepo{}
+	pub := &fakePublisher{}
+	h := newTestHandler(repo, pub, 0)
+
+	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`not-json`))
+	w := httptest.NewRecorder()
+
+	h.UpdateStatus(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid payload, got %d", w.Code)
+	}
+}
+
+func TestUpdateStatus_FindError(t *testing.T) {
+	repo := &fakeRepo{findErr: errors.New("not found")}
+	pub := &fakePublisher{}
+	h := newTestHandler(repo, pub, 0)
+
+	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`{"order_id":"order-1","status":"PROCESSING"}`))
+	w := httptest.NewRecorder()
+
+	h.UpdateStatus(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500 when find fails, got %d", w.Code)
+	}
+	if len(pub.events) != 0 {
+		t.Fatalf("expected no publish on error, got %d", len(pub.events))
+	}
+}
+
 func TestGetUserOrderByID_ValidatesInput(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
@@ -229,6 +281,22 @@ func TestGetUserOrderByID_ValidatesInput(t *testing.T) {
 	}
 }
 
+func TestGetUserOrderByID_NotFound(t *testing.T) {
+	repo := &fakeRepo{findByUserErr: errors.New("missing")}
+	pub := &fakePublisher{}
+	h := newTestHandler(repo, pub, 0)
+
+	req := httptest.NewRequest(http.MethodGet, "/user/order?id=order-123", nil)
+	req = req.WithContext(withUser(req.Context()))
+	w := httptest.NewRecorder()
+
+	h.GetUserOrderByID(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 when repo returns error, got %d", w.Code)
+	}
+}
+
 func TestGetUserOrders_Unauthorized(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
@@ -241,6 +309,22 @@ func TestGetUserOrders_Unauthorized(t *testing.T) {
 
 	if w.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401 when user is missing, got %d", w.Code)
+	}
+}
+
+func TestGetUserOrders_RepoError(t *testing.T) {
+	repo := &fakeRepo{getPageUserErr: errors.New("db issue")}
+	pub := &fakePublisher{}
+	h := newTestHandler(repo, pub, 0)
+
+	req := httptest.NewRequest(http.MethodGet, "/user/orders", nil)
+	req = req.WithContext(withUser(req.Context()))
+	w := httptest.NewRecorder()
+
+	h.GetUserOrders(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500 on repo error, got %d", w.Code)
 	}
 }
 
@@ -271,5 +355,20 @@ func TestGetOrdersByPage_Success(t *testing.T) {
 	}
 	if len(resp.Orders) != 2 {
 		t.Fatalf("expected 2 orders, got %d", len(resp.Orders))
+	}
+}
+
+func TestGetOrdersByPage_Error(t *testing.T) {
+	repo := &fakeRepo{getPageErr: errors.New("db down")}
+	pub := &fakePublisher{}
+	h := newTestHandler(repo, pub, 0)
+
+	req := httptest.NewRequest(http.MethodGet, "/orders?page=1&pageSize=10", nil)
+	w := httptest.NewRecorder()
+
+	h.GetOrdersByPage(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500 on repo error, got %d", w.Code)
 	}
 }
