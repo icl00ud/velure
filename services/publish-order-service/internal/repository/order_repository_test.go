@@ -4,6 +4,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -40,6 +41,38 @@ func TestPostgresOrderRepository_Save(t *testing.T) {
 
 	if err := repo.Save(context.Background(), order); err != nil {
 		t.Errorf("Save retornou erro: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations não atendidas: %v", err)
+	}
+}
+
+func TestPostgresOrderRepository_SaveExecError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("erro sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresOrderRepository{db: db}
+
+	now := time.Now()
+	order := model.Order{
+		ID:        "o-err",
+		UserID:    "user123",
+		Items:     []model.CartItem{{ProductID: "p1", Quantity: 1, Price: 1}},
+		Total:     1,
+		Status:    model.OrderCreated,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO TBLOrders")).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnError(errors.New("db down"))
+
+	if err := repo.Save(context.Background(), order); err == nil {
+		t.Fatal("esperava erro ao executar Save, obteve nil")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("expectations não atendidas: %v", err)
@@ -234,6 +267,92 @@ func TestPostgresOrderRepository_GetOrdersByPage(t *testing.T) {
 	}
 }
 
+func TestPostgresOrderRepository_GetOrdersByPage_QueryError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("erro sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresOrderRepository{db: db}
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, items, total, status, created_at, updated_at")).
+		WithArgs(10, 0).
+		WillReturnError(errors.New("query fail"))
+
+	_, err = repo.GetOrdersByPage(context.Background(), 1, 10)
+	if err == nil {
+		t.Fatal("esperava erro de query, obteve nil")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations não atendidas: %v", err)
+	}
+}
+
+func TestPostgresOrderRepository_GetOrdersByPage_CountError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("erro sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresOrderRepository{db: db}
+
+	rows := sqlmock.NewRows([]string{
+		"id", "user_id", "items", "total", "status", "created_at", "updated_at",
+	}).AddRow("o1", "user", `[]`, 1.0, model.OrderCreated, time.Now(), time.Now())
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, items, total, status, created_at, updated_at")).
+		WithArgs(5, 0).
+		WillReturnRows(rows)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM TBLOrders")).
+		WillReturnError(errors.New("count fail"))
+
+	if _, err := repo.GetOrdersByPage(context.Background(), 1, 5); err == nil {
+		t.Fatal("esperava erro ao buscar count, obteve nil")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations não atendidas: %v", err)
+	}
+}
+
+func TestPostgresOrderRepository_GetOrdersByPage_ScanErrorContinues(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("erro sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresOrderRepository{db: db}
+
+	// Row with too few columns to trigger scan error
+	rows := sqlmock.NewRows([]string{
+		"id", "user_id", "items", "total", "status",
+	}).AddRow("o1", "user", `not-json`, 1.0, model.OrderCreated)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, items, total, status, created_at, updated_at")).
+		WithArgs(10, 0).
+		WillReturnRows(rows)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM TBLOrders")).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+	result, err := repo.GetOrdersByPage(context.Background(), 1, 10)
+	if err != nil {
+		t.Fatalf("não esperava erro apesar do scan: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Fatalf("TotalCount = %d, esperava 1", result.TotalCount)
+	}
+	if len(result.Orders) != 0 {
+		t.Fatalf("esperava 0 orders após erro de scan, obteve %d", len(result.Orders))
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations não atendidas: %v", err)
+	}
+}
+
 func TestPostgresOrderRepository_GetOrdersByUserID(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -272,6 +391,56 @@ func TestPostgresOrderRepository_GetOrdersByUserID(t *testing.T) {
 	}
 	if len(result.Orders) != 1 {
 		t.Errorf("Orders length = %d, want 1", len(result.Orders))
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations não atendidas: %v", err)
+	}
+}
+
+func TestPostgresOrderRepository_GetOrdersByUserID_QueryError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("erro sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresOrderRepository{db: db}
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, items, total, status, created_at, updated_at")).
+		WithArgs("u1", 2, 0).
+		WillReturnError(errors.New("query fail"))
+
+	if _, err := repo.GetOrdersByUserID(context.Background(), "u1", 1, 2); err == nil {
+		t.Fatal("esperava erro de query, obteve nil")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("expectations não atendidas: %v", err)
+	}
+}
+
+func TestPostgresOrderRepository_GetOrdersByUserID_CountError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("erro sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresOrderRepository{db: db}
+
+	rows := sqlmock.NewRows([]string{
+		"id", "user_id", "items", "total", "status", "created_at", "updated_at",
+	}).AddRow("o1", "user", `[]`, 1.0, model.OrderCreated, time.Now(), time.Now())
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT id, user_id, items, total, status, created_at, updated_at")).
+		WithArgs("user", 3, 0).
+		WillReturnRows(rows)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM TBLOrders WHERE user_id = $1")).
+		WithArgs("user").
+		WillReturnError(errors.New("count fail"))
+
+	if _, err := repo.GetOrdersByUserID(context.Background(), "user", 1, 3); err == nil {
+		t.Fatal("esperava erro de count, obteve nil")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("expectations não atendidas: %v", err)
