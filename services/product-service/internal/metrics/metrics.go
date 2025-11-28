@@ -135,18 +135,18 @@ var (
 	// HTTP metrics
 	HTTPRequests = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "http_requests_total",
+			Name: "product_http_requests_total",
 			Help: "Total number of HTTP requests",
 		},
-		[]string{"service", "method", "path", "status"},
+		[]string{"method", "path", "status"},
 	)
 
 	HTTPRequestDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "http_request_duration_seconds",
+			Name:    "product_http_request_duration_seconds",
 			Help:    "Duration of HTTP requests in seconds",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"service", "method", "path"},
+		[]string{"method", "path"},
 	)
 )
