@@ -10,10 +10,15 @@ import (
 	"go.uber.org/zap"
 )
 
-func RunMigrations(db *sql.DB, migrationsPath string) error {
+type migrator interface {
+	Up() error
+	Version() (uint, bool, error)
+}
+
+var newMigrator = func(db *sql.DB, migrationsPath string) (migrator, error) {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
-		return fmt.Errorf("create migration driver: %w", err)
+		return nil, fmt.Errorf("create migration driver: %w", err)
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
@@ -22,7 +27,15 @@ func RunMigrations(db *sql.DB, migrationsPath string) error {
 		driver,
 	)
 	if err != nil {
-		return fmt.Errorf("create migration instance: %w", err)
+		return nil, fmt.Errorf("create migration instance: %w", err)
+	}
+	return m, nil
+}
+
+func RunMigrations(db *sql.DB, migrationsPath string) error {
+	m, err := newMigrator(db, migrationsPath)
+	if err != nil {
+		return err
 	}
 
 	version, dirty, _ := m.Version()
