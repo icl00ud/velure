@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"github.com/rabbitmq/amqp091-go"
@@ -146,5 +147,54 @@ func TestWorker_NackOnError(t *testing.T) {
 	}
 	if ack.tag != 9 {
 		t.Fatalf("expected nack tag 9, got %d", ack.tag)
+	}
+}
+
+func TestWorker_ReturnsWhenChannelClosed(t *testing.T) {
+	rc := &rabbitConsumer{
+		handler: func(ctx context.Context, evt model.Event) error {
+			t.Fatal("handler should not be called")
+			return nil
+		},
+		logger: zap.NewNop(),
+	}
+
+	msgs := make(chan amqp091.Delivery)
+	close(msgs)
+
+	done := make(chan struct{})
+	go func() {
+		rc.worker(context.Background(), 3, msgs)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("worker did not return after channel closed")
+	}
+}
+
+func TestWorker_StopsOnContextCancel(t *testing.T) {
+	rc := &rabbitConsumer{
+		handler: func(ctx context.Context, evt model.Event) error { return nil },
+		logger:  zap.NewNop(),
+	}
+
+	msgs := make(chan amqp091.Delivery)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	done := make(chan struct{})
+	go func() {
+		rc.worker(ctx, 4, msgs)
+		close(done)
+	}()
+
+	cancel()
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("worker did not stop after context cancel")
 	}
 }
