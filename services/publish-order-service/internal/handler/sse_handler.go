@@ -5,20 +5,24 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"context"
 
 	"github.com/icl00ud/publish-order-service/internal/metrics"
 	"github.com/icl00ud/publish-order-service/internal/middleware"
 	"github.com/icl00ud/publish-order-service/internal/model"
-	"github.com/icl00ud/publish-order-service/internal/service"
 	"go.uber.org/zap"
 )
 
+type OrderService interface {
+	GetOrderByID(ctx context.Context, userID, orderID string) (model.Order, error)
+}
+
 type SSEHandler struct {
-	svc      *service.OrderService
+	svc      OrderService
 	registry *SSERegistry
 }
 
-func NewSSEHandler(svc *service.OrderService) *SSEHandler {
+func NewSSEHandler(svc OrderService) *SSEHandler {
 	return &SSEHandler{
 		svc:      svc,
 		registry: NewSSERegistry(),
