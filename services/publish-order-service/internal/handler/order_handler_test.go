@@ -251,6 +251,38 @@ func TestCreateOrder_PublishFailureLogsButReturnsCreated(t *testing.T) {
 	}
 }
 
+func TestCreateOrder_NoItemsReturnsBadRequest(t *testing.T) {
+	repo := &fakeRepo{}
+	pub := &fakePublisher{}
+	h := newTestHandler(repo, pub, 0)
+
+	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"items":[]}`))
+	req = req.WithContext(withUser(req.Context()))
+	w := httptest.NewRecorder()
+
+	h.CreateOrder(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for no items, got %d", w.Code)
+	}
+}
+
+func TestCreateOrder_InvalidItem(t *testing.T) {
+	repo := &fakeRepo{}
+	pub := &fakePublisher{}
+	h := newTestHandler(repo, pub, 0)
+
+	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"items":[{"product_id":"","quantity":0,"price":1}]}`))
+	req = req.WithContext(withUser(req.Context()))
+	w := httptest.NewRecorder()
+
+	h.CreateOrder(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid item, got %d", w.Code)
+	}
+}
+
 func TestUpdateStatus_PublishError(t *testing.T) {
 	now := time.Now()
 	repo := &fakeRepo{
