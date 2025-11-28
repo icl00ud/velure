@@ -1,19 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: velure-auth
-  namespace: {{ .Values.namespace | quote }}
+  name: {{ include "velure-auth.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
-    app: velure-auth
+    {{- include "velure-auth.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
-      app: velure-auth
+      {{- include "velure-auth.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: velure-auth
+        {{- include "velure-auth.labels" . | nindent 8 }}
     spec:
       securityContext:
         fsGroup: 65532
@@ -26,6 +28,8 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
+            - name: ENVIRONMENT
+              value: "production"
             - name: AUTH_SERVICE_APP_PORT
               value: "{{ .Values.service.port }}"
             - name: POSTGRES_URL
@@ -63,18 +67,33 @@ spec:
                 secretKeyRef:
                   name: velure-auth-session
                   key: expiresIn
+            # Redis configuration
+            - name: REDIS_HOST
+              value: "{{ .Values.redis.host }}"
+            - name: REDIS_PORT
+              value: "{{ .Values.redis.port }}"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.secretName }}
+                  key: redis-password
+                  optional: true
           livenessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             limits:
               cpu: {{ .Values.resources.limits.cpu }}
@@ -88,3 +107,9 @@ spec:
             runAsGroup: 65532
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

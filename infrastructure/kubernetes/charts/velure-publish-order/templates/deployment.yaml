@@ -69,3 +69,9 @@ spec:
             runAsGroup: 65532
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

@@ -141,8 +141,15 @@ module "route53" {
   domain_name         = var.domain_name
   enable_health_check = var.enable_route53_health_check
   health_check_path   = var.route53_health_check_path
+  create_dns_record   = false # Set to true AFTER ALB is created by Helm deployment
   tags                = var.tags
 }
+
+# IMPORTANTE: Route53 DNS Record Configuration
+# 1. Primeiro deployment: create_dns_record = false (apenas cria Hosted Zone)
+# 2. Após deploy do Helm (ALB criado): create_dns_record = true
+# 3. Copie os nameservers da Hosted Zone e configure no Registro.br
+#    Outputs: module.route53.name_servers
 
 # Secrets Manager Module for centralized secrets
 module "secrets_manager" {
@@ -176,14 +183,76 @@ module "secrets_manager" {
   # MongoDB Atlas
   mongodb_connection_string = var.mongodb_connection_string
 
-  # Redis (optional)
-  redis_host     = var.redis_host
-  redis_port     = var.redis_port
-  redis_password = var.redis_password
+  # Redis variables removed - Redis runs in-cluster via Helm Chart
+  # If migrating to ElastiCache, uncomment variables in modules/secrets-manager/variables.tf
 
   depends_on = [
     module.rds_auth,
     module.rds_orders,
     module.amazonmq
+  ]
+}
+
+# Null Resource to cleanup Kubernetes-created AWS resources before destroy
+# This prevents "DependencyViolation" errors when destroying VPC/subnets
+resource "null_resource" "cleanup_k8s_resources" {
+  # Trigger recreates if cluster name changes
+  triggers = {
+    cluster_name = module.eks.cluster_name
+    region       = var.aws_region
+  }
+
+  # Destroy-time provisioner: runs BEFORE Terraform destroys resources
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      set -e
+
+      echo "=========================================="
+      echo "🧹 Cleaning up Kubernetes-created AWS resources..."
+      echo "=========================================="
+
+      # Update kubeconfig to ensure we can connect
+      aws eks update-kubeconfig \
+        --region ${self.triggers.region} \
+        --name ${self.triggers.cluster_name} \
+        --kubeconfig /tmp/cleanup-kubeconfig || true
+
+      export KUBECONFIG=/tmp/cleanup-kubeconfig
+
+      # Delete Ingresses (creates ALBs via AWS Load Balancer Controller)
+      echo "Deleting Ingresses (ALBs)..."
+      kubectl delete ingress --all -A --ignore-not-found=true --timeout=300s || true
+
+      # Delete LoadBalancer Services (creates NLBs/CLBs)
+      echo "Deleting LoadBalancer Services..."
+      kubectl delete svc --all -A \
+        --field-selector spec.type=LoadBalancer \
+        --ignore-not-found=true \
+        --timeout=300s || true
+
+      # Delete PVCs (creates EBS volumes)
+      echo "Deleting PersistentVolumeClaims (EBS volumes)..."
+      kubectl delete pvc --all -A --ignore-not-found=true --timeout=300s || true
+
+      # Wait for AWS to cleanup resources
+      echo "Waiting 120 seconds for AWS to cleanup ENIs and dependencies..."
+      sleep 120
+
+      echo "✅ Kubernetes resource cleanup completed!"
+
+      # Cleanup temp kubeconfig
+      rm -f /tmp/cleanup-kubeconfig
+    EOT
+
+    # Environment variables for AWS CLI
+    environment = {
+      AWS_DEFAULT_REGION = self.triggers.region
+    }
+  }
+
+  # Ensure this runs after EKS is created but before it's destroyed
+  depends_on = [
+    module.eks
   ]
 }

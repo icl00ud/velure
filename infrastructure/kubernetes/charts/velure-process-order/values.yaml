@@ -21,7 +21,7 @@ autoscaling:
   targetMemoryUtilizationPercentage: 65
 order:
   exchange: orders
-  queue: order.queue
+  queue: process-order-queue
 livenessProbe:
   httpGet:
     path: /health

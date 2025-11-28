@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: rabbitmq-bootstrap
-  namespace: {{ .Values.namespace | quote }}
+  namespace: {{ .Release.Namespace }}
 data:
   bootstrap.sh: |
     #!/usr/bin/env bash

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: rabbitmq
-  namespace: {{ .Values.namespace | quote }}
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:

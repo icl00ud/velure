@@ -95,22 +95,21 @@ variable "mongodb_connection_string" {
   sensitive   = true
 }
 
-# Redis variables
-variable "redis_host" {
-  description = "Redis host"
-  type        = string
-  default     = ""
-}
-
-variable "redis_port" {
-  description = "Redis port"
-  type        = number
-  default     = 6379
-}
-
-variable "redis_password" {
-  description = "Redis password"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
+# Redis variables REMOVED - Redis runs in-cluster
+# Only needed if using AWS ElastiCache (managed Redis)
+# variable "redis_host" {
+#   description = "Redis host"
+#   type        = string
+#   default     = ""
+# }
+# variable "redis_port" {
+#   description = "Redis port"
+#   type        = number
+#   default     = 6379
+# }
+# variable "redis_password" {
+#   description = "Redis password"
+#   type        = string
+#   sensitive   = true
+#   default     = ""
+# }

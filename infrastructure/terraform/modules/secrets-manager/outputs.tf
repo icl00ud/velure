@@ -24,10 +24,11 @@ output "mongodb_secret_arn" {
   value       = aws_secretsmanager_secret.mongodb.arn
 }
 
-output "redis_secret_arn" {
-  description = "ARN of the Redis secret"
-  value       = aws_secretsmanager_secret.redis.arn
-}
+# Redis secret output REMOVED - Redis runs in-cluster
+# output "redis_secret_arn" {
+#   description = "ARN of the Redis secret"
+#   value       = aws_secretsmanager_secret.redis.arn
+# }
 
 # Secret Names (for External Secrets Operator)
 output "rds_auth_secret_name" {
@@ -55,7 +56,8 @@ output "mongodb_secret_name" {
   value       = aws_secretsmanager_secret.mongodb.name
 }
 
-output "redis_secret_name" {
-  description = "Name of the Redis secret"
-  value       = aws_secretsmanager_secret.redis.name
-}
+# Redis secret output REMOVED - Redis runs in-cluster
+# output "redis_secret_name" {
+#   description = "Name of the Redis secret"
+#   value       = aws_secretsmanager_secret.redis.name
+# }
