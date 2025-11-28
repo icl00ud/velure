@@ -1,6 +1,7 @@
 package publisher
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/icl00ud/publish-order-service/internal/model"
@@ -29,5 +30,22 @@ func TestClose_IsIdempotentWithoutConnections(t *testing.T) {
 	}
 	if err := pub.Close(); err != nil {
 		t.Fatalf("second close returned error: %v", err)
+	}
+}
+
+func TestPublish_ReconnectsWhenChannelNil(t *testing.T) {
+	// Build publisher with nil channel to force reconnect path
+	pub := &rabbitMQPublisher{
+		logger:  zap.NewNop(),
+		amqpURL: "amqp://invalid", // will make connect() fail
+		mu:      sync.Mutex{},
+	}
+
+	pub.ch = nil
+	pub.conn = nil
+
+	err := pub.Publish(model.Event{Type: "order.test", Payload: []byte(`{}`)})
+	if err == nil {
+		t.Fatal("expected error when reconnect fails")
 	}
 }
