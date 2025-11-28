@@ -16,13 +16,26 @@ type Publisher interface {
 }
 
 type rabbitMQPublisher struct {
-	amqpURL  string
-	conn     *amqp091.Connection
-	ch       *amqp091.Channel
-	exchange string
-	logger   *zap.Logger
-	closed   bool
-	mu       sync.Mutex
+	amqpURL   string
+	conn      amqpPublisherConn
+	ch        amqpPublisherChannel
+	exchange  string
+	logger    *zap.Logger
+	closed    bool
+	mu        sync.Mutex
+	dialFn    func(string) (amqpPublisherConn, error)
+	connectFn func() error
+}
+
+type amqpPublisherConn interface {
+	Channel() (*amqp091.Channel, error)
+	Close() error
+}
+
+type amqpPublisherChannel interface {
+	Publish(exchange, key string, mandatory, immediate bool, msg amqp091.Publishing) error
+	ExchangeDeclare(name, kind string, durable, autoDelete, internal, noWait bool, args amqp091.Table) error
+	Close() error
 }
 
 func NewRabbitMQPublisher(amqpURL string, exchange string, logger *zap.Logger) (Publisher, error) {
@@ -30,9 +43,13 @@ func NewRabbitMQPublisher(amqpURL string, exchange string, logger *zap.Logger) (
 		amqpURL:  amqpURL,
 		exchange: exchange,
 		logger:   logger,
+		dialFn: func(url string) (amqpPublisherConn, error) {
+			return amqp091.Dial(url)
+		},
 	}
+	p.connectFn = p.connect
 
-	if err := p.connect(); err != nil {
+	if err := p.connectFn(); err != nil {
 		return nil, err
 	}
 
@@ -48,7 +65,7 @@ func (r *rabbitMQPublisher) connect() error {
 		_ = r.conn.Close()
 	}
 
-	conn, err := amqp091.Dial(r.amqpURL)
+	conn, err := r.dialFn(r.amqpURL)
 	if err != nil {
 		return fmt.Errorf("dial rabbitmq: %w", err)
 	}
@@ -114,7 +131,7 @@ func (r *rabbitMQPublisher) Publish(evt model.Event) error {
 	err = publishFunc()
 	if err != nil {
 		r.logger.Warn("publish failed, attempting reconnect", zap.Error(err))
-		if recErr := r.connect(); recErr != nil {
+		if recErr := r.connectFn(); recErr != nil {
 			r.logger.Error("reconnect failed", zap.Error(recErr))
 			return err
 		}
