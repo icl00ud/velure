@@ -232,6 +232,25 @@ func TestUpdateStatus_PublishesEvent(t *testing.T) {
 	}
 }
 
+func TestCreateOrder_PublishFailureLogsButReturnsCreated(t *testing.T) {
+	repo := &fakeRepo{}
+	pub := &fakePublisher{err: errors.New("publish failed")}
+	h := newTestHandler(repo, pub, 10)
+
+	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"items":[{"product_id":"p1","quantity":1,"price":2}]}`))
+	req = req.WithContext(withUser(req.Context()))
+	w := httptest.NewRecorder()
+
+	h.CreateOrder(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", w.Code)
+	}
+	if len(pub.events) != 1 {
+		t.Fatalf("expected publish attempted once, got %d", len(pub.events))
+	}
+}
+
 func TestUpdateStatus_PublishError(t *testing.T) {
 	now := time.Now()
 	repo := &fakeRepo{
