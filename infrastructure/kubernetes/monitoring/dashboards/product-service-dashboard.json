@@ -75,7 +75,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "min(up{job=\"velure-auth\"})",
+          "expr": "min(up{job=\"velure-product\"})",
           "refId": "A"
         }
       ],
@@ -133,7 +133,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count(up{job=\"velure-auth\"} == 1)",
+          "expr": "count(up{job=\"velure-product\"} == 1)",
           "refId": "A"
         }
       ],
@@ -191,11 +191,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max(auth_total_users)",
+          "expr": "max(product_catalog_total)",
           "refId": "A"
         }
       ],
-      "title": "Total Users",
+      "title": "Total Products",
       "type": "stat"
     },
     {
@@ -213,18 +213,26 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 80
               }
             ]
           },
-          "unit": "short"
+          "unit": "percent"
         }
       },
       "gridPos": {
         "h": 4,
         "w": 4,
-        "x": 10,
+        "x": 8,
         "y": 0
       },
       "id": 3,
@@ -249,11 +257,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(auth_active_sessions)",
+          "expr": "sum(rate(product_cache_hits_total[5m])) / (sum(rate(product_cache_hits_total[5m])) + sum(rate(product_cache_misses_total[5m]))) * 100",
           "refId": "A"
         }
       ],
-      "title": "Active Sessions",
+      "title": "Cache Hit Rate",
       "type": "stat"
     },
     {
@@ -281,8 +289,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 5,
-        "x": 14,
+        "w": 6,
+        "x": 12,
         "y": 0
       },
       "id": 4,
@@ -307,7 +315,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(auth_http_requests_total[5m]))",
+          "expr": "sum(rate(http_requests_total{service=\"product-service\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -347,8 +355,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 5,
-        "x": 19,
+        "w": 6,
+        "x": 18,
         "y": 0
       },
       "id": 5,
@@ -373,7 +381,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(100 * (sum(rate(auth_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(auth_http_requests_total[5m])))) or vector(0)",
+          "expr": "(100 * (sum(rate(http_requests_total{service=\"product-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"product-service\"}[5m])))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -462,8 +470,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (method, path, status) (rate(auth_http_requests_total[5m]))",
-          "legendFormat": "{{method}} {{path}} ({{status}})",
+          "expr": "sum by (method, path, status) (rate(http_requests_total{service=\"product-service\"}[5m]))",
+          "legendFormat": "{{method}} {{path}} {{status}}",
           "refId": "A"
         }
       ],
@@ -560,7 +568,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum(rate(auth_http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service=\"product-service\"}[5m])) by (le))",
           "legendFormat": "p99",
           "refId": "A"
         },
@@ -569,7 +577,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(auth_http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"product-service\"}[5m])) by (le))",
           "legendFormat": "p95",
           "refId": "B"
         },
@@ -578,7 +586,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(auth_http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{service=\"product-service\"}[5m])) by (le))",
           "legendFormat": "p50",
           "refId": "C"
         }
@@ -620,13 +628,15 @@
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "normal"
+              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
             }
           },
           "mappings": [],
+          "max": 100,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -636,7 +646,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "percent"
         }
       },
       "gridPos": {
@@ -668,8 +678,98 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(auth_login_attempts_total{status=\"success\"}[5m]))",
-          "legendFormat": "Success",
+          "expr": "(100 * sum(rate(product_cache_hits_total[5m])) / (sum(rate(product_cache_hits_total[5m])) + sum(rate(product_cache_misses_total[5m])))) or vector(0)",
+          "legendFormat": "Cache Hit Rate",
+          "refId": "A"
+        }
+      ],
+      "title": "Redis Cache Hit Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [
+            "last",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(product_cache_hits_total[5m]))",
+          "legendFormat": "Cache Hits",
           "refId": "A"
         },
         {
@@ -677,12 +777,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(auth_login_attempts_total{status=\"failure\"}[5m]))",
-          "legendFormat": "Failure",
+          "expr": "sum(rate(product_cache_misses_total[5m]))",
+          "legendFormat": "Cache Misses",
           "refId": "B"
         }
       ],
-      "title": "Login Attempts",
+      "title": "Cache Operations",
       "type": "timeseries"
     },
     {
@@ -767,12 +867,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "pg_stat_database_numbackends{datname=\"auth_db\"} or vector(0)",
-          "legendFormat": "Active Connections",
+          "expr": "sum by (operation) (rate(product_mongodb_queries_total[5m]))",
+          "legendFormat": "{{operation}}",
           "refId": "A"
         }
       ],
-      "title": "PostgreSQL Connections",
+      "title": "MongoDB Operations",
       "type": "timeseries"
     },
     {
@@ -857,177 +957,12 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(container_memory_usage_bytes{namespace=\"authentication\", container=\"velure-auth\", container!=\"\", container!=\"POD\"})",
+          "expr": "sum(container_memory_usage_bytes{namespace=\"product\", container=\"velure-product\", container!=\"\", container!=\"POD\"})",
           "legendFormat": "Total Memory",
           "refId": "A"
         }
       ],
       "title": "Memory Usage",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 80
-              },
-              {
-                "color": "green",
-                "value": 95
-              }
-            ]
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 12
-      },
-      "id": 12,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "10.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "(100 * sum(rate(auth_cache_hits_total[5m])) / (sum(rate(auth_cache_hits_total[5m])) + sum(rate(auth_cache_misses_total[5m])))) or vector(0)",
-          "refId": "A"
-        }
-      ],
-      "title": "Cache Hit Rate (%)",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "ops"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 28
-      },
-      "id": 13,
-      "options": {
-        "legend": {
-          "calcs": [
-            "last",
-            "max",
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(rate(auth_cache_hits_total[5m]))",
-          "legendFormat": "Cache Hits/s",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(rate(auth_cache_misses_total[5m]))",
-          "legendFormat": "Cache Misses/s",
-          "refId": "B"
-        }
-      ],
-      "title": "Cache Hits vs Misses",
       "type": "timeseries"
     }
   ],
@@ -1036,7 +971,7 @@
   "style": "dark",
   "tags": [
     "velure",
-    "auth",
+    "product",
     "service"
   ],
   "templating": {
@@ -1048,8 +983,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Auth Service",
-  "uid": "velure-auth-service",
+  "title": "Product Service",
+  "uid": "velure-product-service",
   "version": 1,
   "weekStart": ""
 }

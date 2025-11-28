@@ -64,7 +64,7 @@
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "expr": "up{job=\"velure-auth\"}",
+          "expr": "min(up{job=\"velure-auth\"})",
           "refId": "A"
         }
       ],
@@ -116,7 +116,7 @@
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "expr": "up{job=\"velure-product\"}",
+          "expr": "min(up{job=\"velure-product\"})",
           "refId": "A"
         }
       ],
@@ -168,7 +168,7 @@
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "expr": "up{job=\"velure-publish-order\"}",
+          "expr": "min(up{job=\"velure-publish-order\"})",
           "refId": "A"
         }
       ],
@@ -220,7 +220,7 @@
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "expr": "up{job=\"velure-process-order\"}",
+          "expr": "min(up{job=\"velure-process-order\"})",
           "refId": "A"
         }
       ],
@@ -295,18 +295,18 @@
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "expr": "sum(rate(auth_http_requests_total[5m])) by (status)",
-          "legendFormat": "Auth - {{status}}",
+          "expr": "sum(rate(auth_http_requests_total[5m]))",
+          "legendFormat": "Auth",
           "refId": "A"
         },
         {
-          "expr": "sum(rate(product_http_requests_total[5m])) by (status)",
-          "legendFormat": "Product - {{status}}",
+          "expr": "sum(rate(http_requests_total{service=\"product-service\"}[5m]))",
+          "legendFormat": "Product",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(publish_order_http_requests_total[5m])) by (status)",
-          "legendFormat": "Publish Order - {{status}}",
+          "expr": "sum(rate(http_requests_total{service=\"publish-order-service\"}[5m]))",
+          "legendFormat": "Publish Order",
           "refId": "C"
         }
       ],
@@ -383,12 +383,12 @@
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(product_http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"product-service\"}[5m])) by (le))",
           "legendFormat": "Product p95",
           "refId": "B"
         },
         {
-          "expr": "histogram_quantile(0.95, sum(rate(publish_order_http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"publish-order-service\"}[5m])) by (le))",
           "legendFormat": "Publish Order p95",
           "refId": "C"
         }
@@ -466,18 +466,18 @@
           "refId": "A"
         },
         {
-          "expr": "sum(rate(product_errors_total[5m])) by (type)",
-          "legendFormat": "Product - {{type}}",
+          "expr": "sum(rate(product_errors_total[5m]))",
+          "legendFormat": "Product errors/s",
           "refId": "B"
         },
         {
-          "expr": "sum(rate(publish_order_errors_total[5m])) by (type)",
-          "legendFormat": "Publish Order - {{type}}",
+          "expr": "sum(rate(publish_order_errors_total[5m]))",
+          "legendFormat": "Publish Order errors/s",
           "refId": "C"
         },
         {
-          "expr": "sum(rate(process_order_errors_total[5m])) by (type)",
-          "legendFormat": "Process Order - {{type}}",
+          "expr": "sum(rate(process_order_errors_total[5m]))",
+          "legendFormat": "Process Order errors/s",
           "refId": "D"
         }
       ],
@@ -532,7 +532,7 @@
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "expr": "sum(rate(product_cache_hits_total[5m])) / (sum(rate(product_cache_hits_total[5m])) + sum(rate(product_cache_misses_total[5m]))) * 100",
+          "expr": "(100 * sum(rate(product_cache_hits_total[5m])) / (sum(rate(product_cache_hits_total[5m])) + sum(rate(product_cache_misses_total[5m])))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -587,7 +587,7 @@
       "pluginVersion": "9.0.0",
       "targets": [
         {
-          "expr": "rate(auth_login_attempts_total{status=\"success\"}[5m]) / rate(auth_login_attempts_total[5m])",
+          "expr": "(100 * sum(rate(auth_login_attempts_total{status=\"success\"}[5m])) / sum(rate(auth_login_attempts_total[5m]))) or vector(0)",
           "refId": "A"
         }
       ],
