@@ -130,7 +130,6 @@ jobs:
     needs:
       - determine-changes
       - product-service
-      - deploy-auth-service
     if: github.event_name == 'push' && github.ref == 'refs/heads/master' && (needs.determine-changes.outputs.product-service == 'true' || needs.determine-changes.outputs.shared == 'true')
     uses: ./.github/workflows/deploy-service.yml
     with:
@@ -144,7 +143,6 @@ jobs:
     needs:
       - determine-changes
       - process-order-service
-      - deploy-product-service
     if: github.event_name == 'push' && github.ref == 'refs/heads/master' && (needs.determine-changes.outputs.process-order-service == 'true' || needs.determine-changes.outputs.shared == 'true')
     uses: ./.github/workflows/deploy-service.yml
     with:
@@ -158,7 +156,6 @@ jobs:
     needs:
       - determine-changes
       - publish-order-service
-      - deploy-process-order-service
     if: github.event_name == 'push' && github.ref == 'refs/heads/master' && (needs.determine-changes.outputs.publish-order-service == 'true' || needs.determine-changes.outputs.shared == 'true')
     uses: ./.github/workflows/deploy-service.yml
     with:
@@ -172,7 +169,6 @@ jobs:
     needs:
       - determine-changes
       - ui-service
-      - deploy-publish-order-service
     if: github.event_name == 'push' && github.ref == 'refs/heads/master' && needs.determine-changes.outputs.ui-service == 'true'
     uses: ./.github/workflows/deploy-service.yml
     with:
