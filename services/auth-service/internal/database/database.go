@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"velure-auth-service/internal/config"
@@ -29,23 +30,30 @@ func Connect(cfg config.DatabaseConfig) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Configurar connection pool para alta performance
+	// Configurar connection pool para evitar esgotamento de conexões RDS
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database instance: %w", err)
 	}
 
 	// SetMaxOpenConns: máximo de conexões abertas ao banco
-	sqlDB.SetMaxOpenConns(100)
+	// Cálculo: 3 pods × 25 conns = 75 conexões totais (bem abaixo do limite do RDS)
+	sqlDB.SetMaxOpenConns(25)
 
-	// SetMaxIdleConns: máximo de conexões idle no pool (aumentado para evitar connection churn)
-	sqlDB.SetMaxIdleConns(50)
+	// SetMaxIdleConns: máximo de conexões idle no pool
+	// Mantém conexões prontas para uso rápido sem desperdiçar recursos
+	sqlDB.SetMaxIdleConns(10)
 
 	// SetConnMaxLifetime: tempo máximo que uma conexão pode ser reusada
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	// Força reciclagem periódica de conexões para evitar conexões stale
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 	// SetConnMaxIdleTime: tempo máximo que uma conexão pode ficar idle
-	sqlDB.SetConnMaxIdleTime(10 * time.Minute)
+	// Fecha conexões ociosas mais rapidamente para liberar recursos
+	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
+
+	log.Printf("✅ Database connection pool configured: MaxOpen=%d, MaxIdle=%d, MaxLifetime=%s, MaxIdleTime=%s",
+		25, 10, 5*time.Minute, 2*time.Minute)
 
 	return db, nil
 }

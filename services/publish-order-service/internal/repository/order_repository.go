@@ -34,10 +34,12 @@ func NewOrderRepository(dsn string) (OrderRepository, error) {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(10)
+	// Configurar connection pool para evitar esgotamento de conexões RDS
+	// Cálculo: 2-3 pods × 15 conns = 30-45 conexões totais
+	db.SetMaxOpenConns(15)
+	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(5 * time.Minute)
-	db.SetConnMaxIdleTime(30 * time.Second)
+	db.SetConnMaxIdleTime(2 * time.Minute)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -47,8 +49,10 @@ func NewOrderRepository(dsn string) (OrderRepository, error) {
 	}
 
 	zap.L().Info("database connection pool configured",
-		zap.Int("max_open_conns", 25),
-		zap.Int("max_idle_conns", 10))
+		zap.Int("max_open_conns", 15),
+		zap.Int("max_idle_conns", 5),
+		zap.Duration("max_lifetime", 5*time.Minute),
+		zap.Duration("max_idle_time", 2*time.Minute))
 
 	return &PostgresOrderRepository{db: db}, nil
 }

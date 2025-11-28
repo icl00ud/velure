@@ -1,0 +1,15 @@
+# Environment files (actual configurations, not examples)
+.env.k8s
+.env.local
+
+# Test results
+results/
+*.json
+
+# k6 output files
+*.csv
+*.html
+
+# Temporary files
+*.tmp
+*.log
