@@ -156,3 +156,4 @@ func setupRouter(cfg *config.Config, authHandler *handlers.AuthHandler) *gin.Eng
 
 	return router
 }
+
