@@ -86,7 +86,7 @@ jobs:
           release="${{ steps.vars.outputs.chart }}"
           chart_dir="./infrastructure/kubernetes/charts/${{ steps.vars.outputs.chart }}"
           namespace="${{ steps.vars.outputs.namespace }}"
-          retries=3
+          retries=5
           attempt=1
 
           while true; do
