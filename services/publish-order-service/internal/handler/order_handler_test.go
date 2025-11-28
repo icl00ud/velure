@@ -232,6 +232,26 @@ func TestUpdateStatus_PublishesEvent(t *testing.T) {
 	}
 }
 
+func TestUpdateStatus_PublishError(t *testing.T) {
+	now := time.Now()
+	repo := &fakeRepo{
+		foundOrder: model.Order{ID: "order-2", UserID: "user-123", Status: model.StatusCreated, UpdatedAt: now},
+	}
+	pub := &fakePublisher{
+		err: errors.New("publish fail"),
+	}
+	h := newTestHandler(repo, pub, 0)
+
+	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`{"order_id":"order-2","status":"COMPLETED"}`))
+	w := httptest.NewRecorder()
+
+	h.UpdateStatus(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 even if publish fails, got %d", w.Code)
+	}
+}
+
 func TestUpdateStatus_InvalidPayload(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
@@ -278,6 +298,21 @@ func TestGetUserOrderByID_ValidatesInput(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for missing id, got %d", w.Code)
+	}
+}
+
+func TestGetUserOrderByID_Unauthorized(t *testing.T) {
+	repo := &fakeRepo{}
+	pub := &fakePublisher{}
+	h := newTestHandler(repo, pub, 0)
+
+	req := httptest.NewRequest(http.MethodGet, "/user/order?id=order-123", nil)
+	w := httptest.NewRecorder()
+
+	h.GetUserOrderByID(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 when user missing, got %d", w.Code)
 	}
 }
 
