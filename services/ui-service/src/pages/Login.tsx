@@ -52,10 +52,9 @@ const Login = () => {
         });
         toast({
           title: "Conta criada!",
-          description: "Bem-vindo ao Velure! Você já pode entrar.",
+          description: "Bem-vindo ao Velure!",
         });
-        setIsLogin(true);
-        setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+        navigate("/");
       }
     } catch (error) {
       toast({
