@@ -105,3 +105,111 @@ func TestUpdateProductQuantity_ServiceError(t *testing.T) {
 		t.Fatalf("expected 400, got %d", resp.StatusCode)
 	}
 }
+
+func TestGetProductsByName_MissingName(t *testing.T) {
+	app, handler := setupTestApp()
+	handler.service = &stubProductService{}
+	app.Get("/products/name/:name?", handler.GetProductsByName)
+
+	req := httptest.NewRequest("GET", "/products/name/", nil)
+	resp, _ := app.Test(req)
+	if resp.StatusCode != 400 {
+		t.Fatalf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestGetProductsByPageAndCategory_MissingParams(t *testing.T) {
+	app, handler := setupTestApp()
+	handler.service = &stubProductService{}
+	app.Get("/products/by-category", handler.GetProductsByPageAndCategory)
+
+	req := httptest.NewRequest("GET", "/products/by-category?page=1&pageSize=10", nil)
+	resp, _ := app.Test(req)
+	if resp.StatusCode != 400 {
+		t.Fatalf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestGetProductsByPageAndCategory_Error(t *testing.T) {
+	app, handler := setupTestApp()
+	handler.service = &stubProductService{err: errors.New("db down")}
+	app.Get("/products/by-category", handler.GetProductsByPageAndCategory)
+
+	req := httptest.NewRequest("GET", "/products/by-category?page=1&pageSize=10&category=Cats", nil)
+	resp, _ := app.Test(req)
+	if resp.StatusCode != 500 {
+		t.Fatalf("expected 500, got %d", resp.StatusCode)
+	}
+}
+
+func TestGetProductsCount_Error(t *testing.T) {
+	app, handler := setupTestApp()
+	handler.service = &stubProductService{err: errors.New("count fail")}
+	app.Get("/products/count", handler.GetProductsCount)
+
+	req := httptest.NewRequest("GET", "/products/count", nil)
+	resp, _ := app.Test(req)
+	if resp.StatusCode != 500 {
+		t.Fatalf("expected 500, got %d", resp.StatusCode)
+	}
+}
+
+func TestGetCategories_Error(t *testing.T) {
+	app, handler := setupTestApp()
+	handler.service = &stubProductService{err: errors.New("cache fail")}
+	app.Get("/products/categories", handler.GetCategories)
+
+	req := httptest.NewRequest("GET", "/products/categories", nil)
+	resp, _ := app.Test(req)
+	if resp.StatusCode != 500 {
+		t.Fatalf("expected 500, got %d", resp.StatusCode)
+	}
+}
+
+func TestDeleteProductsByName_MissingName(t *testing.T) {
+	app, handler := setupTestApp()
+	handler.service = &stubProductService{}
+	app.Delete("/products/name/:name?", handler.DeleteProductsByName)
+
+	req := httptest.NewRequest("DELETE", "/products/name/", nil)
+	resp, _ := app.Test(req)
+	if resp.StatusCode != 400 {
+		t.Fatalf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestDeleteProductsByName_Error(t *testing.T) {
+	app, handler := setupTestApp()
+	handler.service = &stubProductService{err: errors.New("fail")}
+	app.Delete("/products/name/:name", handler.DeleteProductsByName)
+
+	req := httptest.NewRequest("DELETE", "/products/name/dog", nil)
+	resp, _ := app.Test(req)
+	if resp.StatusCode != 500 {
+		t.Fatalf("expected 500, got %d", resp.StatusCode)
+	}
+}
+
+func TestDeleteProductById_MissingID(t *testing.T) {
+	app, handler := setupTestApp()
+	handler.service = &stubProductService{}
+	app.Delete("/products/:id?", handler.DeleteProductById)
+
+	req := httptest.NewRequest("DELETE", "/products/", nil)
+	resp, _ := app.Test(req)
+	if resp.StatusCode != 400 {
+		t.Fatalf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestDeleteProductById_Error(t *testing.T) {
+	app, handler := setupTestApp()
+	handler.service = &stubProductService{err: errors.New("fail")}
+	app.Delete("/products/:id", handler.DeleteProductById)
+
+	req := httptest.NewRequest("DELETE", "/products/507f1f77bcf86cd799439011", nil)
+	resp, _ := app.Test(req)
+	if resp.StatusCode != 500 {
+		t.Fatalf("expected 500, got %d", resp.StatusCode)
+	}
+}
