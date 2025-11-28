@@ -315,7 +315,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(http_requests_total{service=\"product-service\"}[5m]))",
+          "expr": "sum(rate(product_http_requests_total[5m]))",
           "refId": "A"
         }
       ],
@@ -381,7 +381,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(100 * (sum(rate(http_requests_total{service=\"product-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"product-service\"}[5m])))) or vector(0)",
+          "expr": "(100 * (sum(rate(product_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(product_http_requests_total[5m])))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -470,8 +470,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (method, path, status) (rate(http_requests_total{service=\"product-service\"}[5m]))",
-          "legendFormat": "{{method}} {{path}} {{status}}",
+          "expr": "sum by (method, path, status) (rate(product_http_requests_total[5m]))",
+          "legendFormat": "{{method}} {{path}} ({{status}})",
           "refId": "A"
         }
       ],
@@ -568,7 +568,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service=\"product-service\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(product_http_request_duration_seconds_bucket[5m])) by (le))",
           "legendFormat": "p99",
           "refId": "A"
         },
@@ -577,7 +577,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"product-service\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(product_http_request_duration_seconds_bucket[5m])) by (le))",
           "legendFormat": "p95",
           "refId": "B"
         },
@@ -586,7 +586,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{service=\"product-service\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(product_http_request_duration_seconds_bucket[5m])) by (le))",
           "legendFormat": "p50",
           "refId": "C"
         }

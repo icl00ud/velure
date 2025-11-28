@@ -4,16 +4,12 @@ Este diretório contém dashboards pré-configurados para monitoramento dos micr
 
 ## Dashboards Disponíveis
 
-### 1. Overview Dashboard (overview-dashboard.json)
-Visão geral de todos os serviços com:
-- Status de cada serviço (UP/DOWN)
-- Taxa de requisições HTTP por serviço
-- Latência p95 de resposta
-- Taxa de erros por tipo
-- Cache hit rate (Product Service)
-- Login success rate (Auth Service)
-
-**Quando usar**: Visão rápida da saúde geral do sistema
+- `microservices-overview-dashboard.json`: status dos serviços, taxa de requisições, latência p95/p99, erro %, cache hit rate (Auth e Product), CPU/mem por serviço e profundidade de fila RabbitMQ.
+- `overview-dashboard.json`: visão enxuta/legada de saúde geral (status, taxas de erro e latência).
+- `auth-service-dashboard.json`: login/registro/token, tráfego HTTP, erros, sessões, cache hit rate (Redis) e hits vs misses.
+- `product-service-dashboard.json`: operações de produto, cache (hit/miss + latência), inventário, buscas e MongoDB.
+- `publish-order-service-dashboard.json`: criação/publicação de pedidos, SSE, estados, banco de dados e métricas de fila.
+- `process-order-service-dashboard.json`: consumo de mensagens, workers, estoque/pagamento, chamadas para Product Service e tamanho da fila.
 
 ## Como Importar Dashboards
 
@@ -29,7 +25,7 @@ Visão geral de todos os serviços com:
 
 3. Clique em **Upload JSON file**
 
-4. Selecione o arquivo `overview-dashboard.json`
+4. Selecione o arquivo `.json` desejado (ex: `microservices-overview-dashboard.json`)
 
 5. Selecione o datasource **Prometheus**
 
@@ -38,15 +34,16 @@ Visão geral de todos os serviços com:
 ### Método 2: Via ConfigMap (Automático)
 
 ```bash
-# Criar ConfigMap com todos os dashboards
+# Criar/atualizar ConfigMap com TODOS os dashboards deste diretório
 kubectl create configmap velure-grafana-dashboards \
-  --from-file=./overview-dashboard.json \
-  -n monitoring
+  --from-file=infrastructure/kubernetes/monitoring/dashboards/ \
+  -n monitoring \
+  -o yaml --dry-run=client | kubectl apply -f -
 
-# Adicionar label para o Grafana detectar
+# Adicionar/atualizar label para o Grafana detectar
 kubectl label configmap velure-grafana-dashboards \
   grafana_dashboard=1 \
-  -n monitoring
+  -n monitoring --overwrite
 
 # Reiniciar Grafana para carregar
 kubectl rollout restart deployment/kube-prometheus-stack-grafana -n monitoring
@@ -89,39 +86,14 @@ rate(product_cache_hits_total[5m]) /
 rate(process_order_processed_total[5m]) * 60
 ```
 
-## Dashboards Adicionais Recomendados
+## Dashboards Adicionais / Customizações
 
-### Auth Service Dashboard
-Crie um dashboard com:
-- Login attempts (success vs failure)
-- Token validations
-- Active sessions
-- User registration rate
-- Authentication errors
-
-### Product Service Dashboard
-Crie um dashboard com:
-- Product queries por operação
-- Cache performance (hits, misses, operations)
-- Inventory updates
-- Search performance
-- MongoDB query duration
-
-### Orders Dashboard
-Crie um dashboard com:
-- Orders created vs processed
-- Payment success rate
-- Payment processing duration
-- Order status distribution
-- RabbitMQ queue size
-- Inventory check failures
-
-### Infrastructure Dashboard
-Use dashboards padrão do kube-prometheus-stack:
-- **Kubernetes / Compute Resources / Cluster**: Visão geral do cluster
-- **Kubernetes / Compute Resources / Namespace (Pods)**: Recursos por namespace
-- **Kubernetes / Compute Resources / Pod**: Métricas de pods individuais
-- **Node Exporter / Nodes**: Métricas de nodes
+- Os dashboards de Auth, Product, Publish Order e Process Order já estão versionados aqui. Duplique-os no Grafana se precisar de filtros/labels específicos do seu ambiente.
+- Para infraestrutura use os dashboards padrão do kube-prometheus-stack:
+  - **Kubernetes / Compute Resources / Cluster**
+  - **Kubernetes / Compute Resources / Namespace (Pods)**
+  - **Kubernetes / Compute Resources / Pod**
+  - **Node Exporter / Nodes**
 
 ## Estrutura de Dashboard Recomendada
 
