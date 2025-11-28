@@ -13,10 +13,11 @@ spec:
       {{- include "velure-product.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        rollout-timestamp: {{ now | date "20060102-150405" | quote }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "velure-product.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}

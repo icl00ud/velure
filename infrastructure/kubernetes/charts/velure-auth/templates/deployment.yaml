@@ -14,6 +14,8 @@ spec:
       {{- include "velure-auth.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        rollout-timestamp: {{ now | date "20060102-150405" | quote }}
       labels:
         {{- include "velure-auth.labels" . | nindent 8 }}
     spec:

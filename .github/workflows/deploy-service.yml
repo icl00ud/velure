@@ -87,7 +87,7 @@ jobs:
             ./infrastructure/kubernetes/charts/${{ steps.vars.outputs.chart }} \
             -n ${{ steps.vars.outputs.namespace }} --create-namespace \
             --set image.tag=${{ inputs.image-tag }} \
-            --timeout 2m || true
+            --wait --timeout 5m
 
       - name: Verify deployment
         run: |
