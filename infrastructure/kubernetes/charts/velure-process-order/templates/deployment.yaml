@@ -11,6 +11,8 @@ spec:
       app: velure-process-order
   template:
     metadata:
+      annotations:
+        rollout-timestamp: {{ now | date "20060102-150405" | quote }}
       labels:
         app: velure-process-order
     spec:
