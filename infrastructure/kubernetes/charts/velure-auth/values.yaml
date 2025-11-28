@@ -91,6 +91,12 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
+# Redis configuration
+redis:
+  host: "velure-datastores-redis-master.datastores.svc.cluster.local"
+  port: "6379"
+  secretName: "velure-auth-redis"
+
 # Secrets configuration (use existing secrets or allow creating externally)
 secrets:
   postgres:

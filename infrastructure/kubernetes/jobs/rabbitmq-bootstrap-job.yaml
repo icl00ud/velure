@@ -1,0 +1,153 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rabbitmq-bootstrap
+  namespace: order
+  labels:
+    app: rabbitmq-bootstrap
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: rabbitmq-bootstrap
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: bootstrap
+        image: python:3.11-slim
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          echo "Installing pika (RabbitMQ Python client)..."
+          pip install --quiet pika
+
+          echo "Running RabbitMQ bootstrap..."
+          python3 <<'PYTHON_SCRIPT'
+          import pika
+          import os
+          import time
+          import ssl
+
+          # Parse AMQP URL
+          rabbitmq_url = os.environ['RABBITMQ_URL']
+          print(f"Connecting to RabbitMQ...")
+
+          # Parse URL: amqps://user:pass@host:port
+          url_parts = rabbitmq_url.replace('amqps://', '').replace('amqp://', '')
+          auth_host = url_parts.split('@')
+          auth = auth_host[0].split(':')
+          host_port = auth_host[1].split(':')
+
+          username = auth[0]
+          password = auth[1]
+          host = host_port[0]
+          port = int(host_port[1]) if len(host_port) > 1 else 5671
+
+          use_ssl = rabbitmq_url.startswith('amqps://')
+
+          # Create connection
+          credentials = pika.PlainCredentials(username, password)
+
+          if use_ssl:
+              ssl_context = ssl.create_default_context()
+              ssl_context.check_hostname = False
+              ssl_context.verify_mode = ssl.CERT_NONE
+              params = pika.ConnectionParameters(
+                  host=host,
+                  port=port,
+                  credentials=credentials,
+                  ssl_options=pika.SSLOptions(ssl_context),
+                  heartbeat=600,
+                  blocked_connection_timeout=300
+              )
+          else:
+              params = pika.ConnectionParameters(
+                  host=host,
+                  port=port,
+                  credentials=credentials
+              )
+
+          # Retry connection
+          max_retries = 5
+          for attempt in range(max_retries):
+              try:
+                  connection = pika.BlockingConnection(params)
+                  channel = connection.channel()
+                  print("✅ Connected to RabbitMQ")
+                  break
+              except Exception as e:
+                  if attempt < max_retries - 1:
+                      wait_time = (attempt + 1) * 2
+                      print(f"Connection failed (attempt {attempt + 1}/{max_retries}): {e}")
+                      print(f"Retrying in {wait_time}s...")
+                      time.sleep(wait_time)
+                  else:
+                      raise
+
+          # Declare exchanges
+          print("Declaring exchange 'orders'...")
+          channel.exchange_declare(
+              exchange='orders',
+              exchange_type='topic',
+              durable=True
+          )
+
+          print("Declaring Dead Letter Exchange 'orders.dlx'...")
+          channel.exchange_declare(
+              exchange='orders.dlx',
+              exchange_type='fanout',
+              durable=True
+          )
+
+          # Declare queues
+          print("Declaring Dead Letter Queue 'process-order-queue.dlq'...")
+          channel.queue_declare(
+              queue='process-order-queue.dlq',
+              durable=True
+          )
+
+          print("Binding DLQ to DLX...")
+          channel.queue_bind(
+              queue='process-order-queue.dlq',
+              exchange='orders.dlx'
+          )
+
+          print("Declaring main queue 'process-order-queue' with DLX...")
+          channel.queue_declare(
+              queue='process-order-queue',
+              durable=True,
+              arguments={
+                  'x-dead-letter-exchange': 'orders.dlx',
+                  'x-max-length': 10000
+              }
+          )
+
+          print("Binding 'orders' exchange to 'process-order-queue'...")
+          channel.queue_bind(
+              queue='process-order-queue',
+              exchange='orders',
+              routing_key='order.created'
+          )
+
+          print("✅ RabbitMQ infrastructure configured successfully!")
+          connection.close()
+          PYTHON_SCRIPT
+
+          echo "Bootstrap completed!"
+        env:
+        - name: RABBITMQ_URL
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-conn
+              key: url
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi

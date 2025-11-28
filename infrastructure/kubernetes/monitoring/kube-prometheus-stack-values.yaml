@@ -168,11 +168,19 @@ kubeStateMetrics:
 prometheusOperator:
   enabled: true
 
-  # Disable admission webhooks to speed up deployment on small clusters
+  # Enable admission webhooks (required for proper operator deployment)
+  # The patch job creates the required TLS certificates
   admissionWebhooks:
-    enabled: false
+    enabled: true
     patch:
-      enabled: false
+      enabled: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
 
   resources:
     requests:

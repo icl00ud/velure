@@ -7,16 +7,16 @@ appVersion: "1.0"
 
 dependencies:
   - name: mongodb
-    version: 14.12.1
+    version: 18.1.10
     repository: https://charts.bitnami.com/bitnami
     condition: mongodb.enabled
 
   - name: redis
-    version: 18.19.1
+    version: 24.0.0
     repository: https://charts.bitnami.com/bitnami
     condition: redis.enabled
 
   - name: rabbitmq
-    version: 13.0.1
+    version: 16.0.14
     repository: https://charts.bitnami.com/bitnami
     condition: rabbitmq.enabled

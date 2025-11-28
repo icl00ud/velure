@@ -1,0 +1,8 @@
+{
+  "name": "velure-scripts",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "dependencies": {
+    "mongodb": "^6.0.0"
+  }
+}

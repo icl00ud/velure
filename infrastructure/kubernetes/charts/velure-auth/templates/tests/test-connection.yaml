@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "{{ include "velure-auth-chart.fullname" . }}-test-connection"
+  name: "{{ include "velure-auth.fullname" . }}-test-connection"
   labels:
-    {{- include "velure-auth-chart.labels" . | nindent 4 }}
+    {{- include "velure-auth.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": test
 spec:
@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "velure-auth-chart.fullname" . }}:{{ .Values.service.port }}']
+      args: ['{{ include "velure-auth.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never

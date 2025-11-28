@@ -272,10 +272,11 @@ output "secrets_manager_mongodb_arn" {
   value       = module.secrets_manager.mongodb_secret_arn
 }
 
-output "secrets_manager_redis_arn" {
-  description = "ARN of Redis secret in Secrets Manager"
-  value       = module.secrets_manager.redis_secret_arn
-}
+# Redis secret output REMOVED - Redis runs in-cluster
+# output "secrets_manager_redis_arn" {
+#   description = "ARN of Redis secret in Secrets Manager"
+#   value       = module.secrets_manager.redis_secret_arn
+# }
 
 # Secret names for External Secrets Operator
 output "secrets_manager_names" {
@@ -286,6 +287,6 @@ output "secrets_manager_names" {
     rabbitmq   = module.secrets_manager.rabbitmq_secret_name
     jwt        = module.secrets_manager.jwt_secret_name
     mongodb    = module.secrets_manager.mongodb_secret_name
-    redis      = module.secrets_manager.redis_secret_name
+    # redis removed - Redis runs in-cluster via Helm
   }
 }

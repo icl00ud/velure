@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: rabbitmq
-  namespace: {{ .Values.namespace | quote }}
+  namespace: {{ .Release.Namespace }}
   labels:
     app: rabbitmq
 spec:

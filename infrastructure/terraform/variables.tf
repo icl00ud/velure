@@ -226,22 +226,21 @@ variable "mongodb_connection_string" {
   sensitive   = true
 }
 
-# Redis (optional - for ElastiCache or in-cluster)
-variable "redis_host" {
-  description = "Redis host"
-  type        = string
-  default     = ""
-}
-
-variable "redis_port" {
-  description = "Redis port"
-  type        = number
-  default     = 6379
-}
-
-variable "redis_password" {
-  description = "Redis password"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
+# Redis variables REMOVED - Redis runs in-cluster via Helm Chart (velure-datastores)
+# These variables are only needed if migrating to AWS ElastiCache (managed Redis)
+# variable "redis_host" {
+#   description = "Redis host"
+#   type        = string
+#   default     = ""
+# }
+# variable "redis_port" {
+#   description = "Redis port"
+#   type        = number
+#   default     = 6379
+# }
+# variable "redis_password" {
+#   description = "Redis password"
+#   type        = string
+#   sensitive   = true
+#   default     = ""
+# }

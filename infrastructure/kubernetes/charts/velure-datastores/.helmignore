@@ -1,6 +1,6 @@
 # Ignore downloaded dependencies
-charts/
-Chart.lock
+# charts/
+# Chart.lock
 
 # Development files
 *.swp

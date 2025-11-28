@@ -1,10 +1,12 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: velure-auth-pdb
-  namespace: {{ .Values.namespace | quote }}
+  name: {{ include "velure-auth.fullname" . }}-pdb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "velure-auth.labels" . | nindent 4 }}
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app: velure-auth
+      {{- include "velure-auth.selectorLabels" . | nindent 6 }}
