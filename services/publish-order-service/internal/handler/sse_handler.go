@@ -5,17 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-	"context"
 
 	"github.com/icl00ud/publish-order-service/internal/metrics"
 	"github.com/icl00ud/publish-order-service/internal/middleware"
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"go.uber.org/zap"
 )
-
-type OrderService interface {
-	GetOrderByID(ctx context.Context, userID, orderID string) (model.Order, error)
-}
 
 type SSEHandler struct {
 	svc      OrderService
