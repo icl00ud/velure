@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/icl00ud/process-order-service/internal/client"
 	"github.com/icl00ud/process-order-service/internal/model"
 )
 
@@ -249,5 +250,59 @@ func TestPaymentService_Process_SecondItemFails(t *testing.T) {
 	// First item should have been processed, but process stopped at second item
 	if len(client.calls) != 2 {
 		t.Errorf("expected 2 UpdateQuantity calls, got %d", len(client.calls))
+	}
+}
+
+func TestPaymentService_Process_PermanentErrorPublishesFailure(t *testing.T) {
+	pub := &mockPublisher{}
+	client := &mockProductClient{
+		updateQuantityFunc: func(productID string, quantityChange int) error {
+			return &client.PermanentError{Message: "not found", StatusCode: 404}
+		},
+	}
+
+	svc := NewPaymentService(pub, client)
+
+	items := []model.CartItem{
+		{ProductID: "p1", Name: "Product 1", Quantity: 1, Price: 10.0},
+	}
+
+	err := svc.Process("order999", items, 10)
+	if err != nil {
+		t.Fatalf("expected nil error for permanent errors (ack), got %v", err)
+	}
+
+	if len(pub.published) != 1 {
+		t.Fatalf("expected failure event published, got %d", len(pub.published))
+	}
+	if pub.published[0].Type != model.OrderFailed {
+		t.Fatalf("expected event type %s, got %s", model.OrderFailed, pub.published[0].Type)
+	}
+}
+
+func TestPaymentService_Process_PermanentErrorPublishFails(t *testing.T) {
+	pub := &mockPublisher{
+		publishFunc: func(evt model.Event) error {
+			return errors.New("publish fail")
+		},
+	}
+	client := &mockProductClient{
+		updateQuantityFunc: func(productID string, quantityChange int) error {
+			return &client.PermanentError{Message: "not found", StatusCode: 404}
+		},
+	}
+
+	svc := NewPaymentService(pub, client)
+
+	items := []model.CartItem{
+		{ProductID: "p1", Name: "Product 1", Quantity: 1, Price: 10.0},
+	}
+
+	err := svc.Process("order1000", items, 10)
+	if err == nil {
+		t.Fatal("expected error when publishing failure event fails")
+	}
+	if len(pub.published) != 1 {
+		t.Fatalf("expected publish attempted once, got %d", len(pub.published))
 	}
 }
