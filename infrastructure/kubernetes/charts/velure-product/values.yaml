@@ -23,10 +23,10 @@ mongodb:
   port: "27017"
 
 redis:
-  host: redis-master.datastores.svc.cluster.local
+  host: velure-datastores-redis-master.datastores.svc.cluster.local
   port: "6379"
   # Se usar senha, crie um Secret e informe o nome
-  passwordSecretName: "redis"
+  passwordSecretName: "velure-datastores-redis"
 
 # This is for the secretes for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 imagePullSecrets: []
@@ -170,3 +170,13 @@ networkPolicy:
       mongodb: true
       redis: true
       rabbitmq: false
+
+# Prometheus metrics configuration
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    labels:
+      prometheus: kube-prometheus

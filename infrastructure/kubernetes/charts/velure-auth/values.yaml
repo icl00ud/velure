@@ -95,7 +95,7 @@ affinity: {}
 redis:
   host: "velure-datastores-redis-master.datastores.svc.cluster.local"
   port: "6379"
-  secretName: "velure-auth-redis"
+  secretName: "velure-datastores-redis"
 
 # Secrets configuration (use existing secrets or allow creating externally)
 secrets:
@@ -109,3 +109,13 @@ secrets:
   session:
     secret: "velure-session-secret-key-change-in-production"
     expiresIn: "24h"
+
+# Prometheus metrics configuration
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    labels:
+      prometheus: kube-prometheus
