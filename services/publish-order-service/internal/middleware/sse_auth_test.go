@@ -60,3 +60,62 @@ func TestSSEAuth_RejectsInvalidToken(t *testing.T) {
 		t.Fatalf("expected 401, got %d", rr.Code)
 	}
 }
+
+func TestSSEAuth_AllowsAuthorizationHeader(t *testing.T) {
+	secret := "header-secret"
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Subject:   "user456",
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+	})
+	tokenStr, _ := token.SignedString([]byte(secret))
+
+	handler := SSEAuth(secret)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if GetUserID(r.Context()) != "user456" {
+			t.Fatalf("expected user id propagated from token")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/sse", nil)
+	req.Header.Set("Authorization", "Bearer "+tokenStr)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200 for valid header token, got %d", rr.Code)
+	}
+}
+
+func TestSSEAuth_RejectsMissingSubject(t *testing.T) {
+	secret := "no-subject"
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+	})
+	tokenStr, _ := token.SignedString([]byte(secret))
+
+	handler := SSEAuth(secret)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/sse?token="+tokenStr, nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 when subject missing, got %d", rr.Code)
+	}
+}
+
+func TestSSEAuth_AllowsOptionsWithoutAuth(t *testing.T) {
+	handler := SSEAuth("secret")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTeapot)
+	}))
+
+	req := httptest.NewRequest(http.MethodOptions, "/sse", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusTeapot {
+		t.Fatalf("expected OPTIONS to bypass auth, got %d", rr.Code)
+	}
+}
