@@ -307,7 +307,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(http_requests_total{service=\"publish-order-service\"}[5m]))",
+          "expr": "sum(rate(http_requests_total{exported_service=\"publish-order-service\"}[5m]))",
           "refId": "A"
         }
       ],
@@ -373,7 +373,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(100 * (sum(rate(http_requests_total{service=\"publish-order-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{service=\"publish-order-service\"}[5m])))) or vector(0)",
+          "expr": "(100 * (sum(rate(http_requests_total{exported_service=\"publish-order-service\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{exported_service=\"publish-order-service\"}[5m])))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -462,7 +462,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (method, path, status) (rate(http_requests_total{service=\"publish-order-service\"}[5m]))",
+          "expr": "sum by (method, path, status) (rate(http_requests_total{exported_service=\"publish-order-service\"}[5m]))",
           "legendFormat": "{{method}} {{path}} {{status}}",
           "refId": "A"
         }
@@ -560,7 +560,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service=\"publish-order-service\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{exported_service=\"publish-order-service\"}[5m])) by (le))",
           "legendFormat": "p99",
           "refId": "A"
         },
@@ -569,7 +569,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"publish-order-service\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{exported_service=\"publish-order-service\"}[5m])) by (le))",
           "legendFormat": "p95",
           "refId": "B"
         },
@@ -578,7 +578,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{service=\"publish-order-service\"}[5m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{exported_service=\"publish-order-service\"}[5m])) by (le))",
           "legendFormat": "p50",
           "refId": "C"
         }
@@ -946,7 +946,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(container_memory_usage_bytes{namespace=\"order\", container=\"velure-publish-order\", container!=\"\", container!=\"POD\"})",
+          "expr": "sum(container_memory_usage_bytes{namespace=\"order\", container=\"publish-order\"})",
           "legendFormat": "Total Memory",
           "refId": "A"
         }
