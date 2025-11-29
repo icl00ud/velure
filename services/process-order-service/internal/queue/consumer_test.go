@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/icl00ud/process-order-service/internal/client"
 	"github.com/icl00ud/process-order-service/internal/model"
 	"github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
@@ -15,6 +16,7 @@ type stubChannel struct {
 	deliveries chan amqp091.Delivery
 	consumeErr error
 	qosCalled  bool
+	closed     bool
 }
 
 func (s *stubChannel) Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp091.Table) (<-chan amqp091.Delivery, error) {
@@ -29,15 +31,33 @@ func (s *stubChannel) Qos(prefetchCount, prefetchSize int, global bool) error {
 	return nil
 }
 
+func (s *stubChannel) QueueBind(queue, key, exchange string, noWait bool, args amqp091.Table) error {
+	return nil
+}
+
+func (s *stubChannel) Publish(exchange, key string, mandatory, immediate bool, msg amqp091.Publishing) error {
+	return nil
+}
+
+func (s *stubChannel) ExchangeDeclare(name, kind string, durable, autoDelete, internal, noWait bool, args amqp091.Table) error {
+	return nil
+}
+
 func (s *stubChannel) Close() error {
+	s.closed = true
 	close(s.deliveries)
 	return nil
 }
 
-type stubConn struct{}
+type stubConn struct {
+	closed bool
+}
 
-func (s *stubConn) Channel() (*amqp091.Channel, error) { return nil, nil }
-func (s *stubConn) Close() error                       { return nil }
+func (s *stubConn) Channel() (AMQPChannel, error) { return nil, nil }
+func (s *stubConn) Close() error {
+	s.closed = true
+	return nil
+}
 
 type stubAcker struct {
 	acked    bool
@@ -154,5 +174,78 @@ func TestRabbitMQConsumer_ContextCancel(t *testing.T) {
 	}
 	if time.Since(start) > time.Second {
 		t.Fatal("consume did not stop promptly on cancel")
+	}
+}
+
+func TestRabbitMQConsumer_PermanentErrorSendsToDLQ(t *testing.T) {
+	acker := &stubAcker{}
+	deliveries := make(chan amqp091.Delivery, 1)
+	deliveries <- amqp091.Delivery{Body: []byte(`{"type":"order.created","payload":{}}`), Acknowledger: acker}
+	close(deliveries)
+
+	ch := &stubChannel{deliveries: deliveries}
+	c := &rabbitMQConsumer{
+		conn:    &stubConn{},
+		channel: ch,
+		queue:   "q",
+		logger:  zap.NewNop(),
+	}
+
+	err := c.Consume(context.Background(), func(evt model.Event) error {
+		return &client.PermanentError{Message: "nope", StatusCode: 404}
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !acker.nacked || acker.requeue {
+		t.Fatal("expected nack without requeue for permanent error")
+	}
+}
+
+func TestRabbitMQConsumer_MaxRetriesSendsToDLQ(t *testing.T) {
+	acker := &stubAcker{}
+	deliveries := make(chan amqp091.Delivery, 1)
+	deliveries <- amqp091.Delivery{
+		Body:         []byte(`{"type":"order.created","payload":{}}`),
+		Acknowledger: acker,
+		Headers: amqp091.Table{
+			"x-death": []interface{}{amqp091.Table{"count": int64(3)}},
+		},
+	}
+	close(deliveries)
+
+	ch := &stubChannel{deliveries: deliveries}
+	c := &rabbitMQConsumer{
+		conn:    &stubConn{},
+		channel: ch,
+		queue:   "q",
+		logger:  zap.NewNop(),
+	}
+
+	err := c.Consume(context.Background(), func(evt model.Event) error { return errors.New("temporary") })
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !acker.nacked || acker.requeue {
+		t.Fatal("expected nack without requeue when max retries reached")
+	}
+}
+
+func TestRabbitMQConsumer_CloseClosesConnAndChannel(t *testing.T) {
+	ch := &stubChannel{deliveries: make(chan amqp091.Delivery)}
+	conn := &stubConn{}
+	c := &rabbitMQConsumer{
+		conn:    conn,
+		channel: ch,
+	}
+
+	if err := c.Close(); err != nil {
+		t.Fatalf("unexpected close error: %v", err)
+	}
+	if !ch.closed {
+		t.Fatal("expected channel to be closed")
+	}
+	if !conn.closed {
+		t.Fatal("expected connection to be closed")
 	}
 }

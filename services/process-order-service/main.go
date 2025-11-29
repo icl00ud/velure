@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,38 +27,48 @@ func main() {
 	defer logger.Sync()
 	zap.ReplaceGlobals(logger)
 
-	cfg, err := config.Load()
-	if err != nil {
-		logger.Fatal("config error", zap.Error(err))
-	}
-
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+
+	if err := run(ctx, logger); err != nil {
+		logger.Fatal("error during execution", zap.Error(err))
+	}
+}
+
+func run(ctx context.Context, logger *zap.Logger) error {
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("config error: %w", err)
+	}
 
 	var rabbitConn *queue.RabbitMQConnection
 	for i := 0; i < 5; i++ {
 		rabbitConn, err = queue.NewRabbitMQConnection(cfg.RabbitURL, logger)
 		if err != nil {
 			logger.Warn("rabbitmq connection failed, retrying", zap.Error(err), zap.Int("attempt", i+1))
-			time.Sleep(time.Duration(i+1) * 2 * time.Second)
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(time.Duration(i+1) * 2 * time.Second):
+			}
 			continue
 		}
 		break
 	}
 	if err != nil {
-		logger.Fatal("rabbitmq connection failed after retries", zap.Error(err))
+		return fmt.Errorf("rabbitmq connection failed after retries: %w", err)
 	}
 	defer rabbitConn.Close()
 
 	consumer, err := rabbitConn.NewConsumer(cfg.OrderQueue)
 	if err != nil {
-		logger.Fatal("consumer init failed", zap.Error(err))
+		return fmt.Errorf("consumer init failed: %w", err)
 	}
 	defer consumer.Close()
 
 	publisher, err := rabbitConn.NewPublisher(cfg.OrderExchange)
 	if err != nil {
-		logger.Fatal("publisher init failed", zap.Error(err))
+		return fmt.Errorf("publisher init failed: %w", err)
 	}
 	defer publisher.Close()
 
@@ -74,10 +85,6 @@ func main() {
 	g, ctx := errgroup.WithContext(ctx)
 	// health server
 	g.Go(func() error {
-		port := os.Getenv("PROCESS_ORDER_SERVICE_APP_PORT")
-		if port == "" {
-			port = "3040"
-		}
 		mux := http.NewServeMux()
 		// Prometheus metrics endpoint
 		mux.Handle("/metrics", promhttp.Handler())
@@ -85,20 +92,23 @@ func main() {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("ok"))
 		})
-		srv := &http.Server{Addr: ":" + port, Handler: mux}
+		srv := &http.Server{Addr: ":" + cfg.Port, Handler: mux}
 		go func() {
 			<-ctx.Done()
 			_ = srv.Shutdown(context.Background())
 		}()
-		return srv.ListenAndServe()
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			return err
+		}
+		return nil
 	})
 	g.Go(func() error {
 		return oc.Start(ctx)
 	})
 
 	if err := g.Wait(); err != nil && err != context.Canceled {
-		logger.Fatal("error during execution", zap.Error(err))
+		return err
 	}
 	logger.Info("shutdown complete")
+	return nil
 }
-

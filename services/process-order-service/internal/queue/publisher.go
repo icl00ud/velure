@@ -14,25 +14,15 @@ type Publisher interface {
 	Close() error
 }
 
-type amqpConnection interface {
-	Channel() (*amqp091.Channel, error)
-	Close() error
-}
-
-type amqpChannel interface {
-	Publish(exchange, key string, mandatory, immediate bool, msg amqp091.Publishing) error
-	Close() error
-}
-
 type rabbitPublisher struct {
-	conn     amqpConnection
-	channel  amqpChannel
+	conn     AMQPConnection
+	channel  AMQPChannel
 	exchange string
 	logger   *zap.Logger
 }
 
 func NewRabbitPublisher(amqpURL, exchange string, logger *zap.Logger) (Publisher, error) {
-	conn, err := amqp091.Dial(amqpURL)
+	conn, err := amqpDial(amqpURL)
 	if err != nil {
 		return nil, fmt.Errorf("dial rabbitmq: %w", err)
 	}

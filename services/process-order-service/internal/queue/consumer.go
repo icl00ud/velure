@@ -18,31 +18,20 @@ type Consumer interface {
 	Close() error
 }
 
-type amqpConsumerConn interface {
-	Channel() (*amqp091.Channel, error)
-	Close() error
-}
-
-type amqpConsumerChannel interface {
-	Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp091.Table) (<-chan amqp091.Delivery, error)
-	Qos(prefetchCount, prefetchSize int, global bool) error
-	Close() error
-}
-
 type amqpAcker interface {
 	Ack(tag uint64, multiple bool) error
 	Nack(tag uint64, multiple bool, requeue bool) error
 }
 
 type rabbitMQConsumer struct {
-	conn    amqpConsumerConn
-	channel amqpConsumerChannel
+	conn    AMQPConnection
+	channel AMQPChannel
 	queue   string
 	logger  *zap.Logger
 }
 
 func NewRabbitMQConsumer(amqpURL, queueName string, logger *zap.Logger) (Consumer, error) {
-	conn, err := amqp091.Dial(amqpURL)
+	conn, err := amqpDial(amqpURL)
 	if err != nil {
 		return nil, err
 	}
