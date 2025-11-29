@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"testing"
+
+	migratedb "github.com/golang-migrate/migrate/v4/database"
 )
 
 type stubMigrator struct {
@@ -18,6 +20,38 @@ func (s *stubMigrator) Version() (uint, bool, error) {
 
 func (s *stubMigrator) Up() error {
 	return s.upErr
+}
+
+func TestNewMigrator_UsesFactories(t *testing.T) {
+	origDriver, origInstance := createDriver, createMigrateInstance
+	defer func() {
+		createDriver = origDriver
+		createMigrateInstance = origInstance
+	}()
+
+	calledDriver := false
+	createDriver = func(db *sql.DB) (migratedb.Driver, error) {
+		calledDriver = true
+		return nil, nil
+	}
+
+	calledInstance := false
+	stub := &stubMigrator{}
+	createMigrateInstance = func(driver migratedb.Driver, migrationsPath string) (migrator, error) {
+		calledInstance = true
+		return stub, nil
+	}
+
+	m, err := newMigrator(&sql.DB{}, "/tmp")
+	if err != nil {
+		t.Fatalf("expected nil error from newMigrator, got %v", err)
+	}
+	if m != stub {
+		t.Fatal("expected stub migrator returned")
+	}
+	if !calledDriver || !calledInstance {
+		t.Fatal("expected both factories to be called")
+	}
 }
 
 func TestRunMigrations_NoChange(t *testing.T) {

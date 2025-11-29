@@ -24,3 +24,23 @@ func TestLogging_CapturesStatus(t *testing.T) {
 		t.Fatalf("esperado 418; recebeu %d", w.Code)
 	}
 }
+
+type flushRecorder struct {
+	*httptest.ResponseRecorder
+	flushed bool
+}
+
+func (f *flushRecorder) Flush() {
+	f.flushed = true
+}
+
+func TestResponseWriterFlush_Delegates(t *testing.T) {
+	rec := &flushRecorder{ResponseRecorder: httptest.NewRecorder()}
+	rw := &responseWriter{ResponseWriter: rec}
+
+	rw.Flush()
+
+	if !rec.flushed {
+		t.Fatal("expected underlying flusher to be invoked")
+	}
+}

@@ -11,7 +11,27 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/icl00ud/publish-order-service/internal/model"
+	_ "github.com/lib/pq"
 )
+
+func TestPostgresOrderRepository_DB(t *testing.T) {
+	db, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("erro sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	repo := &PostgresOrderRepository{db: db}
+	if repo.DB() != db {
+		t.Fatal("DB should return underlying connection")
+	}
+}
+
+func TestNewOrderRepository_InvalidDSN(t *testing.T) {
+	if _, err := NewOrderRepository("postgres://invalid:invalid@localhost:1/invalid?sslmode=disable"); err == nil {
+		t.Fatal("expected error for invalid DSN, got nil")
+	}
+}
 
 func TestPostgresOrderRepository_Save(t *testing.T) {
 	db, mock, err := sqlmock.New()

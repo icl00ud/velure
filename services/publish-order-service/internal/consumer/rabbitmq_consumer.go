@@ -19,7 +19,7 @@ type Consumer interface {
 }
 
 type amqpConn interface {
-	Channel() (*amqp091.Channel, error)
+	Channel() (amqpChan, error)
 	Close() error
 }
 
@@ -41,8 +41,34 @@ type rabbitConsumer struct {
 	workers int
 }
 
-func NewRabbitMQConsumer(amqpURL, exchange, queueName string, handler EventHandler, workers int, logger *zap.Logger) (Consumer, error) {
+type liveConsumerConn struct {
+	conn *amqp091.Connection
+}
+
+func (c *liveConsumerConn) Channel() (amqpChan, error) {
+	if c.conn == nil {
+		return nil, amqp091.ErrClosed
+	}
+	return c.conn.Channel()
+}
+
+func (c *liveConsumerConn) Close() error {
+	if c.conn == nil {
+		return nil
+	}
+	return c.conn.Close()
+}
+
+var dialRabbitMQ = func(amqpURL string) (amqpConn, error) {
 	conn, err := amqp091.Dial(amqpURL)
+	if err != nil {
+		return nil, err
+	}
+	return &liveConsumerConn{conn: conn}, nil
+}
+
+func NewRabbitMQConsumer(amqpURL, exchange, queueName string, handler EventHandler, workers int, logger *zap.Logger) (Consumer, error) {
+	conn, err := dialRabbitMQ(amqpURL)
 	if err != nil {
 		return nil, fmt.Errorf("dial rabbitmq: %w", err)
 	}
