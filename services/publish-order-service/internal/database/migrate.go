@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
+	migratedb "github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"go.uber.org/zap"
@@ -15,17 +16,25 @@ type migrator interface {
 	Version() (uint, bool, error)
 }
 
-var newMigrator = func(db *sql.DB, migrationsPath string) (migrator, error) {
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		return nil, fmt.Errorf("create migration driver: %w", err)
-	}
+var createDriver = func(db *sql.DB) (migratedb.Driver, error) {
+	return postgres.WithInstance(db, &postgres.Config{})
+}
 
-	m, err := migrate.NewWithDatabaseInstance(
+var createMigrateInstance = func(driver migratedb.Driver, migrationsPath string) (migrator, error) {
+	return migrate.NewWithDatabaseInstance(
 		fmt.Sprintf("file://%s", migrationsPath),
 		"postgres",
 		driver,
 	)
+}
+
+var newMigrator = func(db *sql.DB, migrationsPath string) (migrator, error) {
+	driver, err := createDriver(db)
+	if err != nil {
+		return nil, fmt.Errorf("create migration driver: %w", err)
+	}
+
+	m, err := createMigrateInstance(driver, migrationsPath)
 	if err != nil {
 		return nil, fmt.Errorf("create migration instance: %w", err)
 	}

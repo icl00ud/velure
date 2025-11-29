@@ -28,7 +28,7 @@ type rabbitMQPublisher struct {
 }
 
 type amqpPublisherConn interface {
-	Channel() (*amqp091.Channel, error)
+	Channel() (amqpPublisherChannel, error)
 	Close() error
 }
 
@@ -38,14 +38,26 @@ type amqpPublisherChannel interface {
 	Close() error
 }
 
+var amqpDialer = amqp091.Dial
+
+var dialPublisher = func(amqpURL string) (amqpPublisherConn, error) {
+	conn, err := amqpDialer(amqpURL)
+	if err != nil {
+		return nil, err
+	}
+	return &livePublisherConn{conn: conn}, nil
+}
+
 func NewRabbitMQPublisher(amqpURL string, exchange string, logger *zap.Logger) (Publisher, error) {
+	return newRabbitMQPublisher(amqpURL, exchange, logger, dialPublisher)
+}
+
+func newRabbitMQPublisher(amqpURL string, exchange string, logger *zap.Logger, dialFn func(string) (amqpPublisherConn, error)) (Publisher, error) {
 	p := &rabbitMQPublisher{
 		amqpURL:  amqpURL,
 		exchange: exchange,
 		logger:   logger,
-		dialFn: func(url string) (amqpPublisherConn, error) {
-			return amqp091.Dial(url)
-		},
+		dialFn:   dialFn,
 	}
 	p.connectFn = p.connect
 
@@ -54,6 +66,29 @@ func NewRabbitMQPublisher(amqpURL string, exchange string, logger *zap.Logger) (
 	}
 
 	return p, nil
+}
+
+type livePublisherConn struct {
+	conn dialConnection
+}
+
+func (c *livePublisherConn) Channel() (amqpPublisherChannel, error) {
+	if c.conn == nil {
+		return nil, amqp091.ErrClosed
+	}
+	return c.conn.Channel()
+}
+
+func (c *livePublisherConn) Close() error {
+	if c.conn == nil {
+		return nil
+	}
+	return c.conn.Close()
+}
+
+type dialConnection interface {
+	Channel() (*amqp091.Channel, error)
+	Close() error
 }
 
 func (r *rabbitMQPublisher) connect() error {
