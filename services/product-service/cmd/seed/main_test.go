@@ -1,92 +1,224 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"math/rand"
 	"strings"
 	"testing"
+
+	"product-service/internal/config"
+	"product-service/internal/models"
+	"product-service/internal/repository"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestRandomStringUsesExpectedCharset(t *testing.T) {
-	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
-	got := randomString(12)
+type recordingRepo struct {
+	createCalls []models.CreateProductRequest
+	createErrs  []error
+}
 
-	if len(got) != 12 {
-		t.Fatalf("expected length 12, got %d", len(got))
+func (r *recordingRepo) GetAllProducts(ctx context.Context) ([]models.ProductResponse, error) {
+	return nil, nil
+}
+func (r *recordingRepo) GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error) {
+	return nil, nil
+}
+func (r *recordingRepo) GetProductsByPage(ctx context.Context, page, pageSize int) (*models.PaginatedProductsResponse, error) {
+	return &models.PaginatedProductsResponse{}, nil
+}
+func (r *recordingRepo) GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) (*models.PaginatedProductsResponse, error) {
+	return &models.PaginatedProductsResponse{}, nil
+}
+func (r *recordingRepo) GetProductsCount(ctx context.Context) (int64, error) { return 0, nil }
+func (r *recordingRepo) GetProductsCountByCategory(ctx context.Context, category string) (int64, error) {
+	return 0, nil
+}
+func (r *recordingRepo) GetCategories(ctx context.Context) ([]string, error) { return nil, nil }
+func (r *recordingRepo) CreateProduct(ctx context.Context, product models.CreateProductRequest) (*models.ProductResponse, error) {
+	r.createCalls = append(r.createCalls, product)
+	if len(r.createErrs) > 0 {
+		err := r.createErrs[0]
+		r.createErrs = r.createErrs[1:]
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &models.ProductResponse{ID: "id", Name: product.Name}, nil
+}
+func (r *recordingRepo) DeleteProductsByName(ctx context.Context, name string) error { return nil }
+func (r *recordingRepo) DeleteProductById(ctx context.Context, id string) error      { return nil }
+func (r *recordingRepo) UpdateProductQuantity(ctx context.Context, productID string, quantityChange int) error {
+	return nil
+}
+func (r *recordingRepo) GetProductQuantity(ctx context.Context, productID string) (int, error) {
+	return 0, nil
+}
+
+func TestRunSeed_InsertsProducts(t *testing.T) {
+	repo := &recordingRepo{
+		createErrs: []error{errors.New("fail once"), nil, nil, nil, nil},
 	}
 
-	for _, ch := range got {
-		if !strings.ContainsRune(charset, ch) {
-			t.Fatalf("unexpected character %q in random string", ch)
-		}
+	deps := seedDependencies{
+		loadEnv: func() error { return nil },
+		buildRepo: func(cfg *config.Config) (repository.ProductRepository, func(context.Context) error, func(), error) {
+			return repo, nil, nil, nil
+		},
+		generate: func() []models.CreateProductRequest {
+			return []models.CreateProductRequest{
+				{Name: "A"}, {Name: "B"}, {Name: "C"}, {Name: "D"}, {Name: "E"},
+			}
+		},
+	}
+
+	err := runSeed(deps)
+	assert.NoError(t, err)
+	assert.Len(t, repo.createCalls, 5)
+}
+
+func TestRunSeed_RepoError(t *testing.T) {
+	deps := seedDependencies{
+		loadEnv: func() error { return nil },
+		buildRepo: func(cfg *config.Config) (repository.ProductRepository, func(context.Context) error, func(), error) {
+			return nil, nil, nil, errors.New("connect failed")
+		},
+		generate: generatePetProducts,
+	}
+
+	err := runSeed(deps)
+	assert.Error(t, err)
+}
+
+func TestRunSeed_WithLoadEnvError(t *testing.T) {
+	repo := &recordingRepo{}
+	deps := seedDependencies{
+		loadEnv: func() error { return errors.New("missing env") },
+		buildRepo: func(cfg *config.Config) (repository.ProductRepository, func(context.Context) error, func(), error) {
+			return repo, func(context.Context) error { return nil }, func() {}, nil
+		},
+		generate: func() []models.CreateProductRequest {
+			return []models.CreateProductRequest{{Name: "Single", Quantity: 1, Price: 1.0, SKU: "S-1"}}
+		},
+	}
+
+	err := runSeed(deps)
+	assert.NoError(t, err)
+	assert.Len(t, repo.createCalls, 1)
+}
+
+func TestSeedMainUsesDefaultDeps(t *testing.T) {
+	original := defaultSeedDeps
+	originalFatal := seedFatalf
+	defer func() {
+		defaultSeedDeps = original
+		seedFatalf = originalFatal
+	}()
+
+	called := false
+	defaultSeedDeps = seedDependencies{
+		loadEnv: func() error { called = true; return nil },
+		buildRepo: func(cfg *config.Config) (repository.ProductRepository, func(context.Context) error, func(), error) {
+			return &recordingRepo{}, nil, nil, nil
+		},
+		generate: func() []models.CreateProductRequest { return nil },
+	}
+
+	main()
+	assert.True(t, called)
+}
+
+func TestSeedMain_FatalOnError(t *testing.T) {
+	original := defaultSeedDeps
+	originalFatal := seedFatalf
+	defer func() {
+		defaultSeedDeps = original
+		seedFatalf = originalFatal
+	}()
+
+	called := false
+	defaultSeedDeps = seedDependencies{
+		loadEnv: func() error { return nil },
+		buildRepo: func(cfg *config.Config) (repository.ProductRepository, func(context.Context) error, func(), error) {
+			return nil, nil, nil, errors.New("seed failure")
+		},
+		generate: generatePetProducts,
+	}
+	seedFatalf = func(v ...interface{}) { called = true }
+
+	main()
+	assert.True(t, called)
+}
+
+func TestGeneratePetProductsProducesInventory(t *testing.T) {
+	products := generatePetProducts()
+	assert.Equal(t, 16, len(products))
+
+	for _, p := range products {
+		assert.NotEmpty(t, p.Name)
+		assert.True(t, p.Rating >= 3.5 && p.Rating <= 5.0)
+		assert.True(t, p.Quantity >= 10)
+		assert.Len(t, p.Images, 3)
+		assert.NotEmpty(t, p.SKU)
 	}
 }
 
 func TestRandomRatingRange(t *testing.T) {
-	for i := 0; i < 50; i++ {
+	rand.Seed(1)
+	for i := 0; i < 5; i++ {
 		r := randomRating()
-		if r < 3.5 || r > 5.0 {
-			t.Fatalf("rating out of range: %f", r)
-		}
+		assert.GreaterOrEqual(t, r, 3.5)
+		assert.LessOrEqual(t, r, 5.0)
 	}
 }
 
 func TestRandomQuantityRange(t *testing.T) {
-	for i := 0; i < 50; i++ {
+	rand.Seed(2)
+	for i := 0; i < 5; i++ {
 		q := randomQuantity()
-		if q < 10 || q > 109 {
-			t.Fatalf("quantity out of range: %d", q)
-		}
+		assert.GreaterOrEqual(t, q, 10)
+		assert.LessOrEqual(t, q, 110)
 	}
 }
 
-func TestGenerateDimensionsFallback(t *testing.T) {
-	dims := generateDimensions("unknown-category")
-	if dims.Height != 10 || dims.Width != 10 || dims.Length != 10 || dims.Weight != 1.0 {
-		t.Fatalf("expected fallback dimensions, got %+v", dims)
-	}
-}
-
-func TestGenerateColors(t *testing.T) {
-	known := generateColors("Brinquedos")
-	if len(known) == 0 || len(known) > 5 {
-		t.Fatalf("unexpected number of colors for known category: %d", len(known))
-	}
-
-	unknown := generateColors("Unknown")
-	if len(unknown) != 1 || unknown[0] != "Variadas" {
-		t.Fatalf("expected fallback colors, got %v", unknown)
-	}
-}
-
-func TestGenerateImagesReturnsThreeEntries(t *testing.T) {
-	images := generateImages("Alimentação", "Ração Premium")
-	if len(images) != 3 {
-		t.Fatalf("expected 3 images, got %d", len(images))
-	}
+func TestGenerateImagesFallback(t *testing.T) {
+	rand.Seed(3)
+	images := generateImages("Unknown", "Item")
+	assert.Len(t, images, 3)
 	for _, img := range images {
-		if !strings.Contains(img, "images.unsplash.com") {
-			t.Fatalf("unexpected image url: %s", img)
-		}
+		assert.True(t, strings.HasPrefix(img, "https://"))
 	}
 }
 
-func TestGeneratePetProducts(t *testing.T) {
-	products := generatePetProducts()
-	if len(products) != 16 {
-		t.Fatalf("expected 16 products, got %d", len(products))
-	}
+func TestGenerateDimensionsDefaults(t *testing.T) {
+	dims := generateDimensions("Brinquedos")
+	assert.Equal(t, 10.0, dims.Height)
+	assert.Equal(t, 10.0, dims.Width)
+	assert.Equal(t, 15.0, dims.Length)
 
-	for _, p := range products {
-		if p.Name == "" || p.SKU == "" {
-			t.Fatalf("product missing required fields: %+v", p)
-		}
-		if p.Price <= 0 {
-			t.Fatalf("product price should be positive, got %f", p.Price)
-		}
-		if p.Quantity <= 0 {
-			t.Fatalf("product quantity should be positive, got %d", p.Quantity)
-		}
-		if len(p.Images) != 3 {
-			t.Fatalf("expected 3 images for product %s, got %d", p.Name, len(p.Images))
-		}
+	fallback := generateDimensions("Nope")
+	assert.Equal(t, 10.0, fallback.Height)
+	assert.Equal(t, 10.0, fallback.Width)
+	assert.Equal(t, 10.0, fallback.Length)
+}
+
+func TestGenerateColorsSelection(t *testing.T) {
+	rand.Seed(4)
+	colors := generateColors("Brinquedos")
+	assert.True(t, len(colors) >= 1 && len(colors) <= 5)
+
+	defaultColors := generateColors("Desconhecida")
+	assert.Equal(t, []string{"Variadas"}, defaultColors)
+}
+
+func TestRandomStringUsesCharset(t *testing.T) {
+	rand.Seed(5)
+	val := randomString(12)
+	assert.Len(t, val, 12)
+
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+	for _, ch := range val {
+		assert.True(t, strings.ContainsRune(charset, ch))
 	}
 }

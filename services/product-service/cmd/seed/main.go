@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 	"time"
@@ -22,9 +23,41 @@ type ProductData struct {
 	SKU         string
 }
 
+type seedDependencies struct {
+	loadEnv   func() error
+	buildRepo func(cfg *config.Config) (repository.ProductRepository, func(context.Context) error, func(), error)
+	generate  func() []models.CreateProductRequest
+}
+
+var defaultSeedDeps = seedDependencies{
+	loadEnv: func() error { return godotenv.Load() },
+	buildRepo: func(cfg *config.Config) (repository.ProductRepository, func(context.Context) error, func(), error) {
+		mongodb, err := config.NewMongoDB(cfg.MongoURI)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		redis := config.NewRedis(cfg.RedisAddr, cfg.RedisPassword)
+		repo := repository.NewProductRepository(mongodb.Database(cfg.DatabaseName), redis)
+
+		return repo, mongodb.Disconnect, func() {
+			_ = redis.Close()
+		}, nil
+	},
+	generate: generatePetProducts,
+}
+
+var seedFatalf = log.Fatal
+
 func main() {
+	if err := runSeed(defaultSeedDeps); err != nil {
+		seedFatalf(err)
+	}
+}
+
+func runSeed(deps seedDependencies) error {
 	// Load environment variables
-	if err := godotenv.Load(); err != nil {
+	if err := deps.loadEnv(); err != nil {
 		log.Println("No .env file found, using system environment variables")
 	}
 
@@ -33,25 +66,25 @@ func main() {
 
 	log.Printf("Connecting to MongoDB: %s", cfg.DatabaseName)
 
-	// Initialize database connections
-	mongodb, err := config.NewMongoDB(cfg.MongoURI)
+	repo, mongoDisconnect, redisClose, err := deps.buildRepo(cfg)
 	if err != nil {
-		log.Fatal("Failed to connect to MongoDB:", err)
+		return fmt.Errorf("failed to connect to MongoDB: %w", err)
 	}
-	defer func() {
-		if err := mongodb.Disconnect(context.Background()); err != nil {
-			log.Printf("Error disconnecting from MongoDB: %v", err)
-		}
-	}()
 
-	redis := config.NewRedis(cfg.RedisAddr, cfg.RedisPassword)
-	defer redis.Close()
+	if mongoDisconnect != nil {
+		defer func() {
+			if err := mongoDisconnect(context.Background()); err != nil {
+				log.Printf("Error disconnecting from MongoDB: %v", err)
+			}
+		}()
+	}
 
-	// Initialize repository
-	repo := repository.NewProductRepository(mongodb.Database(cfg.DatabaseName), redis)
+	if redisClose != nil {
+		defer redisClose()
+	}
 
 	// Generate and insert products
-	products := generatePetProducts()
+	products := deps.generate()
 
 	log.Printf("Inserting %d products into MongoDB...", len(products))
 
@@ -70,6 +103,7 @@ func main() {
 	}
 
 	log.Printf("✅ Successfully inserted %d out of %d products!", successCount, len(products))
+	return nil
 }
 
 func generatePetProducts() []models.CreateProductRequest {
