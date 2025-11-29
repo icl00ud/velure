@@ -130,10 +130,21 @@ describe("AuthenticationService", () => {
   });
 
   describe("register", () => {
-    it("should register successfully", async () => {
+    it("should register successfully and auto-login", async () => {
+      const mockLoginResponse = {
+        ...mockToken,
+        user: { id: 1, email: mockRegisterUser.email, name: mockRegisterUser.name },
+      };
+
+      // First call: register
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true }),
+        json: async () => ({ id: 1, email: mockRegisterUser.email, name: mockRegisterUser.name }),
+      });
+      // Second call: auto-login
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockLoginResponse,
       });
 
       const result = await authenticationService.register(mockRegisterUser);
@@ -147,6 +158,15 @@ describe("AuthenticationService", () => {
           body: JSON.stringify(mockRegisterUser),
         })
       );
+      // Verify auto-login was called
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/login"),
+        expect.objectContaining({
+          method: "POST",
+        })
+      );
+      // Verify token is stored after auto-login
+      expect(localStorage.getItem("token")).toBeTruthy();
     });
 
     it("should throw error on failed registration", async () => {
@@ -160,15 +180,26 @@ describe("AuthenticationService", () => {
       );
     });
 
-    it("should not store token on registration", async () => {
+    it("should store token after registration auto-login", async () => {
+      const mockLoginResponse = {
+        ...mockToken,
+        user: { id: 1, email: mockRegisterUser.email, name: mockRegisterUser.name },
+      };
+
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true }),
+        json: async () => ({ id: 1 }),
+      });
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockLoginResponse,
       });
 
       await authenticationService.register(mockRegisterUser);
 
-      expect(localStorage.getItem("token")).toBeNull();
+      expect(localStorage.getItem("token")).toBeTruthy();
+      const storedToken = JSON.parse(localStorage.getItem("token")!);
+      expect(storedToken.accessToken).toBe(mockToken.accessToken);
     });
   });
 
