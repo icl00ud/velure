@@ -36,6 +36,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        working-directory: ${{ inputs.service-path }}
+        run: bun install --frozen-lockfile
+
+      - name: Run tests with coverage
+        working-directory: ${{ inputs.service-path }}
+        run: bun run test:coverage -- --run
+
       - name: SonarCloud Scan
         if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@v2
