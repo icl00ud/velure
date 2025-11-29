@@ -130,15 +130,43 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 		metrics.LoginAttempts.WithLabelValues(status).Inc()
 	}()
 
-	// Get user by email
-	user, err := s.userRepo.GetByEmail(req.Email)
-	if err != nil {
-		status = "failure"
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("invalid credentials")
+	ctx := context.Background()
+	cacheKey := "user:email:" + req.Email
+
+	// Try Redis cache first for user lookup
+	var user *models.User
+	if s.redis != nil {
+		cachedJSON, err := s.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			var cachedUser models.User
+			if json.Unmarshal([]byte(cachedJSON), &cachedUser) == nil {
+				metrics.CacheHits.Inc()
+				user = &cachedUser
+			}
+		} else {
+			metrics.CacheMisses.Inc()
 		}
-		metrics.Errors.WithLabelValues("database").Inc()
-		return nil, fmt.Errorf("error getting user: %w", err)
+	}
+
+	// Get user by email from DB if not in cache
+	if user == nil {
+		var err error
+		user, err = s.userRepo.GetByEmail(req.Email)
+		if err != nil {
+			status = "failure"
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, errors.New("invalid credentials")
+			}
+			metrics.Errors.WithLabelValues("database").Inc()
+			return nil, fmt.Errorf("error getting user: %w", err)
+		}
+
+		// Cache user in Redis for future logins
+		if s.redis != nil {
+			if userJSON, err := json.Marshal(user); err == nil {
+				s.redis.Set(ctx, cacheKey, userJSON, time.Duration(s.config.Performance.TokenCacheTTL)*time.Second)
+			}
+		}
 	}
 
 	// Check password com worker pool
