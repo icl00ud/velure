@@ -138,13 +138,12 @@ class AuthenticationService {
         throw new Error("Erro no registro");
       }
 
-      const result = await response.json();
-      const isSuccess = Boolean(result?.success);
-      // Registration should not authenticate the user or store tokens
-      localStorage.removeItem("token");
-      this.notifyAuthStatusChange(false);
       console.log("Registro realizado com sucesso.");
-      return isSuccess;
+
+      // Auto-login após registro bem-sucedido
+      await this.login({ email: user.email, password: user.password });
+
+      return true;
     } catch (error) {
       console.error("Erro no registro", error);
       throw error;
