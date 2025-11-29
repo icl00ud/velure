@@ -20,6 +20,8 @@ If you want to work locally using your own IDE, you can clone this repo and push
 
 The only requirement is having Bun installed - [install Bun](https://bun.sh/docs/installation)
 
+CI note: ao abrir PRs/commits, o pipeline do frontend roda `bun run test:coverage -- --run` para gerar o relatório consumido pelo SonarCloud.
+
 Follow these steps:
 
 ```sh
@@ -71,4 +73,3 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
-
