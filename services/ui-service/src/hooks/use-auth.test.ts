@@ -250,10 +250,21 @@ describe("useAuth", () => {
   });
 
   describe("register", () => {
-    it("should register successfully", async () => {
+    it("should register successfully and auto-login", async () => {
+      const mockLoginResponse = {
+        ...mockToken,
+        user: { id: 1, email: mockRegisterUser.email, name: mockRegisterUser.name },
+      };
+
+      // First call: register
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true }),
+        json: async () => ({ id: 1 }),
+      });
+      // Second call: auto-login
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockLoginResponse,
       });
 
       const { result } = renderHook(() => useAuth());
@@ -269,20 +280,38 @@ describe("useAuth", () => {
 
       expect(registerResult).toBe(true);
       expect(result.current.isLoading).toBe(false);
-      // Registration should not authenticate the user
-      expect(result.current.isAuthenticated).toBe(false);
+      // Registration should now authenticate the user via auto-login
+      await waitFor(() => {
+        expect(result.current.isAuthenticated).toBe(true);
+      });
     });
 
     it("should set loading state during registration", async () => {
+      const mockLoginResponse = {
+        ...mockToken,
+        user: { id: 1, email: mockRegisterUser.email, name: mockRegisterUser.name },
+      };
+
+      let callCount = 0;
       (global.fetch as any).mockImplementation(
         () =>
           new Promise((resolve) => {
+            callCount++;
             setTimeout(() => {
-              resolve({
-                ok: true,
-                json: async () => ({ success: true }),
-              });
-            }, 100);
+              if (callCount === 1) {
+                // Register call
+                resolve({
+                  ok: true,
+                  json: async () => ({ id: 1 }),
+                });
+              } else {
+                // Login call
+                resolve({
+                  ok: true,
+                  json: async () => mockLoginResponse,
+                });
+              }
+            }, 50);
           })
       );
 
@@ -301,12 +330,12 @@ describe("useAuth", () => {
         expect(result.current.isLoading).toBe(true);
       });
 
-      // Wait for registration to complete
+      // Wait for registration + auto-login to complete
       await waitFor(
         () => {
           expect(result.current.isLoading).toBe(false);
         },
-        { timeout: 200 }
+        { timeout: 300 }
       );
     });
 
