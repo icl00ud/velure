@@ -115,6 +115,17 @@ func TestDistributedCache_Miss(t *testing.T) {
 	}
 }
 
+func TestDistributedCache_InvalidEntry(t *testing.T) {
+	cache := NewDistributedCache(50 * time.Millisecond)
+	defer cache.Stop()
+
+	cache.data.Store("bad", "value")
+
+	if _, ok := cache.Get("bad"); ok {
+		t.Fatalf("expected cache miss for invalid entry type")
+	}
+}
+
 func TestUserCacheOperations(t *testing.T) {
 	userCache := NewUserCache(100 * time.Millisecond)
 	defer userCache.cache.Stop()

@@ -207,3 +207,25 @@ func TestRun_WithSQLiteAndRedis(t *testing.T) {
 		t.Fatalf("run() returned unexpected error: %v", err)
 	}
 }
+
+func TestMain_SkipHTTP(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockRedis := miniredis.RunT(t)
+
+	t.Setenv("AUTH_SERVICE_SKIP_HTTP", "true")
+	t.Setenv("POSTGRES_URL", "sqlite://file::memory:?cache=shared")
+	t.Setenv("REDIS_HOST", mockRedis.Host())
+	t.Setenv("REDIS_PORT", mockRedis.Port())
+
+	main()
+}
+
+func TestConnectRedis_Error(t *testing.T) {
+	_, err := connectRedis(config.RedisConfig{
+		Addr: "127.0.0.1:0",
+	})
+	if err == nil {
+		t.Fatalf("expected error connecting to invalid redis address")
+	}
+}
