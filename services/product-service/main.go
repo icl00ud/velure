@@ -17,6 +17,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -132,8 +133,14 @@ func setupFiberApp(service services.ProductService) *fiber.App {
 	// Routes
 	api := app.Group("/")
 
-	// Prometheus metrics endpoint
-	app.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
+	// Prometheus metrics endpoint with error handling
+	metricsHandler := promhttp.HandlerFor(
+		prometheus.DefaultGatherer,
+		promhttp.HandlerOpts{
+			ErrorHandling: promhttp.ContinueOnError,
+		},
+	)
+	app.Get("/metrics", adaptor.HTTPHandler(metricsHandler))
 
 	// Health routes
 	api.Get("/health", healthHandler.Check)
