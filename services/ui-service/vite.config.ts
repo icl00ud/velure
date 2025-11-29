@@ -23,8 +23,11 @@ export default defineConfig(({ mode }) => ({
     coverage: {
       provider: "istanbul",
       reporter: ["text", "json", "html", "lcov"],
+      all: true,
+      include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "node_modules/",
+        "src/components/ui/**",
         "src/test/",
         "**/*.d.ts",
         "**/*.config.*",
