@@ -12,6 +12,11 @@ import (
 // PrometheusMiddleware tracks HTTP request metrics for Fiber
 func PrometheusMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		// Skip metrics endpoint to avoid recursion and errors
+		if c.Path() == "/metrics" {
+			return c.Next()
+		}
+
 		start := time.Now()
 
 		// Process request
@@ -19,7 +24,13 @@ func PrometheusMiddleware() fiber.Handler {
 
 		// Record metrics
 		duration := time.Since(start).Seconds()
-		path := c.Route().Path
+
+		// Safely get the route path
+		path := c.Path()
+		route := c.Route()
+		if route != nil && route.Path != "" {
+			path = route.Path
+		}
 		if path == "" {
 			path = "unknown"
 		}
