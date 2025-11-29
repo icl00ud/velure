@@ -63,3 +63,13 @@ externalSecrets:
   awsSecrets:
     rabbitmq: "velure/production/rabbitmq"
     postgres: "velure/production/rds-orders"
+
+# Prometheus metrics configuration
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    labels:
+      prometheus: kube-prometheus
