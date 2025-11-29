@@ -599,3 +599,23 @@ func TestUpdateProductQuantity(t *testing.T) {
 		})
 	}
 }
+
+func TestSyncProductCatalogMetric_Success(t *testing.T) {
+	mockRepo := new(MockProductRepository)
+	mockRepo.On("GetProductsCount", mock.Anything).Return(int64(10), nil)
+
+	service := NewProductService(mockRepo)
+	service.SyncProductCatalogMetric(context.Background())
+
+	mockRepo.AssertExpectations(t)
+}
+
+func TestSyncProductCatalogMetric_Error(t *testing.T) {
+	mockRepo := new(MockProductRepository)
+	mockRepo.On("GetProductsCount", mock.Anything).Return(int64(0), errors.New("count failed"))
+
+	service := NewProductService(mockRepo)
+	service.SyncProductCatalogMetric(context.Background())
+
+	mockRepo.AssertExpectations(t)
+}

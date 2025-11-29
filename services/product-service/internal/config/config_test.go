@@ -1,10 +1,13 @@
 package config
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func TestNew(t *testing.T) {
@@ -194,6 +197,56 @@ func TestNewMongoDB_AtlasURI(t *testing.T) {
 func TestNewMongoDB_StandardURI(t *testing.T) {
 	// This test will fail to connect but should validate URI format
 	t.Skip("Skipping MongoDB connection test - requires actual MongoDB instance")
+}
+
+func TestNewMongoDB_WithInjectedClients(t *testing.T) {
+	t.Cleanup(func() {
+		mongoConnect = mongo.Connect
+		mongoPing = func(ctx context.Context, client *mongo.Client) error {
+			return client.Ping(ctx, nil)
+		}
+	})
+
+	fakeClient := &mongo.Client{}
+	pingCalled := false
+
+	mongoConnect = func(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error) {
+		return fakeClient, nil
+	}
+	mongoPing = func(ctx context.Context, client *mongo.Client) error {
+		pingCalled = true
+		assert.Equal(t, fakeClient, client)
+		return nil
+	}
+
+	client, err := NewMongoDB("mongodb://localhost:27017")
+	assert.NoError(t, err)
+	assert.True(t, pingCalled)
+	assert.Equal(t, fakeClient, client)
+}
+
+func TestNewMongoDB_SetsServerAPIForAtlasURI(t *testing.T) {
+	t.Cleanup(func() {
+		mongoConnect = mongo.Connect
+		mongoPing = func(ctx context.Context, client *mongo.Client) error {
+			return client.Ping(ctx, nil)
+		}
+	})
+
+	var capturedOpts *options.ClientOptions
+	mongoConnect = func(ctx context.Context, opts ...*options.ClientOptions) (*mongo.Client, error) {
+		if len(opts) > 0 {
+			capturedOpts = opts[0]
+		}
+		return &mongo.Client{}, nil
+	}
+	mongoPing = func(ctx context.Context, client *mongo.Client) error { return nil }
+
+	_, err := NewMongoDB("mongodb+srv://user:pass@cluster.mongodb.net/db")
+	assert.NoError(t, err)
+	if assert.NotNil(t, capturedOpts) {
+		assert.NotNil(t, capturedOpts.ServerAPIOptions)
+	}
 }
 
 func TestConfig_RedisAddr(t *testing.T) {

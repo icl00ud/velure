@@ -16,6 +16,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type mongoCollection interface {
+	Find(context.Context, interface{}, ...*options.FindOptions) (*mongo.Cursor, error)
+	CountDocuments(context.Context, interface{}, ...*options.CountOptions) (int64, error)
+	Distinct(context.Context, string, interface{}, ...*options.DistinctOptions) ([]interface{}, error)
+	InsertOne(context.Context, interface{}, ...*options.InsertOneOptions) (*mongo.InsertOneResult, error)
+	DeleteMany(context.Context, interface{}, ...*options.DeleteOptions) (*mongo.DeleteResult, error)
+	DeleteOne(context.Context, interface{}, ...*options.DeleteOptions) (*mongo.DeleteResult, error)
+	UpdateOne(context.Context, interface{}, interface{}, ...*options.UpdateOptions) (*mongo.UpdateResult, error)
+	FindOne(context.Context, interface{}, ...*options.FindOneOptions) *mongo.SingleResult
+}
+
 type ProductRepository interface {
 	GetAllProducts(ctx context.Context) ([]models.ProductResponse, error)
 	GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error)
@@ -32,7 +43,7 @@ type ProductRepository interface {
 }
 
 type productRepository struct {
-	collection *mongo.Collection
+	collection mongoCollection
 	redis      *redis.Client
 }
 

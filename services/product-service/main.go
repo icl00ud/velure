@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"product-service/internal/config"
@@ -20,9 +20,45 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+type appDependencies struct {
+	loadEnv   func() error
+	buildRepo func(cfg *config.Config) (repository.ProductRepository, func(context.Context) error, func(), error)
+	newSvc    func(repository.ProductRepository) services.ProductService
+	listen    func(app *fiber.App, addr string) error
+}
+
+var defaultDeps = appDependencies{
+	loadEnv: func() error { return godotenv.Load() },
+	buildRepo: func(cfg *config.Config) (repository.ProductRepository, func(context.Context) error, func(), error) {
+		mongodb, err := config.NewMongoDB(cfg.MongoURI)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		redis := config.NewRedis(cfg.RedisAddr, cfg.RedisPassword)
+		repo := repository.NewProductRepository(mongodb.Database(cfg.DatabaseName), redis)
+
+		return repo, mongodb.Disconnect, func() {
+			_ = redis.Close()
+		}, nil
+	},
+	newSvc: services.NewProductService,
+	listen: func(app *fiber.App, addr string) error {
+		return app.Listen(addr)
+	},
+}
+
+var fatalf = log.Fatal
+
 func main() {
+	if err := run(defaultDeps); err != nil {
+		fatalf(err)
+	}
+}
+
+func run(deps appDependencies) error {
 	// Load environment variables from .env file if it exists
-	if err := godotenv.Load(); err != nil {
+	if err := deps.loadEnv(); err != nil {
 		log.Println("No .env file found, using system environment variables")
 	}
 
@@ -35,27 +71,39 @@ func main() {
 	log.Printf("- MongoDB URI: %s", maskURI(cfg.MongoURI))
 	log.Printf("- Redis Address: %s", cfg.RedisAddr)
 
-	// Initialize database connections
-	mongodb, err := config.NewMongoDB(cfg.MongoURI)
+	repo, mongoDisconnect, redisClose, err := deps.buildRepo(cfg)
 	if err != nil {
-		log.Fatal("Failed to connect to MongoDB:", err)
+		return fmt.Errorf("failed to initialize repositories: %w", err)
 	}
-	defer func() {
-		if err := mongodb.Disconnect(context.Background()); err != nil {
-			log.Printf("Error disconnecting from MongoDB: %v", err)
-		}
-	}()
 
-	redis := config.NewRedis(cfg.RedisAddr, cfg.RedisPassword)
-	defer redis.Close()
+	if mongoDisconnect != nil {
+		defer func() {
+			if err := mongoDisconnect(context.Background()); err != nil {
+				log.Printf("Error disconnecting from MongoDB: %v", err)
+			}
+		}()
+	}
 
-	// Initialize repository
-	repo := repository.NewProductRepository(mongodb.Database(cfg.DatabaseName), redis)
+	if redisClose != nil {
+		defer redisClose()
+	}
 
 	// Initialize services
-	service := services.NewProductService(repo)
+	service := deps.newSvc(repo)
 	service.SyncProductCatalogMetric(context.Background())
 
+	app := setupFiberApp(service)
+
+	port := cfg.Port
+	if port == "" {
+		port = "3010"
+	}
+
+	log.Printf("Product service is running on port %s", port)
+	return deps.listen(app, ":"+port)
+}
+
+func setupFiberApp(service services.ProductService) *fiber.App {
 	// Initialize handlers
 	handler := handlers.NewProductHandler(service)
 	healthHandler := handlers.NewHealthHandler()
@@ -114,13 +162,7 @@ func main() {
 	apiProducts := api.Group("/api/product")
 	registerProductRoutes(apiProducts)
 
-	port := os.Getenv("PRODUCT_SERVICE_APP_PORT")
-	if port == "" {
-		port = "3010"
-	}
-
-	log.Printf("Product service is running on port %s", port)
-	log.Fatal(app.Listen(":" + port))
+	return app
 }
 
 // maskURI masks sensitive information in MongoDB URI for logging
@@ -140,4 +182,3 @@ func maskURI(uri string) string {
 	}
 	return uri
 }
-

@@ -94,6 +94,82 @@ func (m *MockProductService) UpdateProductQuantity(ctx context.Context, productI
 	return args.Error(0)
 }
 
+func TestSearchProducts(t *testing.T) {
+	tests := []struct {
+		name           string
+		query          string
+		mockReturn     []models.ProductResponse
+		mockError      error
+		expectedStatus int
+	}{
+		{
+			name:  "success",
+			query: "toy",
+			mockReturn: []models.ProductResponse{
+				{ID: "1", Name: "toy"},
+			},
+			expectedStatus: fiber.StatusOK,
+		},
+		{
+			name:           "missing query",
+			query:          "",
+			expectedStatus: fiber.StatusBadRequest,
+		},
+		{
+			name:           "service error",
+			query:          "toy",
+			mockError:      errors.New("lookup failed"),
+			expectedStatus: fiber.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockService := new(MockProductService)
+			if tt.query != "" {
+				mockService.On("GetProductsByName", mock.Anything, tt.query).Return(tt.mockReturn, tt.mockError)
+			}
+
+			handler := NewProductHandler(mockService)
+			app := fiber.New()
+			app.Get("/products/search", handler.SearchProducts)
+
+			url := "/products/search"
+			if tt.query != "" {
+				url += "?q=" + tt.query
+			}
+
+			req := httptest.NewRequest("GET", url, nil)
+			resp, err := app.Test(req)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+		})
+	}
+}
+
+func TestGetProductsREST(t *testing.T) {
+	mockService := new(MockProductService)
+	mockService.On("GetProductsByPage", mock.Anything, 1, 5).Return(&models.PaginatedProductsResponse{
+		Products:   []models.ProductResponse{{ID: "1", Name: "item"}},
+		Page:       1,
+		PageSize:   5,
+		TotalCount: 1,
+		TotalPages: 1,
+	}, nil)
+
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Get("/products", handler.GetProductsREST)
+
+	req := httptest.NewRequest("GET", "/products?page=1&limit=5", nil)
+	resp, err := app.Test(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+	mockService.AssertExpectations(t)
+}
+
 func TestGetAllProducts(t *testing.T) {
 	tests := []struct {
 		name           string

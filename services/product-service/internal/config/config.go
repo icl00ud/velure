@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -57,6 +58,13 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
+var (
+	mongoConnect = mongo.Connect
+	mongoPing    = func(ctx context.Context, client *mongo.Client) error {
+		return client.Ping(ctx, nil)
+	}
+)
+
 func NewMongoDB(uri string) (*mongo.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -66,17 +74,17 @@ func NewMongoDB(uri string) (*mongo.Client, error) {
 
 	// Only set ServerAPI for mongodb+srv:// URIs (MongoDB Atlas)
 	// Let the driver handle TLS automatically
-	if len(uri) > 13 && uri[:13] == "mongodb+srv://" {
+	if strings.HasPrefix(uri, "mongodb+srv://") {
 		clientOptions.SetServerAPIOptions(options.ServerAPI(options.ServerAPIVersion1))
 	}
 
-	client, err := mongo.Connect(ctx, clientOptions)
+	client, err := mongoConnect(ctx, clientOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	// Ping the database
-	if err := client.Ping(ctx, nil); err != nil {
+	if err := mongoPing(ctx, client); err != nil {
 		return nil, err
 	}
 
