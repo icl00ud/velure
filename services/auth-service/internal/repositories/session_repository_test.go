@@ -199,6 +199,21 @@ func TestSessionRepository_CountActiveSessions_NilContext(t *testing.T) {
 	}
 }
 
+func TestSessionRepository_CountActiveSessions_Error(t *testing.T) {
+	db := testutil.SetupTestDB(t)
+	repo := NewSessionRepository(db)
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("failed to get sql db: %v", err)
+	}
+	sqlDB.Close()
+
+	if _, err := repo.CountActiveSessions(context.Background()); err == nil {
+		t.Fatalf("expected error when counting with closed DB")
+	}
+}
+
 func TestSessionRepository_Delete(t *testing.T) {
 	db := testutil.SetupTestDB(t)
 	repo := NewSessionRepository(db)

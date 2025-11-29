@@ -393,3 +393,33 @@ func TestUserRepository_CountUsers(t *testing.T) {
 		t.Fatalf("CountUsers(nil) = %d, want 2", count)
 	}
 }
+
+func TestUserRepository_CountUsers_Error(t *testing.T) {
+	db := testutil.SetupTestDB(t)
+	repo := NewUserRepository(db)
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("failed to get sql db: %v", err)
+	}
+	sqlDB.Close()
+
+	if _, err := repo.CountUsers(context.Background()); err == nil {
+		t.Fatalf("expected error when counting with closed DB")
+	}
+}
+
+func TestUserRepository_GetByPage_Error(t *testing.T) {
+	db := testutil.SetupTestDB(t)
+	repo := NewUserRepository(db)
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("failed to get sql db: %v", err)
+	}
+	sqlDB.Close()
+
+	if _, _, err := repo.GetByPage(1, 10); err == nil {
+		t.Fatalf("expected error when querying with closed DB")
+	}
+}

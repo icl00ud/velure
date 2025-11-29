@@ -115,6 +115,29 @@ func TestAuthService_CreateUser(t *testing.T) {
 			wantErr: true,
 			errMsg:  "error creating user",
 		},
+		{
+			name: "session lookup error",
+			req: models.CreateUserRequest{
+				Name:     "Test User",
+				Email:    "test@example.com",
+				Password: "password123",
+			},
+			setupMock: func(mockUserRepo *mocks.MockUserRepositoryInterface, mockSessionRepo *mocks.MockSessionRepositoryInterface) {
+				mockUserRepo.EXPECT().
+					GetByEmail("test@example.com").
+					Return(nil, gorm.ErrRecordNotFound)
+
+				mockUserRepo.EXPECT().
+					Create(gomock.Any()).
+					Return(nil)
+
+				mockSessionRepo.EXPECT().
+					GetByUserID(uint(0)).
+					Return(nil, errors.New("session lookup failed"))
+			},
+			wantErr: true,
+			errMsg:  "error checking existing session",
+		},
 	}
 
 	for _, tt := range tests {
@@ -320,6 +343,38 @@ func TestAuthService_Login(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestAuthService_Login_SessionErrors(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
+
+	user := &models.User{ID: 1, Email: "user@example.com", Password: string(hashedPassword)}
+	mockUserRepo.EXPECT().GetByEmail("user@example.com").Return(user, nil)
+	mockSessionRepo.EXPECT().GetByUserID(uint(1)).Return(nil, gorm.ErrRecordNotFound)
+	mockSessionRepo.EXPECT().Create(gomock.Any()).Return(errors.New("create error"))
+
+	if _, err := service.Login(models.LoginRequest{Email: "user@example.com", Password: "password123"}); err == nil {
+		t.Fatalf("expected error when session creation fails")
+	}
+
+	mockUserRepo.EXPECT().GetByEmail("user@example.com").Return(user, nil)
+	existing := &models.Session{ID: 2, UserID: 1}
+	mockSessionRepo.EXPECT().GetByUserID(uint(1)).Return(existing, nil)
+	mockSessionRepo.EXPECT().Update(existing).Return(errors.New("update error"))
+
+	if _, err := service.Login(models.LoginRequest{Email: "user@example.com", Password: "password123"}); err == nil {
+		t.Fatalf("expected error when session update fails")
 	}
 }
 
@@ -833,6 +888,49 @@ func TestAuthService_UpdateOrCreateSessionAsync(t *testing.T) {
 	}
 	if session.ID != 99 {
 		t.Fatalf("expected session ID to be set, got %d", session.ID)
+	}
+}
+
+func TestAuthService_updateOrCreateSession_Errors(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
+
+	mockSessionRepo.EXPECT().
+		GetByUserID(uint(2)).
+		Return(nil, errors.New("db error"))
+
+	if _, err := service.updateOrCreateSession(2); err == nil {
+		t.Fatalf("expected error from get session")
+	}
+
+	existing := &models.Session{ID: 1, UserID: 3}
+	mockSessionRepo.EXPECT().
+		GetByUserID(uint(3)).
+		Return(existing, nil)
+	mockSessionRepo.EXPECT().
+		Update(existing).
+		Return(errors.New("update failed"))
+
+	if _, err := service.updateOrCreateSession(3); err == nil {
+		t.Fatalf("expected error from update session")
+	}
+
+	mockSessionRepo.EXPECT().
+		GetByUserID(uint(4)).
+		Return(nil, gorm.ErrRecordNotFound)
+	mockSessionRepo.EXPECT().
+		Create(gomock.Any()).
+		Return(errors.New("create failed"))
+
+	if _, err := service.updateOrCreateSession(4); err == nil {
+		t.Fatalf("expected error from create session")
 	}
 }
 

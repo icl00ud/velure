@@ -430,6 +430,23 @@ func TestAuthHandler_GetUsers(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:        "pagination error",
+			queryParams: "?page=1&pageSize=10",
+			setupMock: func() {
+				mockService.EXPECT().
+					GetUsersByPage(1, 10).
+					Return(nil, errors.New("paginate error"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
+				var body map[string]interface{}
+				json.Unmarshal(w.Body.Bytes(), &body)
+				if body["error"] == nil {
+					t.Error("Expected error in response")
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -706,5 +723,35 @@ func TestAuthHandler_Logout(t *testing.T) {
 			json.Unmarshal(w.Body.Bytes(), &responseBody)
 			tt.checkResponse(t, responseBody)
 		})
+	}
+}
+
+func TestAuthHandler_GetUserByEmail_MissingEmail(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := NewAuthHandler(nil)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = []gin.Param{{Key: "email", Value: ""}}
+
+	handler.GetUserByEmail(c)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestAuthHandler_Logout_MissingToken(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := NewAuthHandler(nil)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = []gin.Param{{Key: "refreshToken", Value: ""}}
+
+	handler.Logout(c)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
