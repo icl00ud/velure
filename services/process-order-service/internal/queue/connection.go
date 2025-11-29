@@ -3,17 +3,16 @@ package queue
 import (
 	"fmt"
 
-	"github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
 type RabbitMQConnection struct {
-	conn   *amqp091.Connection
+	conn   AMQPConnection
 	logger *zap.Logger
 }
 
 func NewRabbitMQConnection(amqpURL string, logger *zap.Logger) (*RabbitMQConnection, error) {
-	conn, err := amqp091.Dial(amqpURL)
+	conn, err := amqpDial(amqpURL)
 	if err != nil {
 		return nil, fmt.Errorf("dial rabbitmq: %w", err)
 	}
@@ -34,11 +33,11 @@ func (r *RabbitMQConnection) NewConsumer(queueName string) (Consumer, error) {
 
 	// Bind queue to exchange with routing key pattern for order events
 	err = ch.QueueBind(
-		queueName,      // queue name
-		"order.*",      // routing key pattern (matches order.created, order.completed, etc.)
-		"orders",       // exchange name
-		false,          // no-wait
-		nil,            // arguments
+		queueName, // queue name
+		"order.*", // routing key pattern (matches order.created, order.completed, etc.)
+		"orders",  // exchange name
+		false,     // no-wait
+		nil,       // arguments
 	)
 	if err != nil {
 		ch.Close()

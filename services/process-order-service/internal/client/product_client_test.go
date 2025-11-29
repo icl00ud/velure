@@ -120,3 +120,48 @@ func TestProductClient_UpdateQuantity_PositiveChange(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 }
+
+func TestProductClient_UpdateQuantity_TooManyRequests(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+		w.Write([]byte(`{"error":"retry later"}`))
+	}))
+	defer server.Close()
+
+	client := NewProductClient(server.URL)
+	err := client.UpdateQuantity("product789", -1)
+	if err == nil {
+		t.Fatal("expected transient error")
+	}
+	if te, ok := err.(*TransientError); !ok || te.StatusCode != http.StatusTooManyRequests {
+		t.Fatalf("expected TransientError with status 429, got %T: %v", err, err)
+	}
+}
+
+func TestProductClient_UpdateQuantity_UnexpectedStatusDefaultsToPermanent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTeapot)
+	}))
+	defer server.Close()
+
+	client := NewProductClient(server.URL)
+	err := client.UpdateQuantity("product123", -1)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if _, ok := err.(*PermanentError); !ok {
+		t.Fatalf("expected PermanentError for unexpected status, got %T", err)
+	}
+}
+
+func TestPermanentAndTransientErrorMessages(t *testing.T) {
+	pe := &PermanentError{Message: "not found", StatusCode: http.StatusNotFound}
+	if pe.Error() == "" {
+		t.Fatal("expected permanent error message")
+	}
+
+	te := &TransientError{Message: "try again", StatusCode: http.StatusTooManyRequests}
+	if te.Error() == "" {
+		t.Fatal("expected transient error message")
+	}
+}

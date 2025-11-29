@@ -18,6 +18,18 @@ type fakeChannel struct {
 	body      []byte
 }
 
+func (f *fakeChannel) Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp091.Table) (<-chan amqp091.Delivery, error) {
+	return nil, nil
+}
+
+func (f *fakeChannel) Qos(prefetchCount, prefetchSize int, global bool) error {
+	return nil
+}
+
+func (f *fakeChannel) QueueBind(queue, key, exchange string, noWait bool, args amqp091.Table) error {
+	return nil
+}
+
 func (f *fakeChannel) Publish(exchange, key string, mandatory, immediate bool, msg amqp091.Publishing) error {
 	f.published = true
 	f.exchange = exchange
@@ -31,12 +43,16 @@ func (f *fakeChannel) Close() error {
 	return nil
 }
 
+func (f *fakeChannel) ExchangeDeclare(name, kind string, durable, autoDelete, internal, noWait bool, args amqp091.Table) error {
+	return nil
+}
+
 type fakeConn struct {
 	ch     *fakeChannel
 	closed bool
 }
 
-func (f *fakeConn) Channel() (*amqp091.Channel, error) {
+func (f *fakeConn) Channel() (AMQPChannel, error) {
 	// Not used in tests because we inject channel directly.
 	return nil, nil
 }
