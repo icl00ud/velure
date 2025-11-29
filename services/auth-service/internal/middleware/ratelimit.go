@@ -13,6 +13,8 @@ type RateLimiter struct {
 	mu       sync.RWMutex
 	rate     int
 	burst    int
+	ticker   *time.Ticker
+	stop     chan struct{}
 }
 
 type Visitor struct {
@@ -22,10 +24,16 @@ type Visitor struct {
 }
 
 func NewRateLimiter(requestsPerSecond, burst int) *RateLimiter {
+	return newRateLimiterWithInterval(requestsPerSecond, burst, time.Minute)
+}
+
+func newRateLimiterWithInterval(requestsPerSecond, burst int, interval time.Duration) *RateLimiter {
 	rl := &RateLimiter{
 		visitors: make(map[string]*Visitor),
 		rate:     requestsPerSecond,
 		burst:    burst,
+		ticker:   time.NewTicker(interval),
+		stop:     make(chan struct{}),
 	}
 
 	// Goroutine para limpar visitantes inativos
@@ -71,19 +79,21 @@ func (v *Visitor) allow(rate, burst int) bool {
 }
 
 func (rl *RateLimiter) cleanupVisitors() {
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		rl.mu.Lock()
-		for ip, v := range rl.visitors {
-			v.mu.Lock()
-			if time.Since(v.lastSeen) > 3*time.Minute {
-				delete(rl.visitors, ip)
+	for {
+		select {
+		case <-rl.ticker.C:
+			rl.mu.Lock()
+			for ip, v := range rl.visitors {
+				v.mu.Lock()
+				if time.Since(v.lastSeen) > 3*time.Minute {
+					delete(rl.visitors, ip)
+				}
+				v.mu.Unlock()
 			}
-			v.mu.Unlock()
+			rl.mu.Unlock()
+		case <-rl.stop:
+			return
 		}
-		rl.mu.Unlock()
 	}
 }
 
@@ -102,6 +112,18 @@ func (rl *RateLimiter) Middleware() gin.HandlerFunc {
 		}
 
 		c.Next()
+	}
+}
+
+// Stop encerra a goroutine de limpeza (usado em testes)
+func (rl *RateLimiter) Stop() {
+	if rl.ticker != nil {
+		rl.ticker.Stop()
+	}
+	select {
+	case <-rl.stop:
+	default:
+		close(rl.stop)
 	}
 }
 

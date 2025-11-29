@@ -1,15 +1,20 @@
 package services
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
 
+	"velure-auth-service/internal/metrics"
 	"velure-auth-service/internal/mocks"
 	"velure-auth-service/internal/models"
 	"velure-auth-service/internal/testutil"
 
+	"github.com/go-redis/redismock/v9"
 	"github.com/golang-jwt/jwt/v5"
+	promtest "github.com/prometheus/client_golang/prometheus/testutil"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -797,6 +802,252 @@ func TestAuthService_GetUsersByPage(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestAuthService_UpdateOrCreateSessionAsync(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
+
+	mockSessionRepo.EXPECT().
+		GetByUserID(uint(1)).
+		Return(nil, gorm.ErrRecordNotFound)
+
+	mockSessionRepo.EXPECT().
+		Create(gomock.Any()).
+		DoAndReturn(func(s *models.Session) error {
+			s.ID = 99
+			return nil
+		})
+
+	session, err := service.updateOrCreateSessionAsync(1)
+	if err != nil {
+		t.Fatalf("updateOrCreateSessionAsync() error = %v", err)
+	}
+	if session.ID != 99 {
+		t.Fatalf("expected session ID to be set, got %d", session.ID)
+	}
+}
+
+func TestAuthService_SyncTotalUsersMetric(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	metrics.TotalUsers.Set(0)
+
+	mockUserRepo.EXPECT().
+		CountUsers(gomock.Any()).
+		Return(int64(7), nil)
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
+	service.SyncTotalUsersMetric(context.Background())
+
+	if got := promtest.ToFloat64(metrics.TotalUsers); got != 7 {
+		t.Fatalf("expected total users metric to be 7, got %.0f", got)
+	}
+}
+
+func TestAuthService_SyncTotalUsersMetric_Error(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	metrics.TotalUsers.Set(3)
+
+	mockUserRepo.EXPECT().
+		CountUsers(gomock.Any()).
+		Return(int64(0), errors.New("db error"))
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
+	service.SyncTotalUsersMetric(context.Background())
+
+	if got := promtest.ToFloat64(metrics.TotalUsers); got != 3 {
+		t.Fatalf("expected metric to remain unchanged on error, got %.0f", got)
+	}
+}
+
+func TestAuthService_ValidateAccessToken_UsesCache(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+	cfg.Performance.EnableCache = true
+	cfg.Performance.TokenCacheTTL = 1
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
+	token := generateTestToken(t, cfg.JWT.Secret, 1, time.Now().Add(time.Hour))
+
+	user := &models.User{ID: 1, Email: "cached@example.com"}
+	mockUserRepo.EXPECT().
+		GetByID(uint(1)).
+		Return(user, nil)
+
+	firstUser, err := service.ValidateAccessToken(token)
+	if err != nil || firstUser.ID != 1 {
+		t.Fatalf("first ValidateAccessToken() call failed: %v", err)
+	}
+
+	time.Sleep(10 * time.Millisecond)
+
+	secondUser, err := service.ValidateAccessToken(token)
+	if err != nil {
+		t.Fatalf("expected cached validation to succeed, got %v", err)
+	}
+	if secondUser.Email != user.Email {
+		t.Fatalf("unexpected cached user: %#v", secondUser)
+	}
+}
+
+func TestAuthService_GetUserByID_FromRedisCache(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	user := &models.User{ID: 1, Email: "cached@example.com", Name: "Cached"}
+	data, _ := json.Marshal(user)
+
+	redisClient, redisMock := redismock.NewClientMock()
+	redisMock.ExpectGet("user:id:1").SetVal(string(data))
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, redisClient)
+
+	result, err := service.GetUserByID(1)
+	if err != nil {
+		t.Fatalf("GetUserByID() unexpected error: %v", err)
+	}
+	if result.Email != user.Email {
+		t.Fatalf("expected cached user email %s, got %s", user.Email, result.Email)
+	}
+
+	if err := redisMock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet redis expectations: %v", err)
+	}
+}
+
+func TestAuthService_GetUserByEmail_FromRedisCache(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	user := &models.User{ID: 2, Email: "cache@test.com", Name: "Cache User"}
+	data, _ := json.Marshal(user)
+
+	redisClient, redisMock := redismock.NewClientMock()
+	redisMock.ExpectGet("user:email:cache@test.com").SetVal(string(data))
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, redisClient)
+
+	result, err := service.GetUserByEmail("cache@test.com")
+	if err != nil {
+		t.Fatalf("GetUserByEmail() unexpected error: %v", err)
+	}
+	if result.ID != user.ID {
+		t.Fatalf("expected cached user id %d, got %d", user.ID, result.ID)
+	}
+
+	if err := redisMock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet redis expectations: %v", err)
+	}
+}
+
+func TestAuthService_GetUserByID_CacheMissWithRedis(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	redisClient, redisMock := redismock.NewClientMock()
+	redisMock.ExpectGet("user:id:3").RedisNil()
+
+	mockUserRepo.EXPECT().
+		GetByID(uint(3)).
+		Return(&models.User{ID: 3, Email: "miss@example.com"}, nil)
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, redisClient)
+
+	_, err := service.GetUserByID(3)
+	if err != nil {
+		t.Fatalf("expected successful fetch after cache miss, got %v", err)
+	}
+
+	if err := redisMock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet redis expectations: %v", err)
+	}
+}
+
+func TestAuthService_SyncActiveSessionsMetric(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	metrics.ActiveSessions.Set(0)
+
+	mockSessionRepo.EXPECT().
+		CountActiveSessions(gomock.Any()).
+		Return(int64(4), nil)
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
+	service.SyncActiveSessionsMetric(nil)
+
+	if got := promtest.ToFloat64(metrics.ActiveSessions); got != 4 {
+		t.Fatalf("expected active sessions metric to be 4, got %.0f", got)
+	}
+}
+
+func TestAuthService_SyncActiveSessionsMetric_Error(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	metrics.ActiveSessions.Set(2)
+
+	mockSessionRepo.EXPECT().
+		CountActiveSessions(gomock.Any()).
+		Return(int64(0), errors.New("count error"))
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
+	service.SyncActiveSessionsMetric(nil)
+
+	if got := promtest.ToFloat64(metrics.ActiveSessions); got != 2 {
+		t.Fatalf("expected metric to remain unchanged on error, got %.0f", got)
 	}
 }
 

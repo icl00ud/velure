@@ -3,12 +3,14 @@ package database
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"velure-auth-service/internal/config"
 	"velure-auth-service/internal/models"
 
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -23,7 +25,15 @@ func Connect(cfg config.DatabaseConfig) (*gorm.DB, error) {
 			cfg.Host, cfg.Username, cfg.Password, cfg.Database, cfg.Port)
 	}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	var dialector gorm.Dialector
+	if strings.HasPrefix(dsn, "sqlite://") {
+		sqliteDSN := strings.TrimPrefix(dsn, "sqlite://")
+		dialector = sqlite.Open(sqliteDSN)
+	} else {
+		dialector = postgres.Open(dsn)
+	}
+
+	db, err := gorm.Open(dialector, &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
