@@ -21,12 +21,14 @@ type DistributedCache struct {
 	data    sync.Map
 	cleanup *time.Ticker
 	mu      sync.RWMutex
+	stop    chan struct{}
 }
 
 // NewDistributedCache cria um novo cache distribuído
 func NewDistributedCache(cleanupInterval time.Duration) *DistributedCache {
 	dc := &DistributedCache{
 		cleanup: time.NewTicker(cleanupInterval),
+		stop:    make(chan struct{}),
 	}
 
 	// Goroutine para limpar entradas expiradas
@@ -36,16 +38,21 @@ func NewDistributedCache(cleanupInterval time.Duration) *DistributedCache {
 }
 
 func (dc *DistributedCache) cleanupExpired() {
-	for range dc.cleanup.C {
-		now := time.Now()
-		dc.data.Range(func(key, value interface{}) bool {
-			if entry, ok := value.(*CacheEntry); ok {
-				if now.After(entry.ExpiresAt) {
-					dc.data.Delete(key)
+	for {
+		select {
+		case <-dc.cleanup.C:
+			now := time.Now()
+			dc.data.Range(func(key, value interface{}) bool {
+				if entry, ok := value.(*CacheEntry); ok {
+					if now.After(entry.ExpiresAt) {
+						dc.data.Delete(key)
+					}
 				}
-			}
-			return true
-		})
+				return true
+			})
+		case <-dc.stop:
+			return
+		}
 	}
 }
 
@@ -159,6 +166,11 @@ func (dc *DistributedCache) BatchSet(items map[string]interface{}, ttl time.Dura
 // Stop para a goroutine de limpeza
 func (dc *DistributedCache) Stop() {
 	dc.cleanup.Stop()
+	select {
+	case <-dc.stop:
+	default:
+		close(dc.stop)
+	}
 }
 
 // UserCache é um cache especializado para usuários

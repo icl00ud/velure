@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +21,12 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+func run() error {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
@@ -36,30 +43,24 @@ func main() {
 	log.Println("Connecting to database...")
 	db, err := database.Connect(cfg.Database)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 	log.Println("Database connection established successfully")
 
 	// Auto migrate
 	log.Println("Running database migrations...")
 	if err := database.Migrate(db); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
+		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 	log.Println("Database migrations completed successfully")
 
 	// Initialize Redis
 	log.Println("Connecting to Redis...")
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     cfg.Redis.Addr,
-		Password: cfg.Redis.Password,
-		DB:       cfg.Redis.DB,
-	})
-	defer redisClient.Close()
-
-	ctx := context.Background()
-	if err := redisClient.Ping(ctx).Err(); err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
+	redisClient, err := connectRedis(cfg.Redis)
+	if err != nil {
+		return fmt.Errorf("failed to connect to redis: %w", err)
 	}
+	defer redisClient.Close()
 	log.Printf("Redis connection established successfully at %s", cfg.Redis.Addr)
 
 	// Initialize repositories
@@ -94,9 +95,29 @@ func main() {
 
 	log.Printf("Starting HTTP server on port %s...", port)
 	log.Println("Authentication service initialization completed successfully")
-	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	if os.Getenv("AUTH_SERVICE_SKIP_HTTP") == "true" {
+		return nil
 	}
+
+	if err := router.Run(":" + port); err != nil {
+		return fmt.Errorf("failed to start server: %w", err)
+	}
+	return nil
+}
+
+func connectRedis(cfg config.RedisConfig) (*redis.Client, error) {
+	client := redis.NewClient(&redis.Options{
+		Addr:     cfg.Addr,
+		Password: cfg.Password,
+		DB:       cfg.DB,
+	})
+
+	ctx := context.Background()
+	if err := client.Ping(ctx).Err(); err != nil {
+		return nil, err
+	}
+
+	return client, nil
 }
 
 func setupRoutes(router *gin.Engine, authHandler *handlers.AuthHandler) {
@@ -156,4 +177,3 @@ func setupRouter(cfg *config.Config, authHandler *handlers.AuthHandler) *gin.Eng
 
 	return router
 }
-

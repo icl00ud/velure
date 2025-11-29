@@ -9,6 +9,7 @@ import (
 	"velure-auth-service/internal/handlers"
 	"velure-auth-service/internal/mocks"
 
+	miniredis "github.com/alicebob/miniredis/v2"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/mock/gomock"
 )
@@ -31,13 +32,13 @@ func TestSetupRoutes(t *testing.T) {
 	}
 
 	expectedRoutes := map[string]string{
-		"POST /authentication/register":                  "POST",
-		"POST /authentication/login":                     "POST",
-		"POST /authentication/validateToken":             "POST",
-		"GET /authentication/users":                      "GET",
-		"GET /authentication/user/id/:id":                "GET",
-		"GET /authentication/user/email/:email":          "GET",
-		"DELETE /authentication/logout/:refreshToken":    "DELETE",
+		"POST /authentication/register":               "POST",
+		"POST /authentication/login":                  "POST",
+		"POST /authentication/validateToken":          "POST",
+		"GET /authentication/users":                   "GET",
+		"GET /authentication/user/id/:id":             "GET",
+		"GET /authentication/user/email/:email":       "GET",
+		"DELETE /authentication/logout/:refreshToken": "DELETE",
 	}
 
 	foundRoutes := make(map[string]bool)
@@ -189,5 +190,20 @@ func TestSetupRouter_HasMiddleware(t *testing.T) {
 	corsHeader := w.Header().Get("Access-Control-Allow-Origin")
 	if corsHeader == "" {
 		t.Error("Expected CORS headers to be set by middleware")
+	}
+}
+
+func TestRun_WithSQLiteAndRedis(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockRedis := miniredis.RunT(t)
+
+	t.Setenv("AUTH_SERVICE_SKIP_HTTP", "true")
+	t.Setenv("POSTGRES_URL", "sqlite://file::memory:?cache=shared")
+	t.Setenv("REDIS_HOST", mockRedis.Host())
+	t.Setenv("REDIS_PORT", mockRedis.Port())
+
+	if err := run(); err != nil {
+		t.Fatalf("run() returned unexpected error: %v", err)
 	}
 }

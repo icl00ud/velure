@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"testing"
 
 	"velure-auth-service/internal/models"
@@ -296,12 +297,12 @@ func TestUserRepository_GetByPage(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		page          int
-		pageSize      int
-		wantCount     int
-		wantTotal     int64
-		wantErr       bool
+		name      string
+		page      int
+		pageSize  int
+		wantCount int
+		wantTotal int64
+		wantErr   bool
 	}{
 		{
 			name:      "first page with 5 items",
@@ -353,5 +354,42 @@ func TestUserRepository_GetByPage(t *testing.T) {
 				t.Errorf("GetByPage() total = %d, want %d", total, tt.wantTotal)
 			}
 		})
+	}
+}
+
+func TestUserRepository_CountUsers(t *testing.T) {
+	db := testutil.SetupTestDB(t)
+	repo := NewUserRepository(db)
+
+	user1 := testutil.CreateTestUser(func(u *models.User) {
+		u.ID = 0
+		u.Email = "count1@example.com"
+	})
+	user2 := testutil.CreateTestUser(func(u *models.User) {
+		u.ID = 0
+		u.Email = "count2@example.com"
+	})
+
+	if err := repo.Create(user1); err != nil {
+		t.Fatalf("failed to create first user: %v", err)
+	}
+	if err := repo.Create(user2); err != nil {
+		t.Fatalf("failed to create second user: %v", err)
+	}
+
+	count, err := repo.CountUsers(context.Background())
+	if err != nil {
+		t.Fatalf("CountUsers() error = %v", err)
+	}
+	if count != 2 {
+		t.Fatalf("CountUsers() = %d, want 2", count)
+	}
+
+	count, err = repo.CountUsers(nil)
+	if err != nil {
+		t.Fatalf("CountUsers(nil) error = %v", err)
+	}
+	if count != 2 {
+		t.Fatalf("CountUsers(nil) = %d, want 2", count)
 	}
 }

@@ -123,3 +123,22 @@ func TestMigrate_IdempotentOperation(t *testing.T) {
 		t.Errorf("Second Migrate() failed (should be idempotent): %v", err)
 	}
 }
+
+func TestConnect_WithSQLiteURL(t *testing.T) {
+	cfg := config.DatabaseConfig{
+		URL: "sqlite://file::memory:?cache=shared",
+	}
+
+	db, err := Connect(cfg)
+	if err != nil {
+		t.Fatalf("Connect() with sqlite URL error = %v", err)
+	}
+
+	if err := Migrate(db); err != nil {
+		t.Fatalf("Migrate() failed for sqlite connection: %v", err)
+	}
+
+	if !db.Migrator().HasTable(&models.User{}) {
+		t.Fatalf("expected users table to exist after sqlite migration")
+	}
+}

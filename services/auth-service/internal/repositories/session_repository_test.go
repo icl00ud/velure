@@ -175,6 +175,30 @@ func TestSessionRepository_CountActiveSessions(t *testing.T) {
 	}
 }
 
+func TestSessionRepository_CountActiveSessions_NilContext(t *testing.T) {
+	db := testutil.SetupTestDB(t)
+	repo := NewSessionRepository(db)
+	userRepo := NewUserRepository(db)
+
+	user := testutil.CreateTestUser()
+	user.ID = 0
+	userRepo.Create(user)
+
+	session := testutil.CreateTestSession(user.ID, func(s *models.Session) {
+		s.ID = 0
+		s.ExpiresAt = time.Now().Add(1 * time.Hour)
+	})
+	repo.Create(session)
+
+	count, err := repo.CountActiveSessions(nil)
+	if err != nil {
+		t.Fatalf("CountActiveSessions(nil) error = %v", err)
+	}
+	if count != 1 {
+		t.Fatalf("CountActiveSessions(nil) = %d, want 1", count)
+	}
+}
+
 func TestSessionRepository_Delete(t *testing.T) {
 	db := testutil.SetupTestDB(t)
 	repo := NewSessionRepository(db)
