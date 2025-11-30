@@ -105,6 +105,16 @@ func (s *AuthService) CreateUser(req models.CreateUserRequest) (*models.Registra
 		return nil, fmt.Errorf("error creating session: %w", err)
 	}
 
+	// Cacheia o usuário recém-registrado para acelerar o primeiro login
+	if s.redis != nil {
+		ctx := context.Background()
+		if userJSON, err := json.Marshal(user); err == nil {
+			cacheTTL := time.Duration(s.config.Performance.TokenCacheTTL) * time.Second
+			s.redis.Set(ctx, fmt.Sprintf("user:email:%s", user.Email), userJSON, cacheTTL)
+			s.redis.Set(ctx, fmt.Sprintf("user:id:%d", user.ID), userJSON, cacheTTL)
+		}
+	}
+
 	// PERFORMANCE: Métricas de count removidas - devem ser coletadas por job periódico
 	// para evitar sobrecarga de queries COUNT durante picos de carga
 	// TODO: Implementar cronjob para atualizar total_users e active_sessions a cada 30s
