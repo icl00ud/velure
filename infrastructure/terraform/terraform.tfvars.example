@@ -44,7 +44,7 @@ node_max_size     = 2
 # ===========================
 rds_instance_class    = "db.t4g.micro"  # Free Tier
 rds_allocated_storage = 20              # Free Tier: 20GB
-rds_engine_version    = "16.3"          # PostgreSQL 16.3
+rds_engine_version    = "17.4"          # PostgreSQL 17.4
 
 # ===========================
 # RDS Auth Service

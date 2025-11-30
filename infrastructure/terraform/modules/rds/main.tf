@@ -17,7 +17,7 @@ resource "aws_db_subnet_group" "main" {
 # RDS Parameter Group
 resource "aws_db_parameter_group" "main" {
   name   = "${var.identifier}-pg"
-  family = "postgres16"
+  family = "postgres17"
 
   # Otimizações para free tier / low resource
   # Valores em formato numérico conforme requisito do AWS RDS

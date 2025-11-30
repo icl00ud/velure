@@ -126,11 +126,7 @@ cloud-down: ## Destruir TODA infraestrutura AWS + deletar secrets forçadamente
 	@echo "⚠️  ATENÇÃO: Esta ação é DESTRUTIVA e IRREVERSÍVEL!"
 	@echo ""
 	@echo "Será removido:"
-	@echo "  • Todos os recursos Kubernetes (pods, services, ingresses)"
-	@echo "  • EKS Cluster + Node Groups"
-	@echo "  • RDS Databases (auth + orders)"
-	@echo "  • AmazonMQ Broker"
-	@echo "  • VPC + Subnets + NAT Gateway"
+	@echo "  • Toda a infraestrutura gerenciada pelo Terraform (EKS, RDS, VPC etc.)"
 	@echo "  • Secrets Manager (FORÇADO - mesmo pendentes de deleção)"
 	@echo ""
 	@read -p "Digite 'DESTROY' para confirmar: " confirm; \
@@ -139,7 +135,13 @@ cloud-down: ## Destruir TODA infraestrutura AWS + deletar secrets forçadamente
 		exit 1; \
 	fi
 	@echo ""
-	@echo "🗑️  Fase 1: Deletando secrets forçadamente..."
+	@echo "🗑️  Fase 1: Destruindo infraestrutura Terraform..."
+	@echo ""
+	cd infrastructure/terraform && terraform destroy -auto-approve
+	@echo ""
+	@echo "✅ Terraform destroy concluído."
+	@echo ""
+	@echo "🗑️  Fase 2: Deletando secrets forçadamente..."
 	@echo ""
 	@aws secretsmanager list-secrets --region us-east-1 --query 'SecretList[?starts_with(Name, `velure-`)].Name' --output text | \
 	tr '\t' '\n' | while read secret; do \
@@ -149,27 +151,6 @@ cloud-down: ## Destruir TODA infraestrutura AWS + deletar secrets forçadamente
 		fi; \
 	done
 	@echo "✅ Secrets deletados."
-	@echo ""
-	@echo "🗑️  Fase 2: Limpando recursos Kubernetes..."
-	@echo ""
-	@echo "Configurando kubectl..."
-	@aws eks update-kubeconfig --region us-east-1 --name velure-production 2>/dev/null || true
-	@echo "Deletando Helm releases..."
-	@helm uninstall velure-auth velure-product velure-publish-order velure-process-order velure-ui -n default 2>/dev/null || true
-	@helm uninstall kube-prometheus-stack -n monitoring 2>/dev/null || true
-	@helm uninstall velure-datastores -n datastores 2>/dev/null || true
-	@helm uninstall aws-load-balancer-controller -n kube-system 2>/dev/null || true
-	@echo "Deletando namespaces..."
-	@kubectl delete namespace monitoring datastores 2>/dev/null || true
-	@echo "Deletando PVCs..."
-	@kubectl delete pvc --all -A 2>/dev/null || true
-	@echo "Aguardando cleanup de ENIs (30 segundos)..."
-	@sleep 30
-	@echo "✅ Recursos Kubernetes limpos."
-	@echo ""
-	@echo "🗑️  Fase 3: Destruindo infraestrutura Terraform..."
-	@echo ""
-	cd infrastructure/terraform && terraform destroy -auto-approve
 	@echo ""
 	@echo "✅ INFRAESTRUTURA AWS COMPLETAMENTE REMOVIDA!"
 	@echo ""

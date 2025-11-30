@@ -1,44 +1,46 @@
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Rate, Trend, Counter } from 'k6/metrics';
+import http from "k6/http";
+import { check, sleep } from "k6";
+import { Rate, Trend, Counter } from "k6/metrics";
 
 // Custom metrics
-const registrationFailureRate = new Rate('registration_failures');
-const loginFailureRate = new Rate('login_failures');
-const productListFailureRate = new Rate('product_list_failures');
-const orderCreationFailureRate = new Rate('order_creation_failures');
-const endToEndDuration = new Trend('end_to_end_duration');
-const orderTotal = new Trend('order_total_value');
-const ordersCreated = new Counter('orders_created_total');
+const registrationFailureRate = new Rate("registration_failures");
+const loginFailureRate = new Rate("login_failures");
+const productListFailureRate = new Rate("product_list_failures");
+const orderCreationFailureRate = new Rate("order_creation_failures");
+const endToEndDuration = new Trend("end_to_end_duration");
+const orderTotal = new Trend("order_total_value");
+const ordersCreated = new Counter("orders_created_total");
 
 // Load test configuration
 // Progressive ramp: 10 → 150 VUs over 7 minutes, then sustained load
+// Load test configuration
+// Progressive ramp: 10 → 150 VUs aumentando a cada 2 minutos, depois carga sustentada
 export const options = {
   stages: [
-    { duration: '1m', target: 10 },   // Warmup: Start with 10 users
-    { duration: '1m', target: 30 },   // Ramp: 10 → 30 users
-    { duration: '1m', target: 50 },   // Ramp: 30 → 50 users
-    { duration: '1m', target: 70 },   // Ramp: 50 → 70 users
-    { duration: '1m', target: 90 },   // Ramp: 70 → 90 users
-    { duration: '1m', target: 110 },  // Ramp: 90 → 110 users
-    { duration: '1m', target: 130 },  // Ramp: 110 → 130 users
-    { duration: '1m', target: 150 },  // Ramp: 130 → 150 users (peak)
-    { duration: '2m', target: 150 },  // Sustained: Hold at 150 users
-    { duration: '1m', target: 0 },    // Ramp down: 150 → 0
+    { duration: "2m", target: 10 }, // Warmup: 10 usuários
+    { duration: "2m", target: 30 }, // 10 → 30
+    { duration: "2m", target: 50 }, // 30 → 50
+    { duration: "2m", target: 70 }, // 50 → 70
+    { duration: "2m", target: 90 }, // 70 → 90
+    { duration: "2m", target: 110 }, // 90 → 110
+    { duration: "2m", target: 130 }, // 110 → 130
+    { duration: "2m", target: 150 }, // 130 → 150 (pico)
+    { duration: "2m", target: 150 }, // Sustained: mantém 150 usuários por 2m
+    { duration: "2m", target: 0 }, // Ramp down: 150 → 0 em 2m
   ],
   thresholds: {
-    http_req_duration: ['p(95)<3000'], // 95% of requests should be below 3s (relaxed for high load)
-    http_req_failed: ['rate<0.15'],    // Error rate should be below 15% (relaxed for high load)
-    registration_failures: ['rate<0.15'],
-    login_failures: ['rate<0.15'],
-    product_list_failures: ['rate<0.15'],
-    order_creation_failures: ['rate<0.25'], // Allow higher failure rate at peak load
-    end_to_end_duration: ['p(95)<15000'], // 95% of full journeys should complete in 15s
+    http_req_duration: ["p(95)<3000"],
+    http_req_failed: ["rate<0.15"],
+    registration_failures: ["rate<0.15"],
+    login_failures: ["rate<0.15"],
+    product_list_failures: ["rate<0.15"],
+    order_creation_failures: ["rate<0.25"],
+    end_to_end_duration: ["p(95)<15000"],
   },
 };
 
 // Get base URL from environment variable or use default
-const BASE_URL = __ENV.BASE_URL || 'https://your-k8s-ingress-url.com';
+const BASE_URL = __ENV.BASE_URL || "https://your-k8s-ingress-url.com";
 
 // Helper function to generate unique user data
 function generateUserData() {
@@ -50,13 +52,14 @@ function generateUserData() {
   return {
     name: `User ${uniqueId}`,
     email: `user_${uniqueId}@test.com`,
-    password: 'Test@123456',
+    password: "Test@123456",
   };
 }
 
 // Helper function to select random products
 function selectRandomProducts(products, minItems = 1, maxItems = 3) {
-  const numItems = Math.floor(Math.random() * (maxItems - minItems + 1)) + minItems;
+  const numItems =
+    Math.floor(Math.random() * (maxItems - minItems + 1)) + minItems;
   const selectedProducts = [];
 
   // Create a copy of products array to avoid modifying original
@@ -80,26 +83,26 @@ function selectRandomProducts(products, minItems = 1, maxItems = 3) {
 export default function () {
   const startTime = Date.now();
   const userData = generateUserData();
-  let accessToken = '';
+  let accessToken = "";
 
   // Step 1: Register user
   const registerPayload = JSON.stringify(userData);
   const registerParams = {
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    tags: { name: 'Register' },
+    tags: { name: "Register" },
   };
 
   const registerRes = http.post(
     `${BASE_URL}/api/auth/register`,
     registerPayload,
-    registerParams
+    registerParams,
   );
 
   const registerSuccess = check(registerRes, {
-    'registration status is 201': (r) => r.status === 201,
-    'registration returns access token': (r) => {
+    "registration status is 201": (r) => r.status === 201,
+    "registration returns access token": (r) => {
       try {
         const body = JSON.parse(r.body);
         return body.accessToken !== undefined;
@@ -112,7 +115,9 @@ export default function () {
   registrationFailureRate.add(!registerSuccess);
 
   if (!registerSuccess) {
-    console.error(`Registration failed: ${registerRes.status} - ${registerRes.body}`);
+    console.error(
+      `Registration failed: ${registerRes.status} - ${registerRes.body}`,
+    );
     return;
   }
 
@@ -136,20 +141,20 @@ export default function () {
 
   const loginParams = {
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    tags: { name: 'Login' },
+    tags: { name: "Login" },
   };
 
   const loginRes = http.post(
     `${BASE_URL}/api/auth/login`,
     loginPayload,
-    loginParams
+    loginParams,
   );
 
   const loginSuccess = check(loginRes, {
-    'login status is 200': (r) => r.status === 200,
-    'login returns access token': (r) => {
+    "login status is 200": (r) => r.status === 200,
+    "login returns access token": (r) => {
       try {
         const body = JSON.parse(r.body);
         return body.accessToken !== undefined;
@@ -182,19 +187,19 @@ export default function () {
   // Response format: { products: [...], totalCount, page, pageSize, totalPages }
   const productParams = {
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    tags: { name: 'ListProducts' },
+    tags: { name: "ListProducts" },
   };
 
   const productRes = http.get(
     `${BASE_URL}/api/product/products?page=1&limit=20`,
-    productParams
+    productParams,
   );
 
   const productSuccess = check(productRes, {
-    'product list status is 200': (r) => r.status === 200,
-    'product list returns items': (r) => {
+    "product list status is 200": (r) => r.status === 200,
+    "product list returns items": (r) => {
       try {
         const body = JSON.parse(r.body);
         return body.products && body.products.length > 0;
@@ -207,7 +212,9 @@ export default function () {
   productListFailureRate.add(!productSuccess);
 
   if (!productSuccess) {
-    console.error(`Product list failed: ${productRes.status} - ${productRes.body}`);
+    console.error(
+      `Product list failed: ${productRes.status} - ${productRes.body}`,
+    );
     return;
   }
 
@@ -221,7 +228,7 @@ export default function () {
   }
 
   if (products.length === 0) {
-    console.error('No products available to order');
+    console.error("No products available to order");
     return;
   }
 
@@ -235,21 +242,21 @@ export default function () {
 
   const orderParams = {
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
     },
-    tags: { name: 'CreateOrder' },
+    tags: { name: "CreateOrder" },
   };
 
   const orderRes = http.post(
     `${BASE_URL}/api/order/create-order`,
     orderPayload,
-    orderParams
+    orderParams,
   );
 
   const orderSuccess = check(orderRes, {
-    'order creation status is 201': (r) => r.status === 201,
-    'order returns order_id': (r) => {
+    "order creation status is 201": (r) => r.status === 201,
+    "order returns order_id": (r) => {
       try {
         const body = JSON.parse(r.body);
         return body.order_id !== undefined;
@@ -257,7 +264,7 @@ export default function () {
         return false;
       }
     },
-    'order returns total': (r) => {
+    "order returns total": (r) => {
       try {
         const body = JSON.parse(r.body);
         return body.total !== undefined && body.total > 0;
@@ -278,7 +285,9 @@ export default function () {
       console.error(`Failed to parse order response: ${e}`);
     }
   } else {
-    console.error(`Order creation failed: ${orderRes.status} - ${orderRes.body}`);
+    console.error(
+      `Order creation failed: ${orderRes.status} - ${orderRes.body}`,
+    );
   }
 
   // Record end-to-end duration
@@ -290,13 +299,15 @@ export default function () {
 
 // Setup function (runs once per VU at the beginning)
 export function setup() {
-  console.log('🚀 Starting user journey load test');
+  console.log("🚀 Starting user journey load test");
   console.log(`📍 Base URL: ${BASE_URL}`);
-  console.log('📊 Test will simulate: Register → Login → Browse Products → Create Order');
+  console.log(
+    "📊 Test will simulate: Register → Login → Browse Products → Create Order",
+  );
 
   // Verify the base URL is accessible
   const healthCheck = http.get(`${BASE_URL}/health`, {
-    timeout: '10s',
+    timeout: "10s",
   });
 
   if (healthCheck.status !== 200 && healthCheck.status !== 404) {
@@ -308,6 +319,6 @@ export function setup() {
 
 // Teardown function (runs once at the end)
 export function teardown(data) {
-  console.log('✅ Load test completed');
+  console.log("✅ Load test completed");
   console.log(`⏱️  Test duration: ${(Date.now() - data.timestamp) / 1000}s`);
 }
