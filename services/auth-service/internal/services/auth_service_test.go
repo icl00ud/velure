@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -12,9 +13,11 @@ import (
 	"velure-auth-service/internal/models"
 	"velure-auth-service/internal/testutil"
 
+	miniredis "github.com/alicebob/miniredis/v2"
 	"github.com/go-redis/redismock/v9"
 	"github.com/golang-jwt/jwt/v5"
 	promtest "github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -184,6 +187,79 @@ func TestAuthService_CreateUser(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestAuthService_CreateUser_CachesUserInRedis(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+	cfg.Performance.TokenCacheTTL = 120
+
+	mockRedis := miniredis.RunT(t)
+	redisClient := redis.NewClient(&redis.Options{Addr: mockRedis.Addr()})
+	defer redisClient.Close()
+
+	mockUserRepo.EXPECT().
+		GetByEmail("cache@test.com").
+		Return(nil, gorm.ErrRecordNotFound)
+	mockUserRepo.EXPECT().
+		Create(gomock.Any()).
+		DoAndReturn(func(u *models.User) error {
+			u.ID = 42
+			u.CreatedAt = time.Now()
+			u.UpdatedAt = time.Now()
+			return nil
+		})
+
+	mockSessionRepo.EXPECT().
+		GetByUserID(uint(42)).
+		Return(nil, gorm.ErrRecordNotFound)
+	mockSessionRepo.EXPECT().
+		Create(gomock.Any()).
+		Return(nil)
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, redisClient)
+
+	req := models.CreateUserRequest{
+		Name:     "Cache User",
+		Email:    "cache@test.com",
+		Password: "password123",
+	}
+
+	if _, err := service.CreateUser(req); err != nil {
+		t.Fatalf("CreateUser() unexpected error: %v", err)
+	}
+
+	emailKey := "user:email:cache@test.com"
+	idKey := fmt.Sprintf("user:id:%d", 42)
+
+	emailValue, err := mockRedis.Get(emailKey)
+	if err != nil {
+		t.Fatalf("expected user cached by email, got error: %v", err)
+	}
+
+	var cachedUser models.User
+	if err := json.Unmarshal([]byte(emailValue), &cachedUser); err != nil {
+		t.Fatalf("failed to unmarshal cached user: %v", err)
+	}
+	if cachedUser.Email != req.Email {
+		t.Fatalf("expected cached user email %s, got %s", req.Email, cachedUser.Email)
+	}
+	if cachedUser.ID != 42 {
+		t.Fatalf("expected cached user id 42, got %d", cachedUser.ID)
+	}
+
+	if _, err := mockRedis.Get(idKey); err != nil {
+		t.Fatalf("expected user cached by id, got error: %v", err)
+	}
+
+	if ttl := mockRedis.TTL(emailKey); ttl <= 0 {
+		t.Fatalf("expected cache TTL to be set, got %v", ttl)
 	}
 }
 
