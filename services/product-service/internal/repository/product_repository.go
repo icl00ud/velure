@@ -175,6 +175,22 @@ func (r *productRepository) GetProductsByPage(ctx context.Context, page, pageSiz
 }
 
 func (r *productRepository) GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) (*models.PaginatedProductsResponse, error) {
+	cacheKey := fmt.Sprintf("productsPageCat:%d:%d:%s", page, pageSize, category)
+
+	// Try to get from cache
+	if r.redis != nil {
+		cached, err := r.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			metrics.CacheHits.Inc()
+			var response models.PaginatedProductsResponse
+			if err := json.Unmarshal([]byte(cached), &response); err == nil {
+				return &response, nil
+			}
+		} else {
+			metrics.CacheMisses.Inc()
+		}
+	}
+
 	// Get total count for this category
 	totalCount, err := r.GetProductsCountByCategory(ctx, category)
 	if err != nil {
@@ -207,22 +223,87 @@ func (r *productRepository) GetProductsByPageAndCategory(ctx context.Context, pa
 		totalPages++
 	}
 
-	return &models.PaginatedProductsResponse{
+	response := &models.PaginatedProductsResponse{
 		Products:   productResponses,
 		TotalCount: totalCount,
 		Page:       page,
 		PageSize:   pageSize,
 		TotalPages: totalPages,
-	}, nil
+	}
+
+	// Cache the result
+	if r.redis != nil {
+		if data, err := json.Marshal(response); err == nil {
+			r.redis.Set(ctx, cacheKey, data, 30*time.Minute)
+		}
+	}
+
+	return response, nil
 }
 
 func (r *productRepository) GetProductsCount(ctx context.Context) (int64, error) {
-	return r.collection.CountDocuments(ctx, bson.M{})
+	cacheKey := "productsCount"
+
+	// Try to get from cache
+	if r.redis != nil {
+		cached, err := r.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			metrics.CacheHits.Inc()
+			var count int64
+			if err := json.Unmarshal([]byte(cached), &count); err == nil {
+				return count, nil
+			}
+		} else {
+			metrics.CacheMisses.Inc()
+		}
+	}
+
+	count, err := r.collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return 0, err
+	}
+
+	// Cache for 5 minutes (count changes less frequently)
+	if r.redis != nil {
+		if data, err := json.Marshal(count); err == nil {
+			r.redis.Set(ctx, cacheKey, data, 5*time.Minute)
+		}
+	}
+
+	return count, nil
 }
 
 func (r *productRepository) GetProductsCountByCategory(ctx context.Context, category string) (int64, error) {
+	cacheKey := fmt.Sprintf("productsCountCat:%s", category)
+
+	// Try to get from cache
+	if r.redis != nil {
+		cached, err := r.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			metrics.CacheHits.Inc()
+			var count int64
+			if err := json.Unmarshal([]byte(cached), &count); err == nil {
+				return count, nil
+			}
+		} else {
+			metrics.CacheMisses.Inc()
+		}
+	}
+
 	filter := bson.M{"category": category}
-	return r.collection.CountDocuments(ctx, filter)
+	count, err := r.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return 0, err
+	}
+
+	// Cache for 5 minutes
+	if r.redis != nil {
+		if data, err := json.Marshal(count); err == nil {
+			r.redis.Set(ctx, cacheKey, data, 5*time.Minute)
+		}
+	}
+
+	return count, nil
 }
 
 func (r *productRepository) GetCategories(ctx context.Context) ([]string, error) {
@@ -357,6 +438,11 @@ func (r *productRepository) UpdateProductQuantity(ctx context.Context, productID
 		return fmt.Errorf("product not found")
 	}
 
+	// Clear quantity cache for this specific product
+	if r.redis != nil {
+		r.redis.Del(ctx, fmt.Sprintf("productQty:%s", productID))
+	}
+
 	// Clear all product-related caches
 	r.clearProductCaches(ctx)
 
@@ -364,6 +450,22 @@ func (r *productRepository) UpdateProductQuantity(ctx context.Context, productID
 }
 
 func (r *productRepository) GetProductQuantity(ctx context.Context, productID string) (int, error) {
+	cacheKey := fmt.Sprintf("productQty:%s", productID)
+
+	// Try to get from cache
+	if r.redis != nil {
+		cached, err := r.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			metrics.CacheHits.Inc()
+			var qty int
+			if err := json.Unmarshal([]byte(cached), &qty); err == nil {
+				return qty, nil
+			}
+		} else {
+			metrics.CacheMisses.Inc()
+		}
+	}
+
 	objectID, err := primitive.ObjectIDFromHex(productID)
 	if err != nil {
 		return 0, fmt.Errorf("invalid product ID: %w", err)
@@ -378,19 +480,45 @@ func (r *productRepository) GetProductQuantity(ctx context.Context, productID st
 		return 0, fmt.Errorf("failed to get product: %w", err)
 	}
 
+	// Cache for 1 minute (quantity can change with orders)
+	if r.redis != nil {
+		if data, err := json.Marshal(product.Quantity); err == nil {
+			r.redis.Set(ctx, cacheKey, data, time.Minute)
+		}
+	}
+
 	return product.Quantity, nil
 }
 
 func (r *productRepository) clearProductCaches(ctx context.Context) {
+	if r.redis == nil {
+		return
+	}
+
 	// Clear all products cache
 	r.redis.Del(ctx, "allProducts")
 
 	// Clear categories cache
 	r.redis.Del(ctx, "productCategories")
 
+	// Clear counts cache
+	r.redis.Del(ctx, "productsCount")
+
 	// Clear all pagination caches (pattern delete)
 	// Note: This is a simple approach. For production, consider using Redis SCAN
 	keys, err := r.redis.Keys(ctx, "productsPage:*").Result()
+	if err == nil && len(keys) > 0 {
+		r.redis.Del(ctx, keys...)
+	}
+
+	// Clear category pagination caches
+	keys, err = r.redis.Keys(ctx, "productsPageCat:*").Result()
+	if err == nil && len(keys) > 0 {
+		r.redis.Del(ctx, keys...)
+	}
+
+	// Clear category count caches
+	keys, err = r.redis.Keys(ctx, "productsCountCat:*").Result()
 	if err == nil && len(keys) > 0 {
 		r.redis.Del(ctx, keys...)
 	}
