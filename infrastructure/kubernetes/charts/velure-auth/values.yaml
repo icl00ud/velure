@@ -58,11 +58,11 @@ ingress:
 # Recursos de CPU e memória para o container
 resources:
   limits:
-    cpu: "100m"
-    memory: "128Mi"
+    cpu: "250m"
+    memory: "256Mi"
   requests:
-    cpu: "100m"
-    memory: "128Mi"
+    cpu: "250m"
+    memory: "256Mi"
 
 # Probes de liveness e readiness
 livenessProbe:

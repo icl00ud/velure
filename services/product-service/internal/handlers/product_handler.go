@@ -45,8 +45,6 @@ func (h *ProductHandler) GetProductsByName(c *fiber.Ctx) error {
 
 // GetProductsREST is a REST-style endpoint that accepts both 'limit' and 'pageSize' query parameters
 func (h *ProductHandler) GetProductsREST(c *fiber.Ctx) error {
-	start := time.Now()
-
 	pageStr := c.Query("page")
 	// Accept both 'limit' (REST-style) and 'pageSize' (legacy) - prefer 'limit'
 	pageSizeStr := c.Query("limit")
@@ -55,19 +53,16 @@ func (h *ProductHandler) GetProductsREST(c *fiber.Ctx) error {
 	}
 
 	if pageStr == "" || pageSizeStr == "" {
-		metrics.HTTPRequests.WithLabelValues("GET", "/products", "400").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, "Missing query parameters (page and limit/pageSize required)")
 	}
 
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
-		metrics.HTTPRequests.WithLabelValues("GET", "/products", "400").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter")
 	}
 
 	pageSize, err := strconv.Atoi(pageSizeStr)
 	if err != nil {
-		metrics.HTTPRequests.WithLabelValues("GET", "/products", "400").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid limit/pageSize parameter")
 	}
 
@@ -76,40 +71,32 @@ func (h *ProductHandler) GetProductsREST(c *fiber.Ctx) error {
 
 	response, err := h.service.GetProductsByPage(c.Context(), page, pageSize)
 	if err != nil {
-		metrics.HTTPRequests.WithLabelValues("GET", "/products", "500").Inc()
 		metrics.Errors.WithLabelValues("database").Inc()
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	metrics.ProductOperationDuration.WithLabelValues("list").Observe(time.Since(opStart).Seconds())
 	metrics.SearchResultsReturned.Observe(float64(len(response.Products)))
-	metrics.HTTPRequests.WithLabelValues("GET", "/products", "200").Inc()
-	metrics.HTTPRequestDuration.WithLabelValues("GET", "/products").Observe(time.Since(start).Seconds())
 
 	return c.JSON(response)
 }
 
 // GetProductsByPage is the legacy endpoint that requires 'pageSize'
 func (h *ProductHandler) GetProductsByPage(c *fiber.Ctx) error {
-	start := time.Now()
-
 	pageStr := c.Query("page")
 	pageSizeStr := c.Query("pageSize")
 
 	if pageStr == "" || pageSizeStr == "" {
-		metrics.HTTPRequests.WithLabelValues("GET", "/products", "400").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, "Missing query parameters")
 	}
 
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
-		metrics.HTTPRequests.WithLabelValues("GET", "/products", "400").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter")
 	}
 
 	pageSize, err := strconv.Atoi(pageSizeStr)
 	if err != nil {
-		metrics.HTTPRequests.WithLabelValues("GET", "/products", "400").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter")
 	}
 
@@ -118,15 +105,12 @@ func (h *ProductHandler) GetProductsByPage(c *fiber.Ctx) error {
 
 	response, err := h.service.GetProductsByPage(c.Context(), page, pageSize)
 	if err != nil {
-		metrics.HTTPRequests.WithLabelValues("GET", "/products", "500").Inc()
 		metrics.Errors.WithLabelValues("database").Inc()
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	metrics.ProductOperationDuration.WithLabelValues("list").Observe(time.Since(opStart).Seconds())
 	metrics.SearchResultsReturned.Observe(float64(len(response.Products)))
-	metrics.HTTPRequests.WithLabelValues("GET", "/products", "200").Inc()
-	metrics.HTTPRequestDuration.WithLabelValues("GET", "/products").Observe(time.Since(start).Seconds())
 
 	return c.JSON(response)
 }
@@ -225,35 +209,28 @@ func (h *ProductHandler) DeleteProductById(c *fiber.Ctx) error {
 }
 
 func (h *ProductHandler) UpdateProductQuantity(c *fiber.Ctx) error {
-	start := time.Now()
-
 	// Log raw body for debugging
 	log.Printf("UpdateProductQuantity received body: %s", string(c.Body()))
 
 	var req models.UpdateQuantityRequest
 	if err := c.BodyParser(&req); err != nil {
-		metrics.HTTPRequests.WithLabelValues("PUT", "/products/quantity", "400").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
 	log.Printf("Parsed UpdateQuantityRequest: %+v", req)
 
 	if req.ProductID == "" {
-		metrics.HTTPRequests.WithLabelValues("PUT", "/products/quantity", "400").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, "Product ID is required")
 	}
 
 	opStart := time.Now()
 	if err := h.service.UpdateProductQuantity(c.Context(), req.ProductID, req.QuantityChange); err != nil {
-		metrics.HTTPRequests.WithLabelValues("PUT", "/products/quantity", "400").Inc()
 		metrics.Errors.WithLabelValues("inventory").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
 	metrics.InventoryUpdates.WithLabelValues("success").Inc()
 	metrics.ProductOperationDuration.WithLabelValues("update_quantity").Observe(time.Since(opStart).Seconds())
-	metrics.HTTPRequests.WithLabelValues("PUT", "/products/quantity", "200").Inc()
-	metrics.HTTPRequestDuration.WithLabelValues("PUT", "/products/quantity").Observe(time.Since(start).Seconds())
 
 	return c.JSON(fiber.Map{
 		"message": "Product quantity updated successfully",

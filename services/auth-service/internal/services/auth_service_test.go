@@ -1101,7 +1101,12 @@ func TestAuthService_GetUserByID_FromRedisCache(t *testing.T) {
 	cfg := testutil.CreateTestConfig()
 
 	user := &models.User{ID: 1, Email: "cached@example.com", Name: "Cached"}
-	data, _ := json.Marshal(user)
+	cacheEntry := userCacheEntry{
+		ID:    user.ID,
+		Email: user.Email,
+		Name:  user.Name,
+	}
+	data, _ := json.Marshal(cacheEntry)
 
 	redisClient, redisMock := redismock.NewClientMock()
 	redisMock.ExpectGet("user:id:1").SetVal(string(data))
@@ -1131,7 +1136,12 @@ func TestAuthService_GetUserByEmail_FromRedisCache(t *testing.T) {
 	cfg := testutil.CreateTestConfig()
 
 	user := &models.User{ID: 2, Email: "cache@test.com", Name: "Cache User"}
-	data, _ := json.Marshal(user)
+	cacheEntry := userCacheEntry{
+		ID:    user.ID,
+		Email: user.Email,
+		Name:  user.Name,
+	}
+	data, _ := json.Marshal(cacheEntry)
 
 	redisClient, redisMock := redismock.NewClientMock()
 	redisMock.ExpectGet("user:email:cache@test.com").SetVal(string(data))

@@ -31,6 +31,17 @@ type AuthService struct {
 	tokenCache        sync.Map // fallback cache se redis falhar
 }
 
+// userCacheEntry é usado para serializar/deserializar usuários no cache Redis
+// O campo Password é incluído aqui porque models.User tem json:"-" que exclui a senha
+type userCacheEntry struct {
+	ID        uint      `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
 func NewAuthService(
 	userRepo repositories.UserRepositoryInterface,
 	sessionRepo repositories.SessionRepositoryInterface,
@@ -106,9 +117,18 @@ func (s *AuthService) CreateUser(req models.CreateUserRequest) (*models.Registra
 	}
 
 	// Cacheia o usuário recém-registrado para acelerar o primeiro login
+	// Nota: Usamos userCacheEntry para incluir a senha no cache (json:"-" exclui do json.Marshal normal)
 	if s.redis != nil {
 		ctx := context.Background()
-		if userJSON, err := json.Marshal(user); err == nil {
+		cacheEntry := userCacheEntry{
+			ID:        user.ID,
+			Name:      user.Name,
+			Email:     user.Email,
+			Password:  user.Password,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		}
+		if userJSON, err := json.Marshal(cacheEntry); err == nil {
 			cacheTTL := time.Duration(s.config.Performance.TokenCacheTTL) * time.Second
 			s.redis.Set(ctx, fmt.Sprintf("user:email:%s", user.Email), userJSON, cacheTTL)
 			s.redis.Set(ctx, fmt.Sprintf("user:id:%d", user.ID), userJSON, cacheTTL)
@@ -148,12 +168,20 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 	if s.redis != nil {
 		cachedJSON, err := s.redis.Get(ctx, cacheKey).Result()
 		if err == nil {
-			var cachedUser models.User
-			if json.Unmarshal([]byte(cachedJSON), &cachedUser) == nil {
+			var cachedEntry userCacheEntry
+			if json.Unmarshal([]byte(cachedJSON), &cachedEntry) == nil && cachedEntry.Password != "" {
 				metrics.CacheHits.Inc()
-				user = &cachedUser
+				user = &models.User{
+					ID:        cachedEntry.ID,
+					Name:      cachedEntry.Name,
+					Email:     cachedEntry.Email,
+					Password:  cachedEntry.Password,
+					CreatedAt: cachedEntry.CreatedAt,
+					UpdatedAt: cachedEntry.UpdatedAt,
+				}
 			}
-		} else {
+		}
+		if user == nil {
 			metrics.CacheMisses.Inc()
 		}
 	}
@@ -173,7 +201,15 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 
 		// Cache user in Redis for future logins
 		if s.redis != nil {
-			if userJSON, err := json.Marshal(user); err == nil {
+			cacheEntry := userCacheEntry{
+				ID:        user.ID,
+				Name:      user.Name,
+				Email:     user.Email,
+				Password:  user.Password,
+				CreatedAt: user.CreatedAt,
+				UpdatedAt: user.UpdatedAt,
+			}
+			if userJSON, err := json.Marshal(cacheEntry); err == nil {
 				s.redis.Set(ctx, cacheKey, userJSON, time.Duration(s.config.Performance.TokenCacheTTL)*time.Second)
 			}
 		}
@@ -300,10 +336,16 @@ func (s *AuthService) GetUserByID(id uint) (*models.UserResponse, error) {
 	if s.redis != nil {
 		cachedJSON, err := s.redis.Get(ctx, cacheKey).Result()
 		if err == nil {
-			var cachedUser models.User
-			if json.Unmarshal([]byte(cachedJSON), &cachedUser) == nil {
+			var cachedEntry userCacheEntry
+			if json.Unmarshal([]byte(cachedJSON), &cachedEntry) == nil {
 				metrics.CacheHits.Inc()
-				response := cachedUser.ToResponse()
+				response := models.UserResponse{
+					ID:        cachedEntry.ID,
+					Name:      cachedEntry.Name,
+					Email:     cachedEntry.Email,
+					CreatedAt: cachedEntry.CreatedAt,
+					UpdatedAt: cachedEntry.UpdatedAt,
+				}
 				return &response, nil
 			}
 		}
@@ -321,7 +363,15 @@ func (s *AuthService) GetUserByID(id uint) (*models.UserResponse, error) {
 
 	// Cache in Redis
 	if s.redis != nil {
-		if userJSON, err := json.Marshal(user); err == nil {
+		cacheEntry := userCacheEntry{
+			ID:        user.ID,
+			Name:      user.Name,
+			Email:     user.Email,
+			Password:  user.Password,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		}
+		if userJSON, err := json.Marshal(cacheEntry); err == nil {
 			s.redis.Set(ctx, cacheKey, userJSON, time.Duration(s.config.Performance.TokenCacheTTL)*time.Second)
 		}
 	}
@@ -340,10 +390,16 @@ func (s *AuthService) GetUserByEmail(email string) (*models.UserResponse, error)
 	if s.redis != nil {
 		cachedJSON, err := s.redis.Get(ctx, cacheKey).Result()
 		if err == nil {
-			var cachedUser models.User
-			if json.Unmarshal([]byte(cachedJSON), &cachedUser) == nil {
+			var cachedEntry userCacheEntry
+			if json.Unmarshal([]byte(cachedJSON), &cachedEntry) == nil {
 				metrics.CacheHits.Inc()
-				response := cachedUser.ToResponse()
+				response := models.UserResponse{
+					ID:        cachedEntry.ID,
+					Name:      cachedEntry.Name,
+					Email:     cachedEntry.Email,
+					CreatedAt: cachedEntry.CreatedAt,
+					UpdatedAt: cachedEntry.UpdatedAt,
+				}
 				return &response, nil
 			}
 		}
@@ -361,7 +417,15 @@ func (s *AuthService) GetUserByEmail(email string) (*models.UserResponse, error)
 
 	// Cache in Redis
 	if s.redis != nil {
-		if userJSON, err := json.Marshal(user); err == nil {
+		cacheEntry := userCacheEntry{
+			ID:        user.ID,
+			Name:      user.Name,
+			Email:     user.Email,
+			Password:  user.Password,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		}
+		if userJSON, err := json.Marshal(cacheEntry); err == nil {
 			s.redis.Set(ctx, cacheKey, userJSON, time.Duration(s.config.Performance.TokenCacheTTL)*time.Second)
 		}
 	}
