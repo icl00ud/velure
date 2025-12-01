@@ -36,10 +36,10 @@ const ProductCatalog = () => {
     pageSize,
     category
   );
-  const { addToCart, isInCart, getItemQuantity } = useCart();
+  const { addToCart, getItemQuantity } = useCart();
 
   const toggleFavorite = (productId: string) => {
-    const numId = parseInt(productId);
+    const numId = parseInt(productId, 10);
     setFavorites((prev) =>
       prev.includes(numId) ? prev.filter((id) => id !== numId) : [...prev, numId]
     );
@@ -233,14 +233,14 @@ const ProductCatalog = () => {
                           variant="ghost"
                           size="icon"
                           className={`absolute top-2 right-2 ${
-                            favorites.includes(parseInt(product._id))
+                            favorites.includes(parseInt(product._id, 10))
                               ? "text-red-500 hover:text-red-600"
                               : "text-muted-foreground hover:text-red-500"
                           }`}
                           onClick={() => toggleFavorite(product._id)}
                         >
                           <Heart
-                            className={`h-4 w-4 ${favorites.includes(parseInt(product._id)) ? "fill-current" : ""}`}
+                            className={`h-4 w-4 ${favorites.includes(parseInt(product._id, 10)) ? "fill-current" : ""}`}
                           />
                         </Button>
                         {product.quantity === 0 && (
@@ -287,7 +287,7 @@ const ProductCatalog = () => {
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-bold text-primary">
-                              ${product.price.toFixed(2)}
+                              R$ {product.price.toFixed(2)}
                             </div>
                             {product.quantity < 10 && product.quantity > 0 && (
                               <div className="text-xs text-orange-500">
@@ -347,14 +347,14 @@ const ProductCatalog = () => {
                             variant="ghost"
                             size="icon"
                             className={
-                              favorites.includes(parseInt(product._id))
+                              favorites.includes(parseInt(product._id, 10))
                                 ? "text-red-500"
                                 : "text-muted-foreground"
                             }
                             onClick={() => toggleFavorite(product._id)}
                           >
                             <Heart
-                              className={`h-4 w-4 ${favorites.includes(parseInt(product._id)) ? "fill-current" : ""}`}
+                              className={`h-4 w-4 ${favorites.includes(parseInt(product._id, 10)) ? "fill-current" : ""}`}
                             />
                           </Button>
                         </div>
@@ -386,18 +386,21 @@ const ProductCatalog = () => {
                               SKU: {product.sku}
                             </Badge>
                           )}
-                          {product.colors &&
-                            product.colors.map((color, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {color}
-                              </Badge>
-                            ))}
+                          {product.colors?.map((color) => (
+                            <Badge
+                              key={`list-color-${color}`}
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              {color}
+                            </Badge>
+                          ))}
                         </div>
 
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <div className="text-xl font-bold text-primary">
-                              ${product.price.toFixed(2)}
+                              R$ {product.price.toFixed(2)}
                             </div>
                             {product.quantity < 10 && product.quantity > 0 && (
                               <span className="text-sm text-orange-500">

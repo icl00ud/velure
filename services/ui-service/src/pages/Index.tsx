@@ -1,11 +1,24 @@
-import { Heart, Shield, Truck, Users } from "lucide-react";
+import { Bird, Cat, Dog, Fish, Heart, Loader2, Rabbit, Shield, Truck, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/petshop-hero.jpg";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCategories } from "@/hooks/use-products";
+
+const categoryConfig: Record<string, { name: string; icon: React.ReactNode; emoji: string }> = {
+  dogs: { name: "Cães", icon: <Dog className="h-8 w-8" />, emoji: "🐕" },
+  cats: { name: "Gatos", icon: <Cat className="h-8 w-8" />, emoji: "🐈" },
+  birds: { name: "Pássaros", icon: <Bird className="h-8 w-8" />, emoji: "🐦" },
+  fish: { name: "Peixes", icon: <Fish className="h-8 w-8" />, emoji: "🐟" },
+  "small-pets": { name: "Pets Pequenos", icon: <Rabbit className="h-8 w-8" />, emoji: "🐹" },
+  reptiles: { name: "Répteis", icon: null, emoji: "🦎" },
+  rabbits: { name: "Coelhos", icon: <Rabbit className="h-8 w-8" />, emoji: "🐰" },
+};
 
 const Index = () => {
+  const { categories, loading: loadingCategories } = useCategories();
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -136,29 +149,44 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
-            {[
-              { name: "Cães", color: "primary", link: "/products/dogs" },
-              { name: "Gatos", color: "secondary", link: "/products/cats" },
-              { name: "Pássaros", color: "accent", link: "/products/birds" },
-              { name: "Peixes", color: "primary", link: "/products/fish" },
-              {
-                name: "Pets Pequenos",
-                color: "secondary",
-                link: "/products/small-pets",
-              },
-            ].map((category) => (
-              <Link key={category.name} to={category.link}>
-                <Card className="group cursor-pointer hover:scale-105 transition-transform duration-300 shadow-soft">
-                  <CardContent className="p-8 text-center">
-                    <h3 className="font-semibold text-xl text-foreground group-hover:text-primary transition-colors">
-                      {category.name}
-                    </h3>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          {loadingCategories ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2 text-muted-foreground">Carregando categorias...</span>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
+              {categories.map((category) => {
+                const config = categoryConfig[category.toLowerCase()] || {
+                  name: category,
+                  icon: null,
+                  emoji: "🐾",
+                };
+                return (
+                  <Link key={category} to={`/products/${category}`}>
+                    <Card className="group cursor-pointer hover:scale-105 transition-all duration-300 shadow-soft hover:shadow-primary border-2 border-transparent hover:border-primary/20">
+                      <CardContent className="p-8 text-center">
+                        <div className="mb-4 flex justify-center">
+                          {config.icon ? (
+                            <div className="bg-gradient-primary rounded-full p-4 text-primary-foreground group-hover:scale-110 transition-transform duration-300">
+                              {config.icon}
+                            </div>
+                          ) : (
+                            <span className="text-5xl group-hover:scale-110 transition-transform duration-300">
+                              {config.emoji}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-semibold text-xl text-foreground group-hover:text-primary transition-colors">
+                          {config.name}
+                        </h3>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
