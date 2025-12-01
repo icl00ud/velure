@@ -6,14 +6,20 @@ WORKDIR /app
 # Instalar dependências do sistema
 RUN apk add --no-cache git
 
+# Copy shared module first
+COPY shared /shared
+
 # Copiar go.mod e go.sum
-COPY go.mod go.sum ./
+COPY services/product-service/go.mod services/product-service/go.sum ./
+
+# Update replace directive to use absolute path in container
+RUN go mod edit -replace github.com/icl00ud/velure-shared=/shared
 
 # Download das dependências
 RUN go mod download
 
 # Copiar código fonte
-COPY . .
+COPY services/product-service/ .
 
 # Compilar a aplicação
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .

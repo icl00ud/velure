@@ -2,11 +2,19 @@ FROM golang:1.24.6-alpine AS build
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+# Copy shared module first
+COPY shared /shared
+
+# Copy go.mod and go.sum
+COPY services/process-order-service/go.mod services/process-order-service/go.sum ./
+
+# Update replace directive to use absolute path in container
+RUN go mod edit -replace github.com/icl00ud/velure-shared=/shared
 
 RUN go mod download
 
-COPY . .
+# Copy source code
+COPY services/process-order-service/ .
 
 RUN go build -o main ./main.go
 
