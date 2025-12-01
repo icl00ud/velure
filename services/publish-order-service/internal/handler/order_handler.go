@@ -10,7 +10,7 @@ import (
 	"github.com/icl00ud/publish-order-service/internal/middleware"
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"github.com/icl00ud/publish-order-service/internal/service"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 type Publisher interface {
@@ -31,7 +31,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	userID := middleware.GetUserID(r.Context())
 	if userID == "" {
-		zap.L().Warn("missing user_id in context")
+		logger.Warn("missing user_id in context")
 		metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", "401").Inc()
 		metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
 		writeJSON(w, http.StatusUnauthorized, response{"error": "unauthorized"})
@@ -40,7 +40,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	items, err := parseCreateOrder(r.Body)
 	if err != nil {
-		zap.L().Warn("invalid payload", zap.Error(err))
+		logger.Warn("invalid payload", logger.Err(err))
 		metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", "400").Inc()
 		metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
 		writeJSON(w, http.StatusBadRequest, response{"error": "invalid payload"})
@@ -53,7 +53,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, service.ErrNoItems) || errors.Is(err, service.ErrInvalidItem) {
 			code = http.StatusBadRequest
 		}
-		zap.L().Error("create order failed", zap.Error(err))
+		logger.Error("create order failed", logger.Err(err))
 		metrics.OrdersCreated.WithLabelValues("failure").Inc()
 		metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", http.StatusText(code)).Inc()
 		metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
@@ -68,7 +68,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	evt := model.Event{Type: model.OrderCreated, Payload: mustMarshal(o)}
 	if err := h.pub.Publish(evt); err != nil {
-		zap.L().Error("publish event failed", zap.Error(err))
+		logger.Error("publish event failed", logger.Err(err))
 		metrics.Errors.WithLabelValues("rabbitmq").Inc()
 		metrics.OrdersPublished.WithLabelValues("failure").Inc()
 	} else {
@@ -87,7 +87,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 func (h *OrderHandler) GetUserOrders(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	if userID == "" {
-		zap.L().Warn("missing user_id in context")
+		logger.Warn("missing user_id in context")
 		writeJSON(w, http.StatusUnauthorized, response{"error": "unauthorized"})
 		return
 	}
@@ -96,7 +96,7 @@ func (h *OrderHandler) GetUserOrders(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.svc.GetOrdersByUserID(r.Context(), userID, page, pageSize)
 	if err != nil {
-		zap.L().Error("get user orders failed", zap.Error(err))
+		logger.Error("get user orders failed", logger.Err(err))
 		writeJSON(w, http.StatusInternalServerError, response{"error": "internal error"})
 		return
 	}
@@ -107,21 +107,21 @@ func (h *OrderHandler) GetUserOrders(w http.ResponseWriter, r *http.Request) {
 func (h *OrderHandler) GetUserOrderByID(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	if userID == "" {
-		zap.L().Warn("missing user_id in context")
+		logger.Warn("missing user_id in context")
 		writeJSON(w, http.StatusUnauthorized, response{"error": "unauthorized"})
 		return
 	}
 
 	orderID := r.URL.Query().Get("id")
 	if orderID == "" {
-		zap.L().Warn("missing order_id in query")
+		logger.Warn("missing order_id in query")
 		writeJSON(w, http.StatusBadRequest, response{"error": "order_id required"})
 		return
 	}
 
 	order, err := h.svc.GetOrderByID(r.Context(), userID, orderID)
 	if err != nil {
-		zap.L().Error("get user order by id failed", zap.Error(err))
+		logger.Error("get user order by id failed", logger.Err(err))
 		writeJSON(w, http.StatusNotFound, response{"error": "order not found"})
 		return
 	}
@@ -135,21 +135,21 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		Status  string `json:"status"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
-		zap.L().Warn("invalid payload", zap.Error(err))
+		logger.Warn("invalid payload", logger.Err(err))
 		writeJSON(w, http.StatusBadRequest, response{"error": "invalid payload"})
 		return
 	}
 
 	o, err := h.svc.UpdateStatus(r.Context(), dto.OrderID, dto.Status)
 	if err != nil {
-		zap.L().Error("update status failed", zap.Error(err))
+		logger.Error("update status failed", logger.Err(err))
 		writeJSON(w, http.StatusInternalServerError, response{"error": "internal error"})
 		return
 	}
 
 	evt := model.Event{Type: dto.Status, Payload: mustMarshal(o)}
 	if err := h.pub.Publish(evt); err != nil {
-		zap.L().Error("publish event failed", zap.Error(err))
+		logger.Error("publish event failed", logger.Err(err))
 	}
 
 	writeJSON(w, http.StatusOK, response{
@@ -164,7 +164,7 @@ func (h *OrderHandler) GetOrdersByPage(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.svc.GetOrdersByPage(r.Context(), page, pageSize)
 	if err != nil {
-		zap.L().Error("get orders by page failed", zap.Error(err))
+		logger.Error("get orders by page failed", logger.Err(err))
 		writeJSON(w, http.StatusInternalServerError, response{"error": "internal error"})
 		return
 	}

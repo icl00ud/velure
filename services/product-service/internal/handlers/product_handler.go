@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"log"
 	"strconv"
 	"time"
 
+	"github.com/icl00ud/velure-shared/logger"
 	"product-service/internal/metrics"
 	"product-service/internal/models"
 	"product-service/internal/services"
@@ -225,15 +225,14 @@ func (h *ProductHandler) DeleteProductById(c *fiber.Ctx) error {
 }
 
 func (h *ProductHandler) UpdateProductQuantity(c *fiber.Ctx) error {
-	// Log raw body for debugging
-	log.Printf("UpdateProductQuantity received body: %s", string(c.Body()))
+	logger.Debug("UpdateProductQuantity received", logger.String("body", string(c.Body())))
 
 	var req models.UpdateQuantityRequest
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	log.Printf("Parsed UpdateQuantityRequest: %+v", req)
+	logger.Debug("Parsed UpdateQuantityRequest", logger.String("product_id", req.ProductID), logger.Int("quantity_change", req.QuantityChange))
 
 	if req.ProductID == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "Product ID is required")

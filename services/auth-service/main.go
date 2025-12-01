@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -15,77 +14,80 @@ import (
 	"velure-auth-service/internal/services"
 
 	"github.com/gin-gonic/gin"
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 )
 
 func main() {
-	if err := run(); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	log := logger.Init(logger.Config{
+		ServiceName: "auth-service",
+		Level:       os.Getenv("LOG_LEVEL"),
+		UseColor:    os.Getenv("LOG_COLOR") != "false",
+	})
+
+	if err := run(log); err != nil {
+		log.Fatal("Failed to start server", logger.Err(err))
 	}
 }
 
-func run() error {
+func run(log *logger.Logger) error {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using environment variables")
+		log.Info("No .env file found, using environment variables")
 	}
 
 	// Load configuration
-	log.Println("Loading configuration...")
+	log.Info("Loading configuration")
 	cfg := config.Load()
-	log.Printf("Configuration loaded successfully")
-	log.Printf("Database config - Host: %s, Port: %d, Database: %s, User: %s",
-		cfg.Database.Host, cfg.Database.Port, cfg.Database.Database, cfg.Database.Username)
+	log.Info("Configuration loaded",
+		logger.String("db_host", cfg.Database.Host),
+		logger.Int("db_port", cfg.Database.Port),
+		logger.String("db_name", cfg.Database.Database))
 
 	// Initialize database
-	log.Println("Connecting to database...")
+	log.Info("Connecting to database")
 	db, err := database.Connect(cfg.Database)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
-	log.Println("Database connection established successfully")
+	log.Info("Database connected")
 
 	// Auto migrate
-	log.Println("Running database migrations...")
+	log.Info("Running migrations")
 	if err := database.Migrate(db); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
-	log.Println("Database migrations completed successfully")
+	log.Info("Migrations completed")
 
 	// Initialize Redis
-	log.Println("Connecting to Redis...")
+	log.Info("Connecting to Redis", logger.String("addr", cfg.Redis.Addr))
 	redisClient, err := connectRedis(cfg.Redis)
 	if err != nil {
 		return fmt.Errorf("failed to connect to redis: %w", err)
 	}
 	defer redisClient.Close()
-	log.Printf("Redis connection established successfully at %s", cfg.Redis.Addr)
+	log.Info("Redis connected")
 
 	// Initialize repositories
-	log.Println("Initializing repositories...")
+	log.Info("Initializing repositories")
 	userRepo := repositories.NewUserRepository(db)
 	sessionRepo := repositories.NewSessionRepository(db)
 	passwordResetRepo := repositories.NewPasswordResetRepository(db)
-	log.Println("Repositories initialized successfully")
 
 	// Initialize services
-	log.Println("Initializing services...")
+	log.Info("Initializing services")
 	authService := services.NewAuthService(userRepo, sessionRepo, passwordResetRepo, cfg, redisClient)
 	authService.SyncActiveSessionsMetric(context.Background())
 	authService.SyncTotalUsersMetric(context.Background())
-	log.Println("Services initialized successfully")
 
 	// Initialize handlers
-	log.Println("Initializing handlers...")
 	authHandler := handlers.NewAuthHandler(authService)
-	log.Println("Handlers initialized successfully")
 
 	// Set up router with all middleware and routes
-	log.Println("Initializing HTTP router...")
+	log.Info("Setting up HTTP router")
 	router := setupRouter(cfg, authHandler)
-	log.Println("HTTP router initialized successfully")
 
 	// Start server
 	port := os.Getenv("AUTH_SERVICE_APP_PORT")
@@ -93,8 +95,7 @@ func run() error {
 		port = "3020"
 	}
 
-	log.Printf("Starting HTTP server on port %s...", port)
-	log.Println("Authentication service initialization completed successfully")
+	log.Info("Starting HTTP server", logger.String("port", port))
 	if os.Getenv("AUTH_SERVICE_SKIP_HTTP") == "true" {
 		return nil
 	}

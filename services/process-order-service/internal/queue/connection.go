@@ -3,22 +3,22 @@ package queue
 import (
 	"fmt"
 
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 type RabbitMQConnection struct {
 	conn   AMQPConnection
-	logger *zap.Logger
+	logger *logger.Logger
 }
 
-func NewRabbitMQConnection(amqpURL string, logger *zap.Logger) (*RabbitMQConnection, error) {
+func NewRabbitMQConnection(amqpURL string, log *logger.Logger) (*RabbitMQConnection, error) {
 	conn, err := amqpDial(amqpURL)
 	if err != nil {
 		return nil, fmt.Errorf("dial rabbitmq: %w", err)
 	}
 
-	logger.Info("rabbitmq connection established")
-	return &RabbitMQConnection{conn: conn, logger: logger}, nil
+	log.Info("rabbitmq connection established")
+	return &RabbitMQConnection{conn: conn, logger: log}, nil
 }
 
 func (r *RabbitMQConnection) NewConsumer(queueName string) (Consumer, error) {

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 // SSEAuth is a middleware for SSE connections that accepts token from query parameter
@@ -37,7 +37,7 @@ func SSEAuth(jwtSecret string) func(http.Handler) http.Handler {
 			}
 
 			if tokenString == "" {
-				zap.L().Warn("missing authorization token")
+				logger.Warn("missing authorization token")
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
@@ -51,14 +51,14 @@ func SSEAuth(jwtSecret string) func(http.Handler) http.Handler {
 			})
 
 			if err != nil || !token.Valid {
-				zap.L().Warn("invalid token", zap.Error(err))
+				logger.Warn("invalid token", logger.Err(err))
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
 
 			userID := claims.Subject
 			if userID == "" {
-				zap.L().Warn("missing user_id in token")
+				logger.Warn("missing user_id in token")
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}

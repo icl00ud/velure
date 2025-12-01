@@ -9,7 +9,7 @@ import (
 	"github.com/icl00ud/publish-order-service/internal/metrics"
 	"github.com/icl00ud/publish-order-service/internal/middleware"
 	"github.com/icl00ud/publish-order-service/internal/model"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 type SSEHandler struct {
@@ -27,28 +27,28 @@ func NewSSEHandler(svc OrderService) *SSEHandler {
 func (h *SSEHandler) StreamOrderStatus(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	if userID == "" {
-		zap.L().Warn("missing user_id in context")
+		logger.Warn("missing user_id in context")
 		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 		return
 	}
 
 	orderID := r.URL.Query().Get("id")
 	if orderID == "" {
-		zap.L().Warn("missing order_id in query")
+		logger.Warn("missing order_id in query")
 		http.Error(w, `{"error":"order_id required"}`, http.StatusBadRequest)
 		return
 	}
 
 	order, err := h.svc.GetOrderByID(r.Context(), userID, orderID)
 	if err != nil {
-		zap.L().Error("get user order by id failed", zap.Error(err))
+		logger.Error("get user order by id failed", logger.Err(err))
 		http.Error(w, `{"error":"order not found"}`, http.StatusNotFound)
 		return
 	}
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		zap.L().Error("streaming not supported")
+		logger.Error("streaming not supported")
 		http.Error(w, `{"error":"streaming not supported"}`, http.StatusInternalServerError)
 		return
 	}
@@ -80,7 +80,7 @@ func (h *SSEHandler) StreamOrderStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := sendEvent(order); err != nil {
-		zap.L().Error("failed to send initial event", zap.Error(err))
+		logger.Error("failed to send initial event", logger.Err(err))
 		return
 	}
 
@@ -90,17 +90,17 @@ func (h *SSEHandler) StreamOrderStatus(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case <-r.Context().Done():
-			zap.L().Info("client disconnected", zap.String("order_id", orderID))
+			logger.Info("client disconnected", logger.String("order_id", orderID))
 			return
 		case updatedOrder := <-events:
 			if err := sendEvent(updatedOrder); err != nil {
-				zap.L().Error("failed to send event", zap.Error(err))
+				logger.Error("failed to send event", logger.Err(err))
 				return
 			}
 		case <-ticker.C:
 			_, err := fmt.Fprintf(w, ": keepalive\n\n")
 			if err != nil {
-				zap.L().Error("failed to send keepalive", zap.Error(err))
+				logger.Error("failed to send keepalive", logger.Err(err))
 				return
 			}
 			flusher.Flush()
@@ -149,7 +149,7 @@ func (r *SSERegistry) Broadcast(orderID string, order model.Order) {
 			select {
 			case ch <- order:
 			default:
-				zap.L().Warn("channel full, dropping event", zap.String("order_id", orderID))
+				logger.Warn("channel full, dropping event", logger.String("order_id", orderID))
 			}
 		}
 	}

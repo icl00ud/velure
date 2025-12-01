@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 // skipLoggingPaths contains paths that should not be logged
@@ -26,11 +26,11 @@ func Logging(next http.Handler) http.Handler {
 			return
 		}
 
-		zap.L().Info("request completed",
-			zap.String("method", r.Method),
-			zap.String("path", r.URL.Path),
-			zap.Int("status", lrw.statusCode),
-			zap.Duration("duration", time.Since(start)),
+		logger.Info("request",
+			logger.String("method", r.Method),
+			logger.String("path", r.URL.Path),
+			logger.Int("status", lrw.statusCode),
+			logger.Duration("duration", time.Since(start)),
 		)
 	})
 }

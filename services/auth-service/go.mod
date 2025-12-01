@@ -3,22 +3,25 @@ module velure-auth-service
 go 1.23.12
 
 require (
+	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/icl00ud/velure-shared v0.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/redis/go-redis/v9 v9.16.0
 	go.uber.org/mock v0.6.0
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.41.0
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.30.0
 )
 
+replace github.com/icl00ud/velure-shared => ../../shared
+
 require (
-	github.com/alicebob/miniredis/v2 v2.35.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect

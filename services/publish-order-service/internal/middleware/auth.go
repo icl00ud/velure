@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 type contextKey string
@@ -25,14 +25,14 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				zap.L().Warn("missing authorization header")
+				logger.Warn("missing authorization header")
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				zap.L().Warn("invalid authorization header format")
+				logger.Warn("invalid authorization header format")
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
@@ -48,14 +48,14 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 			})
 
 			if err != nil || !token.Valid {
-				zap.L().Warn("invalid token", zap.Error(err))
+				logger.Warn("invalid token", logger.Err(err))
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
 
 			userID := claims.Subject
 			if userID == "" {
-				zap.L().Warn("missing user_id in token")
+				logger.Warn("missing user_id in token")
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
