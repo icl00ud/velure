@@ -14,7 +14,7 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 func setupRabbitContainer(ctx context.Context, t *testing.T) (testcontainers.Container, string) {
@@ -41,7 +41,7 @@ func TestNewRabbitMQPublisher_Success(t *testing.T) {
 	ctx := context.Background()
 	rabbitC, url := setupRabbitContainer(ctx, t)
 	defer rabbitC.Terminate(ctx)
-	logger := zap.NewNop()
+	logger := logger.NewNop()
 
 	// Act
 	pub, err := NewRabbitMQPublisher(url, "ex.test", logger)
@@ -61,7 +61,7 @@ func TestNewRabbitMQPublisher_DialError(t *testing.T) {
 	invalidURL := "amqp://invalid:invalid/"
 
 	// Act
-	_, err := NewRabbitMQPublisher(invalidURL, "ex.test", zap.NewNop())
+	_, err := NewRabbitMQPublisher(invalidURL, "ex.test", logger.NewNop())
 
 	// Assert
 	if err == nil {
@@ -76,7 +76,7 @@ func TestNewRabbitMQPublisher_ExchangeDeclareError(t *testing.T) {
 	defer rabbitC.Terminate(ctx)
 
 	// Act
-	_, err := NewRabbitMQPublisher(url, "", zap.NewNop())
+	_, err := NewRabbitMQPublisher(url, "", logger.NewNop())
 
 	// Assert
 	if err == nil {
@@ -90,7 +90,7 @@ func TestPublishAndConsume(t *testing.T) {
 	rabbitC, url := setupRabbitContainer(ctx, t)
 	defer rabbitC.Terminate(ctx)
 
-	logger := zap.NewNop()
+	logger := logger.NewNop()
 	exchange := "ex.test"
 	routingKey := "test.key"
 
@@ -161,7 +161,7 @@ func TestPublish_AfterClose(t *testing.T) {
 	rabbitC, url := setupRabbitContainer(ctx, t)
 	defer rabbitC.Terminate(ctx)
 
-	pub, err := NewRabbitMQPublisher(url, "ex.test", zap.NewNop())
+	pub, err := NewRabbitMQPublisher(url, "ex.test", logger.NewNop())
 	if err != nil {
 		t.Fatalf("setup publisher failed: %v", err)
 	}
@@ -195,7 +195,7 @@ func TestClose_Idempotent(t *testing.T) {
 	rabbitC, url := setupRabbitContainer(ctx, t)
 	defer rabbitC.Terminate(ctx)
 
-	pub, err := NewRabbitMQPublisher(url, "ex.test", zap.NewNop())
+	pub, err := NewRabbitMQPublisher(url, "ex.test", logger.NewNop())
 	if err != nil {
 		t.Fatalf("setup publisher failed: %v", err)
 	}

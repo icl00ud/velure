@@ -15,8 +15,8 @@ import (
 	"velure-auth-service/internal/repositories"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -555,7 +555,7 @@ func (s *AuthService) SyncActiveSessionsMetric(ctx context.Context) {
 
 	count, err := s.sessionRepo.CountActiveSessions(ctx)
 	if err != nil {
-		zap.L().Warn("failed to sync active sessions metric", zap.Error(err))
+		logger.Warn("failed to sync active sessions metric", logger.Err(err))
 		return
 	}
 	metrics.ActiveSessions.Set(float64(count))
@@ -573,7 +573,7 @@ func (s *AuthService) SyncTotalUsersMetric(ctx context.Context) {
 
 	count, err := s.userRepo.CountUsers(ctx)
 	if err != nil {
-		zap.L().Warn("failed to sync total users metric", zap.Error(err))
+		logger.Warn("failed to sync total users metric", logger.Err(err))
 		return
 	}
 	metrics.TotalUsers.Set(float64(count))

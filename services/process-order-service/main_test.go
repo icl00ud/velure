@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 
 	"github.com/icl00ud/process-order-service/internal/queue"
 )
@@ -100,7 +100,7 @@ func TestRun_StartsAndStopsWithStubbedDependencies(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- run(ctx, zap.NewNop())
+		errCh <- run(ctx, logger.NewNop())
 	}()
 
 	time.Sleep(50 * time.Millisecond)

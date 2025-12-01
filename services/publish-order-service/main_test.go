@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 
 	"github.com/icl00ud/publish-order-service/internal/config"
 	"github.com/icl00ud/publish-order-service/internal/consumer"
@@ -53,12 +53,12 @@ func TestRunWithInjectedDependencies(t *testing.T) {
 			fakeRepo.migrationsPath = path
 			return nil
 		},
-		newPublisher: func(url, exchange string, logger *zap.Logger) (publisher.Publisher, error) {
+		newPublisher: func(url, exchange string, logger *logger.Logger) (publisher.Publisher, error) {
 			fakePublisher.url = url
 			fakePublisher.exchange = exchange
 			return fakePublisher, nil
 		},
-		newConsumer: func(url, exchange, queue string, handler consumer.EventHandler, workers int, logger *zap.Logger) (consumer.Consumer, error) {
+		newConsumer: func(url, exchange, queue string, handler consumer.EventHandler, workers int, logger *logger.Logger) (consumer.Consumer, error) {
 			fakeConsumer.url = url
 			fakeConsumer.exchange = exchange
 			fakeConsumer.queue = queue
@@ -66,8 +66,8 @@ func TestRunWithInjectedDependencies(t *testing.T) {
 			fakeConsumer.handler = handler
 			return fakeConsumer, nil
 		},
-		newLogger: func() (*zap.Logger, error) {
-			return zap.NewExample(), nil
+		newLogger: func() *logger.Logger {
+			return logger.NewNop()
 		},
 		newHTTPServer: func(cfg config.Config, handler http.Handler) server {
 			fakeServer.handler = handler
@@ -130,13 +130,13 @@ func TestMainUsesInjectedFactoryAndHandlesSignal(t *testing.T) {
 				return fakeRepo, nil
 			},
 			runMigrations: func(*sql.DB, string) error { return nil },
-			newPublisher: func(string, string, *zap.Logger) (publisher.Publisher, error) {
+			newPublisher: func(string, string, *logger.Logger) (publisher.Publisher, error) {
 				return fakePublisher, nil
 			},
-			newConsumer: func(string, string, string, consumer.EventHandler, int, *zap.Logger) (consumer.Consumer, error) {
+			newConsumer: func(string, string, string, consumer.EventHandler, int, *logger.Logger) (consumer.Consumer, error) {
 				return fakeConsumer, nil
 			},
-			newLogger: func() (*zap.Logger, error) { return zap.NewExample(), nil },
+			newLogger: func() *logger.Logger { return logger.NewNop() },
 			newHTTPServer: func(config.Config, http.Handler) server {
 				return fakeServer
 			},
@@ -174,13 +174,13 @@ func TestRunReturnsErrorWhenRepositoryCreationFails(t *testing.T) {
 				JWTSecret:   "secret",
 			}, nil
 		},
-		newLogger: func() (*zap.Logger, error) { return zap.NewExample(), nil },
+		newLogger: func() *logger.Logger { return logger.NewNop() },
 		newRepo: func(string) (repository.OrderRepository, error) {
 			return nil, errors.New("boom")
 		},
 		runMigrations: func(*sql.DB, string) error { return nil },
-		newPublisher:  func(string, string, *zap.Logger) (publisher.Publisher, error) { return &stubPublisher{}, nil },
-		newConsumer: func(string, string, string, consumer.EventHandler, int, *zap.Logger) (consumer.Consumer, error) {
+		newPublisher:  func(string, string, *logger.Logger) (publisher.Publisher, error) { return &stubPublisher{}, nil },
+		newConsumer: func(string, string, string, consumer.EventHandler, int, *logger.Logger) (consumer.Consumer, error) {
 			return &stubConsumer{}, nil
 		},
 		newHTTPServer: func(config.Config, http.Handler) server { return newStubServer() },

@@ -9,7 +9,7 @@ import (
 	"github.com/icl00ud/process-order-service/internal/client"
 	"github.com/icl00ud/process-order-service/internal/model"
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 type stubChannel struct {
@@ -96,7 +96,7 @@ func TestRabbitMQConsumer_ConsumeSuccess(t *testing.T) {
 		conn:    &stubConn{},
 		channel: ch,
 		queue:   "q",
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 	}
 
 	if err := c.Consume(context.Background(), func(evt model.Event) error { return nil }); err != nil {
@@ -118,7 +118,7 @@ func TestRabbitMQConsumer_ConsumeHandlerErrorRequeues(t *testing.T) {
 		conn:    &stubConn{},
 		channel: ch,
 		queue:   "q",
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 	}
 
 	err := c.Consume(context.Background(), func(evt model.Event) error { return errors.New("temp") })
@@ -144,7 +144,7 @@ func TestRabbitMQConsumer_InvalidJSON(t *testing.T) {
 		conn:    &stubConn{},
 		channel: ch,
 		queue:   "q",
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 	}
 
 	err := c.Consume(context.Background(), func(evt model.Event) error { return nil })
@@ -162,7 +162,7 @@ func TestRabbitMQConsumer_ContextCancel(t *testing.T) {
 		conn:    &stubConn{},
 		channel: ch,
 		queue:   "q",
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -188,7 +188,7 @@ func TestRabbitMQConsumer_PermanentErrorSendsToDLQ(t *testing.T) {
 		conn:    &stubConn{},
 		channel: ch,
 		queue:   "q",
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 	}
 
 	err := c.Consume(context.Background(), func(evt model.Event) error {
@@ -219,7 +219,7 @@ func TestRabbitMQConsumer_MaxRetriesSendsToDLQ(t *testing.T) {
 		conn:    &stubConn{},
 		channel: ch,
 		queue:   "q",
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 	}
 
 	err := c.Consume(context.Background(), func(evt model.Event) error { return errors.New("temporary") })

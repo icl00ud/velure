@@ -11,6 +11,7 @@ import (
 
 	miniredis "github.com/alicebob/miniredis/v2"
 	"github.com/gin-gonic/gin"
+	"github.com/icl00ud/velure-shared/logger"
 	"go.uber.org/mock/gomock"
 )
 
@@ -203,8 +204,8 @@ func TestRun_WithSQLiteAndRedis(t *testing.T) {
 	t.Setenv("REDIS_HOST", mockRedis.Host())
 	t.Setenv("REDIS_PORT", mockRedis.Port())
 
-	if err := run(); err != nil {
-		t.Fatalf("run() returned unexpected error: %v", err)
+	if err := run(logger.NewNop()); err != nil {
+		t.Fatalf("run(logger.NewNop()) returned unexpected error: %v", err)
 	}
 }
 

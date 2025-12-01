@@ -51,6 +51,13 @@ var defaultDeps = appDependencies{
 
 var log *logger.Logger
 
+// fatalf is a variable to allow tests to replace the fatal behavior
+var fatalf = func(v ...interface{}) {
+	if log != nil {
+		log.Fatal("fatal error", logger.Any("error", v))
+	}
+}
+
 func main() {
 	log = logger.Init(logger.Config{
 		ServiceName: "product-service",
@@ -59,11 +66,16 @@ func main() {
 	})
 
 	if err := run(defaultDeps); err != nil {
-		log.Fatal("Failed to start server", logger.Err(err))
+		fatalf("Failed to start server:", err)
 	}
 }
 
 func run(deps appDependencies) error {
+	// Ensure log is initialized
+	if log == nil {
+		log = logger.NewNop()
+	}
+	
 	// Load environment variables from .env file if it exists
 	if err := deps.loadEnv(); err != nil {
 		log.Info("No .env file found, using system environment variables")

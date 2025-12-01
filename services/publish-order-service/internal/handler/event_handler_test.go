@@ -6,7 +6,7 @@ import (
 
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"github.com/icl00ud/publish-order-service/internal/service"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 type recordingRepo struct {
@@ -56,7 +56,7 @@ func (fixedPricing) Calculate(items []model.CartItem) float64 { return 0 }
 func TestHandleEvent_UpdatesStatusAndNotifiesSSE(t *testing.T) {
 	repo := &recordingRepo{findOrder: model.Order{UserID: "user-1", Status: model.StatusCreated}}
 	svc := service.NewOrderService(repo, fixedPricing{})
-	h := NewEventHandler(svc, zap.NewNop())
+	h := NewEventHandler(svc, logger.NewNop())
 
 	sse := NewSSEHandler(svc)
 	events := make(chan model.Order, 1)
@@ -88,7 +88,7 @@ func TestHandleEvent_UpdatesStatusAndNotifiesSSE(t *testing.T) {
 func TestHandleEvent_ReturnsErrorOnEmptyPayloadID(t *testing.T) {
 	repo := &recordingRepo{findOrder: model.Order{UserID: "user-1"}}
 	svc := service.NewOrderService(repo, fixedPricing{})
-	h := NewEventHandler(svc, zap.NewNop())
+	h := NewEventHandler(svc, logger.NewNop())
 
 	err := h.HandleEvent(context.Background(), model.Event{
 		Type:    model.OrderCompleted,
@@ -102,7 +102,7 @@ func TestHandleEvent_ReturnsErrorOnEmptyPayloadID(t *testing.T) {
 func TestHandleOrderProcessing_ValidPayload(t *testing.T) {
 	repo := &recordingRepo{findOrder: model.Order{UserID: "user-1"}}
 	svc := service.NewOrderService(repo, fixedPricing{})
-	h := NewEventHandler(svc, zap.NewNop())
+	h := NewEventHandler(svc, logger.NewNop())
 
 	if err := h.handleOrderProcessing(context.Background(), []byte(`{"id":"order-42"}`)); err != nil {
 		t.Fatalf("expected no error updating status: %v", err)
@@ -115,7 +115,7 @@ func TestHandleOrderProcessing_ValidPayload(t *testing.T) {
 func TestHandleOrderProcessing_InvalidJSON(t *testing.T) {
 	repo := &recordingRepo{findOrder: model.Order{}}
 	svc := service.NewOrderService(repo, fixedPricing{})
-	h := NewEventHandler(svc, zap.NewNop())
+	h := NewEventHandler(svc, logger.NewNop())
 
 	if err := h.handleOrderProcessing(context.Background(), []byte(`{invalid`)); err == nil {
 		t.Fatal("expected error for invalid JSON payload")
@@ -125,7 +125,7 @@ func TestHandleOrderProcessing_InvalidJSON(t *testing.T) {
 func TestHandleOrderCompleted_UsesOrderIDField(t *testing.T) {
 	repo := &recordingRepo{findOrder: model.Order{UserID: "user-1"}}
 	svc := service.NewOrderService(repo, fixedPricing{})
-	h := NewEventHandler(svc, zap.NewNop())
+	h := NewEventHandler(svc, logger.NewNop())
 
 	if err := h.handleOrderCompleted(context.Background(), []byte(`{"order_id":"abc-123"}`)); err != nil {
 		t.Fatalf("expected no error, got %v", err)

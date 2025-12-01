@@ -80,6 +80,16 @@ func Init(cfg Config) *Logger {
 	return defaultLogger
 }
 
+// NewNop returns a no-op logger for testing purposes
+func NewNop() *Logger {
+	return &Logger{
+		out:         io.Discard,
+		level:       FATAL + 1, // Higher than any level, so nothing gets logged
+		serviceName: "test",
+		useColor:    false,
+	}
+}
+
 func Default() *Logger {
 	if defaultLogger == nil {
 		defaultLogger = New(Config{

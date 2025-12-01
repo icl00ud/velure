@@ -13,6 +13,7 @@ import (
 	"product-service/internal/services"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -183,6 +184,11 @@ func (f *fakeRepo) UpdateProductQuantity(ctx context.Context, productID string, 
 
 func (f *fakeRepo) GetProductQuantity(ctx context.Context, productID string) (int, error) {
 	return 0, nil
+}
+
+func init() {
+	// Initialize logger for tests
+	log = logger.NewNop()
 }
 
 func TestRun_WithStubbedDependencies(t *testing.T) {

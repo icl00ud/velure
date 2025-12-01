@@ -8,7 +8,7 @@ import (
 
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 type stubConsumerChannel struct {
@@ -119,7 +119,7 @@ func TestNewRabbitMQConsumer_InitializesBindings(t *testing.T) {
 		"orders.queue",
 		func(ctx context.Context, evt model.Event) error { return nil },
 		2,
-		zap.NewNop(),
+		logger.NewNop(),
 	)
 	if err != nil {
 		t.Fatalf("expected constructor to succeed, got %v", err)
@@ -150,7 +150,7 @@ func TestNewRabbitMQConsumer_ChannelErrorClosesConn(t *testing.T) {
 		return conn, nil
 	}
 
-	if _, err := NewRabbitMQConsumer("amqp://example", "ex", "q", func(context.Context, model.Event) error { return nil }, 1, zap.NewNop()); err == nil {
+	if _, err := NewRabbitMQConsumer("amqp://example", "ex", "q", func(context.Context, model.Event) error { return nil }, 1, logger.NewNop()); err == nil {
 		t.Fatal("expected error when channel creation fails")
 	}
 	if !conn.closed {
@@ -168,7 +168,7 @@ func TestNewRabbitMQConsumer_ExchangeDeclareError(t *testing.T) {
 		return conn, nil
 	}
 
-	if _, err := NewRabbitMQConsumer("amqp://example", "ex", "q", func(context.Context, model.Event) error { return nil }, 1, zap.NewNop()); err == nil {
+	if _, err := NewRabbitMQConsumer("amqp://example", "ex", "q", func(context.Context, model.Event) error { return nil }, 1, logger.NewNop()); err == nil {
 		t.Fatal("expected error when exchange declaration fails")
 	}
 	if !ch.closed || !conn.closed {
@@ -186,7 +186,7 @@ func TestNewRabbitMQConsumer_QueueDeclareError(t *testing.T) {
 		return conn, nil
 	}
 
-	if _, err := NewRabbitMQConsumer("amqp://example", "ex", "q", func(context.Context, model.Event) error { return nil }, 1, zap.NewNop()); err == nil {
+	if _, err := NewRabbitMQConsumer("amqp://example", "ex", "q", func(context.Context, model.Event) error { return nil }, 1, logger.NewNop()); err == nil {
 		t.Fatal("expected error when queue declaration fails")
 	}
 	if !ch.closed || !conn.closed {
@@ -204,7 +204,7 @@ func TestNewRabbitMQConsumer_QueueBindError(t *testing.T) {
 		return conn, nil
 	}
 
-	if _, err := NewRabbitMQConsumer("amqp://example", "ex", "q", func(context.Context, model.Event) error { return nil }, 1, zap.NewNop()); err == nil {
+	if _, err := NewRabbitMQConsumer("amqp://example", "ex", "q", func(context.Context, model.Event) error { return nil }, 1, logger.NewNop()); err == nil {
 		t.Fatal("expected error when queue binding fails")
 	}
 	if !ch.closed || !conn.closed {
@@ -222,7 +222,7 @@ func TestNewRabbitMQConsumer_QosError(t *testing.T) {
 		return conn, nil
 	}
 
-	if _, err := NewRabbitMQConsumer("amqp://example", "ex", "q", func(context.Context, model.Event) error { return nil }, 1, zap.NewNop()); err == nil {
+	if _, err := NewRabbitMQConsumer("amqp://example", "ex", "q", func(context.Context, model.Event) error { return nil }, 1, logger.NewNop()); err == nil {
 		t.Fatal("expected error when QoS setup fails")
 	}
 	if !ch.closed || !conn.closed {
@@ -242,7 +242,7 @@ func TestRabbitConsumer_StartProcessesMessages(t *testing.T) {
 		channel: ch,
 		queue:   "q",
 		handler: func(ctx context.Context, evt model.Event) error { return nil },
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 		workers: 1,
 	}
 
@@ -280,7 +280,7 @@ func TestRabbitConsumer_HandlerErrorNacks(t *testing.T) {
 		channel: ch,
 		queue:   "q",
 		handler: func(ctx context.Context, evt model.Event) error { return errors.New("fail") },
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 		workers: 1,
 	}
 
@@ -305,7 +305,7 @@ func TestRabbitConsumer_ProcessMessageInvalidJSON(t *testing.T) {
 	ch := &stubConsumerChannel{}
 	c := &rabbitConsumer{
 		channel: ch,
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 	}
 	msg := amqp091.Delivery{Body: []byte(`{invalid`), Acknowledger: acker}
 	if err := c.processMessage(context.Background(), msg); err == nil {
@@ -323,7 +323,7 @@ func TestRabbitConsumer_CloseClosesChannelAndConn(t *testing.T) {
 		conn:    conn,
 		channel: ch,
 		queue:   "q",
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 	}
 
 	if err := c.Close(); err != nil {
