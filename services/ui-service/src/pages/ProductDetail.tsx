@@ -31,7 +31,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  const { product, loading, error } = useProduct(id ? parseInt(id, 10) : 0);
+  const { product, loading, error } = useProduct(id || "");
   const { addToCart, getItemQuantity } = useCart();
 
   const handleAddToCart = () => {

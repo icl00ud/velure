@@ -76,25 +76,27 @@ grafana:
     type: ClusterIP
     port: 80
 
-  # Datasources are configured automatically by kube-prometheus-stack
+  # Sidecar configuration for dashboards
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      folderAnnotation: grafana_folder
+      searchNamespace: ALL
+      provider:
+        foldersFromFilesStructure: true
+        allowUiUpdates: true
 
-  # Dashboard providers
-  dashboardProviders:
-    dashboardproviders.yaml:
-      apiVersion: 1
-      providers:
-        - name: 'velure-dashboards'
-          orgId: 1
-          folder: 'Velure'
-          type: file
-          disableDeletion: false
-          editable: true
-          options:
-            path: /var/lib/grafana/dashboards/velure
-
-  # Import dashboards
-  dashboardsConfigMaps:
-    velure: "velure-grafana-dashboards"
+  # Additional datasources (Loki)
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      url: http://loki.monitoring:3100
+      access: proxy
+      isDefault: false
+      jsonData: {}
 
   # Grafana.ini configuration
   grafana.ini:
