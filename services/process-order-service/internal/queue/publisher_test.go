@@ -6,7 +6,7 @@ import (
 
 	"github.com/icl00ud/process-order-service/internal/model"
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 type fakeChannel struct {
@@ -67,7 +67,7 @@ func TestRabbitPublisher_PublishSuccess(t *testing.T) {
 	pub := &rabbitPublisher{
 		channel:  ch,
 		exchange: "orders",
-		logger:   zap.NewNop(),
+		logger:   logger.NewNop(),
 	}
 
 	evt := model.Event{Type: "order.created", Payload: []byte(`{"id":"1"}`)}
@@ -90,7 +90,7 @@ func TestRabbitPublisher_PublishError(t *testing.T) {
 	pub := &rabbitPublisher{
 		channel:  ch,
 		exchange: "orders",
-		logger:   zap.NewNop(),
+		logger:   logger.NewNop(),
 	}
 
 	err := pub.Publish(model.Event{Type: "order.created", Payload: []byte(`{}`)})
@@ -105,7 +105,7 @@ func TestRabbitPublisher_CloseClosesResources(t *testing.T) {
 	pub := &rabbitPublisher{
 		channel: ch,
 		conn:    conn,
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 	}
 
 	if err := pub.Close(); err != nil {

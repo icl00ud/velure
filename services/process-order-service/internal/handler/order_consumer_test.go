@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/icl00ud/process-order-service/internal/model"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 // Mock consumer for testing
@@ -60,7 +60,7 @@ func (m *mockPaymentService) Process(orderID string, items []model.CartItem, amo
 func TestNewOrderConsumer(t *testing.T) {
 	consumer := &mockConsumer{}
 	svc := &mockPaymentService{}
-	logger := zap.NewNop()
+	logger := logger.NewNop()
 
 	oc := NewOrderConsumer(consumer, svc, 5, logger)
 
@@ -74,7 +74,7 @@ func TestNewOrderConsumer(t *testing.T) {
 
 func TestOrderConsumer_Start_OrderCreatedEvent(t *testing.T) {
 	svc := &mockPaymentService{}
-	logger := zap.NewNop()
+	logger := logger.NewNop()
 
 	// Create a test event
 	orderPayload := struct {
@@ -134,7 +134,7 @@ func TestOrderConsumer_Start_OrderCreatedEvent(t *testing.T) {
 
 func TestOrderConsumer_Start_NonOrderCreatedEvent(t *testing.T) {
 	svc := &mockPaymentService{}
-	logger := zap.NewNop()
+	logger := logger.NewNop()
 
 	// Create a non-order.created event
 	evt := model.Event{
@@ -167,7 +167,7 @@ func TestOrderConsumer_Start_NonOrderCreatedEvent(t *testing.T) {
 
 func TestOrderConsumer_Start_InvalidPayload(t *testing.T) {
 	svc := &mockPaymentService{}
-	logger := zap.NewNop()
+	logger := logger.NewNop()
 
 	// Create event with invalid JSON payload
 	evt := model.Event{
@@ -204,7 +204,7 @@ func TestOrderConsumer_Start_ProcessFails(t *testing.T) {
 			return errors.New("payment processing failed")
 		},
 	}
-	logger := zap.NewNop()
+	logger := logger.NewNop()
 
 	orderPayload := struct {
 		ID    string           `json:"id"`
@@ -249,7 +249,7 @@ func TestOrderConsumer_Start_ProcessFails(t *testing.T) {
 
 func TestOrderConsumer_Start_MultipleWorkers(t *testing.T) {
 	svc := &mockPaymentService{}
-	logger := zap.NewNop()
+	logger := logger.NewNop()
 
 	consumer := &mockConsumer{
 		consumeFunc: func(ctx context.Context, handler func(model.Event) error) error {

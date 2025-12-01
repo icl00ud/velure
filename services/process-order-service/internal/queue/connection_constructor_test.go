@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
 )
 
 type stubAMQPChannel struct {
@@ -85,7 +85,7 @@ func TestNewRabbitMQConnectionUsesDialer(t *testing.T) {
 	})
 	defer restore()
 
-	conn, err := NewRabbitMQConnection("amqp://stub", zap.NewNop())
+	conn, err := NewRabbitMQConnection("amqp://stub", logger.NewNop())
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -97,7 +97,7 @@ func TestNewRabbitMQConnectionUsesDialer(t *testing.T) {
 func TestRabbitMQConnection_NewConsumer_SetsQosAndBinding(t *testing.T) {
 	channel := &stubAMQPChannel{}
 	stubConn := &stubAMQPConnection{ch: channel}
-	rc := &RabbitMQConnection{conn: stubConn, logger: zap.NewNop()}
+	rc := &RabbitMQConnection{conn: stubConn, logger: logger.NewNop()}
 
 	consumer, err := rc.NewConsumer("orders")
 	if err != nil {
@@ -117,7 +117,7 @@ func TestRabbitMQConnection_NewConsumer_SetsQosAndBinding(t *testing.T) {
 func TestRabbitMQConnection_NewConsumer_BindErrorClosesChannel(t *testing.T) {
 	channel := &stubAMQPChannel{bindErr: errors.New("bind error")}
 	stubConn := &stubAMQPConnection{ch: channel}
-	rc := &RabbitMQConnection{conn: stubConn, logger: zap.NewNop()}
+	rc := &RabbitMQConnection{conn: stubConn, logger: logger.NewNop()}
 
 	if _, err := rc.NewConsumer("orders"); err == nil {
 		t.Fatal("expected bind error")
@@ -130,7 +130,7 @@ func TestRabbitMQConnection_NewConsumer_BindErrorClosesChannel(t *testing.T) {
 func TestRabbitMQConnection_NewConsumer_QosErrorClosesChannel(t *testing.T) {
 	channel := &stubAMQPChannel{qosErr: errors.New("qos error")}
 	stubConn := &stubAMQPConnection{ch: channel}
-	rc := &RabbitMQConnection{conn: stubConn, logger: zap.NewNop()}
+	rc := &RabbitMQConnection{conn: stubConn, logger: logger.NewNop()}
 
 	if _, err := rc.NewConsumer("orders"); err == nil {
 		t.Fatal("expected qos error")
@@ -143,7 +143,7 @@ func TestRabbitMQConnection_NewConsumer_QosErrorClosesChannel(t *testing.T) {
 func TestRabbitMQConnection_NewPublisher_DeclareErrorClosesChannel(t *testing.T) {
 	channel := &stubAMQPChannel{declareErr: errors.New("declare error")}
 	stubConn := &stubAMQPConnection{ch: channel}
-	rc := &RabbitMQConnection{conn: stubConn, logger: zap.NewNop()}
+	rc := &RabbitMQConnection{conn: stubConn, logger: logger.NewNop()}
 
 	if _, err := rc.NewPublisher("orders"); err == nil {
 		t.Fatal("expected declare error")
@@ -156,7 +156,7 @@ func TestRabbitMQConnection_NewPublisher_DeclareErrorClosesChannel(t *testing.T)
 func TestRabbitMQConnection_NewPublisher_Success(t *testing.T) {
 	channel := &stubAMQPChannel{}
 	stubConn := &stubAMQPConnection{ch: channel}
-	rc := &RabbitMQConnection{conn: stubConn, logger: zap.NewNop()}
+	rc := &RabbitMQConnection{conn: stubConn, logger: logger.NewNop()}
 
 	if _, err := rc.NewPublisher("orders"); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -168,7 +168,7 @@ func TestRabbitMQConnection_NewPublisher_Success(t *testing.T) {
 
 func TestRabbitMQConnection_NewPublisher_ChannelError(t *testing.T) {
 	stubConn := &stubAMQPConnection{channelErr: errors.New("channel error")}
-	rc := &RabbitMQConnection{conn: stubConn, logger: zap.NewNop()}
+	rc := &RabbitMQConnection{conn: stubConn, logger: logger.NewNop()}
 
 	if _, err := rc.NewPublisher("orders"); err == nil {
 		t.Fatal("expected channel error")
@@ -195,7 +195,7 @@ func TestNewRabbitMQConsumer_QosErrorClosesResources(t *testing.T) {
 	})
 	defer restore()
 
-	if _, err := NewRabbitMQConsumer("amqp://stub", "queue", zap.NewNop()); err == nil {
+	if _, err := NewRabbitMQConsumer("amqp://stub", "queue", logger.NewNop()); err == nil {
 		t.Fatal("expected qos error")
 	}
 	if !channel.closed {
@@ -214,7 +214,7 @@ func TestNewRabbitMQConsumer_Success(t *testing.T) {
 	})
 	defer restore()
 
-	consumer, err := NewRabbitMQConsumer("amqp://stub", "queue", zap.NewNop())
+	consumer, err := NewRabbitMQConsumer("amqp://stub", "queue", logger.NewNop())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -233,7 +233,7 @@ func TestNewRabbitMQConsumer_ChannelErrorClosesConnection(t *testing.T) {
 	})
 	defer restore()
 
-	if _, err := NewRabbitMQConsumer("amqp://stub", "queue", zap.NewNop()); err == nil {
+	if _, err := NewRabbitMQConsumer("amqp://stub", "queue", logger.NewNop()); err == nil {
 		t.Fatal("expected channel error")
 	}
 	if !stubConn.closed {
@@ -247,7 +247,7 @@ func TestNewRabbitMQConsumer_DialError(t *testing.T) {
 	})
 	defer restore()
 
-	if _, err := NewRabbitMQConsumer("amqp://stub", "queue", zap.NewNop()); err == nil {
+	if _, err := NewRabbitMQConsumer("amqp://stub", "queue", logger.NewNop()); err == nil {
 		t.Fatal("expected dial error")
 	}
 }
@@ -260,7 +260,7 @@ func TestNewRabbitPublisher_DeclareErrorClosesResources(t *testing.T) {
 	})
 	defer restore()
 
-	if _, err := NewRabbitPublisher("amqp://stub", "orders", zap.NewNop()); err == nil {
+	if _, err := NewRabbitPublisher("amqp://stub", "orders", logger.NewNop()); err == nil {
 		t.Fatal("expected declare error")
 	}
 	if !channel.closed {
@@ -279,7 +279,7 @@ func TestNewRabbitPublisher_Success(t *testing.T) {
 	})
 	defer restore()
 
-	pub, err := NewRabbitPublisher("amqp://stub", "orders", zap.NewNop())
+	pub, err := NewRabbitPublisher("amqp://stub", "orders", logger.NewNop())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -297,7 +297,7 @@ func TestNewRabbitPublisher_DialError(t *testing.T) {
 	})
 	defer restore()
 
-	if _, err := NewRabbitPublisher("amqp://stub", "orders", zap.NewNop()); err == nil {
+	if _, err := NewRabbitPublisher("amqp://stub", "orders", logger.NewNop()); err == nil {
 		t.Fatal("expected dial error")
 	}
 }
@@ -308,7 +308,7 @@ func TestNewRabbitMQConnection_DialError(t *testing.T) {
 	})
 	defer restore()
 
-	if _, err := NewRabbitMQConnection("amqp://stub", zap.NewNop()); err == nil {
+	if _, err := NewRabbitMQConnection("amqp://stub", logger.NewNop()); err == nil {
 		t.Fatal("expected dial error")
 	}
 }

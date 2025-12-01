@@ -7,12 +7,12 @@ import (
 
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 func TestPublish_ReturnsErrorWhenClosed(t *testing.T) {
 	pub := &rabbitMQPublisher{
-		logger: zap.NewNop(),
+		logger: logger.NewNop(),
 		closed: true,
 	}
 
@@ -24,7 +24,7 @@ func TestPublish_ReturnsErrorWhenClosed(t *testing.T) {
 
 func TestClose_IsIdempotentWithoutConnections(t *testing.T) {
 	pub := &rabbitMQPublisher{
-		logger: zap.NewNop(),
+		logger: logger.NewNop(),
 	}
 
 	if err := pub.Close(); err != nil {
@@ -116,7 +116,7 @@ func TestPublish_ReconnectsOnError(t *testing.T) {
 	first := &fakePubChannel{publishErr: errors.New("fail")}
 	second := &fakePubChannel{}
 	pub := &rabbitMQPublisher{}
-	pub.logger = zap.NewNop()
+	pub.logger = logger.NewNop()
 	pub.exchange = "ex"
 	pub.ch = first
 	pub.connectFn = func() error {
@@ -139,7 +139,7 @@ func TestPublish_ReconnectsOnError(t *testing.T) {
 func TestPublish_ReconnectFailure(t *testing.T) {
 	ch := &fakePubChannel{publishErr: errors.New("fail")}
 	pub := &rabbitMQPublisher{
-		logger:   zap.NewNop(),
+		logger:   logger.NewNop(),
 		exchange: "ex",
 		ch:       ch,
 		connectFn: func() error {
@@ -158,7 +158,7 @@ func TestPublish_FailsAfterReconnect(t *testing.T) {
 	second := &fakePubChannel{publishErr: errors.New("second")}
 
 	pub := &rabbitMQPublisher{
-		logger:   zap.NewNop(),
+		logger:   logger.NewNop(),
 		exchange: "ex",
 		ch:       first,
 	}
@@ -179,7 +179,7 @@ func TestPublish_FailsAfterReconnect(t *testing.T) {
 func TestPublish_ReconnectsWhenChannelNil(t *testing.T) {
 	// Build publisher with nil channel to force reconnect path
 	pub := &rabbitMQPublisher{
-		logger:  zap.NewNop(),
+		logger:  logger.NewNop(),
 		amqpURL: "amqp://invalid", // will make connect() fail
 		mu:      sync.Mutex{},
 		connectFn: func() error {
@@ -201,7 +201,7 @@ func TestNewRabbitMQPublisher_UsesInjectedDial(t *testing.T) {
 	conn := &fakePubConn{ch: ch}
 	dialCalled := 0
 
-	pub, err := newRabbitMQPublisher("amqp://example", "ex.test", zap.NewNop(), func(url string) (amqpPublisherConn, error) {
+	pub, err := newRabbitMQPublisher("amqp://example", "ex.test", logger.NewNop(), func(url string) (amqpPublisherConn, error) {
 		dialCalled++
 		return conn, nil
 	})
@@ -228,7 +228,7 @@ func TestRabbitMQPublisher_ConnectClosesOldResources(t *testing.T) {
 	newConn := &fakePubConn{ch: newCh}
 
 	pub := &rabbitMQPublisher{
-		logger:   zap.NewNop(),
+		logger:   logger.NewNop(),
 		amqpURL:  "amqp://example",
 		exchange: "ex.retry",
 		ch:       oldCh,
@@ -250,7 +250,7 @@ func TestRabbitMQPublisher_ConnectClosesOldResources(t *testing.T) {
 }
 
 func TestNewRabbitMQPublisher_PropagatesConnectError(t *testing.T) {
-	if _, err := newRabbitMQPublisher("amqp://example", "ex", zap.NewNop(), func(string) (amqpPublisherConn, error) {
+	if _, err := newRabbitMQPublisher("amqp://example", "ex", logger.NewNop(), func(string) (amqpPublisherConn, error) {
 		return nil, errors.New("dial failed")
 	}); err == nil {
 		t.Fatal("expected error when connect fails")
@@ -259,7 +259,7 @@ func TestNewRabbitMQPublisher_PropagatesConnectError(t *testing.T) {
 
 func TestRabbitMQPublisher_ConnectDialError(t *testing.T) {
 	pub := &rabbitMQPublisher{
-		logger:   zap.NewNop(),
+		logger:   logger.NewNop(),
 		amqpURL:  "amqp://example",
 		exchange: "ex",
 		dialFn: func(string) (amqpPublisherConn, error) {
@@ -274,7 +274,7 @@ func TestRabbitMQPublisher_ConnectDialError(t *testing.T) {
 func TestRabbitMQPublisher_ChannelOpenError(t *testing.T) {
 	conn := &failingConn{}
 	pub := &rabbitMQPublisher{
-		logger:   zap.NewNop(),
+		logger:   logger.NewNop(),
 		amqpURL:  "amqp://example",
 		exchange: "ex",
 		dialFn: func(string) (amqpPublisherConn, error) {
@@ -293,7 +293,7 @@ func TestRabbitMQPublisher_ExchangeDeclareError(t *testing.T) {
 	ch := &fakePubChannel{declareErr: errors.New("exchange declare fail")}
 	conn := &fakePubConn{ch: ch}
 	pub := &rabbitMQPublisher{
-		logger:   zap.NewNop(),
+		logger:   logger.NewNop(),
 		amqpURL:  "amqp://example",
 		exchange: "ex",
 		dialFn: func(string) (amqpPublisherConn, error) {
@@ -319,7 +319,7 @@ func TestNewRabbitMQPublisher_UsesDialVariable(t *testing.T) {
 		return conn, nil
 	}
 
-	pub, err := NewRabbitMQPublisher("amqp://example", "ex.var", zap.NewNop())
+	pub, err := NewRabbitMQPublisher("amqp://example", "ex.var", logger.NewNop())
 	if err != nil {
 		t.Fatalf("expected constructor to succeed, got %v", err)
 	}
@@ -356,7 +356,7 @@ func TestClose_ClosesChannelAndConnection(t *testing.T) {
 	ch := &fakePubChannel{}
 	conn := &fakePubConn{}
 	pub := &rabbitMQPublisher{
-		logger: zap.NewNop(),
+		logger: logger.NewNop(),
 		ch:     ch,
 		conn:   conn,
 	}
@@ -373,7 +373,7 @@ func TestClose_ReturnsConnectionError(t *testing.T) {
 	ch := &fakePubChannel{closeErr: errors.New("channel close")}
 	conn := &fakePubConn{closeErr: errors.New("conn close")}
 	pub := &rabbitMQPublisher{
-		logger: zap.NewNop(),
+		logger: logger.NewNop(),
 		ch:     ch,
 		conn:   conn,
 	}
