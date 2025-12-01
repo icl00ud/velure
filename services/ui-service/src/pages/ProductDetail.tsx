@@ -24,35 +24,35 @@ import { toast } from "@/hooks/use-toast";
 // Mock product data
 const mockProduct = {
   id: 1,
-  name: "Premium Dry Dog Food - Chicken & Rice",
+  name: "Ração Premium para Cães - Frango e Arroz",
   brand: "PetNutrition Pro",
   price: 45.99,
   originalPrice: 52.99,
   rating: 4.8,
   reviews: 156,
-  category: "Food",
-  tags: ["Premium", "Grain-Free", "Adult"],
+  category: "Ração",
+  tags: ["Premium", "Sem Grãos", "Adulto"],
   inStock: true,
   stockQuantity: 23,
   discount: 13,
   description:
-    "Give your dog the nutrition they deserve with our premium chicken and rice formula. Made with real chicken as the first ingredient, this recipe provides complete and balanced nutrition for adult dogs.",
+    "Ofereça ao seu cão a nutrição que ele merece com nossa fórmula premium de frango e arroz. Feita com frango de verdade como ingrediente principal, esta receita fornece nutrição completa e equilibrada para cães adultos.",
   features: [
-    "Real chicken as first ingredient",
-    "No artificial colors, flavors, or preservatives",
-    "Rich in protein for lean muscle maintenance",
-    "Added vitamins and minerals for immune support",
-    "Omega-6 fatty acids for healthy skin and coat",
+    "Frango de verdade como ingrediente principal",
+    "Sem corantes, sabores ou conservantes artificiais",
+    "Rico em proteínas para manutenção muscular",
+    "Vitaminas e minerais adicionados para suporte imunológico",
+    "Ácidos graxos ômega-6 para pele e pelo saudáveis",
   ],
   specifications: {
-    Weight: "15 lbs (6.8 kg)",
-    "Life Stage": "Adult",
-    "Breed Size": "All Sizes",
-    "Primary Protein": "Chicken",
-    "Special Diet": "Grain-Free",
+    Peso: "6,8 kg",
+    "Fase de Vida": "Adulto",
+    "Porte": "Todos os Portes",
+    "Proteína Principal": "Frango",
+    "Dieta Especial": "Sem Grãos",
   },
   ingredients:
-    "Deboned Chicken, Chicken Meal, Sweet Potatoes, Peas, Chicken Fat, Tomato Pomace, Natural Flavor, Salt, Choline Chloride, Taurine, Dried Chicory Root, Yucca Schidigera Extract, Rosemary Extract, Mixed Tocopherols",
+    "Frango Desossado, Farinha de Frango, Batata Doce, Ervilhas, Gordura de Frango, Polpa de Tomate, Sabor Natural, Sal, Cloreto de Colina, Taurina, Raiz de Chicória Seca, Extrato de Yucca Schidigera, Extrato de Alecrim, Tocoferóis Mistos",
   images: [
     "/api/placeholder/500/500",
     "/api/placeholder/500/500",
@@ -64,30 +64,30 @@ const mockProduct = {
 const mockReviews = [
   {
     id: 1,
-    author: "Sarah M.",
+    author: "Maria S.",
     rating: 5,
     date: "2024-01-15",
-    title: "My dog loves it!",
+    title: "Meu cachorro adora!",
     content:
-      "My golden retriever absolutely loves this food. His coat is shinier and he has more energy. Highly recommend!",
+      "Meu golden retriever adora essa ração. O pelo dele está mais brilhante e ele tem mais energia. Recomendo muito!",
   },
   {
     id: 2,
-    author: "Mike R.",
+    author: "Pedro R.",
     rating: 4,
     date: "2024-01-10",
-    title: "Great quality",
+    title: "Ótima qualidade",
     content:
-      "Good quality food at a reasonable price. My dog took a few days to adjust but now eats it happily.",
+      "Ração de boa qualidade com preço justo. Meu cachorro levou alguns dias para se adaptar, mas agora come feliz.",
   },
   {
     id: 3,
-    author: "Lisa K.",
+    author: "Ana K.",
     rating: 5,
     date: "2024-01-05",
-    title: "Excellent nutrition",
+    title: "Excelente nutrição",
     content:
-      "Vet recommended this brand. Great ingredients and my dog's digestion has improved significantly.",
+      "O veterinário recomendou essa marca. Ótimos ingredientes e a digestão do meu cachorro melhorou significativamente.",
   },
 ];
 
@@ -99,15 +99,15 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     toast({
-      title: "Added to cart!",
-      description: `${quantity} x ${mockProduct.name} added to your cart.`,
+      title: "Adicionado ao carrinho!",
+      description: `${quantity} x ${mockProduct.name} adicionado ao seu carrinho.`,
     });
   };
 
   const handleBuyNow = () => {
     toast({
-      title: "Redirecting to checkout...",
-      description: "Taking you to secure checkout.",
+      title: "Redirecionando para o checkout...",
+      description: "Levando você para o pagamento seguro.",
     });
   };
 
@@ -120,11 +120,11 @@ const ProductDetail = () => {
         <nav className="mb-6">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-primary">
-              Home
+              Início
             </Link>
             <span>/</span>
             <Link to="/products/dogs" className="hover:text-primary">
-              Dogs
+              Cães
             </Link>
             <span>/</span>
             <span className="text-foreground font-medium">{mockProduct.category}</span>
@@ -136,7 +136,7 @@ const ProductDetail = () => {
           className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Products
+          Voltar para produtos
         </Link>
 
         <div className="grid lg:grid-cols-2 gap-12 mb-12">
@@ -183,7 +183,7 @@ const ProductDetail = () => {
                   ))}
                   <span className="ml-2 font-medium">{mockProduct.rating}</span>
                 </div>
-                <span className="text-muted-foreground">({mockProduct.reviews} reviews)</span>
+                <span className="text-muted-foreground">({mockProduct.reviews} avaliações)</span>
               </div>
 
               <div className="flex flex-wrap gap-2 mb-6">
@@ -204,7 +204,7 @@ const ProductDetail = () => {
               )}
               {mockProduct.discount > 0 && (
                 <Badge className="bg-secondary text-secondary-foreground">
-                  Save {mockProduct.discount}%
+                  Economize {mockProduct.discount}%
                 </Badge>
               )}
             </div>
@@ -215,14 +215,14 @@ const ProductDetail = () => {
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-primary rounded-full"></div>
               <span className="text-sm font-medium text-primary">
-                In Stock ({mockProduct.stockQuantity} available)
+                Em estoque ({mockProduct.stockQuantity} disponíveis)
               </span>
             </div>
 
             {/* Quantity & Actions */}
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
-                <span className="font-medium">Quantity:</span>
+                <span className="font-medium">Quantidade:</span>
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
@@ -250,7 +250,7 @@ const ProductDetail = () => {
                   className="flex-1 bg-gradient-primary hover:opacity-90 text-primary-foreground"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
-                  Add to Cart
+                  Adicionar ao carrinho
                 </Button>
 
                 <Button
@@ -258,7 +258,7 @@ const ProductDetail = () => {
                   onClick={handleBuyNow}
                   className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                 >
-                  Buy Now
+                  Comprar agora
                 </Button>
               </div>
 
@@ -284,8 +284,8 @@ const ProductDetail = () => {
                   <Truck className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Free Shipping</p>
-                  <p className="text-xs text-muted-foreground">On orders over $50</p>
+                  <p className="text-sm font-medium">Frete grátis</p>
+                  <p className="text-xs text-muted-foreground">Em pedidos acima de R$ 100</p>
                 </div>
               </div>
 
@@ -294,8 +294,8 @@ const ProductDetail = () => {
                   <RotateCcw className="h-4 w-4 text-secondary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">30-Day Returns</p>
-                  <p className="text-xs text-muted-foreground">Money back guarantee</p>
+                  <p className="text-sm font-medium">Devolução em 30 dias</p>
+                  <p className="text-xs text-muted-foreground">Garantia de dinheiro de volta</p>
                 </div>
               </div>
 
@@ -304,8 +304,8 @@ const ProductDetail = () => {
                   <Shield className="h-4 w-4 text-accent-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Quality Guarantee</p>
-                  <p className="text-xs text-muted-foreground">Premium products</p>
+                  <p className="text-sm font-medium">Garantia de qualidade</p>
+                  <p className="text-xs text-muted-foreground">Produtos premium</p>
                 </div>
               </div>
 
@@ -314,8 +314,8 @@ const ProductDetail = () => {
                   <Award className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Vet Approved</p>
-                  <p className="text-xs text-muted-foreground">Trusted by vets</p>
+                  <p className="text-sm font-medium">Aprovado por veterinários</p>
+                  <p className="text-xs text-muted-foreground">Confiável por veterinários</p>
                 </div>
               </div>
             </div>
@@ -327,18 +327,18 @@ const ProductDetail = () => {
           <CardContent className="p-0">
             <Tabs defaultValue="description" className="w-full">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger value="specifications">Specifications</TabsTrigger>
-                <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
-                <TabsTrigger value="reviews">Reviews ({mockProduct.reviews})</TabsTrigger>
+                <TabsTrigger value="description">Descrição</TabsTrigger>
+                <TabsTrigger value="specifications">Especificações</TabsTrigger>
+                <TabsTrigger value="ingredients">Ingredientes</TabsTrigger>
+                <TabsTrigger value="reviews">Avaliações ({mockProduct.reviews})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="description" className="p-6">
                 <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-foreground">Product Description</h3>
+                  <h3 className="text-xl font-semibold text-foreground">Descrição do Produto</h3>
                   <p className="text-muted-foreground leading-relaxed">{mockProduct.description}</p>
 
-                  <h4 className="text-lg font-semibold text-foreground mt-6">Key Features</h4>
+                  <h4 className="text-lg font-semibold text-foreground mt-6">Principais Características</h4>
                   <ul className="space-y-2">
                     {mockProduct.features.map((feature, index) => (
                       <li key={index} className="flex items-start space-x-2">
@@ -352,7 +352,7 @@ const ProductDetail = () => {
 
               <TabsContent value="specifications" className="p-6">
                 <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-foreground">Specifications</h3>
+                  <h3 className="text-xl font-semibold text-foreground">Especificações</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {Object.entries(mockProduct.specifications).map(([key, value]) => (
                       <div key={key} className="flex justify-between py-2 border-b border-border">
@@ -366,7 +366,7 @@ const ProductDetail = () => {
 
               <TabsContent value="ingredients" className="p-6">
                 <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-foreground">Ingredients</h3>
+                  <h3 className="text-xl font-semibold text-foreground">Ingredientes</h3>
                   <p className="text-muted-foreground leading-relaxed">{mockProduct.ingredients}</p>
                 </div>
               </TabsContent>
@@ -374,7 +374,7 @@ const ProductDetail = () => {
               <TabsContent value="reviews" className="p-6">
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-foreground">Customer Reviews</h3>
+                    <h3 className="text-xl font-semibold text-foreground">Avaliações de Clientes</h3>
                     <div className="flex items-center space-x-2">
                       <div className="flex items-center">
                         {[1, 2, 3, 4, 5].map((star) => (
@@ -388,7 +388,7 @@ const ProductDetail = () => {
                           />
                         ))}
                       </div>
-                      <span className="font-medium">{mockProduct.rating} out of 5</span>
+                      <span className="font-medium">{mockProduct.rating} de 5</span>
                     </div>
                   </div>
 

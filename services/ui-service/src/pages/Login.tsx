@@ -31,15 +31,15 @@ const Login = () => {
           password: formData.password,
         });
         toast({
-          title: "Welcome back!",
-          description: "You've been successfully logged in.",
+          title: "Bem-vindo de volta!",
+          description: "Você foi autenticado com sucesso.",
         });
         navigate("/");
       } else {
         if (formData.password !== formData.confirmPassword) {
           toast({
-            title: "Error",
-            description: "Passwords do not match.",
+            title: "Erro",
+            description: "As senhas não coincidem.",
             variant: "destructive",
           });
           return;
@@ -58,8 +58,8 @@ const Login = () => {
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred",
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Ocorreu um erro",
         variant: "destructive",
       });
     }
