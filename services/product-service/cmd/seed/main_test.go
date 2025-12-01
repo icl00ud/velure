@@ -22,6 +22,9 @@ type recordingRepo struct {
 func (r *recordingRepo) GetAllProducts(ctx context.Context) ([]models.ProductResponse, error) {
 	return nil, nil
 }
+func (r *recordingRepo) GetProductById(ctx context.Context, id string) (*models.ProductResponse, error) {
+	return nil, nil
+}
 func (r *recordingRepo) GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error) {
 	return nil, nil
 }

@@ -30,6 +30,22 @@ func (h *ProductHandler) GetAllProducts(c *fiber.Ctx) error {
 	return c.JSON(products)
 }
 
+func (h *ProductHandler) GetProductById(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Product ID is required")
+	}
+
+	product, err := h.service.GetProductById(c.Context(), id)
+	if err != nil {
+		if err.Error() == "product not found" {
+			return fiber.NewError(fiber.StatusNotFound, err.Error())
+		}
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(product)
+}
+
 func (h *ProductHandler) GetProductsByName(c *fiber.Ctx) error {
 	name := c.Params("name")
 	if name == "" {

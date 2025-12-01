@@ -13,6 +13,7 @@ import (
 
 type ProductService interface {
 	GetAllProducts(ctx context.Context) ([]models.ProductResponse, error)
+	GetProductById(ctx context.Context, id string) (*models.ProductResponse, error)
 	GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error)
 	GetProductsByPage(ctx context.Context, page, pageSize int) (*models.PaginatedProductsResponse, error)
 	GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) (*models.PaginatedProductsResponse, error)
@@ -50,6 +51,23 @@ func (s *productService) GetAllProducts(ctx context.Context) ([]models.ProductRe
 
 	metrics.SearchResultsReturned.Observe(float64(len(results)))
 	return results, nil
+}
+
+func (s *productService) GetProductById(ctx context.Context, id string) (*models.ProductResponse, error) {
+	start := time.Now()
+	defer func() {
+		metrics.ProductOperationDuration.WithLabelValues("get_by_id").Observe(time.Since(start).Seconds())
+	}()
+
+	metrics.ProductQueries.WithLabelValues("get_by_id").Inc()
+
+	result, err := s.repo.GetProductById(ctx, id)
+	if err != nil {
+		metrics.Errors.WithLabelValues("database").Inc()
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (s *productService) GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error) {

@@ -123,7 +123,12 @@ func setupFiberApp(service services.ProductService) *fiber.App {
 	})
 
 	// Middleware
-	app.Use(logger.New())
+	app.Use(logger.New(logger.Config{
+		Next: func(c *fiber.Ctx) bool {
+			path := c.Path()
+			return path == "/metrics" || path == "/health"
+		},
+	}))
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept",
@@ -155,6 +160,7 @@ func setupFiberApp(service services.ProductService) *fiber.App {
 		g.Get("/getProductsByPageAndCategory", handler.GetProductsByPageAndCategory)
 		g.Get("/getProductsCount", handler.GetProductsCount)
 		g.Get("/categories", handler.GetCategories)
+		g.Get("/:id", handler.GetProductById)
 		g.Post("/", handler.CreateProduct)
 		g.Post("/updateQuantity", handler.UpdateProductQuantity)
 		g.Delete("/deleteProductsByName/:name", handler.DeleteProductsByName)

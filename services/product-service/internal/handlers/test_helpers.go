@@ -18,6 +18,9 @@ func (s *stubProductService) SyncProductCatalogMetric(ctx context.Context) {}
 func (s *stubProductService) GetAllProducts(ctx context.Context) ([]models.ProductResponse, error) {
 	return nil, s.err
 }
+func (s *stubProductService) GetProductById(ctx context.Context, id string) (*models.ProductResponse, error) {
+	return nil, s.err
+}
 func (s *stubProductService) GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error) {
 	return nil, s.err
 }

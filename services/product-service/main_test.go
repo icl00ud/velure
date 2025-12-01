@@ -135,6 +135,10 @@ func (f *fakeRepo) GetAllProducts(ctx context.Context) ([]models.ProductResponse
 	return nil, nil
 }
 
+func (f *fakeRepo) GetProductById(ctx context.Context, id string) (*models.ProductResponse, error) {
+	return nil, nil
+}
+
 func (f *fakeRepo) GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error) {
 	return nil, nil
 }
