@@ -15,7 +15,7 @@ class ProductService {
     }
   }
 
-  async getProductById(id: number): Promise<Product> {
+  async getProductById(id: string): Promise<Product> {
     try {
       const response = await fetch(`${configService.productServiceUrl}/${id}`);
       if (!response.ok) {

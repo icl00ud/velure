@@ -32,7 +32,7 @@ export function useProducts() {
   };
 }
 
-export function useProduct(id: number) {
+export function useProduct(id: string) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
