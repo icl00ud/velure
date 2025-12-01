@@ -1,4 +1,4 @@
-import { ChevronDown, Heart, LogOut, ShoppingCart, User } from "lucide-react";
+import { ChevronDown, Heart, LogOut, Menu, ShoppingCart, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { productService } from "@/services/product.service";
@@ -17,19 +17,19 @@ const Header = () => {
   const { itemsCount } = useCart();
   const { isAuthenticated, logout } = useAuth();
   const [categories, setCategories] = useState<string[]>([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await productService.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+      }
+    };
     loadCategories();
   }, []);
-
-  const loadCategories = async () => {
-    try {
-      const data = await productService.getCategories();
-      setCategories(data);
-    } catch (error) {
-      console.error("Failed to load categories:", error);
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -96,6 +96,85 @@ const Header = () => {
 
         {/* Actions */}
         <div className="flex items-center space-x-4">
+          {/* Mobile Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+              <SheetHeader>
+                <SheetTitle className="flex items-center space-x-2">
+                  <div className="bg-gradient-primary rounded-full p-2">
+                    <Heart className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <span className="font-bold text-lg text-primary">Velure</span>
+                </SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col space-y-4 mt-8">
+                <Link
+                  to="/products"
+                  className="text-foreground hover:text-primary transition-colors py-2 border-b border-border"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Todos os Produtos
+                </Link>
+                {categories.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Categorias</p>
+                    {categories.map((category) => (
+                      <Link
+                        key={category}
+                        to={`/products/${category}`}
+                        className="block text-foreground hover:text-primary transition-colors py-2 pl-4"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {formatCategoryName(category)}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                <Link
+                  to="/contact"
+                  className="text-foreground hover:text-primary transition-colors py-2 border-t border-border"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Contato
+                </Link>
+                {isAuthenticated ? (
+                  <>
+                    <Link
+                      to="/orders"
+                      className="text-foreground hover:text-primary transition-colors py-2"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Meus Pedidos
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleLogout();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-left text-foreground hover:text-primary transition-colors py-2"
+                    >
+                      Sair
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="text-foreground hover:text-primary transition-colors py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Entrar / Cadastrar
+                  </Link>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
+
           {/* Cart */}
           <Link to="/cart">
             <Button variant="ghost" size="icon" className="relative">
