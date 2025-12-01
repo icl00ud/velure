@@ -152,8 +152,9 @@ func setupRouter(cfg *config.Config, authHandler *handlers.AuthHandler) *gin.Eng
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Initialize router
-	router := gin.Default()
+	// Initialize router without default middleware
+	router := gin.New()
+	router.Use(gin.Recovery())
 
 	// Rate limiter global
 	rateLimiter := middleware.NewRateLimiter(100, 200) // 100 req/s, burst 200

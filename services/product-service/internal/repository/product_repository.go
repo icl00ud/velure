@@ -29,6 +29,7 @@ type mongoCollection interface {
 
 type ProductRepository interface {
 	GetAllProducts(ctx context.Context) ([]models.ProductResponse, error)
+	GetProductById(ctx context.Context, id string) (*models.ProductResponse, error)
 	GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error)
 	GetProductsByPage(ctx context.Context, page, pageSize int) (*models.PaginatedProductsResponse, error)
 	GetProductsByPageAndCategory(ctx context.Context, page, pageSize int, category string) (*models.PaginatedProductsResponse, error)
@@ -90,6 +91,49 @@ func (r *productRepository) GetAllProducts(ctx context.Context) ([]models.Produc
 	}
 
 	return response, nil
+}
+
+func (r *productRepository) GetProductById(ctx context.Context, id string) (*models.ProductResponse, error) {
+	cacheKey := fmt.Sprintf("product:%s", id)
+
+	// Try to get from cache
+	if r.redis != nil {
+		cached, err := r.redis.Get(ctx, cacheKey).Result()
+		if err == nil {
+			metrics.CacheHits.Inc()
+			var product models.ProductResponse
+			if err := json.Unmarshal([]byte(cached), &product); err == nil {
+				return &product, nil
+			}
+		} else {
+			metrics.CacheMisses.Inc()
+		}
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid product ID: %w", err)
+	}
+
+	var product models.Product
+	err = r.collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&product)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("product not found")
+		}
+		return nil, fmt.Errorf("failed to get product: %w", err)
+	}
+
+	response := r.toProductResponse(product)
+
+	// Cache for 30 minutes
+	if r.redis != nil {
+		if data, err := json.Marshal(response); err == nil {
+			r.redis.Set(ctx, cacheKey, data, 30*time.Minute)
+		}
+	}
+
+	return &response, nil
 }
 
 func (r *productRepository) GetProductsByName(ctx context.Context, name string) ([]models.ProductResponse, error) {

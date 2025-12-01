@@ -7,11 +7,25 @@ import (
 	"go.uber.org/zap"
 )
 
+// skipLoggingPaths contains paths that should not be logged
+var skipLoggingPaths = map[string]bool{
+	"/metrics": true,
+	"/health":  true,
+	"/healthz": true,
+	"/readyz":  true,
+}
+
 func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		lrw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 		start := time.Now()
 		next.ServeHTTP(lrw, r)
+
+		// Skip logging for health and metrics endpoints
+		if skipLoggingPaths[r.URL.Path] {
+			return
+		}
+
 		zap.L().Info("request completed",
 			zap.String("method", r.Method),
 			zap.String("path", r.URL.Path),

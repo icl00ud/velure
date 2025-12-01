@@ -23,5 +23,7 @@ func CORS() gin.HandlerFunc {
 }
 
 func Logger() gin.HandlerFunc {
-	return gin.Logger()
+	return gin.LoggerWithConfig(gin.LoggerConfig{
+		SkipPaths: []string{"/metrics", "/health"},
+	})
 }
