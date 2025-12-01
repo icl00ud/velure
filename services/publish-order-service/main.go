@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/icl00ud/publish-order-service/internal/config"
@@ -21,6 +20,7 @@ import (
 	"github.com/icl00ud/publish-order-service/internal/publisher"
 	"github.com/icl00ud/publish-order-service/internal/repository"
 	"github.com/icl00ud/publish-order-service/internal/service"
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -39,9 +39,9 @@ type appDeps struct {
 	loadConfig    func() (config.Config, error)
 	newRepo       func(string) (repository.OrderRepository, error)
 	runMigrations func(*sql.DB, string) error
-	newPublisher  func(string, string, *zap.Logger) (publisher.Publisher, error)
-	newConsumer   func(string, string, string, consumer.EventHandler, int, *zap.Logger) (consumer.Consumer, error)
-	newLogger     func() (*zap.Logger, error)
+	newPublisher  func(string, string, *logger.Logger) (publisher.Publisher, error)
+	newConsumer   func(string, string, string, consumer.EventHandler, int, *logger.Logger) (consumer.Consumer, error)
+	newLogger     func() *logger.Logger
 	newHTTPServer func(config.Config, http.Handler) server
 }
 
@@ -54,8 +54,12 @@ func defaultDeps() appDeps {
 		runMigrations: database.RunMigrations,
 		newPublisher:  publisher.NewRabbitMQPublisher,
 		newConsumer:   consumer.NewRabbitMQConsumer,
-		newLogger: func() (*zap.Logger, error) {
-			return zap.NewProduction()
+		newLogger: func() *logger.Logger {
+			return logger.Init(logger.Config{
+				ServiceName: "publish-order-service",
+				Level:       os.Getenv("LOG_LEVEL"),
+				UseColor:    os.Getenv("LOG_COLOR") != "false",
+			})
 		},
 		newHTTPServer: func(cfg config.Config, handler http.Handler) server {
 			return &http.Server{
@@ -71,89 +75,82 @@ func defaultDeps() appDeps {
 
 func main() {
 	if err := run(context.Background(), depsFactory()); err != nil {
-		zap.L().Fatal("error during execution", zap.Error(err))
+		logger.Fatal("error during execution", logger.Err(err))
 	}
 }
 
 func run(parentCtx context.Context, deps appDeps) error {
 	godotenv.Load()
 
-	logger, err := deps.newLogger()
-	if err != nil {
-		return fmt.Errorf("logger init failed: %w", err)
-	}
-	defer logger.Sync()
-	zap.ReplaceGlobals(logger)
+	log := deps.newLogger()
+	defer log.Sync()
 
-	logger.Info("Starting publish-order-service initialization...")
+	log.Info("Starting publish-order-service")
 
-	logger.Info("Loading configuration...")
+	log.Info("Loading configuration")
 	cfg, err := deps.loadConfig()
 	if err != nil {
 		return fmt.Errorf("config error: %w", err)
 	}
-	logger.Info("Configuration loaded successfully",
-		zap.String("port", cfg.Port),
-		zap.String("exchange", cfg.Exchange),
-		zap.String("queue", cfg.Queue),
-		zap.Int("workers", cfg.Workers))
+	log.Info("Configuration loaded",
+		logger.String("port", cfg.Port),
+		logger.String("exchange", cfg.Exchange),
+		logger.String("queue", cfg.Queue),
+		logger.Int("workers", cfg.Workers))
 
 	ctx, cancel := signal.NotifyContext(parentCtx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	logger.Info("Connecting to PostgreSQL database...", zap.String("postgres_url_masked", "postgresql://***"))
+	log.Info("Connecting to PostgreSQL")
 	repo, err := deps.newRepo(cfg.PostgresURL)
 	if err != nil {
 		return fmt.Errorf("repository init failed: %w", err)
 	}
-	logger.Info("PostgreSQL database connection established successfully")
+	log.Info("PostgreSQL connected")
 
 	if dbRepo, ok := repo.(dbProvider); ok {
-		logger.Info("Running database migrations...")
+		log.Info("Running migrations")
 		if err := deps.runMigrations(dbRepo.DB(), "./internal/migrations"); err != nil {
 			return fmt.Errorf("migration error: %w", err)
 		}
-		logger.Info("Database migrations completed successfully")
+		log.Info("Migrations completed")
 	} else {
-		logger.Info("Skipping migrations: repository does not expose DB()")
+		log.Info("Skipping migrations")
 	}
 
-	logger.Info("Connecting to RabbitMQ...", zap.String("exchange", cfg.Exchange))
-	pub, err := deps.newPublisher(cfg.RabbitURL, cfg.Exchange, logger)
+	log.Info("Connecting to RabbitMQ", logger.String("exchange", cfg.Exchange))
+	pub, err := deps.newPublisher(cfg.RabbitURL, cfg.Exchange, log)
 	if err != nil {
 		return fmt.Errorf("publisher init failed: %w", err)
 	}
 	defer pub.Close()
-	logger.Info("RabbitMQ publisher initialized successfully")
+	log.Info("RabbitMQ publisher initialized")
 
-	logger.Info("Initializing services and handlers...")
+	log.Info("Initializing services")
 	svc := service.NewOrderService(repo, service.NewPricingCalculator())
 	oh := handler.NewOrderHandler(svc, pub)
 
 	sseHandler := handler.NewSSEHandler(svc)
-	eventHandler := handler.NewEventHandler(svc, logger)
+	eventHandler := handler.NewEventHandler(svc, log)
 	eventHandler.SetSSEHandler(sseHandler)
-	logger.Info("Services and handlers initialized successfully")
 
-	logger.Info("Initializing RabbitMQ consumer...", zap.String("queue", cfg.Queue), zap.Int("workers", cfg.Workers))
+	log.Info("Initializing RabbitMQ consumer", logger.String("queue", cfg.Queue), logger.Int("workers", cfg.Workers))
 	cons, err := deps.newConsumer(
 		cfg.RabbitURL,
 		cfg.Exchange,
 		cfg.Queue,
 		eventHandler.HandleEvent,
 		cfg.Workers,
-		logger,
+		log,
 	)
 	if err != nil {
 		return fmt.Errorf("consumer init failed: %w", err)
 	}
 	defer cons.Close()
-	logger.Info("RabbitMQ consumer initialized successfully")
 
-	logger.Info("Setting up middleware...")
+	log.Info("Setting up middleware")
 	authMiddleware := middleware.Auth(cfg.JWTSecret)
 	sseAuthMiddleware := middleware.SSEAuth(cfg.JWTSecret)
-	logger.Info("Middleware configured successfully")
 
 	mux := http.NewServeMux()
 	// Support both root paths (local dev with Caddy rewrite) and /api/order (Kubernetes ALB)
@@ -188,29 +185,27 @@ func run(parentCtx context.Context, deps appDeps) error {
 		_, _ = w.Write([]byte("ok"))
 	})
 
-	logger.Info("Configuring HTTP server routes...")
+	log.Info("Starting HTTP server", logger.String("port", cfg.Port))
 	srv := deps.newHTTPServer(cfg, mux)
-	logger.Info("HTTP server configured, ready to start", zap.String("port", cfg.Port))
 
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		logger.Info("HTTP server starting...", zap.String("addr", cfg.Port))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error("HTTP server error", zap.Error(err))
+			log.Error("HTTP server error", logger.Err(err))
 			return err
 		}
 		return nil
 	})
 
 	g.Go(func() error {
-		logger.Info("consumer starting", zap.String("queue", cfg.Queue), zap.Int("workers", cfg.Workers))
+		log.Info("Consumer starting", logger.String("queue", cfg.Queue), logger.Int("workers", cfg.Workers))
 		return cons.Start(ctx)
 	})
 
 	g.Go(func() error {
 		<-ctx.Done()
-		logger.Info("shutting down server")
+		log.Info("Shutting down server")
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer shutdownCancel()
 		return srv.Shutdown(shutdownCtx)
@@ -220,6 +215,6 @@ func run(parentCtx context.Context, deps appDeps) error {
 		return err
 	}
 
-	logger.Info("shutdown complete")
+	log.Info("Shutdown complete")
 	return nil
 }

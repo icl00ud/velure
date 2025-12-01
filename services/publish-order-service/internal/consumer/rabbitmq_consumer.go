@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
 
 	"github.com/icl00ud/publish-order-service/internal/model"
 )
@@ -37,7 +37,7 @@ type rabbitConsumer struct {
 	channel amqpChan
 	queue   string
 	handler EventHandler
-	logger  *zap.Logger
+	logger  *logger.Logger
 	workers int
 }
 
@@ -67,7 +67,7 @@ var dialRabbitMQ = func(amqpURL string) (amqpConn, error) {
 	return &liveConsumerConn{conn: conn}, nil
 }
 
-func NewRabbitMQConsumer(amqpURL, exchange, queueName string, handler EventHandler, workers int, logger *zap.Logger) (Consumer, error) {
+func NewRabbitMQConsumer(amqpURL, exchange, queueName string, handler EventHandler, workers int, log *logger.Logger) (Consumer, error) {
 	conn, err := dialRabbitMQ(amqpURL)
 	if err != nil {
 		return nil, fmt.Errorf("dial rabbitmq: %w", err)
@@ -110,17 +110,17 @@ func NewRabbitMQConsumer(amqpURL, exchange, queueName string, handler EventHandl
 		return nil, fmt.Errorf("set qos: %w", err)
 	}
 
-	logger.Info("rabbitmq consumer initialized",
-		zap.String("exchange", exchange),
-		zap.String("queue", queueName),
-		zap.Int("workers", workers))
+	log.Info("rabbitmq consumer initialized",
+		logger.String("exchange", exchange),
+		logger.String("queue", queueName),
+		logger.Int("workers", workers))
 
 	return &rabbitConsumer{
 		conn:    conn,
 		channel: ch,
 		queue:   q.Name,
 		handler: handler,
-		logger:  logger,
+		logger:  log,
 		workers: workers,
 	}, nil
 }
@@ -140,23 +140,23 @@ func (r *rabbitConsumer) Start(ctx context.Context) error {
 }
 
 func (r *rabbitConsumer) worker(ctx context.Context, id int, msgs <-chan amqp091.Delivery) {
-	r.logger.Info("consumer worker started", zap.Int("worker_id", id))
+	r.logger.Info("consumer worker started", logger.Int("worker_id", id))
 
 	for {
 		select {
 		case <-ctx.Done():
-			r.logger.Info("consumer worker stopped", zap.Int("worker_id", id))
+			r.logger.Info("consumer worker stopped", logger.Int("worker_id", id))
 			return
 		case msg, ok := <-msgs:
 			if !ok {
-				r.logger.Warn("message channel closed", zap.Int("worker_id", id))
+				r.logger.Warn("message channel closed", logger.Int("worker_id", id))
 				return
 			}
 
 			if err := r.processMessage(ctx, msg); err != nil {
 				r.logger.Error("message processing failed",
-					zap.Int("worker_id", id),
-					zap.Error(err))
+					logger.Int("worker_id", id),
+					logger.Err(err))
 				msg.Nack(false, true)
 			} else {
 				msg.Ack(false)
@@ -168,22 +168,22 @@ func (r *rabbitConsumer) worker(ctx context.Context, id int, msgs <-chan amqp091
 func (r *rabbitConsumer) processMessage(ctx context.Context, msg amqp091.Delivery) error {
 	var evt model.Event
 	if err := json.Unmarshal(msg.Body, &evt); err != nil {
-		r.logger.Error("failed to unmarshal event", zap.Error(err))
+		r.logger.Error("failed to unmarshal event", logger.Err(err))
 		return err
 	}
 
 	r.logger.Info("processing event",
-		zap.String("type", evt.Type),
-		zap.ByteString("payload", evt.Payload))
+		logger.String("type", evt.Type),
+		logger.String("payload", string(evt.Payload)))
 
 	if err := r.handler(ctx, evt); err != nil {
 		r.logger.Error("handler failed",
-			zap.String("event_type", evt.Type),
-			zap.Error(err))
+			logger.String("event_type", evt.Type),
+			logger.Err(err))
 		return err
 	}
 
-	r.logger.Info("event processed successfully", zap.String("type", evt.Type))
+	r.logger.Info("event processed", logger.String("type", evt.Type))
 	return nil
 }
 

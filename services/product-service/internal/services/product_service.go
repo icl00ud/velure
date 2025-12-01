@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/icl00ud/velure-shared/logger"
 	"product-service/internal/metrics"
 	"product-service/internal/models"
 	"product-service/internal/repository"
@@ -247,7 +247,7 @@ func (s *productService) SyncProductCatalogMetric(ctx context.Context) {
 
 	count, err := s.repo.GetProductsCount(ctx)
 	if err != nil {
-		log.Printf("failed to sync product catalog metric: %v", err)
+		logger.Error("failed to sync product catalog metric", logger.Err(err))
 		return
 	}
 	metrics.CurrentProductCount.Set(float64(count))

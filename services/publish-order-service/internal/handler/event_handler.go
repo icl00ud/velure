@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 
 	"github.com/icl00ud/publish-order-service/internal/model"
 	"github.com/icl00ud/publish-order-service/internal/service"
@@ -13,14 +13,14 @@ import (
 
 type EventHandler struct {
 	orderService *service.OrderService
-	logger       *zap.Logger
+	logger       *logger.Logger
 	sseHandler   *SSEHandler
 }
 
-func NewEventHandler(orderService *service.OrderService, logger *zap.Logger) *EventHandler {
+func NewEventHandler(orderService *service.OrderService, log *logger.Logger) *EventHandler {
 	return &EventHandler{
 		orderService: orderService,
-		logger:       logger,
+		logger:       log,
 	}
 }
 
@@ -29,7 +29,7 @@ func (h *EventHandler) SetSSEHandler(sseHandler *SSEHandler) {
 }
 
 func (h *EventHandler) HandleEvent(ctx context.Context, evt model.Event) error {
-	zap.L().Info("event received", zap.String("type", evt.Type))
+	logger.Info("event received", logger.String("type", evt.Type))
 
 	if evt.Type == model.OrderProcessing || evt.Type == model.OrderCompleted || evt.Type == model.OrderFailed {
 		var payload struct {
@@ -65,7 +65,7 @@ func (h *EventHandler) HandleEvent(ctx context.Context, evt model.Event) error {
 		if err != nil {
 			return fmt.Errorf("update status: %w", err)
 		}
-		zap.L().Info("order status updated", zap.String("order_id", orderID), zap.String("status", status))
+		logger.Info("order status updated", logger.String("order_id", orderID), logger.String("status", status))
 
 		if h.sseHandler != nil {
 			h.sseHandler.NotifyOrderUpdate(order)
@@ -81,7 +81,7 @@ func (h *EventHandler) handleOrderProcessing(ctx context.Context, payload json.R
 	}
 
 	if err := json.Unmarshal(payload, &data); err != nil {
-		h.logger.Error("failed to unmarshal order.processing payload", zap.Error(err))
+		h.logger.Error("failed to unmarshal order.processing payload", logger.Err(err))
 		return fmt.Errorf("unmarshal processing payload: %w", err)
 	}
 
@@ -89,16 +89,16 @@ func (h *EventHandler) handleOrderProcessing(ctx context.Context, payload json.R
 		return fmt.Errorf("order id is empty")
 	}
 
-	h.logger.Info("updating order status to PROCESSING", zap.String("order_id", data.ID))
+	h.logger.Info("updating order status to PROCESSING", logger.String("order_id", data.ID))
 
 	if _, err := h.orderService.UpdateStatus(ctx, data.ID, model.StatusProcessing); err != nil {
 		h.logger.Error("failed to update order status to PROCESSING",
-			zap.String("order_id", data.ID),
-			zap.Error(err))
+			logger.String("order_id", data.ID),
+			logger.Err(err))
 		return fmt.Errorf("update status to processing: %w", err)
 	}
 
-	h.logger.Info("order status updated to PROCESSING", zap.String("order_id", data.ID))
+	h.logger.Info("order status updated to PROCESSING", logger.String("order_id", data.ID))
 	return nil
 }
 
@@ -109,7 +109,7 @@ func (h *EventHandler) handleOrderCompleted(ctx context.Context, payload json.Ra
 	}
 
 	if err := json.Unmarshal(payload, &data); err != nil {
-		h.logger.Error("failed to unmarshal order.completed payload", zap.Error(err))
+		h.logger.Error("failed to unmarshal order.completed payload", logger.Err(err))
 		return fmt.Errorf("unmarshal completed payload: %w", err)
 	}
 
@@ -122,15 +122,15 @@ func (h *EventHandler) handleOrderCompleted(ctx context.Context, payload json.Ra
 		return fmt.Errorf("order id is empty")
 	}
 
-	h.logger.Info("updating order status to COMPLETED", zap.String("order_id", orderID))
+	h.logger.Info("updating order status to COMPLETED", logger.String("order_id", orderID))
 
 	if _, err := h.orderService.UpdateStatus(ctx, orderID, model.StatusCompleted); err != nil {
 		h.logger.Error("failed to update order status to COMPLETED",
-			zap.String("order_id", orderID),
-			zap.Error(err))
+			logger.String("order_id", orderID),
+			logger.Err(err))
 		return fmt.Errorf("update status to completed: %w", err)
 	}
 
-	h.logger.Info("order status updated to COMPLETED", zap.String("order_id", orderID))
+	h.logger.Info("order status updated to COMPLETED", logger.String("order_id", orderID))
 	return nil
 }

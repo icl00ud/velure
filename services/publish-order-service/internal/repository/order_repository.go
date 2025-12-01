@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/icl00ud/publish-order-service/internal/model"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 type OrderRepository interface {
@@ -48,11 +48,11 @@ func NewOrderRepository(dsn string) (OrderRepository, error) {
 		return nil, err
 	}
 
-	zap.L().Info("database connection pool configured",
-		zap.Int("max_open_conns", 15),
-		zap.Int("max_idle_conns", 5),
-		zap.Duration("max_lifetime", 5*time.Minute),
-		zap.Duration("max_idle_time", 2*time.Minute))
+	logger.Info("database connection pool configured",
+		logger.Int("max_open_conns", 15),
+		logger.Int("max_idle_conns", 5),
+		logger.Duration("max_lifetime", 5*time.Minute),
+		logger.Duration("max_idle_time", 2*time.Minute))
 
 	return &PostgresOrderRepository{db: db}, nil
 }
@@ -75,7 +75,7 @@ func (r *PostgresOrderRepository) Save(ctx context.Context, o model.Order) error
 	if _, err = r.db.ExecContext(ctx, q,
 		o.ID, o.UserID, data, o.Total, o.Status, o.CreatedAt, o.UpdatedAt,
 	); err != nil {
-		zap.L().Error("order save failed", zap.Error(err))
+		logger.Error("order save failed", logger.Err(err))
 	}
 	return err
 }
@@ -130,7 +130,7 @@ func (r *PostgresOrderRepository) GetOrdersByPage(ctx context.Context, page, pag
 
 	rows, err := r.db.QueryContext(ctx, q, pageSize, offset)
 	if err != nil {
-		zap.L().Error("get orders by page failed", zap.Error(err))
+		logger.Error("get orders by page failed", logger.Err(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -140,7 +140,7 @@ func (r *PostgresOrderRepository) GetOrdersByPage(ctx context.Context, page, pag
 		var o model.Order
 		var data []byte
 		if err := rows.Scan(&o.ID, &o.UserID, &data, &o.Total, &o.Status, &o.CreatedAt, &o.UpdatedAt); err != nil {
-			zap.L().Error("scan order failed", zap.Error(err))
+			logger.Error("scan order failed", logger.Err(err))
 			continue
 		}
 		_ = json.Unmarshal(data, &o.Items)
@@ -168,7 +168,7 @@ func (r *PostgresOrderRepository) GetOrdersByUserID(ctx context.Context, userID 
 
 	rows, err := r.db.QueryContext(ctx, q, userID, pageSize, offset)
 	if err != nil {
-		zap.L().Error("get orders by user_id failed", zap.Error(err))
+		logger.Error("get orders by user_id failed", logger.Err(err))
 		return nil, err
 	}
 	defer rows.Close()
@@ -178,13 +178,13 @@ func (r *PostgresOrderRepository) GetOrdersByUserID(ctx context.Context, userID 
 		var o model.Order
 		var data []byte
 		if err := rows.Scan(&o.ID, &o.UserID, &data, &o.Total, &o.Status, &o.CreatedAt, &o.UpdatedAt); err != nil {
-			zap.L().Error("scan order failed", zap.Error(err))
+			logger.Error("scan order failed", logger.Err(err))
 			continue
 		}
 		o.Items = []model.CartItem{} // Initialize with empty array
 		if len(data) > 0 {
 			if err := json.Unmarshal(data, &o.Items); err != nil {
-				zap.L().Warn("failed to unmarshal items", zap.String("order_id", o.ID), zap.Error(err))
+				logger.Warn("failed to unmarshal items", logger.String("order_id", o.ID), logger.Err(err))
 			}
 		}
 		orders = append(orders, o)
@@ -203,7 +203,7 @@ func (r *PostgresOrderRepository) GetOrdersCount(ctx context.Context) (int64, er
 	const q = `SELECT COUNT(*) FROM TBLOrders;`
 
 	if err := r.db.QueryRowContext(ctx, q).Scan(&count); err != nil {
-		zap.L().Error("get orders count failed", zap.Error(err))
+		logger.Error("get orders count failed", logger.Err(err))
 		return 0, err
 	}
 
@@ -215,7 +215,7 @@ func (r *PostgresOrderRepository) GetOrdersCountByUserID(ctx context.Context, us
 	const q = `SELECT COUNT(*) FROM TBLOrders WHERE user_id = $1;`
 
 	if err := r.db.QueryRowContext(ctx, q, userID).Scan(&count); err != nil {
-		zap.L().Error("get orders count by user_id failed", zap.Error(err))
+		logger.Error("get orders count by user_id failed", logger.Err(err))
 		return 0, err
 	}
 

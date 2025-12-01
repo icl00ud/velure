@@ -7,8 +7,8 @@ import (
 
 	"github.com/icl00ud/process-order-service/internal/client"
 	"github.com/icl00ud/process-order-service/internal/model"
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
 )
 
 const maxRetries = 3
@@ -27,10 +27,10 @@ type rabbitMQConsumer struct {
 	conn    AMQPConnection
 	channel AMQPChannel
 	queue   string
-	logger  *zap.Logger
+	logger  *logger.Logger
 }
 
-func NewRabbitMQConsumer(amqpURL, queueName string, logger *zap.Logger) (Consumer, error) {
+func NewRabbitMQConsumer(amqpURL, queueName string, log *logger.Logger) (Consumer, error) {
 	conn, err := amqpDial(amqpURL)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func NewRabbitMQConsumer(amqpURL, queueName string, logger *zap.Logger) (Consume
 		return nil, err
 	}
 
-	return &rabbitMQConsumer{conn: conn, channel: ch, queue: queueName, logger: logger}, nil
+	return &rabbitMQConsumer{conn: conn, channel: ch, queue: queueName, logger: log}, nil
 }
 
 // getRetryCount obtém o número de tentativas do header x-death do RabbitMQ
@@ -104,14 +104,14 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(model.Event
 				// Erro de parsing é permanente - envia direto para DLQ
 				d.Nack(false, false)
 				r.logger.Error("invalid event structure - sending to DLQ",
-					zap.Error(err),
-					zap.Int64("retry_count", retryCount))
+					logger.Err(err),
+					logger.Int64("retry_count", retryCount))
 				continue
 			}
 
 			r.logger.Info("payment processing started",
-				zap.String("event_type", evt.Type),
-				zap.Int64("retry_count", retryCount))
+				logger.String("event_type", evt.Type),
+				logger.Int64("retry_count", retryCount))
 
 			if err := handler(evt); err != nil {
 				// Verifica se é erro permanente
@@ -120,9 +120,9 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(model.Event
 					// Erro permanente (ex: produto não encontrado) - envia para DLQ imediatamente
 					d.Nack(false, false)
 					r.logger.Error("permanent error - sending to DLQ",
-						zap.Error(err),
-						zap.Int("status_code", permErr.StatusCode),
-						zap.Int64("retry_count", retryCount))
+						logger.Err(err),
+						logger.Int("status_code", permErr.StatusCode),
+						logger.Int64("retry_count", retryCount))
 					continue
 				}
 
@@ -131,26 +131,26 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(model.Event
 					// Excedeu limite de retries - envia para DLQ
 					d.Nack(false, false)
 					r.logger.Error("max retries exceeded - sending to DLQ",
-						zap.Error(err),
-						zap.Int64("retry_count", retryCount),
-						zap.Int("max_retries", maxRetries))
+						logger.Err(err),
+						logger.Int64("retry_count", retryCount),
+						logger.Int("max_retries", maxRetries))
 					continue
 				}
 
 				// Erro temporário com retries disponíveis - requeue
 				d.Nack(false, true)
 				r.logger.Warn("transient error - requeueing for retry",
-					zap.Error(err),
-					zap.Int64("retry_count", retryCount),
-					zap.Int64("remaining_retries", maxRetries-retryCount))
+					logger.Err(err),
+					logger.Int64("retry_count", retryCount),
+					logger.Int64("remaining_retries", int64(maxRetries)-retryCount))
 				continue
 			}
 
 			// Sucesso - ACK
 			d.Ack(false)
-			r.logger.Info("payment processed successfully",
-				zap.String("event_type", evt.Type),
-				zap.Int64("retry_count", retryCount))
+			r.logger.Info("payment processed",
+				logger.String("event_type", evt.Type),
+				logger.Int64("retry_count", retryCount))
 		}
 	}
 }

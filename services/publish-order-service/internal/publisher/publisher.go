@@ -6,8 +6,8 @@ import (
 	"sync"
 
 	"github.com/icl00ud/publish-order-service/internal/model"
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
 )
 
 type Publisher interface {
@@ -20,7 +20,7 @@ type rabbitMQPublisher struct {
 	conn      amqpPublisherConn
 	ch        amqpPublisherChannel
 	exchange  string
-	logger    *zap.Logger
+	logger    *logger.Logger
 	closed    bool
 	mu        sync.Mutex
 	dialFn    func(string) (amqpPublisherConn, error)
@@ -48,15 +48,15 @@ var dialPublisher = func(amqpURL string) (amqpPublisherConn, error) {
 	return &livePublisherConn{conn: conn}, nil
 }
 
-func NewRabbitMQPublisher(amqpURL string, exchange string, logger *zap.Logger) (Publisher, error) {
-	return newRabbitMQPublisher(amqpURL, exchange, logger, dialPublisher)
+func NewRabbitMQPublisher(amqpURL string, exchange string, log *logger.Logger) (Publisher, error) {
+	return newRabbitMQPublisher(amqpURL, exchange, log, dialPublisher)
 }
 
-func newRabbitMQPublisher(amqpURL string, exchange string, logger *zap.Logger, dialFn func(string) (amqpPublisherConn, error)) (Publisher, error) {
+func newRabbitMQPublisher(amqpURL string, exchange string, log *logger.Logger, dialFn func(string) (amqpPublisherConn, error)) (Publisher, error) {
 	p := &rabbitMQPublisher{
 		amqpURL:  amqpURL,
 		exchange: exchange,
-		logger:   logger,
+		logger:   log,
 		dialFn:   dialFn,
 	}
 	p.connectFn = p.connect
@@ -126,7 +126,7 @@ func (r *rabbitMQPublisher) connect() error {
 		conn.Close()
 		return fmt.Errorf("declare exchange: %w", err)
 	}
-	r.logger.Info("Exchange declared", zap.String("exchange", r.exchange))
+	r.logger.Info("Exchange declared", logger.String("exchange", r.exchange))
 
 	r.conn = conn
 	r.ch = ch
@@ -143,7 +143,7 @@ func (r *rabbitMQPublisher) Publish(evt model.Event) error {
 
 	body, err := json.Marshal(evt)
 	if err != nil {
-		r.logger.Error("failed to marshal event", zap.Error(err), zap.Any("event", evt))
+		r.logger.Error("failed to marshal event", logger.Err(err), logger.Any("event", evt))
 		return err
 	}
 
@@ -165,18 +165,18 @@ func (r *rabbitMQPublisher) Publish(evt model.Event) error {
 
 	err = publishFunc()
 	if err != nil {
-		r.logger.Warn("publish failed, attempting reconnect", zap.Error(err))
+		r.logger.Warn("publish failed, attempting reconnect", logger.Err(err))
 		if recErr := r.connectFn(); recErr != nil {
-			r.logger.Error("reconnect failed", zap.Error(recErr))
+			r.logger.Error("reconnect failed", logger.Err(recErr))
 			return err
 		}
 		if err = publishFunc(); err != nil {
-			r.logger.Error("publish failed after reconnect", zap.Error(err))
+			r.logger.Error("publish failed after reconnect", logger.Err(err))
 			return err
 		}
 	}
 
-	r.logger.Info("event published successfully", zap.String("exchange", r.exchange), zap.String("routingKey", evt.Type), zap.Int("body_size", len(body)))
+	r.logger.Info("event published", logger.String("exchange", r.exchange), logger.String("routingKey", evt.Type), logger.Int("body_size", len(body)))
 	return nil
 }
 
@@ -191,12 +191,12 @@ func (r *rabbitMQPublisher) Close() error {
 
 	if r.ch != nil {
 		if err := r.ch.Close(); err != nil {
-			r.logger.Warn("channel close error", zap.Error(err))
+			r.logger.Warn("channel close error", logger.Err(err))
 		}
 	}
 	if r.conn != nil {
 		if err := r.conn.Close(); err != nil {
-			r.logger.Warn("connection close error", zap.Error(err))
+			r.logger.Warn("connection close error", logger.Err(err))
 			return err
 		}
 	}

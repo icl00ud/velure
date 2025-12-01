@@ -8,7 +8,7 @@ import (
 	migratedb "github.com/golang-migrate/migrate/v4/database"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"go.uber.org/zap"
+	"github.com/icl00ud/velure-shared/logger"
 )
 
 type migrator interface {
@@ -48,18 +48,18 @@ func RunMigrations(db *sql.DB, migrationsPath string) error {
 	}
 
 	version, dirty, _ := m.Version()
-	zap.L().Info("current migration state",
-		zap.Uint("version", version),
-		zap.Bool("dirty", dirty))
+	logger.Info("current migration state",
+		logger.Uint("version", version),
+		logger.Bool("dirty", dirty))
 
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("run migrations: %w", err)
 	}
 
 	version, dirty, _ = m.Version()
-	zap.L().Info("migrations applied successfully",
-		zap.Uint("version", version),
-		zap.Bool("dirty", dirty))
+	logger.Info("migrations applied",
+		logger.Uint("version", version),
+		logger.Bool("dirty", dirty))
 
 	return nil
 }

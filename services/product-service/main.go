@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"os"
 	"strings"
 
 	"product-service/internal/config"
@@ -15,7 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -49,28 +49,34 @@ var defaultDeps = appDependencies{
 	},
 }
 
-var fatalf = log.Fatal
+var log *logger.Logger
 
 func main() {
+	log = logger.Init(logger.Config{
+		ServiceName: "product-service",
+		Level:       os.Getenv("LOG_LEVEL"),
+		UseColor:    os.Getenv("LOG_COLOR") != "false",
+	})
+
 	if err := run(defaultDeps); err != nil {
-		fatalf(err)
+		log.Fatal("Failed to start server", logger.Err(err))
 	}
 }
 
 func run(deps appDependencies) error {
 	// Load environment variables from .env file if it exists
 	if err := deps.loadEnv(); err != nil {
-		log.Println("No .env file found, using system environment variables")
+		log.Info("No .env file found, using system environment variables")
 	}
 
 	// Initialize configuration
 	cfg := config.New()
 
-	log.Printf("Starting Product Service with configuration:")
-	log.Printf("- Port: %s", cfg.Port)
-	log.Printf("- Database: %s", cfg.DatabaseName)
-	log.Printf("- MongoDB URI: %s", maskURI(cfg.MongoURI))
-	log.Printf("- Redis Address: %s", cfg.RedisAddr)
+	log.Info("Starting Product Service",
+		logger.String("port", cfg.Port),
+		logger.String("database", cfg.DatabaseName),
+		logger.String("mongodb_uri", maskURI(cfg.MongoURI)),
+		logger.String("redis_addr", cfg.RedisAddr))
 
 	repo, mongoDisconnect, redisClose, err := deps.buildRepo(cfg)
 	if err != nil {
@@ -80,7 +86,7 @@ func run(deps appDependencies) error {
 	if mongoDisconnect != nil {
 		defer func() {
 			if err := mongoDisconnect(context.Background()); err != nil {
-				log.Printf("Error disconnecting from MongoDB: %v", err)
+				log.Error("Error disconnecting from MongoDB", logger.Err(err))
 			}
 		}()
 	}
@@ -100,7 +106,7 @@ func run(deps appDependencies) error {
 		port = "3010"
 	}
 
-	log.Printf("Product service is running on port %s", port)
+	log.Info("Product service started", logger.String("port", port))
 	return deps.listen(app, ":"+port)
 }
 
@@ -122,13 +128,21 @@ func setupFiberApp(service services.ProductService) *fiber.App {
 		},
 	})
 
-	// Middleware
-	app.Use(logger.New(logger.Config{
-		Next: func(c *fiber.Ctx) bool {
-			path := c.Path()
-			return path == "/metrics" || path == "/health"
-		},
-	}))
+	// Middleware - custom request logging
+	app.Use(func(c *fiber.Ctx) error {
+		path := c.Path()
+		if path == "/metrics" || path == "/health" {
+			return c.Next()
+		}
+		start := c.Context().Time()
+		err := c.Next()
+		log.Info("request",
+			logger.String("method", c.Method()),
+			logger.String("path", path),
+			logger.Int("status", c.Response().StatusCode()),
+			logger.String("duration", c.Context().Time().Sub(start).String()))
+		return err
+	})
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept",

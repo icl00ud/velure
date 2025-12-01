@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/icl00ud/process-order-service/internal/model"
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
 )
 
 type Publisher interface {
@@ -18,10 +18,10 @@ type rabbitPublisher struct {
 	conn     AMQPConnection
 	channel  AMQPChannel
 	exchange string
-	logger   *zap.Logger
+	logger   *logger.Logger
 }
 
-func NewRabbitPublisher(amqpURL, exchange string, logger *zap.Logger) (Publisher, error) {
+func NewRabbitPublisher(amqpURL, exchange string, log *logger.Logger) (Publisher, error) {
 	conn, err := amqpDial(amqpURL)
 	if err != nil {
 		return nil, fmt.Errorf("dial rabbitmq: %w", err)
@@ -38,7 +38,7 @@ func NewRabbitPublisher(amqpURL, exchange string, logger *zap.Logger) (Publisher
 		return nil, fmt.Errorf("declare exchange: %w", err)
 	}
 
-	return &rabbitPublisher{conn: conn, channel: ch, exchange: exchange, logger: logger}, nil
+	return &rabbitPublisher{conn: conn, channel: ch, exchange: exchange, logger: log}, nil
 }
 
 func (r *rabbitPublisher) Publish(evt model.Event) error {
@@ -53,10 +53,10 @@ func (r *rabbitPublisher) Publish(evt model.Event) error {
 		amqp091.Publishing{ContentType: "application/json", Body: body},
 	)
 	if err != nil {
-		r.logger.Error("publish failed", zap.Error(err), zap.String("exchange", r.exchange), zap.String("event_type", evt.Type))
+		r.logger.Error("publish failed", logger.Err(err), logger.String("exchange", r.exchange), logger.String("event_type", evt.Type))
 		return err
 	}
-	r.logger.Info("payment event published", zap.String("exchange", r.exchange), zap.String("event_type", evt.Type))
+	r.logger.Info("payment event published", logger.String("exchange", r.exchange), logger.String("event_type", evt.Type))
 	return nil
 }
 

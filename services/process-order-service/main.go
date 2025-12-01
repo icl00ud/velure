@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/icl00ud/process-order-service/internal/client"
@@ -17,25 +16,29 @@ import (
 	"github.com/icl00ud/process-order-service/internal/handler"
 	"github.com/icl00ud/process-order-service/internal/queue"
 	"github.com/icl00ud/process-order-service/internal/service"
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
 	_ = godotenv.Load()
-	logger, _ := zap.NewProduction()
-	defer logger.Sync()
-	zap.ReplaceGlobals(logger)
+	log := logger.Init(logger.Config{
+		ServiceName: "process-order-service",
+		Level:       os.Getenv("LOG_LEVEL"),
+		UseColor:    os.Getenv("LOG_COLOR") != "false",
+	})
+	defer log.Sync()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	if err := run(ctx, logger); err != nil {
-		logger.Fatal("error during execution", zap.Error(err))
+	if err := run(ctx, log); err != nil {
+		log.Fatal("error during execution", logger.Err(err))
 	}
 }
 
-func run(ctx context.Context, logger *zap.Logger) error {
+func run(ctx context.Context, log *logger.Logger) error {
 	cfg, err := config.Load()
 	if err != nil {
 		return fmt.Errorf("config error: %w", err)
@@ -43,9 +46,9 @@ func run(ctx context.Context, logger *zap.Logger) error {
 
 	var rabbitConn *queue.RabbitMQConnection
 	for i := 0; i < 5; i++ {
-		rabbitConn, err = queue.NewRabbitMQConnection(cfg.RabbitURL, logger)
+		rabbitConn, err = queue.NewRabbitMQConnection(cfg.RabbitURL, log)
 		if err != nil {
-			logger.Warn("rabbitmq connection failed, retrying", zap.Error(err), zap.Int("attempt", i+1))
+			log.Warn("rabbitmq connection failed, retrying", logger.Err(err), logger.Int("attempt", i+1))
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
@@ -80,7 +83,7 @@ func run(ctx context.Context, logger *zap.Logger) error {
 	productClient := client.NewProductClient(productServiceURL)
 
 	paySvc := service.NewPaymentService(publisher, productClient)
-	oc := handler.NewOrderConsumer(consumer, paySvc, cfg.Workers, logger)
+	oc := handler.NewOrderConsumer(consumer, paySvc, cfg.Workers, log)
 
 	g, ctx := errgroup.WithContext(ctx)
 	// health server
@@ -109,6 +112,6 @@ func run(ctx context.Context, logger *zap.Logger) error {
 	if err := g.Wait(); err != nil && err != context.Canceled {
 		return err
 	}
-	logger.Info("shutdown complete")
+	log.Info("Shutdown complete")
 	return nil
 }
