@@ -6,14 +6,20 @@ WORKDIR /app
 # Install dependencies
 RUN apk add --no-cache git
 
-# Copy go mod and sum files
-COPY go.mod go.sum ./
+# Copy shared module first
+COPY shared /shared
+
+# Copy service files
+COPY services/auth-service/go.mod services/auth-service/go.sum ./
+
+# Update replace directive to use absolute path in container
+RUN go mod edit -replace github.com/icl00ud/velure-shared=/shared
 
 # Download dependencies
 RUN go mod download
 
 # Copy source code
-COPY . .
+COPY services/auth-service/ .
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
@@ -29,7 +35,7 @@ WORKDIR /app
 COPY --from=builder /app/main .
 
 # Copy wait-for-it script if it exists
-COPY wait-for-it.sh .
+COPY services/auth-service/wait-for-it.sh .
 RUN chmod +x wait-for-it.sh
 
 # Expose port

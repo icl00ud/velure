@@ -4,10 +4,19 @@ RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /build
 
-COPY go.mod go.sum ./
+# Copy shared module first
+COPY shared /shared
+
+# Copy go.mod and go.sum
+COPY services/publish-order-service/go.mod services/publish-order-service/go.sum ./
+
+# Update replace directive to use absolute path in container
+RUN go mod edit -replace github.com/icl00ud/velure-shared=/shared
+
 RUN go mod download
 
-COPY . .
+# Copy source code
+COPY services/publish-order-service/ .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o publish-order-service ./main.go
 
