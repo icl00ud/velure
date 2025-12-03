@@ -29,6 +29,8 @@ const Orders = () => {
     setIsLoading(true);
     try {
       const result = await orderService.getUserOrders(page, pageSize);
+      console.log('API Order Response:', result);
+
       // Handle different response formats
       let ordersList: Order[] = [];
       if (Array.isArray(result)) {
@@ -40,8 +42,9 @@ const Orders = () => {
       } else if (result?.data) {
         ordersList = result.data;
       }
-
-      setOrders(ordersList);
+      
+      console.log('Parsed Orders List:', ordersList);
+      setOrders(ordersList || []);
       
       // Handle pagination
       if (result?.totalPages) {
@@ -52,6 +55,7 @@ const Orders = () => {
         setTotalPages(1);
       }
     } catch (error) {
+      console.error('Error loading orders:', error);
       setOrders([]);
       toast({
         title: "Erro ao carregar pedidos",
@@ -89,6 +93,13 @@ const Orders = () => {
       default:
         return <Badge className="font-body font-semibold">{status}</Badge>;
     }
+  };
+
+  const getOrderId = (order: Order) => order.id || order._id || 'UNKNOWN';
+  const getOrderDate = (order: Order) => {
+    const dateStr = order.created_at || order.createdAt;
+    if (!dateStr) return new Date();
+    return new Date(dateStr);
   };
 
   return (
@@ -141,52 +152,55 @@ const Orders = () => {
             </Card>
           ) : (
             <div className="space-y-6">
-              {orders.map((order, index) => (
-                <Card
-                  key={order.id}
-                  className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl card-hover-subtle observe-animation"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <CardHeader className="pb-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="font-display text-2xl font-bold text-[#2D3319]">
-                          Pedido #{order.id.slice(0, 8)}
-                        </CardTitle>
-                        <p className="font-body text-sm text-[#5A6751] mt-2">
-                          {new Date(order.created_at).toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
+              {orders.map((order, index) => {
+                const orderId = getOrderId(order);
+                return (
+                  <Card
+                    key={orderId}
+                    className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl card-hover-subtle observe-animation"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CardHeader className="pb-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="font-display text-2xl font-bold text-[#2D3319]">
+                            Pedido #{orderId.slice(0, 8)}
+                          </CardTitle>
+                          <p className="font-body text-sm text-[#5A6751] mt-2">
+                            {getOrderDate(order).toLocaleDateString("pt-BR", {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                        {getStatusBadge(order.status)}
                       </div>
-                      {getStatusBadge(order.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center py-4 px-6 bg-[#FAF7F2] rounded-2xl">
-                        <span className="font-body text-[#5A6751]">
-                          {order.items?.length || 0}{" "}
-                          {(order.items?.length || 0) === 1 ? "item" : "itens"}
-                        </span>
-                        <span className="font-display text-2xl font-bold text-[#D97757]">
-                          R$ {(order.total || 0).toFixed(2)}
-                        </span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center py-4 px-6 bg-[#FAF7F2] rounded-2xl">
+                          <span className="font-body text-[#5A6751]">
+                            {order.items?.length || 0}{" "}
+                            {(order.items?.length || 0) === 1 ? "item" : "itens"}
+                          </span>
+                          <span className="font-display text-2xl font-bold text-[#D97757]">
+                            R$ {(order.total || 0).toFixed(2)}
+                          </span>
+                        </div>
+                        <Button
+                          asChild
+                          className="w-full btn-primary-custom font-body text-lg rounded-full h-14"
+                        >
+                          <Link to={`/orders/${orderId}`}>Ver detalhes do pedido</Link>
+                        </Button>
                       </div>
-                      <Button
-                        asChild
-                        className="w-full btn-primary-custom font-body text-lg rounded-full h-14"
-                      >
-                        <Link to={`/orders/${order.id}`}>Ver detalhes do pedido</Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
 

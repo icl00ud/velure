@@ -156,6 +156,13 @@ const OrderDetail = () => {
     );
   }
 
+  const getOrderId = (order: Order) => order.id || order._id || 'UNKNOWN';
+  const getOrderDate = (order: Order) => {
+    const dateStr = order.created_at || order.createdAt;
+    if (!dateStr) return new Date();
+    return new Date(dateStr);
+  };
+
   return (
     <>
       <style>{designSystemStyles}</style>
@@ -174,11 +181,11 @@ const OrderDetail = () => {
             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
               <div>
                 <h1 className="font-display text-4xl lg:text-5xl font-bold text-[#2D3319] mb-4">
-                  Pedido #{order.id.slice(0, 8)}
+                  Pedido #{getOrderId(order).slice(0, 8)}
                 </h1>
                 <p className="font-body text-lg text-[#5A6751]">
                   Realizado em{" "}
-                  {new Date(order.created_at).toLocaleDateString("pt-BR", {
+                  {getOrderDate(order).toLocaleDateString("pt-BR", {
                     day: "2-digit",
                     month: "long",
                     year: "numeric",
