@@ -1,35 +1,59 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Nome deve ter pelo menos 2 caracteres.",
+  }),
+  email: z.string().email({
+    message: "Por favor, insira um email válido.",
+  }),
+  message: z.string().min(10, {
+    message: "A mensagem deve ter pelo menos 10 caracteres.",
+  }),
+});
+
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: "",
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simulate form submission
-    toast({
-      title: "Mensagem enviada!",
-      description: "Retornaremos em até 24 horas.",
-    });
-    setFormData({ name: "", email: "", message: "" });
-  };
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    const subject = encodeURIComponent("Novo contato via Site Velure");
+    const body = encodeURIComponent(
+      `Nome: ${values.name}\nEmail: ${values.email}\n\nMensagem:\n${values.message}`
+    );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+    window.location.href = `mailto:israelschroederm@gmail.com?subject=${subject}&body=${body}`;
+
+    toast({
+      title: "Mensagem preparada!",
+      description: "Seu cliente de email será aberto para enviar a mensagem.",
     });
-  };
+
+    form.reset();
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -55,67 +79,71 @@ const Contact = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label
-                      htmlFor="name"
-                      className="block text-sm font-medium text-foreground mb-2"
-                    >
-                      Nome
-                    </label>
-                    <Input
-                      id="name"
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
                       name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="border-border focus:ring-primary"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Seu nome"
+                              {...field}
+                              className="border-border focus:ring-primary"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-foreground mb-2"
-                    >
-                      E-mail
-                    </label>
-                    <Input
-                      id="email"
+                    <FormField
+                      control={form.control}
                       name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                      className="border-border focus:ring-primary"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>E-mail</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="seu@email.com"
+                              {...field}
+                              className="border-border focus:ring-primary"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="message"
-                      className="block text-sm font-medium text-foreground mb-2"
-                    >
-                      Mensagem
-                    </label>
-                    <Textarea
-                      id="message"
+                    <FormField
+                      control={form.control}
                       name="message"
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      required
-                      rows={5}
-                      className="border-border focus:ring-primary"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mensagem</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Como podemos ajudar?"
+                              className="resize-none border-border focus:ring-primary"
+                              rows={5}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
-                  >
-                    Enviar mensagem
-                  </Button>
-                </form>
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
+                    >
+                      Enviar mensagem
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
 
