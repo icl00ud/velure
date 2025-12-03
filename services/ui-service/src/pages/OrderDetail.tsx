@@ -212,7 +212,7 @@ const OrderDetail = () => {
                       <div className="overflow-hidden h-3 text-xs flex rounded-full bg-gray-200">
                         <div
                           style={{ width: `${getStatusProgress(order.status)}%` }}
-                          className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-[#D97757] to-[#C56647] transition-all duration-500"
+                          className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
                         />
                       </div>
                     </div>
@@ -220,53 +220,61 @@ const OrderDetail = () => {
                     <div className="grid grid-cols-3 gap-4 text-center">
                       <div
                         className={`p-5 rounded-2xl border-2 ${
-                          order.status === "CREATED" ||
-                          order.status === "PROCESSING" ||
-                          order.status === "COMPLETED"
-                            ? "bg-[#D97757]/10 border-[#D97757]"
+                          ["CREATED", "PROCESSING", "COMPLETED"].includes(order.status)
+                            ? "bg-green-50 border-green-500"
                             : "bg-gray-100 border-gray-200"
                         }`}
                       >
                         <Clock
                           className={`h-8 w-8 mx-auto mb-3 ${
-                            order.status === "CREATED" ||
-                            order.status === "PROCESSING" ||
-                            order.status === "COMPLETED"
-                              ? "text-[#D97757]"
+                            ["CREATED", "PROCESSING", "COMPLETED"].includes(order.status)
+                              ? "text-green-600"
                               : "text-gray-400"
                           }`}
                         />
-                        <p className="font-body text-sm font-semibold">Criado</p>
+                        <p className={`font-body text-sm font-semibold ${
+                          ["CREATED", "PROCESSING", "COMPLETED"].includes(order.status)
+                            ? "text-green-700"
+                            : "text-gray-500"
+                        }`}>Criado</p>
                       </div>
                       <div
                         className={`p-5 rounded-2xl border-2 ${
-                          order.status === "PROCESSING" || order.status === "COMPLETED"
-                            ? "bg-[#8B9A7E]/10 border-[#8B9A7E]"
+                          ["PROCESSING", "COMPLETED"].includes(order.status)
+                            ? "bg-green-50 border-green-500"
                             : "bg-gray-100 border-gray-200"
                         }`}
                       >
                         <Package
                           className={`h-8 w-8 mx-auto mb-3 ${
-                            order.status === "PROCESSING" || order.status === "COMPLETED"
-                              ? "text-[#8B9A7E]"
+                            ["PROCESSING", "COMPLETED"].includes(order.status)
+                              ? "text-green-600"
                               : "text-gray-400"
                           }`}
                         />
-                        <p className="font-body text-sm font-semibold">Processando</p>
+                        <p className={`font-body text-sm font-semibold ${
+                          ["PROCESSING", "COMPLETED"].includes(order.status)
+                            ? "text-green-700"
+                            : "text-gray-500"
+                        }`}>Processando</p>
                       </div>
                       <div
                         className={`p-5 rounded-2xl border-2 ${
                           order.status === "COMPLETED"
-                            ? "bg-[#F4C430]/10 border-[#F4C430]"
+                            ? "bg-green-50 border-green-500"
                             : "bg-gray-100 border-gray-200"
                         }`}
                       >
                         <CheckCircle
                           className={`h-8 w-8 mx-auto mb-3 ${
-                            order.status === "COMPLETED" ? "text-[#F4C430]" : "text-gray-400"
+                            order.status === "COMPLETED" ? "text-green-600" : "text-gray-400"
                           }`}
                         />
-                        <p className="font-body text-sm font-semibold">Concluído</p>
+                        <p className={`font-body text-sm font-semibold ${
+                          order.status === "COMPLETED"
+                            ? "text-green-700"
+                            : "text-gray-500"
+                        }`}>Concluído</p>
                       </div>
                     </div>
 
