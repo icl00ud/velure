@@ -46,6 +46,24 @@ const Contact = () => {
     setIsVisible(true);
   }, []);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("animate-in");
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const elements = document.querySelectorAll(".observe-animation");
+    elements.forEach((element) => observer.observe(element));
+
+    return () => observer.disconnect();
+  }, []);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     const subject = encodeURIComponent("Novo contato via Site Velure");
     const body = encodeURIComponent(

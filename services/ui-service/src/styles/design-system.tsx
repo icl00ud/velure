@@ -1,6 +1,8 @@
 // Velure Design System
 // Warm Editorial Design - Shared styles, colors, fonts, and animations
 
+import React from 'react';
+
 export const designSystemStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap');
 
@@ -341,5 +343,3 @@ export const colors = {
 export const staggerDelays = (index: number, baseDelay = 0.05) => ({
   animationDelay: `${index * baseDelay}s`,
 });
-
-import React from 'react';

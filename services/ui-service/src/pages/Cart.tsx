@@ -24,6 +24,24 @@ const Cart = () => {
     setIsVisible(true);
   }, []);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("animate-in");
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const elements = document.querySelectorAll(".observe-animation");
+    elements.forEach((element) => observer.observe(element));
+
+    return () => observer.disconnect();
+  }, [cartItems]);
+
   const handleRemoveItem = (productId: string, productName: string) => {
     removeFromCart(productId);
     toast({
