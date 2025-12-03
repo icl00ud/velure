@@ -118,41 +118,41 @@ const Cart = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-[#FAF7F2]">
+      <div className="min-h-screen bg-[#F8FAF5]">
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
           <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
             <Link
               to="/"
-              className="inline-flex items-center font-body text-[#5A6751] hover:text-[#D97757] transition-colors mb-6 group"
+              className="inline-flex items-center font-body text-[#2D6A4F] hover:text-[#52B788] transition-colors mb-6 group"
             >
               <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
               Continuar comprando
             </Link>
-            <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#2D3319] mb-4">
+            <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-4">
               Carrinho de compras
             </h1>
-            <div className="w-20 h-1 bg-gradient-to-r from-[#D97757] to-[#F4C430] mb-6" />
-            <p className="font-body text-xl text-[#5A6751]">
-              <span className="font-bold text-[#D97757]">{cartItems.length}</span>{" "}
+            <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mb-6" />
+            <p className="font-body text-xl text-[#2D6A4F]">
+              <span className="font-bold text-[#52B788]">{cartItems.length}</span>{" "}
               {cartItems.length === 1 ? "item" : "itens"} no seu carrinho
             </p>
           </div>
 
           {cartItems.length === 0 ? (
-            <Card className="text-center py-20 rounded-3xl border-2 border-[#2D3319]/10 shadow-2xl">
+            <Card className="text-center py-20 rounded-3xl border-2 border-[#1B4332]/10 shadow-2xl">
               <CardContent>
                 <div className="relative inline-block mb-8">
-                  <div className="absolute inset-0 bg-[#D97757]/20 blur-3xl" />
-                  <div className="relative bg-gradient-to-br from-[#D97757]/10 to-[#8B9A7E]/10 rounded-full p-8">
-                    <ShoppingBag className="h-20 w-20 text-[#D97757]" />
+                  <div className="absolute inset-0 bg-[#52B788]/20 blur-3xl" />
+                  <div className="relative bg-gradient-to-br from-[#52B788]/10 to-[#95D5B2]/10 rounded-full p-8">
+                    <ShoppingBag className="h-20 w-20 text-[#52B788]" />
                   </div>
                 </div>
-                <h3 className="font-display text-3xl font-bold text-[#2D3319] mb-4">
+                <h3 className="font-display text-3xl font-bold text-[#1B4332] mb-4">
                   Seu carrinho está vazio
                 </h3>
-                <p className="font-body text-lg text-[#5A6751] mb-8 max-w-md mx-auto">
+                <p className="font-body text-lg text-[#2D6A4F] mb-8 max-w-md mx-auto">
                   Parece que você ainda não adicionou nenhum item ao seu carrinho.
                   Explore nossos produtos!
                 </p>
@@ -171,12 +171,12 @@ const Cart = () => {
                 {cartItems.map((item, index) => (
                   <Card
                     key={item.product._id}
-                    className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl card-hover-subtle observe-animation"
+                    className="shadow-lg border-2 border-[#1B4332]/10 rounded-3xl card-hover-subtle observe-animation"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     <CardContent className="p-6">
                       <div className="flex gap-6">
-                        <div className="w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#FAF7F2] to-white">
+                        <div className="w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#F8FAF5] to-white">
                           <ProductImageWithFallback
                             images={item.product.images || []}
                             alt={item.product.name}
@@ -190,11 +190,11 @@ const Cart = () => {
                             <div>
                               <Link
                                 to={`/product/${item.product._id}`}
-                                className="font-display text-xl font-bold text-[#2D3319] hover:text-[#D97757] transition-colors"
+                                className="font-display text-xl font-bold text-[#1B4332] hover:text-[#52B788] transition-colors"
                               >
                                 {item.product.name}
                               </Link>
-                              <p className="font-body text-sm text-[#5A6751] mt-1">
+                              <p className="font-body text-sm text-[#2D6A4F] mt-1">
                                 {item.product.brand || "Marca"} •{" "}
                                 {item.product.category || "Categoria"}
                               </p>
@@ -208,30 +208,30 @@ const Cart = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleRemoveItem(item.product._id, item.product.name)}
-                              className="text-[#5A6751] hover:text-red-600 hover:bg-red-50 rounded-full"
+                              className="text-[#2D6A4F] hover:text-red-600 hover:bg-red-50 rounded-full"
                             >
                               <Trash2 className="h-5 w-5" />
                             </Button>
                           </div>
 
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3 bg-[#FAF7F2] rounded-full p-1">
+                            <div className="flex items-center space-x-3 bg-[#F8FAF5] rounded-full p-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-10 w-10 rounded-full hover:bg-[#D97757] hover:text-white"
+                                className="h-10 w-10 rounded-full hover:bg-[#52B788] hover:text-white"
                                 onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
                                 disabled={item.quantity <= 1}
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
-                              <span className="w-12 text-center font-body font-bold text-[#2D3319]">
+                              <span className="w-12 text-center font-body font-bold text-[#1B4332]">
                                 {item.quantity}
                               </span>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-10 w-10 rounded-full hover:bg-[#D97757] hover:text-white"
+                                className="h-10 w-10 rounded-full hover:bg-[#52B788] hover:text-white"
                                 onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
                               >
                                 <Plus className="h-4 w-4" />
@@ -239,10 +239,10 @@ const Cart = () => {
                             </div>
 
                             <div className="text-right">
-                              <div className="font-display text-2xl font-bold text-[#D97757]">
+                              <div className="font-display text-2xl font-bold text-[#52B788]">
                                 R$ {(item.product.price * item.quantity).toFixed(2)}
                               </div>
-                              <div className="font-body text-sm text-[#5A6751]">
+                              <div className="font-body text-sm text-[#2D6A4F]">
                                 R$ {item.product.price.toFixed(2)} cada
                               </div>
                             </div>
@@ -256,45 +256,45 @@ const Cart = () => {
 
               {/* Order Summary */}
               <div className="space-y-6">
-                <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl sticky top-24">
+                <Card className="shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl sticky top-24">
                   <CardContent className="p-8">
-                    <h3 className="font-display text-2xl font-bold text-[#2D3319] mb-6">
+                    <h3 className="font-display text-2xl font-bold text-[#1B4332] mb-6">
                       Resumo do pedido
                     </h3>
 
                     <div className="space-y-4 font-body">
-                      <div className="flex justify-between text-[#5A6751]">
+                      <div className="flex justify-between text-[#2D6A4F]">
                         <span>Subtotal</span>
-                        <span className="font-semibold text-[#2D3319]">
+                        <span className="font-semibold text-[#1B4332]">
                           R$ {subtotal.toFixed(2)}
                         </span>
                       </div>
-                      <div className="flex justify-between text-[#5A6751]">
+                      <div className="flex justify-between text-[#2D6A4F]">
                         <span>Frete</span>
-                        <span className="font-semibold text-[#2D3319]">
+                        <span className="font-semibold text-[#1B4332]">
                           {shipping === 0 ? (
-                            <span className="text-[#8B9A7E] font-bold">Grátis</span>
+                            <span className="text-[#95D5B2] font-bold">Grátis</span>
                           ) : (
                             `R$ ${shipping.toFixed(2)}`
                           )}
                         </span>
                       </div>
-                      <div className="flex justify-between text-[#5A6751]">
+                      <div className="flex justify-between text-[#2D6A4F]">
                         <span>Impostos</span>
-                        <span className="font-semibold text-[#2D3319]">
+                        <span className="font-semibold text-[#1B4332]">
                           R$ {tax.toFixed(2)}
                         </span>
                       </div>
                       {appliedDiscount > 0 && (
-                        <div className="flex justify-between text-[#8B9A7E] font-bold">
+                        <div className="flex justify-between text-[#95D5B2] font-bold">
                           <span>Desconto</span>
                           <span>-R$ {appliedDiscount.toFixed(2)}</span>
                         </div>
                       )}
-                      <Separator className="bg-[#2D3319]/20" />
+                      <Separator className="bg-[#1B4332]/20" />
                       <div className="flex justify-between text-xl pt-2">
-                        <span className="font-display font-bold text-[#2D3319]">Total</span>
-                        <span className="font-display font-bold text-[#D97757]">
+                        <span className="font-display font-bold text-[#1B4332]">Total</span>
+                        <span className="font-display font-bold text-[#52B788]">
                           R$ {total.toFixed(2)}
                         </span>
                       </div>
@@ -307,12 +307,12 @@ const Cart = () => {
                           value={promoCode}
                           onChange={(e) => setPromoCode(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && applyPromoCode()}
-                          className="font-body border-2 border-[#2D3319]/10 rounded-xl focus:border-[#D97757]"
+                          className="font-body border-2 border-[#1B4332]/10 rounded-xl focus:border-[#52B788]"
                         />
                         <Button
                           variant="outline"
                           onClick={applyPromoCode}
-                          className="font-body border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white rounded-xl px-6"
+                          className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-xl px-6"
                         >
                           Aplicar
                         </Button>
@@ -337,34 +337,34 @@ const Cart = () => {
                 </Card>
 
                 {/* Benefits */}
-                <Card className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl">
+                <Card className="shadow-lg border-2 border-[#1B4332]/10 rounded-3xl">
                   <CardContent className="p-6">
-                    <h4 className="font-display text-xl font-bold text-[#2D3319] mb-6">
+                    <h4 className="font-display text-xl font-bold text-[#1B4332] mb-6">
                       Seus benefícios
                     </h4>
 
                     <div className="space-y-4">
                       <div className="flex items-start space-x-4">
-                        <div className="bg-gradient-to-br from-[#D97757] to-[#C56647] rounded-2xl p-3 flex-shrink-0">
+                        <div className="bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl p-3 flex-shrink-0">
                           <Truck className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <p className="font-body font-semibold text-[#2D3319]">Frete grátis</p>
-                          <p className="font-body text-sm text-[#5A6751]">
+                          <p className="font-body font-semibold text-[#1B4332]">Frete grátis</p>
+                          <p className="font-body text-sm text-[#2D6A4F]">
                             Em pedidos acima de R$ 100
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-start space-x-4">
-                        <div className="bg-gradient-to-br from-[#8B9A7E] to-[#5A6751] rounded-2xl p-3 flex-shrink-0">
+                        <div className="bg-gradient-to-br from-[#95D5B2] to-[#2D6A4F] rounded-2xl p-3 flex-shrink-0">
                           <Shield className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <p className="font-body font-semibold text-[#2D3319]">
+                          <p className="font-body font-semibold text-[#1B4332]">
                             Devolução em 30 dias
                           </p>
-                          <p className="font-body text-sm text-[#5A6751]">
+                          <p className="font-body text-sm text-[#2D6A4F]">
                             Garantia de dinheiro de volta
                           </p>
                         </div>

@@ -81,36 +81,36 @@ const Login = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-gradient-to-br from-[#FAF7F2] via-[#F5EFE7] to-[#EDDBC7] flex items-center justify-center p-4 grain-texture relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-[#F8FAF5] via-[#EDF7ED] to-[#E8F5E9] flex items-center justify-center p-4 grain-texture relative overflow-hidden">
         {/* Decorative Elements */}
-        <div className="fixed top-20 right-10 w-64 h-64 rounded-full bg-[#D97757]/10 blur-3xl pointer-events-none" />
-        <div className="fixed bottom-20 left-10 w-80 h-80 rounded-full bg-[#8B9A7E]/10 blur-3xl pointer-events-none" />
+        <div className="fixed top-20 right-10 w-64 h-64 rounded-full bg-[#52B788]/10 blur-3xl pointer-events-none" />
+        <div className="fixed bottom-20 left-10 w-80 h-80 rounded-full bg-[#95D5B2]/10 blur-3xl pointer-events-none" />
 
         <div className="w-full max-w-md relative z-10">
           {/* Logo */}
           <div className={`text-center mb-8 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
             <Link to="/" className="inline-flex items-center space-x-3 mb-6 group">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#D97757] to-[#C56647] rounded-2xl blur-md group-hover:blur-lg transition-all opacity-50" />
-                <div className="relative bg-gradient-to-br from-[#D97757] to-[#C56647] rounded-2xl p-3 transform group-hover:scale-110 transition-transform duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl blur-md group-hover:blur-lg transition-all opacity-50" />
+                <div className="relative bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl p-3 transform group-hover:scale-110 transition-transform duration-300">
                   <Heart className="h-8 w-8 text-white fill-white" />
                 </div>
               </div>
-              <span className="font-display font-bold text-3xl text-[#2D3319] group-hover:text-[#D97757] transition-colors">
+              <span className="font-display font-bold text-3xl text-[#1B4332] group-hover:text-[#52B788] transition-colors">
                 Velure
               </span>
             </Link>
-            <p className="font-body text-lg text-[#5A6751]">
+            <p className="font-body text-lg text-[#2D6A4F]">
               {isLogin ? "Bem-vindo de volta!" : "Junte-se à família Velure"}
             </p>
           </div>
 
-          <Card className={`shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl backdrop-blur-sm bg-white/95 ${isVisible ? 'page-enter active' : 'page-enter'}`} style={{ animationDelay: '0.2s' }}>
+          <Card className={`shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl backdrop-blur-sm bg-white/95 ${isVisible ? 'page-enter active' : 'page-enter'}`} style={{ animationDelay: '0.2s' }}>
             <CardHeader className="text-center pt-8">
-              <CardTitle className="font-display text-4xl font-bold text-[#2D3319]">
+              <CardTitle className="font-display text-4xl font-bold text-[#1B4332]">
                 {isLogin ? "Entrar" : "Criar conta"}
               </CardTitle>
-              <CardDescription className="font-body text-base text-[#5A6751] mt-3">
+              <CardDescription className="font-body text-base text-[#2D6A4F] mt-3">
                 {isLogin
                   ? "Digite suas credenciais para acessar sua conta"
                   : "Cadastre-se para começar a comprar para seus pets"}
@@ -121,11 +121,11 @@ const Login = () => {
               <form onSubmit={handleSubmit} className="space-y-5">
                 {!isLogin && (
                   <div className="space-y-2">
-                    <label htmlFor="name" className="font-body text-sm font-semibold text-[#2D3319]">
+                    <label htmlFor="name" className="font-body text-sm font-semibold text-[#1B4332]">
                       Nome completo
                     </label>
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#5A6751]" />
+                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
                       <Input
                         id="name"
                         name="name"
@@ -134,18 +134,18 @@ const Login = () => {
                         value={formData.name}
                         onChange={handleInputChange}
                         required={!isLogin}
-                        className="pl-12 font-body border-2 border-[#2D3319]/10 rounded-xl h-12 focus:border-[#D97757]"
+                        className="pl-12 font-body border-2 border-[#1B4332]/10 rounded-xl h-12 focus:border-[#52B788]"
                       />
                     </div>
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <label htmlFor="email" className="font-body text-sm font-semibold text-[#2D3319]">
+                  <label htmlFor="email" className="font-body text-sm font-semibold text-[#1B4332]">
                     E-mail
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#5A6751]" />
+                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
                     <Input
                       id="email"
                       name="email"
@@ -154,17 +154,17 @@ const Login = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="pl-12 font-body border-2 border-[#2D3319]/10 rounded-xl h-12 focus:border-[#D97757]"
+                      className="pl-12 font-body border-2 border-[#1B4332]/10 rounded-xl h-12 focus:border-[#52B788]"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="password" className="font-body text-sm font-semibold text-[#2D3319]">
+                  <label htmlFor="password" className="font-body text-sm font-semibold text-[#1B4332]">
                     Senha
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#5A6751]" />
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
                     <Input
                       id="password"
                       name="password"
@@ -173,19 +173,19 @@ const Login = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       required
-                      className="pl-12 pr-12 font-body border-2 border-[#2D3319]/10 rounded-xl h-12 focus:border-[#D97757]"
+                      className="pl-12 pr-12 font-body border-2 border-[#1B4332]/10 rounded-xl h-12 focus:border-[#52B788]"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full hover:bg-[#D97757]/10"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-full hover:bg-[#52B788]/10"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-5 w-5 text-[#5A6751]" />
+                        <EyeOff className="h-5 w-5 text-[#2D6A4F]" />
                       ) : (
-                        <Eye className="h-5 w-5 text-[#5A6751]" />
+                        <Eye className="h-5 w-5 text-[#2D6A4F]" />
                       )}
                     </Button>
                   </div>
@@ -195,12 +195,12 @@ const Login = () => {
                   <div className="space-y-2">
                     <label
                       htmlFor="confirmPassword"
-                      className="font-body text-sm font-semibold text-[#2D3319]"
+                      className="font-body text-sm font-semibold text-[#1B4332]"
                     >
                       Confirmar senha
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#5A6751]" />
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
                       <Input
                         id="confirmPassword"
                         name="confirmPassword"
@@ -209,7 +209,7 @@ const Login = () => {
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
                         required={!isLogin}
-                        className="pl-12 font-body border-2 border-[#2D3319]/10 rounded-xl h-12 focus:border-[#D97757]"
+                        className="pl-12 font-body border-2 border-[#1B4332]/10 rounded-xl h-12 focus:border-[#52B788]"
                       />
                     </div>
                   </div>
@@ -220,13 +220,13 @@ const Login = () => {
                     <label className="flex items-center space-x-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        className="rounded border-2 border-[#2D3319]/20 text-[#D97757] focus:ring-[#D97757]"
+                        className="rounded border-2 border-[#1B4332]/20 text-[#52B788] focus:ring-[#52B788]"
                       />
-                      <span className="text-[#5A6751]">Lembrar-me</span>
+                      <span className="text-[#2D6A4F]">Lembrar-me</span>
                     </label>
                     <Link
                       to="/forgot-password"
-                      className="text-[#D97757] hover:text-[#C56647] font-semibold transition-colors"
+                      className="text-[#52B788] hover:text-[#40916C] font-semibold transition-colors"
                     >
                       Esqueceu a senha?
                     </Link>
@@ -244,10 +244,10 @@ const Login = () => {
 
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <Separator className="bg-[#2D3319]/20" />
+                  <Separator className="bg-[#1B4332]/20" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-4 text-[#5A6751] font-body font-semibold tracking-wider">
+                  <span className="bg-white px-4 text-[#2D6A4F] font-body font-semibold tracking-wider">
                     Ou continue com
                   </span>
                 </div>
@@ -256,7 +256,7 @@ const Login = () => {
               <div className="grid grid-cols-2 gap-4">
                 <Button
                   variant="outline"
-                  className="font-body border-2 border-[#2D3319]/20 hover:border-[#D97757] hover:bg-[#D97757]/5 rounded-xl h-12"
+                  className="font-body border-2 border-[#1B4332]/20 hover:border-[#52B788] hover:bg-[#52B788]/5 rounded-xl h-12"
                 >
                   <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                     <path
@@ -280,7 +280,7 @@ const Login = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="font-body border-2 border-[#2D3319]/20 hover:border-[#D97757] hover:bg-[#D97757]/5 rounded-xl h-12"
+                  className="font-body border-2 border-[#1B4332]/20 hover:border-[#52B788] hover:bg-[#52B788]/5 rounded-xl h-12"
                 >
                   <svg className="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
@@ -292,11 +292,11 @@ const Login = () => {
           </Card>
 
           <div className="text-center mt-8 font-body">
-            <p className="text-[#5A6751]">
+            <p className="text-[#2D6A4F]">
               {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
               <button
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-[#D97757] hover:text-[#C56647] font-bold transition-colors"
+                className="text-[#52B788] hover:text-[#40916C] font-bold transition-colors"
               >
                 {isLogin ? "Cadastre-se" : "Entre"}
               </button>
@@ -306,7 +306,7 @@ const Login = () => {
           <div className="text-center mt-6">
             <Link
               to="/"
-              className="inline-flex items-center font-body text-[#5A6751] hover:text-[#D97757] transition-colors font-semibold"
+              className="inline-flex items-center font-body text-[#2D6A4F] hover:text-[#52B788] transition-colors font-semibold"
             >
               ← Voltar ao início
             </Link>
