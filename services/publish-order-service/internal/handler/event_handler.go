@@ -63,6 +63,13 @@ func (h *EventHandler) HandleEvent(ctx context.Context, evt model.Event) error {
 
 		order, err := h.orderService.UpdateStatus(ctx, orderID, status)
 		if err != nil {
+			// If order not found, it was likely deleted - just ACK the message
+			if err.Error() == "sql: no rows in result set" {
+				logger.Warn("order not found in database, skipping status update",
+					logger.String("order_id", orderID),
+					logger.String("status", status))
+				return nil
+			}
 			return fmt.Errorf("update status: %w", err)
 		}
 		logger.Info("order status updated", logger.String("order_id", orderID), logger.String("status", status))
