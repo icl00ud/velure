@@ -133,7 +133,7 @@ func TestNewRabbitMQConsumer_InitializesBindings(t *testing.T) {
 	if ch.queueName != "orders.queue" {
 		t.Fatalf("expected queue name set, got %s", ch.queueName)
 	}
-	if len(ch.bindKeys) != 2 || ch.bindKeys[0] != "order.processing" || ch.bindKeys[1] != "order.completed" {
+	if len(ch.bindKeys) != 3 || ch.bindKeys[0] != "order.processing" || ch.bindKeys[1] != "order.completed" || ch.bindKeys[2] != "order.failed" {
 		t.Fatalf("queue bindings not applied: %v", ch.bindKeys)
 	}
 	if !ch.prefetchSet {
