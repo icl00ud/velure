@@ -56,13 +56,7 @@ class OrderService {
   async getUserOrders(
     page: number = 1,
     pageSize: number = 10
-  ): Promise<{
-    orders: Order[];
-    totalCount: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
-  }> {
+  ): Promise<any> {
     const tokenString = localStorage.getItem("token");
     if (!tokenString) {
       throw new Error("Usuário não autenticado");

@@ -29,8 +29,28 @@ const Orders = () => {
     setIsLoading(true);
     try {
       const result = await orderService.getUserOrders(page, pageSize);
-      setOrders(result?.orders || []);
-      setTotalPages(result?.totalPages || 1);
+      // Handle different response formats
+      let ordersList: Order[] = [];
+      if (Array.isArray(result)) {
+        ordersList = result;
+      } else if (result?.orders) {
+        ordersList = result.orders;
+      } else if (result?.items) {
+        ordersList = result.items;
+      } else if (result?.data) {
+        ordersList = result.data;
+      }
+
+      setOrders(ordersList);
+      
+      // Handle pagination
+      if (result?.totalPages) {
+        setTotalPages(result.totalPages);
+      } else if (result?.totalCount) {
+        setTotalPages(Math.ceil(result.totalCount / pageSize));
+      } else {
+        setTotalPages(1);
+      }
     } catch (error) {
       setOrders([]);
       toast({
