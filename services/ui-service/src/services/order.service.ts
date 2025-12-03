@@ -150,6 +150,7 @@ class OrderService {
 
 export interface Order {
   id: string;
+  _id?: string; // Support for MongoDB _id
   user_id: string;
   items: Array<{
     product_id: string;
@@ -160,7 +161,9 @@ export interface Order {
   total: number;
   status: string;
   created_at: string;
+  createdAt?: string; // Support for camelCase
   updated_at: string;
+  updatedAt?: string; // Support for camelCase
 }
 
 export const orderService = new OrderService();
