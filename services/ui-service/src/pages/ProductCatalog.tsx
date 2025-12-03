@@ -1,5 +1,5 @@
 import { Filter, Grid3X3, Heart, List, Loader2, Search, ShoppingCart, Star } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { ProductImageWithFallback } from "@/components/ProductImage";
@@ -17,8 +17,7 @@ import {
 import { useCart } from "@/hooks/use-cart";
 import { useProductsPaginated } from "@/hooks/use-products";
 import { toast } from "@/hooks/use-toast";
-
-// No mock data needed - using real API
+import { designSystemStyles } from "@/styles/design-system";
 
 const ProductCatalog = () => {
   const { category } = useParams();
@@ -28,15 +27,37 @@ const ProductCatalog = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [favorites, setFavorites] = useState<number[]>([]);
   const [page, setPage] = useState(1);
+  const [isVisible, setIsVisible] = useState(false);
   const pageSize = 12;
 
-  // Use hooks para produtos e carrinho
   const { products, loading, error, totalCount, totalPages } = useProductsPaginated(
     page,
     pageSize,
     category
   );
   const { addToCart, getItemQuantity } = useCart();
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("animate-in");
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const elements = document.querySelectorAll(".observe-animation");
+    elements.forEach((element) => observer.observe(element));
+
+    return () => observer.disconnect();
+  }, [products]);
 
   const toggleFavorite = (productId: string) => {
     const numId = parseInt(productId, 10);
@@ -53,7 +74,6 @@ const ProductCatalog = () => {
     });
   };
 
-  // Filtrar produtos com base na busca e filtros
   const filteredProdutos = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -65,431 +85,434 @@ const ProductCatalog = () => {
     return matchesSearch && matchesFilter;
   });
 
-  // Mapeamento de categorias para português
   const categoryNames: Record<string, string> = {
     dogs: "Cães",
     cats: "Gatos",
     birds: "Pássaros",
     fish: "Peixes",
     "small-pets": "Pets pequenos",
+    reptiles: "Répteis",
+    rabbits: "Coelhos",
   };
 
   const categoryName = category ? categoryNames[category] || category : "Todos os produtos";
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <>
+      <style>{designSystemStyles}</style>
+      <div className="min-h-screen bg-[#FAF7F2]">
+        <Header />
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-primary">
-              Início
-            </Link>
-            <span>/</span>
-            <Link to="/products" className="hover:text-primary">
-              Produtos
-            </Link>
-            {category && (
-              <>
-                <span>/</span>
-                <span className="text-foreground font-medium">{categoryName}</span>
-              </>
-            )}
-          </div>
-        </nav>
+        <main className="container mx-auto px-4 lg:px-8 py-12">
+          {/* Breadcrumb */}
+          <nav className={`mb-8 ${isVisible ? 'page-enter active' : 'page-enter'}`}>
+            <div className="flex items-center space-x-2 text-sm font-body text-[#5A6751]">
+              <Link to="/" className="hover:text-[#D97757] transition-colors">
+                Início
+              </Link>
+              <span>/</span>
+              <Link to="/products" className="hover:text-[#D97757] transition-colors">
+                Produtos
+              </Link>
+              {category && (
+                <>
+                  <span>/</span>
+                  <span className="text-[#2D3319] font-semibold">{categoryName}</span>
+                </>
+              )}
+            </div>
+          </nav>
 
-        {/* Header */}
-        <div className="mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">
+          {/* Header */}
+          <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+            <span className="font-body text-[#D97757] font-semibold text-sm tracking-widest uppercase mb-4 block">
+              {category ? `Categoria: ${categoryName}` : "Catálogo Completo"}
+            </span>
+            <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#2D3319] mb-4">
               {category ? `Produtos para ${categoryName}` : "Todos os produtos"}
             </h1>
-            <p className="text-muted-foreground">
-              {loading ? "Carregando..." : `${totalCount} produtos encontrados`}
+            <div className="w-20 h-1 bg-gradient-to-r from-[#D97757] to-[#F4C430] mb-6" />
+            <p className="font-body text-xl text-[#5A6751]">
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Carregando produtos...
+                </span>
+              ) : (
+                <>
+                  <span className="font-bold text-[#D97757]">{totalCount || 0}</span> produtos encontrados
+                </>
+              )}
             </p>
           </div>
-        </div>
 
-        {/* Filters & Search */}
-        <Card className="mb-8 shadow-soft">
-          <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-              <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                {/* Search */}
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar produtos..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+          {/* Filters & Search */}
+          <Card className="mb-12 shadow-lg border-2 border-[#2D3319]/10 observe-animation rounded-2xl">
+            <CardContent className="p-6">
+              <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full">
+                  {/* Search */}
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#5A6751]" />
+                    <Input
+                      placeholder="Buscar produtos..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-12 font-body border-2 border-[#2D3319]/10 rounded-xl focus:border-[#D97757] h-12"
+                    />
+                  </div>
+
+                  {/* Filter */}
+                  <Select value={filterBy} onValueChange={setFilterBy}>
+                    <SelectTrigger className="w-full sm:w-48 font-body border-2 border-[#2D3319]/10 rounded-xl h-12">
+                      <Filter className="h-4 w-4 mr-2 text-[#D97757]" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl">
+                      <SelectItem value="all">Todos os produtos</SelectItem>
+                      <SelectItem value="on-sale">Em promoção</SelectItem>
+                      <SelectItem value="in-stock">Em estoque</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Sort */}
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-full sm:w-48 font-body border-2 border-[#2D3319]/10 rounded-xl h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl">
+                      <SelectItem value="popularity">Mais Popular</SelectItem>
+                      <SelectItem value="price-low">Preço: Menor ao Maior</SelectItem>
+                      <SelectItem value="price-high">Preço: Maior ao Menor</SelectItem>
+                      <SelectItem value="rating">Melhor Avaliado</SelectItem>
+                      <SelectItem value="newest">Mais Recente</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Filter */}
-                <Select value={filterBy} onValueChange={setFilterBy}>
-                  <SelectTrigger className="w-40">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os produtos</SelectItem>
-                    <SelectItem value="on-sale">Em promoção</SelectItem>
-                    <SelectItem value="in-stock">Em estoque</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* Sort */}
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="popularity">Mais Popular</SelectItem>
-                    <SelectItem value="price-low">Preço: Menor ao Maior</SelectItem>
-                    <SelectItem value="price-high">Preço: Maior ao Menor</SelectItem>
-                    <SelectItem value="rating">Melhor Avaliado</SelectItem>
-                    <SelectItem value="newest">Mais Recente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* View Mode */}
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Produtos Grid */}
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-              : "space-y-4"
-          }
-        >
-          {loading ? (
-            // Loading state
-            <div className="col-span-full flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Carregando produtos...</span>
-            </div>
-          ) : error ? (
-            // Error state
-            <div className="col-span-full">
-              <Card className="text-center py-12">
-                <CardContent>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">
-                    Erro ao carregar produtos
-                  </h3>
-                  <p className="text-muted-foreground mb-6">{error}</p>
+                {/* View Mode */}
+                <div className="flex items-center space-x-2">
                   <Button
-                    onClick={() => window.location.reload()}
-                    className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
+                    variant={viewMode === "grid" ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => setViewMode("grid")}
+                    className={viewMode === "grid" ? "bg-[#D97757] hover:bg-[#C56647]" : "hover:bg-[#D97757]/10"}
                   >
-                    Tentar novamente
+                    <Grid3X3 className="h-4 w-4" />
                   </Button>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            filteredProdutos.map((product) => (
-              <Card
-                key={product._id}
-                className="group shadow-soft hover:shadow-primary transition-all duration-300"
-              >
-                <CardContent className="p-0">
-                  {viewMode === "grid" ? (
-                    // Grid View
-                    <>
-                      <div className="relative">
-                        <div className="aspect-square">
-                          <ProductImageWithFallback
-                            images={product.images || []}
-                            alt={product.name}
-                            className="w-full h-full rounded-t-lg"
-                            fallbackIcon="🐕"
-                          />
-                        </div>
-                        {/* Placeholder for discount badge */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`absolute top-2 right-2 ${
-                            favorites.includes(parseInt(product._id, 10))
-                              ? "text-red-500 hover:text-red-600"
-                              : "text-muted-foreground hover:text-red-500"
-                          }`}
-                          onClick={() => toggleFavorite(product._id)}
-                        >
-                          <Heart
-                            className={`h-4 w-4 ${favorites.includes(parseInt(product._id, 10)) ? "fill-current" : ""}`}
-                          />
-                        </Button>
-                        {product.quantity === 0 && (
-                          <div className="absolute inset-0 bg-background/80 rounded-t-lg flex items-center justify-center">
-                            <Badge variant="destructive">Sem Estoque</Badge>
-                          </div>
-                        )}
-                      </div>
+                  <Button
+                    variant={viewMode === "list" ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => setViewMode("list")}
+                    className={viewMode === "list" ? "bg-[#D97757] hover:bg-[#C56647]" : "hover:bg-[#D97757]/10"}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                      <div className="p-4">
-                        <div className="mb-2">
-                          <p className="text-xs text-muted-foreground font-medium">
-                            {product.brand || "Marca"}
-                          </p>
-                          <Link
-                            to={`/product/${product._id}`}
-                            className="font-semibold text-foreground hover:text-primary transition-colors line-clamp-2"
-                          >
-                            {product.name}
-                          </Link>
-                        </div>
-
-                        <div className="flex items-center space-x-1 mb-2">
-                          <div className="flex items-center">
-                            <Star className="h-3 w-3 text-accent fill-current" />
-                            <span className="text-xs font-medium ml-1">{product.rating}</span>
-                          </div>
-                          <span className="text-xs text-muted-foreground">(avaliações)</span>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {product.category && (
-                            <Badge variant="secondary" className="text-xs">
-                              {product.category}
-                            </Badge>
-                          )}
-                          {product.colors && product.colors.length > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                              {product.colors.length} cores
-                            </Badge>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-bold text-primary">
-                              R$ {product.price.toFixed(2)}
-                            </div>
-                            {product.quantity < 10 && product.quantity > 0 && (
-                              <div className="text-xs text-orange-500">
-                                Apenas {product.quantity} restantes
-                              </div>
-                            )}
-                          </div>
-                          <Button
-                            size="sm"
-                            className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
-                            onClick={() => handleAdicionarToCart(product)}
-                            disabled={product.quantity === 0}
-                          >
-                            <ShoppingCart className="h-3 w-3 mr-1" />
-                            {(() => {
-                              const quantity = getItemQuantity(product._id);
-                              if (quantity > 0) {
-                                return `No carrinho (${quantity})`;
-                              }
-                              return "Adicionar";
-                            })()}
-                          </Button>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    // List View
-                    <div className="flex gap-4 p-4">
-                      <div className="w-32 h-32 flex-shrink-0">
-                        <ProductImageWithFallback
-                          images={product.images || []}
-                          alt={product.name}
-                          className="w-full h-full rounded-lg"
-                          fallbackIcon="🐕"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <p className="text-sm text-muted-foreground font-medium">
-                              {product.brand || "Marca"}
-                            </p>
-                            <Link
-                              to={`/product/${product._id}`}
-                              className="text-lg font-semibold text-foreground hover:text-primary transition-colors"
-                            >
-                              {product.name}
-                            </Link>
-                            {product.description && (
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                {product.description}
-                              </p>
-                            )}
+          {/* Products Grid */}
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                : "space-y-6"
+            }
+          >
+            {loading ? (
+              <div className="col-span-full flex flex-col items-center justify-center py-20">
+                <Loader2 className="h-16 w-16 animate-spin text-[#D97757] mb-4" />
+                <p className="font-body text-[#5A6751] text-lg">Carregando produtos...</p>
+              </div>
+            ) : error ? (
+              <div className="col-span-full">
+                <Card className="text-center py-16 rounded-2xl border-2 border-[#2D3319]/10">
+                  <CardContent>
+                    <h3 className="font-display text-2xl font-bold text-[#2D3319] mb-2">
+                      Erro ao carregar produtos
+                    </h3>
+                    <p className="font-body text-[#5A6751] mb-6">{error}</p>
+                    <Button
+                      onClick={() => window.location.reload()}
+                      className="btn-primary-custom font-body px-8 py-3 rounded-full"
+                    >
+                      Tentar novamente
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              filteredProdutos.map((product, index) => (
+                <Card
+                  key={product._id}
+                  className="product-card observe-animation bg-white shadow-lg hover:shadow-2xl rounded-3xl overflow-hidden"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <CardContent className="p-0">
+                    {viewMode === "grid" ? (
+                      <>
+                        <div className="relative group">
+                          <div className="aspect-square overflow-hidden">
+                            <ProductImageWithFallback
+                              images={product.images || []}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                              fallbackIcon="🐕"
+                            />
                           </div>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className={
+                            className={`absolute top-3 right-3 rounded-full bg-white/90 backdrop-blur-sm shadow-lg ${
                               favorites.includes(parseInt(product._id, 10))
-                                ? "text-red-500"
-                                : "text-muted-foreground"
-                            }
+                                ? "text-red-500 hover:text-red-600"
+                                : "text-[#5A6751] hover:text-red-500"
+                            }`}
                             onClick={() => toggleFavorite(product._id)}
                           >
                             <Heart
-                              className={`h-4 w-4 ${favorites.includes(parseInt(product._id, 10)) ? "fill-current" : ""}`}
+                              className={`h-5 w-5 ${favorites.includes(parseInt(product._id, 10)) ? "fill-current" : ""}`}
                             />
                           </Button>
-                        </div>
-
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div className="flex items-center">
-                            <Star className="h-4 w-4 text-accent fill-current" />
-                            <span className="text-sm font-medium ml-1">{product.rating}</span>
-                          </div>
-                          <span className="text-sm text-muted-foreground">(avaliações)</span>
-                          {product.quantity === 0 && (
-                            <Badge variant="destructive">Sem estoque</Badge>
-                          )}
-                          {product.quantity < 10 && product.quantity > 0 && (
-                            <Badge variant="outline" className="text-orange-500">
-                              Estoque baixo
+                          {product.price > 100 && (
+                            <Badge className="absolute top-3 left-3 bg-[#F4C430] text-[#2D3319] font-bold rounded-full px-4 py-1">
+                              15% OFF
                             </Badge>
                           )}
+                          {product.quantity === 0 && (
+                            <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center">
+                              <Badge className="bg-[#2D3319] text-white px-6 py-2 text-base">Sem Estoque</Badge>
+                            </div>
+                          )}
                         </div>
 
-                        <div className="flex flex-wrap gap-1 mb-3">
+                        <div className="p-6 space-y-3">
+                          {product.brand && (
+                            <p className="font-body text-xs text-[#8B9A7E] font-semibold uppercase tracking-widest">
+                              {product.brand}
+                            </p>
+                          )}
+                          <Link to={`/product/${product._id}`} className="block">
+                            <h3 className="font-display text-lg font-bold text-[#2D3319] hover:text-[#D97757] transition-colors line-clamp-2 min-h-[3.5rem]">
+                              {product.name}
+                            </h3>
+                          </Link>
+
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-4 w-4 ${
+                                  star <= Math.round(product.rating || 0)
+                                    ? "text-[#F4C430] fill-[#F4C430]"
+                                    : "text-gray-300"
+                                }`}
+                              />
+                            ))}
+                            <span className="font-body text-sm font-semibold text-[#2D3319] ml-2">
+                              {(product.rating || 0).toFixed(1)}
+                            </span>
+                          </div>
+
                           {product.category && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge className="bg-[#8B9A7E]/20 text-[#5A6751] border-0 font-body">
                               {product.category}
                             </Badge>
                           )}
-                          {product.sku && (
-                            <Badge variant="outline" className="text-xs">
-                              SKU: {product.sku}
-                            </Badge>
-                          )}
-                          {product.colors?.map((color) => (
-                            <Badge
-                              key={`list-color-${color}`}
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              {color}
-                            </Badge>
-                          ))}
-                        </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <div className="text-xl font-bold text-primary">
-                              R$ {product.price.toFixed(2)}
+                          <div className="space-y-3 pt-2">
+                            <div className="flex items-baseline gap-2">
+                              <span className="font-display text-3xl font-bold text-[#D97757]">
+                                R$ {product.price.toFixed(2)}
+                              </span>
+                              {product.price > 100 && (
+                                <span className="font-body text-sm text-[#5A6751] line-through">
+                                  R$ {(product.price * 1.15).toFixed(2)}
+                                </span>
+                              )}
                             </div>
                             {product.quantity < 10 && product.quantity > 0 && (
-                              <span className="text-sm text-orange-500">
-                                Apenas {product.quantity} restantes
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                                <span className="font-body text-xs font-semibold text-orange-600">
+                                  Apenas {product.quantity} em estoque
+                                </span>
+                              </div>
+                            )}
+                            <Button
+                              size="lg"
+                              onClick={() => handleAdicionarToCart(product)}
+                              disabled={product.quantity === 0}
+                              className="w-full btn-primary-custom font-body rounded-full font-semibold"
+                            >
+                              <ShoppingCart className="h-4 w-4 mr-2" />
+                              {(() => {
+                                const quantity = getItemQuantity(product._id);
+                                if (quantity > 0) {
+                                  return `No carrinho (${quantity})`;
+                                }
+                                return "Adicionar";
+                              })()}
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex gap-6 p-6">
+                        <div className="w-48 h-48 flex-shrink-0 rounded-2xl overflow-hidden">
+                          <ProductImageWithFallback
+                            images={product.images || []}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            fallbackIcon="🐕"
+                          />
+                        </div>
+
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              {product.brand && (
+                                <p className="font-body text-xs text-[#8B9A7E] font-semibold uppercase tracking-widest mb-2">
+                                  {product.brand}
+                                </p>
+                              )}
+                              <Link to={`/product/${product._id}`}>
+                                <h3 className="font-display text-2xl font-bold text-[#2D3319] hover:text-[#D97757] transition-colors">
+                                  {product.name}
+                                </h3>
+                              </Link>
+                              {product.description && (
+                                <p className="font-body text-[#5A6751] mt-2 line-clamp-2">
+                                  {product.description}
+                                </p>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={`rounded-full ${
+                                favorites.includes(parseInt(product._id, 10))
+                                  ? "text-red-500"
+                                  : "text-[#5A6751]"
+                              }`}
+                              onClick={() => toggleFavorite(product._id)}
+                            >
+                              <Heart
+                                className={`h-5 w-5 ${favorites.includes(parseInt(product._id, 10)) ? "fill-current" : ""}`}
+                              />
+                            </Button>
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1">
+                              <Star className="h-5 w-5 text-[#F4C430] fill-[#F4C430]" />
+                              <span className="font-body text-sm font-semibold">{product.rating}</span>
+                            </div>
+                            {product.quantity === 0 && (
+                              <Badge className="bg-[#2D3319] text-white">Sem estoque</Badge>
+                            )}
+                            {product.quantity < 10 && product.quantity > 0 && (
+                              <Badge className="border-orange-500 text-orange-600">Estoque baixo</Badge>
                             )}
                           </div>
-                          <Button
-                            className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
-                            onClick={() => handleAdicionarToCart(product)}
-                            disabled={product.quantity === 0}
-                          >
-                            <ShoppingCart className="h-4 w-4 mr-2" />
-                            {(() => {
-                              const quantity = getItemQuantity(product._id);
-                              if (quantity > 0) {
-                                return `No carrinho (${quantity})`;
-                              }
-                              return "Adicionar ao carrinho";
-                            })()}
-                          </Button>
+
+                          <div className="flex items-center justify-between pt-4">
+                            <div className="font-display text-3xl font-bold text-[#D97757]">
+                              R$ {product.price.toFixed(2)}
+                            </div>
+                            <Button
+                              className="btn-primary-custom font-body rounded-full px-8"
+                              onClick={() => handleAdicionarToCart(product)}
+                              disabled={product.quantity === 0}
+                            >
+                              <ShoppingCart className="h-4 w-4 mr-2" />
+                              {(() => {
+                                const quantity = getItemQuantity(product._id);
+                                if (quantity > 0) {
+                                  return `No carrinho (${quantity})`;
+                                }
+                                return "Adicionar ao carrinho";
+                              })()}
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-
-        {/* No Results */}
-        {filteredProdutos.length === 0 && !loading && (
-          <Card className="text-center py-12">
-            <CardContent>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                Nenhum produto encontrado
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Tente ajustar sua busca ou critérios de filtro
-              </p>
-              <Button
-                onClick={() => {
-                  setSearchQuery("");
-                  setFilterBy("all");
-                }}
-                className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
-              >
-                Limpar filtros
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && filteredProdutos.length > 0 && (
-          <div className="mt-8 flex justify-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              Anterior
-            </Button>
-            <div className="flex items-center gap-2">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const pageNum = i + 1;
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={page === pageNum ? "default" : "outline"}
-                    onClick={() => setPage(pageNum)}
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-            >
-              Próximo
-            </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
-        )}
-      </main>
-    </div>
+
+          {/* No Results */}
+          {filteredProdutos.length === 0 && !loading && (
+            <Card className="text-center py-16 rounded-2xl border-2 border-[#2D3319]/10">
+              <CardContent>
+                <h3 className="font-display text-3xl font-bold text-[#2D3319] mb-3">
+                  Nenhum produto encontrado
+                </h3>
+                <p className="font-body text-[#5A6751] text-lg mb-8">
+                  Tente ajustar sua busca ou critérios de filtro
+                </p>
+                <Button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFilterBy("all");
+                  }}
+                  className="btn-primary-custom font-body px-8 py-3 rounded-full"
+                >
+                  Limpar filtros
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && filteredProdutos.length > 0 && (
+            <div className="mt-16 flex justify-center items-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="font-body border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white rounded-full px-6"
+              >
+                ← Anterior
+              </Button>
+              <div className="flex items-center gap-2">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={page === pageNum ? "default" : "outline"}
+                      onClick={() => setPage(pageNum)}
+                      className={
+                        page === pageNum
+                          ? "bg-[#D97757] hover:bg-[#C56647] rounded-full"
+                          : "border-2 border-[#2D3319]/20 rounded-full hover:border-[#D97757]"
+                      }
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+                {totalPages > 5 && <span className="font-body text-[#5A6751]">...</span>}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="font-body border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white rounded-full px-6"
+              >
+                Próximo →
+              </Button>
+            </div>
+          )}
+        </main>
+      </div>
+    </>
   );
 };
 

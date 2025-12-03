@@ -12,12 +12,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
 import { productService } from "@/services/product.service";
+import { designSystemStyles } from "@/styles/design-system";
 
 const Header = () => {
   const { itemsCount } = useCart();
   const { isAuthenticated, logout } = useAuth();
   const [categories, setCategories] = useState<string[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -29,6 +31,14 @@ const Header = () => {
       }
     };
     loadCategories();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleLogout = async () => {
@@ -53,171 +63,227 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2">
-          <div className="bg-gradient-primary rounded-full p-2">
-            <Heart className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <span className="font-bold text-xl text-primary">Velure</span>
-        </Link>
-
-        {/* Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
-          <div className="flex items-center">
-            <Link to="/products" className="text-foreground hover:text-primary transition-colors">
-              Produtos
+    <>
+      <style>{designSystemStyles}</style>
+      <header
+        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+          scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-lg border-b-2 border-[#D97757]/20"
+            : "bg-[#FAF7F2]/95 backdrop-blur-sm border-b border-[#2D3319]/10"
+        }`}
+      >
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#D97757] to-[#C56647] rounded-2xl blur-sm group-hover:blur-md transition-all opacity-50" />
+                <div className="relative bg-gradient-to-br from-[#D97757] to-[#C56647] rounded-2xl p-2.5 transform group-hover:scale-110 transition-transform duration-300">
+                  <Heart className="h-6 w-6 text-white fill-white" />
+                </div>
+              </div>
+              <span className="font-display font-bold text-2xl text-[#2D3319] group-hover:text-[#D97757] transition-colors">
+                Velure
+              </span>
             </Link>
-            {categories.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 ml-1">
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-background border border-border shadow-soft">
-                  {categories.map((category) => (
-                    <DropdownMenuItem key={category} asChild>
-                      <Link to={`/products/${category}`} className="w-full">
-                        {formatCategoryName(category)}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
 
-          <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
-            Contato
-          </Link>
-        </nav>
-
-        {/* Actions */}
-        <div className="flex items-center space-x-4">
-          {/* Mobile Menu */}
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[280px] sm:w-[320px]">
-              <SheetHeader>
-                <SheetTitle className="flex items-center space-x-2">
-                  <div className="bg-gradient-primary rounded-full p-2">
-                    <Heart className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                  <span className="font-bold text-lg text-primary">Velure</span>
-                </SheetTitle>
-              </SheetHeader>
-              <nav className="flex flex-col space-y-4 mt-8">
+            {/* Navigation - Desktop */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <div className="flex items-center">
                 <Link
                   to="/products"
-                  className="text-foreground hover:text-primary transition-colors py-2 border-b border-border"
-                  onClick={() => setMobileMenuOpen(false)}
+                  className="font-body text-[#2D3319] hover:text-[#D97757] transition-colors font-medium relative group"
                 >
-                  Todos os Produtos
+                  Produtos
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#D97757] group-hover:w-full transition-all duration-300" />
                 </Link>
                 {categories.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">Categorias</p>
-                    {categories.map((category) => (
-                      <Link
-                        key={category}
-                        to={`/products/${category}`}
-                        className="block text-foreground hover:text-primary transition-colors py-2 pl-4"
-                        onClick={() => setMobileMenuOpen(false)}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 ml-1 hover:bg-[#D97757]/10 hover:text-[#D97757]"
                       >
-                        {formatCategoryName(category)}
-                      </Link>
-                    ))}
-                  </div>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 bg-white border-2 border-[#2D3319]/10 shadow-2xl rounded-2xl p-2">
+                      {categories.map((category) => (
+                        <DropdownMenuItem
+                          key={category}
+                          asChild
+                          className="rounded-xl font-body hover:bg-[#D97757]/10 hover:text-[#D97757] cursor-pointer"
+                        >
+                          <Link to={`/products/${category}`} className="w-full px-3 py-2">
+                            {formatCategoryName(category)}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
-                <Link
-                  to="/contact"
-                  className="text-foreground hover:text-primary transition-colors py-2 border-t border-border"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Contato
-                </Link>
-                {isAuthenticated ? (
-                  <>
+              </div>
+
+              <Link
+                to="/contact"
+                className="font-body text-[#2D3319] hover:text-[#D97757] transition-colors font-medium relative group"
+              >
+                Contato
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#D97757] group-hover:w-full transition-all duration-300" />
+              </Link>
+            </nav>
+
+            {/* Actions */}
+            <div className="flex items-center space-x-2">
+              {/* Mobile Menu */}
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild className="md:hidden">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-[#D97757]/10 hover:text-[#D97757]"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[280px] sm:w-[320px] bg-[#FAF7F2]">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center space-x-3">
+                      <div className="bg-gradient-to-br from-[#D97757] to-[#C56647] rounded-2xl p-2">
+                        <Heart className="h-5 w-5 text-white fill-white" />
+                      </div>
+                      <span className="font-display font-bold text-xl text-[#2D3319]">Velure</span>
+                    </SheetTitle>
+                  </SheetHeader>
+                  <nav className="flex flex-col space-y-2 mt-8 font-body">
                     <Link
-                      to="/orders"
-                      className="text-foreground hover:text-primary transition-colors py-2"
+                      to="/products"
+                      className="text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-3 px-4 rounded-xl border-b border-[#2D3319]/10"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Meus Pedidos
+                      Todos os Produtos
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleLogout();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="text-left text-foreground hover:text-primary transition-colors py-2"
+                    {categories.length > 0 && (
+                      <div className="space-y-1 pt-2">
+                        <p className="text-sm font-semibold text-[#5A6751] px-4 mb-2">
+                          Categorias
+                        </p>
+                        {categories.map((category) => (
+                          <Link
+                            key={category}
+                            to={`/products/${category}`}
+                            className="block text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-2 px-6 rounded-xl"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            {formatCategoryName(category)}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                    <Link
+                      to="/contact"
+                      className="text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-3 px-4 rounded-xl border-t border-[#2D3319]/10 mt-2"
+                      onClick={() => setMobileMenuOpen(false)}
                     >
-                      Sair
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="text-foreground hover:text-primary transition-colors py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Entrar / Cadastrar
-                  </Link>
-                )}
-              </nav>
-            </SheetContent>
-          </Sheet>
+                      Contato
+                    </Link>
+                    {isAuthenticated ? (
+                      <>
+                        <Link
+                          to="/orders"
+                          className="text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-3 px-4 rounded-xl"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          Meus Pedidos
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleLogout();
+                            setMobileMenuOpen(false);
+                          }}
+                          className="text-left text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-3 px-4 rounded-xl"
+                        >
+                          Sair
+                        </button>
+                      </>
+                    ) : (
+                      <Link
+                        to="/login"
+                        className="text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-3 px-4 rounded-xl"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Entrar / Cadastrar
+                      </Link>
+                    )}
+                  </nav>
+                </SheetContent>
+              </Sheet>
 
-          {/* Cart */}
-          <Link to="/cart">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              {itemsCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-secondary text-secondary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {itemsCount}
-                </span>
-              )}
-            </Button>
-          </Link>
-
-          {/* User */}
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
+              {/* Cart */}
+              <Link to="/cart">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative hover:bg-[#D97757]/10 hover:text-[#D97757] transition-all"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {itemsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-gradient-to-br from-[#D97757] to-[#C56647] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg animate-pulse">
+                      {itemsCount}
+                    </span>
+                  )}
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-background border border-border shadow-soft">
-                <DropdownMenuItem asChild>
-                  <Link to="/orders" className="w-full">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Meus Pedidos
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Link to="/login">
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
-          )}
+              </Link>
+
+              {/* User */}
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="hover:bg-[#D97757]/10 hover:text-[#D97757]"
+                    >
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-white border-2 border-[#2D3319]/10 shadow-2xl rounded-2xl p-2">
+                    <DropdownMenuItem
+                      asChild
+                      className="rounded-xl font-body hover:bg-[#D97757]/10 hover:text-[#D97757] cursor-pointer"
+                    >
+                      <Link to="/orders" className="w-full px-3 py-2">
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Meus Pedidos
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="rounded-xl font-body hover:bg-[#D97757]/10 hover:text-[#D97757] cursor-pointer px-3 py-2"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to="/login">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-[#D97757]/10 hover:text-[#D97757]"
+                  >
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 };
 
