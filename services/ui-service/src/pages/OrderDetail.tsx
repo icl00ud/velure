@@ -200,7 +200,7 @@ const OrderDetail = () => {
 
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl observe-animation">
+              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl">
                 <CardHeader>
                   <CardTitle className="font-display text-2xl font-bold text-[#2D3319]">
                     Status do Pedido
@@ -282,7 +282,7 @@ const OrderDetail = () => {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl observe-animation" style={{ animationDelay: '0.1s' }}>
+              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl">
                 <CardHeader>
                   <CardTitle className="font-display text-2xl font-bold text-[#2D3319]">
                     Itens do Pedido
@@ -325,7 +325,7 @@ const OrderDetail = () => {
             </div>
 
             <div>
-              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl sticky top-24 observe-animation" style={{ animationDelay: '0.2s' }}>
+              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl sticky top-24">
                 <CardHeader>
                   <CardTitle className="font-display text-2xl font-bold text-[#2D3319]">
                     Resumo do Pedido
