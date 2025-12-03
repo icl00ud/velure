@@ -9,6 +9,7 @@ import (
 	"product-service/internal/metrics"
 	"product-service/internal/models"
 
+	"github.com/icl00ud/velure-shared/logger"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -41,6 +42,7 @@ type ProductRepository interface {
 	DeleteProductById(ctx context.Context, id string) error
 	UpdateProductQuantity(ctx context.Context, productID string, quantityChange int) error
 	GetProductQuantity(ctx context.Context, productID string) (int, error)
+	WarmupCache(ctx context.Context) error
 }
 
 type productRepository struct {
@@ -464,7 +466,11 @@ func (r *productRepository) toProductResponse(product models.Product) models.Pro
 func (r *productRepository) UpdateProductQuantity(ctx context.Context, productID string, quantityChange int) error {
 	objectID, err := primitive.ObjectIDFromHex(productID)
 	if err != nil {
-		return fmt.Errorf("invalid product ID: %w", err)
+		logger.Error("invalid product ID format in UpdateProductQuantity",
+			logger.String("product_id", productID),
+			logger.Int("quantity_change", quantityChange),
+			logger.Err(err))
+		return fmt.Errorf("invalid product ID %s: %w", productID, err)
 	}
 
 	// Use $inc to atomically increment/decrement the quantity
@@ -482,13 +488,14 @@ func (r *productRepository) UpdateProductQuantity(ctx context.Context, productID
 		return fmt.Errorf("product not found")
 	}
 
-	// Clear quantity cache for this specific product
+	// PERFORMANCE: Only invalidate specific product caches, not all products
+	// This dramatically improves cache hit rate during high-frequency quantity updates
 	if r.redis != nil {
-		r.redis.Del(ctx, fmt.Sprintf("productQty:%s", productID))
+		r.redis.Del(ctx,
+			fmt.Sprintf("productQty:%s", productID),
+			fmt.Sprintf("product:%s", productID),
+		)
 	}
-
-	// Clear all product-related caches
-	r.clearProductCaches(ctx)
 
 	return nil
 }
@@ -512,7 +519,10 @@ func (r *productRepository) GetProductQuantity(ctx context.Context, productID st
 
 	objectID, err := primitive.ObjectIDFromHex(productID)
 	if err != nil {
-		return 0, fmt.Errorf("invalid product ID: %w", err)
+		logger.Error("invalid product ID format",
+			logger.String("product_id", productID),
+			logger.Err(err))
+		return 0, fmt.Errorf("invalid product ID %s: %w", productID, err)
 	}
 
 	var product models.Product
@@ -566,4 +576,61 @@ func (r *productRepository) clearProductCaches(ctx context.Context) {
 	if err == nil && len(keys) > 0 {
 		r.redis.Del(ctx, keys...)
 	}
+}
+
+// WarmupCache pre-loads all products into Redis cache at startup
+// This creates a "hot cache" for better performance with small product catalogs
+func (r *productRepository) WarmupCache(ctx context.Context) error {
+	if r.redis == nil {
+		return nil
+	}
+
+	// Get all products from MongoDB
+	cursor, err := r.collection.Find(ctx, bson.M{})
+	if err != nil {
+		return fmt.Errorf("failed to fetch products for warmup: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var products []models.Product
+	if err := cursor.All(ctx, &products); err != nil {
+		return fmt.Errorf("failed to decode products for warmup: %w", err)
+	}
+
+	// Cache each product individually (24h TTL for stable catalog)
+	for _, product := range products {
+		productResponse := r.toProductResponse(product)
+		if data, err := json.Marshal(productResponse); err == nil {
+			cacheKey := fmt.Sprintf("product:%s", product.ID.Hex())
+			r.redis.Set(ctx, cacheKey, data, 24*time.Hour)
+		}
+	}
+
+	// Cache all products together
+	responses := make([]models.ProductResponse, len(products))
+	for i, product := range products {
+		responses[i] = r.toProductResponse(product)
+	}
+	if data, err := json.Marshal(responses); err == nil {
+		r.redis.Set(ctx, "allProducts", data, 24*time.Hour)
+	}
+
+	// Pre-cache first page (most accessed)
+	firstPage := 20
+	if len(products) > firstPage {
+		responses = responses[:firstPage]
+	}
+	totalPages := (len(products) + firstPage - 1) / firstPage
+	paginatedResp := &models.PaginatedProductsResponse{
+		Products:   responses,
+		TotalCount: int64(len(products)),
+		Page:       1,
+		PageSize:   firstPage,
+		TotalPages: totalPages,
+	}
+	if data, err := json.Marshal(paginatedResp); err == nil {
+		r.redis.Set(ctx, "productsPage:1:20", data, 24*time.Hour)
+	}
+
+	return nil
 }

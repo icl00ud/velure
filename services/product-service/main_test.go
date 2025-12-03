@@ -186,6 +186,10 @@ func (f *fakeRepo) GetProductQuantity(ctx context.Context, productID string) (in
 	return 0, nil
 }
 
+func (f *fakeRepo) WarmupCache(ctx context.Context) error {
+	return nil
+}
+
 func init() {
 	// Initialize logger for tests
 	log = logger.NewNop()

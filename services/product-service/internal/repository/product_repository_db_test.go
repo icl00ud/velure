@@ -96,23 +96,31 @@ func TestUpdateProductQuantity_Paths(t *testing.T) {
 	ctx := context.Background()
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 
-	mt.Run("success clears caches", func(mt *mtest.T) {
+	mt.Run("success clears product-specific caches only", func(mt *mtest.T) {
 		mr, err := miniredis.Run()
 		require.NoError(mt, err)
 		defer mr.Close()
 		rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+
+		productID := primitive.NewObjectID().Hex()
+		// Set product-specific caches
+		_ = rdb.Set(ctx, fmt.Sprintf("productQty:%s", productID), "10", 0)
+		_ = rdb.Set(ctx, fmt.Sprintf("product:%s", productID), `{"name":"test"}`, 0)
+		// Set global caches that should NOT be cleared (performance optimization)
 		_ = rdb.Set(ctx, "allProducts", "value", 0)
 		_ = rdb.Set(ctx, "productCategories", "value", 0)
-		_ = rdb.Set(ctx, "productsPage:1:10", "value", 0)
 
 		repo := &productRepository{collection: mt.Coll, redis: rdb}
 		mt.AddMockResponses(mtest.CreateSuccessResponse(bson.E{Key: "n", Value: 1}))
 
-		err = repo.UpdateProductQuantity(ctx, primitive.NewObjectID().Hex(), 2)
+		err = repo.UpdateProductQuantity(ctx, productID, 2)
 		require.NoError(mt, err)
-		require.False(mt, mr.Exists("allProducts"))
-		require.False(mt, mr.Exists("productCategories"))
-		require.False(mt, mr.Exists("productsPage:1:10"))
+		// Product-specific caches should be cleared
+		require.False(mt, mr.Exists(fmt.Sprintf("productQty:%s", productID)))
+		require.False(mt, mr.Exists(fmt.Sprintf("product:%s", productID)))
+		// Global caches should NOT be cleared (performance optimization)
+		require.True(mt, mr.Exists("allProducts"))
+		require.True(mt, mr.Exists("productCategories"))
 	})
 
 	mt.Run("not found returns error", func(mt *mtest.T) {

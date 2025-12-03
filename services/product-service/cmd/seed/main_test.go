@@ -58,6 +58,7 @@ func (r *recordingRepo) UpdateProductQuantity(ctx context.Context, productID str
 func (r *recordingRepo) GetProductQuantity(ctx context.Context, productID string) (int, error) {
 	return 0, nil
 }
+func (r *recordingRepo) WarmupCache(ctx context.Context) error { return nil }
 
 func TestRunSeed_InsertsProducts(t *testing.T) {
 	repo := &recordingRepo{

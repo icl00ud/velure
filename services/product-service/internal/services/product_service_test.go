@@ -102,6 +102,11 @@ func (m *MockProductRepository) GetProductQuantity(ctx context.Context, productI
 	return args.Get(0).(int), args.Error(1)
 }
 
+func (m *MockProductRepository) WarmupCache(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
 func TestGetAllProducts(t *testing.T) {
 	tests := []struct {
 		name       string
