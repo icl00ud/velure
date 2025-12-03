@@ -1,5 +1,5 @@
 import { ArrowLeft, Loader2, Minus, Plus, Shield, ShoppingBag, Trash2, Truck } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { ProductImageWithFallback } from "@/components/ProductImage";
@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "@/hooks/use-toast";
 import { orderService } from "@/services/order.service";
+import { designSystemStyles } from "@/styles/design-system";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -17,6 +18,11 @@ const Cart = () => {
   const [promoCode, setPromoCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   const handleRemoveItem = (productId: string, productName: string) => {
     removeFromCart(productId);
@@ -88,228 +94,272 @@ const Cart = () => {
 
   const subtotal = totalPrice;
   const shipping = subtotal > 100 ? 0 : 15.0;
-  const tax = subtotal * 0.05; // 5% de impostos
+  const tax = subtotal * 0.05;
   const total = subtotal + shipping + tax - appliedDiscount;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <>
+      <style>{designSystemStyles}</style>
+      <div className="min-h-screen bg-[#FAF7F2]">
+        <Header />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <Link
-            to="/"
-            className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Continuar comprando
-          </Link>
-          <h1 className="text-4xl font-bold text-foreground">Carrinho de compras</h1>
-          <p className="text-muted-foreground mt-2">
-            {cartItems.length} {cartItems.length === 1 ? "item" : "itens"} no seu carrinho
-          </p>
-        </div>
+        <main className="container mx-auto px-4 lg:px-8 py-12">
+          <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+            <Link
+              to="/"
+              className="inline-flex items-center font-body text-[#5A6751] hover:text-[#D97757] transition-colors mb-6 group"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+              Continuar comprando
+            </Link>
+            <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#2D3319] mb-4">
+              Carrinho de compras
+            </h1>
+            <div className="w-20 h-1 bg-gradient-to-r from-[#D97757] to-[#F4C430] mb-6" />
+            <p className="font-body text-xl text-[#5A6751]">
+              <span className="font-bold text-[#D97757]">{cartItems.length}</span>{" "}
+              {cartItems.length === 1 ? "item" : "itens"} no seu carrinho
+            </p>
+          </div>
 
-        {cartItems.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                Seu carrinho está vazio
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Parece que você ainda não adicionou nenhum item ao seu carrinho.
-              </p>
-              <Button
-                asChild
-                className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
-              >
-                <Link to="/products">Começar a comprar</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4">
-              {cartItems.map((item) => (
-                <Card key={item.product._id} className="shadow-soft">
-                  <CardContent className="p-6">
-                    <div className="flex gap-4">
-                      <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
-                        <ProductImageWithFallback
-                          images={item.product.images || []}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                          fallbackIcon="🐕"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <Link
-                              to={`/product/${item.product._id}`}
-                              className="font-semibold text-foreground hover:text-primary transition-colors"
-                            >
-                              {item.product.name}
-                            </Link>
-                            <p className="text-sm text-muted-foreground">
-                              {item.product.brand || "Marca"} •{" "}
-                              {item.product.category || "Categoria"}
-                            </p>
-                            {item.product.quantity === 0 && (
-                              <p className="text-sm text-destructive mt-1">Sem estoque</p>
-                            )}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveItem(item.product._id, item.product.name)}
-                            className="text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+          {cartItems.length === 0 ? (
+            <Card className="text-center py-20 rounded-3xl border-2 border-[#2D3319]/10 shadow-2xl">
+              <CardContent>
+                <div className="relative inline-block mb-8">
+                  <div className="absolute inset-0 bg-[#D97757]/20 blur-3xl" />
+                  <div className="relative bg-gradient-to-br from-[#D97757]/10 to-[#8B9A7E]/10 rounded-full p-8">
+                    <ShoppingBag className="h-20 w-20 text-[#D97757]" />
+                  </div>
+                </div>
+                <h3 className="font-display text-3xl font-bold text-[#2D3319] mb-4">
+                  Seu carrinho está vazio
+                </h3>
+                <p className="font-body text-lg text-[#5A6751] mb-8 max-w-md mx-auto">
+                  Parece que você ainda não adicionou nenhum item ao seu carrinho.
+                  Explore nossos produtos!
+                </p>
+                <Button
+                  asChild
+                  className="btn-primary-custom font-body px-10 py-6 rounded-full text-lg"
+                >
+                  <Link to="/products">Começar a comprar</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Cart Items */}
+              <div className="lg:col-span-2 space-y-6">
+                {cartItems.map((item, index) => (
+                  <Card
+                    key={item.product._id}
+                    className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl card-hover-subtle observe-animation"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex gap-6">
+                        <div className="w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#FAF7F2] to-white">
+                          <ProductImageWithFallback
+                            images={item.product.images || []}
+                            alt={item.product.name}
+                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                            fallbackIcon="🐕"
+                          />
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <Link
+                                to={`/product/${item.product._id}`}
+                                className="font-display text-xl font-bold text-[#2D3319] hover:text-[#D97757] transition-colors"
+                              >
+                                {item.product.name}
+                              </Link>
+                              <p className="font-body text-sm text-[#5A6751] mt-1">
+                                {item.product.brand || "Marca"} •{" "}
+                                {item.product.category || "Categoria"}
+                              </p>
+                              {item.product.quantity === 0 && (
+                                <p className="font-body text-sm text-red-600 font-semibold mt-2">
+                                  ⚠️ Sem estoque
+                                </p>
+                              )}
+                            </div>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
-                              onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
-                              disabled={item.quantity <= 1}
+                              onClick={() => handleRemoveItem(item.product._id, item.product.name)}
+                              className="text-[#5A6751] hover:text-red-600 hover:bg-red-50 rounded-full"
                             >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="w-8 text-center font-medium">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
-                            >
-                              <Plus className="h-3 w-3" />
+                              <Trash2 className="h-5 w-5" />
                             </Button>
                           </div>
 
-                          <div className="text-right">
-                            <div className="font-semibold text-primary">
-                              R$ {(item.product.price * item.quantity).toFixed(2)}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3 bg-[#FAF7F2] rounded-full p-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10 rounded-full hover:bg-[#D97757] hover:text-white"
+                                onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
+                                disabled={item.quantity <= 1}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <span className="w-12 text-center font-body font-bold text-[#2D3319]">
+                                {item.quantity}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10 rounded-full hover:bg-[#D97757] hover:text-white"
+                                onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              R$ {item.product.price.toFixed(2)} cada
+
+                            <div className="text-right">
+                              <div className="font-display text-2xl font-bold text-[#D97757]">
+                                R$ {(item.product.price * item.quantity).toFixed(2)}
+                              </div>
+                              <div className="font-body text-sm text-[#5A6751]">
+                                R$ {item.product.price.toFixed(2)} cada
+                              </div>
                             </div>
                           </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Order Summary */}
+              <div className="space-y-6">
+                <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl sticky top-24">
+                  <CardContent className="p-8">
+                    <h3 className="font-display text-2xl font-bold text-[#2D3319] mb-6">
+                      Resumo do pedido
+                    </h3>
+
+                    <div className="space-y-4 font-body">
+                      <div className="flex justify-between text-[#5A6751]">
+                        <span>Subtotal</span>
+                        <span className="font-semibold text-[#2D3319]">
+                          R$ {subtotal.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-[#5A6751]">
+                        <span>Frete</span>
+                        <span className="font-semibold text-[#2D3319]">
+                          {shipping === 0 ? (
+                            <span className="text-[#8B9A7E] font-bold">Grátis</span>
+                          ) : (
+                            `R$ ${shipping.toFixed(2)}`
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-[#5A6751]">
+                        <span>Impostos</span>
+                        <span className="font-semibold text-[#2D3319]">
+                          R$ {tax.toFixed(2)}
+                        </span>
+                      </div>
+                      {appliedDiscount > 0 && (
+                        <div className="flex justify-between text-[#8B9A7E] font-bold">
+                          <span>Desconto</span>
+                          <span>-R$ {appliedDiscount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <Separator className="bg-[#2D3319]/20" />
+                      <div className="flex justify-between text-xl pt-2">
+                        <span className="font-display font-bold text-[#2D3319]">Total</span>
+                        <span className="font-display font-bold text-[#D97757]">
+                          R$ {total.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 space-y-4">
+                      <div className="flex space-x-3">
+                        <Input
+                          placeholder="Cupom de desconto"
+                          value={promoCode}
+                          onChange={(e) => setPromoCode(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && applyPromoCode()}
+                          className="font-body border-2 border-[#2D3319]/10 rounded-xl focus:border-[#D97757]"
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={applyPromoCode}
+                          className="font-body border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white rounded-xl px-6"
+                        >
+                          Aplicar
+                        </Button>
+                      </div>
+
+                      <Button
+                        className="w-full btn-primary-custom font-body text-lg rounded-full py-6"
+                        disabled={cartItems.length === 0 || isProcessing}
+                        onClick={handleCheckout}
+                      >
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                            Processando...
+                          </>
+                        ) : (
+                          "Finalizar compra"
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Benefits */}
+                <Card className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl">
+                  <CardContent className="p-6">
+                    <h4 className="font-display text-xl font-bold text-[#2D3319] mb-6">
+                      Seus benefícios
+                    </h4>
+
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-4">
+                        <div className="bg-gradient-to-br from-[#D97757] to-[#C56647] rounded-2xl p-3 flex-shrink-0">
+                          <Truck className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-body font-semibold text-[#2D3319]">Frete grátis</p>
+                          <p className="font-body text-sm text-[#5A6751]">
+                            Em pedidos acima de R$ 100
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start space-x-4">
+                        <div className="bg-gradient-to-br from-[#8B9A7E] to-[#5A6751] rounded-2xl p-3 flex-shrink-0">
+                          <Shield className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-body font-semibold text-[#2D3319]">
+                            Devolução em 30 dias
+                          </p>
+                          <p className="font-body text-sm text-[#5A6751]">
+                            Garantia de dinheiro de volta
+                          </p>
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              </div>
             </div>
-
-            {/* Order Summary */}
-            <div className="space-y-6">
-              <Card className="shadow-soft">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-foreground mb-4">Resumo do pedido</h3>
-
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span className="font-medium">R$ {subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Frete</span>
-                      <span className="font-medium">
-                        {shipping === 0 ? "Grátis" : `R$ ${shipping.toFixed(2)}`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Impostos</span>
-                      <span className="font-medium">R$ {tax.toFixed(2)}</span>
-                    </div>
-                    {appliedDiscount > 0 && (
-                      <div className="flex justify-between text-accent">
-                        <span>Desconto</span>
-                        <span>-R$ {appliedDiscount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <Separator />
-                    <div className="flex justify-between text-lg font-semibold">
-                      <span>Total</span>
-                      <span className="text-primary">R$ {total.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 space-y-4">
-                    <div className="flex space-x-2">
-                      <Input
-                        placeholder="Cupom de desconto"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && applyPromoCode()}
-                      />
-                      <Button variant="outline" onClick={applyPromoCode}>
-                        Aplicar
-                      </Button>
-                    </div>
-
-                    <Button
-                      className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
-                      disabled={cartItems.length === 0 || isProcessing}
-                      onClick={handleCheckout}
-                    >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Processando...
-                        </>
-                      ) : (
-                        "Finalizar compra"
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Benefits */}
-              <Card className="shadow-soft">
-                <CardContent className="p-6">
-                  <h4 className="font-semibold text-foreground mb-4">Seus benefícios</h4>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-primary/10 rounded-full p-2">
-                        <Truck className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Frete grátis</p>
-                        <p className="text-xs text-muted-foreground">Em pedidos acima de R$ 100</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3">
-                      <div className="bg-secondary/10 rounded-full p-2">
-                        <Shield className="h-4 w-4 text-secondary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Devolução em 30 dias</p>
-                        <p className="text-xs text-muted-foreground">
-                          Garantia de dinheiro de volta
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
+          )}
+        </main>
+      </div>
+    </>
   );
 };
 

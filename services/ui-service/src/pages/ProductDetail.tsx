@@ -12,7 +12,7 @@ import {
   Star,
   Truck,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { ProductImageWithFallback } from "@/components/ProductImage";
@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCart } from "@/hooks/use-cart";
 import { useProduct } from "@/hooks/use-products";
 import { toast } from "@/hooks/use-toast";
+import { designSystemStyles } from "@/styles/design-system";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -30,9 +31,14 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
   const { product, loading, error } = useProduct(id || "");
   const { addToCart, getItemQuantity } = useCart();
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -51,37 +57,45 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <span className="ml-4 text-lg text-muted-foreground">Carregando produto...</span>
+      <>
+        <style>{designSystemStyles}</style>
+        <div className="min-h-screen bg-[#FAF7F2]">
+          <Header />
+          <div className="flex flex-col items-center justify-center py-32">
+            <Loader2 className="h-16 w-16 animate-spin text-[#D97757] mb-4" />
+            <span className="font-body text-lg text-[#5A6751]">Carregando produto...</span>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <Card className="text-center py-12">
-            <CardContent>
-              <h3 className="text-xl font-semibold text-foreground mb-2">Produto não encontrado</h3>
-              <p className="text-muted-foreground mb-6">
-                {error || "O produto que você está procurando não existe."}
-              </p>
-              <Button
-                asChild
-                className="bg-gradient-primary hover:opacity-90 text-primary-foreground"
-              >
-                <Link to="/products">Ver todos os produtos</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
+      <>
+        <style>{designSystemStyles}</style>
+        <div className="min-h-screen bg-[#FAF7F2]">
+          <Header />
+          <main className="container mx-auto px-4 lg:px-8 py-12">
+            <Card className="text-center py-20 rounded-3xl border-2 border-[#2D3319]/10 shadow-2xl">
+              <CardContent>
+                <h3 className="font-display text-3xl font-bold text-[#2D3319] mb-4">
+                  Produto não encontrado
+                </h3>
+                <p className="font-body text-lg text-[#5A6751] mb-8">
+                  {error || "O produto que você está procurando não existe."}
+                </p>
+                <Button
+                  asChild
+                  className="btn-primary-custom font-body px-10 py-4 rounded-full text-lg"
+                >
+                  <Link to="/products">Ver todos os produtos</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      </>
     );
   }
 
@@ -89,342 +103,410 @@ const ProductDetail = () => {
   const cartQuantity = getItemQuantity(product._id);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <>
+      <style>{designSystemStyles}</style>
+      <div className="min-h-screen bg-[#FAF7F2]">
+        <Header />
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-6">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-primary">
-              Início
-            </Link>
-            <span>/</span>
-            <Link to="/products" className="hover:text-primary">
-              Produtos
-            </Link>
-            {product.category && (
-              <>
-                <span>/</span>
-                <Link to={`/products/${product.category}`} className="hover:text-primary">
-                  {product.category}
-                </Link>
-              </>
-            )}
-            <span>/</span>
-            <span className="text-foreground font-medium line-clamp-1">{product.name}</span>
-          </div>
-        </nav>
-
-        <Link
-          to="/products"
-          className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar para produtos
-        </Link>
-
-        <div className="grid lg:grid-cols-2 gap-12 mb-12">
-          {/* Product Images */}
-          <div className="space-y-4">
-            <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-              <ProductImageWithFallback
-                images={product.images || []}
-                alt={product.name}
-                className="w-full h-full object-cover"
-                fallbackIcon="🐕"
-              />
-            </div>
-
-            {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {product.images.slice(0, 4).map((image, index) => (
-                  <button
-                    type="button"
-                    key={`image-${image}-${index}`}
-                    onClick={() => setSelectedImage(index)}
-                    className={`aspect-square bg-muted rounded-lg overflow-hidden border-2 transition-colors ${
-                      selectedImage === index
-                        ? "border-primary"
-                        : "border-transparent hover:border-muted-foreground"
-                    }`}
+        <main className="container mx-auto px-4 lg:px-8 py-12">
+          {/* Breadcrumb */}
+          <nav className={`mb-8 ${isVisible ? 'page-enter active' : 'page-enter'}`}>
+            <div className="flex items-center space-x-2 text-sm font-body text-[#5A6751]">
+              <Link to="/" className="hover:text-[#D97757] transition-colors">
+                Início
+              </Link>
+              <span>/</span>
+              <Link to="/products" className="hover:text-[#D97757] transition-colors">
+                Produtos
+              </Link>
+              {product.category && (
+                <>
+                  <span>/</span>
+                  <Link
+                    to={`/products/${product.category}`}
+                    className="hover:text-[#D97757] transition-colors"
                   >
-                    <ProductImageWithFallback
-                      images={[image]}
-                      alt={`${product.name} - ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      fallbackIcon="🐕"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Product Info */}
-          <div className="space-y-6">
-            <div>
-              {product.brand && (
-                <p className="text-muted-foreground font-medium mb-2">{product.brand}</p>
+                    {product.category}
+                  </Link>
+                </>
               )}
-              <h1 className="text-3xl font-bold text-foreground mb-4">{product.name}</h1>
+              <span>/</span>
+              <span className="text-[#2D3319] font-semibold line-clamp-1">{product.name}</span>
+            </div>
+          </nav>
 
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="flex items-center">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`h-4 w-4 ${
-                        star <= Math.floor(product.rating || 0)
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-muted-foreground"
+          <Link
+            to="/products"
+            className="inline-flex items-center font-body text-[#5A6751] hover:text-[#D97757] transition-colors mb-8 group"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+            Voltar para produtos
+          </Link>
+
+          <div className="grid lg:grid-cols-2 gap-12 mb-16">
+            {/* Product Images */}
+            <div className={`space-y-6 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+              <div className="aspect-square bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-[#2D3319]/10 relative group">
+                <ProductImageWithFallback
+                  images={product.images || []}
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  fallbackIcon="🐕"
+                />
+                {!inStock && (
+                  <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center">
+                    <Badge className="bg-[#2D3319] text-white px-8 py-3 text-lg">
+                      Produto Esgotado
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {product.images && product.images.length > 1 && (
+                <div className="grid grid-cols-4 gap-4">
+                  {product.images.slice(0, 4).map((image, index) => (
+                    <button
+                      type="button"
+                      key={`image-${image}-${index}`}
+                      onClick={() => setSelectedImage(index)}
+                      className={`aspect-square bg-white rounded-2xl overflow-hidden border-3 transition-all duration-300 hover:scale-105 ${
+                        selectedImage === index
+                          ? "border-[#D97757] shadow-lg"
+                          : "border-[#2D3319]/10 hover:border-[#D97757]/50"
                       }`}
-                    />
+                    >
+                      <ProductImageWithFallback
+                        images={[image]}
+                        alt={`${product.name} - ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        fallbackIcon="🐕"
+                      />
+                    </button>
                   ))}
-                  <span className="ml-2 font-medium">{(product.rating || 0).toFixed(1)}</span>
                 </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mb-6">
-                {product.category && <Badge variant="secondary">{product.category}</Badge>}
-                {product.colors?.map((color) => (
-                  <Badge key={`color-${color}`} variant="outline">
-                    {color}
-                  </Badge>
-                ))}
-              </div>
+              )}
             </div>
 
-            <div className="flex items-baseline space-x-4">
-              <span className="text-3xl font-bold text-primary">R$ {product.price.toFixed(2)}</span>
-            </div>
-
-            {product.description && (
-              <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-            )}
-
-            {/* Stock Status */}
-            <div className="flex items-center space-x-2">
-              <div
-                className={`w-2 h-2 rounded-full ${inStock ? "bg-green-500" : "bg-red-500"}`}
-              ></div>
-              <span
-                className={`text-sm font-medium ${inStock ? "text-green-600" : "text-red-600"}`}
-              >
-                {inStock ? `Em estoque (${product.quantity} disponíveis)` : "Produto esgotado"}
-              </span>
-            </div>
-
-            {cartQuantity > 0 && (
-              <div className="bg-primary/10 rounded-lg p-3 flex items-center justify-between">
-                <span className="text-sm text-primary font-medium">
-                  Você já tem {cartQuantity} unidade(s) no carrinho
-                </span>
-                <Button asChild variant="link" className="text-primary p-0 h-auto">
-                  <Link to="/cart">Ver carrinho</Link>
-                </Button>
-              </div>
-            )}
-
-            {/* Quantity & Actions */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <span className="font-medium">Quantidade:</span>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1 || !inStock}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="w-12 text-center font-medium">{quantity}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setQuantity(Math.min(product.quantity, quantity + 1))}
-                    disabled={quantity >= product.quantity || !inStock}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex space-x-4">
-                <Button
-                  onClick={handleAddToCart}
-                  className="flex-1 bg-gradient-primary hover:opacity-90 text-primary-foreground"
-                  disabled={!inStock}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Adicionar ao carrinho
-                </Button>
-
-                <Button
-                  variant="outline"
-                  onClick={handleBuyNow}
-                  className="flex-1 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                  disabled={!inStock}
-                >
-                  Comprar agora
-                </Button>
-              </div>
-
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  className={isFavorite ? "text-red-500 border-red-500" : ""}
-                >
-                  <Heart className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href);
-                    toast({
-                      title: "Link copiado!",
-                      description: "O link do produto foi copiado para a área de transferência.",
-                    });
-                  }}
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Benefits */}
-            <div className="grid grid-cols-2 gap-4 pt-6">
-              <div className="flex items-center space-x-3">
-                <div className="bg-primary/10 rounded-full p-2">
-                  <Truck className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Frete grátis</p>
-                  <p className="text-xs text-muted-foreground">Em pedidos acima de R$ 100</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="bg-secondary/10 rounded-full p-2">
-                  <RotateCcw className="h-4 w-4 text-secondary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Devolução em 30 dias</p>
-                  <p className="text-xs text-muted-foreground">Garantia de dinheiro de volta</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="bg-accent/10 rounded-full p-2">
-                  <Shield className="h-4 w-4 text-accent-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Garantia de qualidade</p>
-                  <p className="text-xs text-muted-foreground">Produtos premium</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <div className="bg-primary/10 rounded-full p-2">
-                  <Award className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Aprovado por veterinários</p>
-                  <p className="text-xs text-muted-foreground">Confiável por veterinários</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Product Details Tabs */}
-        <Card className="shadow-soft">
-          <CardContent className="p-0">
-            <Tabs defaultValue="description" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="description">Descrição</TabsTrigger>
-                <TabsTrigger value="specifications">Especificações</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="description" className="p-6">
-                <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-foreground">Descrição do Produto</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {product.description || "Nenhuma descrição disponível para este produto."}
+            {/* Product Info */}
+            <div className={`space-y-6 ${isVisible ? 'hero-enter active' : 'hero-enter'}`} style={{ animationDelay: '0.2s' }}>
+              <div>
+                {product.brand && (
+                  <p className="font-body text-[#8B9A7E] font-semibold uppercase tracking-widest text-sm mb-3">
+                    {product.brand}
                   </p>
-                </div>
-              </TabsContent>
+                )}
+                <h1 className="font-display text-4xl lg:text-5xl font-bold text-[#2D3319] mb-4">
+                  {product.name}
+                </h1>
 
-              <TabsContent value="specifications" className="p-6">
-                <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-foreground">Especificações</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {product.sku && (
-                      <div className="flex justify-between py-2 border-b border-border">
-                        <span className="font-medium text-foreground">SKU:</span>
-                        <span className="text-muted-foreground">{product.sku}</span>
-                      </div>
-                    )}
-                    {product.brand && (
-                      <div className="flex justify-between py-2 border-b border-border">
-                        <span className="font-medium text-foreground">Marca:</span>
-                        <span className="text-muted-foreground">{product.brand}</span>
-                      </div>
-                    )}
-                    {product.category && (
-                      <div className="flex justify-between py-2 border-b border-border">
-                        <span className="font-medium text-foreground">Categoria:</span>
-                        <span className="text-muted-foreground">{product.category}</span>
-                      </div>
-                    )}
-                    {product.dimensions?.weight && (
-                      <div className="flex justify-between py-2 border-b border-border">
-                        <span className="font-medium text-foreground">Peso:</span>
-                        <span className="text-muted-foreground">
-                          {product.dimensions.weight} kg
-                        </span>
-                      </div>
-                    )}
-                    {product.dimensions?.height && (
-                      <div className="flex justify-between py-2 border-b border-border">
-                        <span className="font-medium text-foreground">Altura:</span>
-                        <span className="text-muted-foreground">
-                          {product.dimensions.height} cm
-                        </span>
-                      </div>
-                    )}
-                    {product.dimensions?.width && (
-                      <div className="flex justify-between py-2 border-b border-border">
-                        <span className="font-medium text-foreground">Largura:</span>
-                        <span className="text-muted-foreground">{product.dimensions.width} cm</span>
-                      </div>
-                    )}
-                    {product.dimensions?.length && (
-                      <div className="flex justify-between py-2 border-b border-border">
-                        <span className="font-medium text-foreground">Comprimento:</span>
-                        <span className="text-muted-foreground">
-                          {product.dimensions.length} cm
-                        </span>
-                      </div>
-                    )}
-                    {product.colors && product.colors.length > 0 && (
-                      <div className="flex justify-between py-2 border-b border-border">
-                        <span className="font-medium text-foreground">Cores disponíveis:</span>
-                        <span className="text-muted-foreground">{product.colors.join(", ")}</span>
-                      </div>
-                    )}
+                <div className="flex items-center space-x-4 mb-6">
+                  <div className="flex items-center">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-5 w-5 ${
+                          star <= Math.floor(product.rating || 0)
+                            ? "text-[#F4C430] fill-[#F4C430]"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                    <span className="ml-3 font-body font-bold text-[#2D3319] text-lg">
+                      {(product.rating || 0).toFixed(1)}
+                    </span>
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {product.category && (
+                    <Badge className="bg-[#8B9A7E]/20 text-[#5A6751] border-0 font-body px-4 py-1">
+                      {product.category}
+                    </Badge>
+                  )}
+                  {product.colors?.map((color) => (
+                    <Badge
+                      key={`color-${color}`}
+                      className="border-2 border-[#2D3319]/20 text-[#2D3319] bg-white font-body px-4 py-1"
+                    >
+                      {color}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-baseline space-x-4 py-6 border-y-2 border-[#2D3319]/10">
+                <span className="font-display text-5xl font-bold text-[#D97757]">
+                  R$ {product.price.toFixed(2)}
+                </span>
+              </div>
+
+              {product.description && (
+                <p className="font-body text-lg text-[#5A6751] leading-relaxed">
+                  {product.description}
+                </p>
+              )}
+
+              {/* Stock Status */}
+              <div className="flex items-center space-x-3 bg-white rounded-2xl p-4 border-2 border-[#2D3319]/10">
+                <div
+                  className={`w-3 h-3 rounded-full ${inStock ? "bg-green-500" : "bg-red-500"} animate-pulse`}
+                />
+                <span
+                  className={`font-body font-semibold ${inStock ? "text-green-600" : "text-red-600"}`}
+                >
+                  {inStock ? `Em estoque (${product.quantity} disponíveis)` : "Produto esgotado"}
+                </span>
+              </div>
+
+              {cartQuantity > 0 && (
+                <div className="bg-gradient-to-r from-[#D97757]/10 to-[#8B9A7E]/10 rounded-2xl p-5 flex items-center justify-between border-2 border-[#D97757]/20">
+                  <span className="font-body font-bold text-[#D97757]">
+                    Você já tem {cartQuantity} unidade(s) no carrinho
+                  </span>
+                  <Button asChild variant="link" className="text-[#D97757] font-bold p-0 h-auto">
+                    <Link to="/cart">Ver carrinho →</Link>
+                  </Button>
+                </div>
+              )}
+
+              {/* Quantity & Actions */}
+              <div className="space-y-5">
+                <div className="flex items-center space-x-4">
+                  <span className="font-body font-bold text-[#2D3319]">Quantidade:</span>
+                  <div className="flex items-center space-x-3 bg-[#FAF7F2] rounded-full p-1 border-2 border-[#2D3319]/10">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1 || !inStock}
+                      className="h-10 w-10 rounded-full hover:bg-[#D97757] hover:text-white"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-12 text-center font-body font-bold text-[#2D3319] text-lg">
+                      {quantity}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setQuantity(Math.min(product.quantity, quantity + 1))}
+                      disabled={quantity >= product.quantity || !inStock}
+                      className="h-10 w-10 rounded-full hover:bg-[#D97757] hover:text-white"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button
+                    onClick={handleAddToCart}
+                    className="flex-1 btn-primary-custom font-body text-lg font-semibold rounded-full h-14"
+                    disabled={!inStock}
+                  >
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                    Adicionar ao carrinho
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={handleBuyNow}
+                    className="flex-1 font-body text-lg font-semibold rounded-full h-14 border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white"
+                    disabled={!inStock}
+                  >
+                    Comprar agora
+                  </Button>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsFavorite(!isFavorite)}
+                    className={`rounded-full h-12 w-12 border-2 ${
+                      isFavorite
+                        ? "text-red-500 border-red-500 bg-red-50"
+                        : "border-[#2D3319]/20 hover:border-red-500 hover:text-red-500"
+                    }`}
+                  >
+                    <Heart className={`h-5 w-5 ${isFavorite ? "fill-current" : ""}`} />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast({
+                        title: "Link copiado!",
+                        description: "O link do produto foi copiado para a área de transferência.",
+                      });
+                    }}
+                    className="rounded-full h-12 w-12 border-2 border-[#2D3319]/20 hover:border-[#D97757] hover:text-[#D97757]"
+                  >
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Benefits */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6">
+                {[
+                  {
+                    icon: Truck,
+                    title: "Frete grátis",
+                    description: "Em pedidos acima de R$ 100",
+                    color: "from-[#D97757] to-[#C56647]",
+                  },
+                  {
+                    icon: RotateCcw,
+                    title: "Devolução em 30 dias",
+                    description: "Garantia de dinheiro de volta",
+                    color: "from-[#8B9A7E] to-[#5A6751]",
+                  },
+                  {
+                    icon: Shield,
+                    title: "Garantia de qualidade",
+                    description: "Produtos premium",
+                    color: "from-[#F4C430] to-[#E5B520]",
+                  },
+                  {
+                    icon: Award,
+                    title: "Aprovado por veterinários",
+                    description: "Confiável por profissionais",
+                    color: "from-[#D97757] to-[#C56647]",
+                  },
+                ].map((benefit, index) => {
+                  const Icon = benefit.icon;
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-start space-x-4 bg-white rounded-2xl p-4 border-2 border-[#2D3319]/10"
+                    >
+                      <div className={`bg-gradient-to-br ${benefit.color} rounded-xl p-2.5 flex-shrink-0`}>
+                        <Icon className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-body font-semibold text-[#2D3319] text-sm">
+                          {benefit.title}
+                        </p>
+                        <p className="font-body text-xs text-[#5A6751]">{benefit.description}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Product Details Tabs */}
+          <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl observe-animation">
+            <CardContent className="p-0">
+              <Tabs defaultValue="description" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 bg-[#FAF7F2] rounded-t-3xl p-2">
+                  <TabsTrigger
+                    value="description"
+                    className="font-body font-semibold rounded-2xl data-[state=active]:bg-white data-[state=active]:text-[#D97757]"
+                  >
+                    Descrição
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="specifications"
+                    className="font-body font-semibold rounded-2xl data-[state=active]:bg-white data-[state=active]:text-[#D97757]"
+                  >
+                    Especificações
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="description" className="p-8">
+                  <div className="space-y-4">
+                    <h3 className="font-display text-3xl font-bold text-[#2D3319]">
+                      Descrição do Produto
+                    </h3>
+                    <div className="w-16 h-1 bg-[#D97757]" />
+                    <p className="font-body text-lg text-[#5A6751] leading-relaxed">
+                      {product.description || "Nenhuma descrição disponível para este produto."}
+                    </p>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="specifications" className="p-8">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="font-display text-3xl font-bold text-[#2D3319]">
+                        Especificações
+                      </h3>
+                      <div className="w-16 h-1 bg-[#D97757] mt-4" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {product.sku && (
+                        <div className="flex justify-between py-4 border-b-2 border-[#2D3319]/10">
+                          <span className="font-body font-bold text-[#2D3319]">SKU:</span>
+                          <span className="font-body text-[#5A6751]">{product.sku}</span>
+                        </div>
+                      )}
+                      {product.brand && (
+                        <div className="flex justify-between py-4 border-b-2 border-[#2D3319]/10">
+                          <span className="font-body font-bold text-[#2D3319]">Marca:</span>
+                          <span className="font-body text-[#5A6751]">{product.brand}</span>
+                        </div>
+                      )}
+                      {product.category && (
+                        <div className="flex justify-between py-4 border-b-2 border-[#2D3319]/10">
+                          <span className="font-body font-bold text-[#2D3319]">Categoria:</span>
+                          <span className="font-body text-[#5A6751]">{product.category}</span>
+                        </div>
+                      )}
+                      {product.dimensions?.weight && (
+                        <div className="flex justify-between py-4 border-b-2 border-[#2D3319]/10">
+                          <span className="font-body font-bold text-[#2D3319]">Peso:</span>
+                          <span className="font-body text-[#5A6751]">
+                            {product.dimensions.weight} kg
+                          </span>
+                        </div>
+                      )}
+                      {product.dimensions?.height && (
+                        <div className="flex justify-between py-4 border-b-2 border-[#2D3319]/10">
+                          <span className="font-body font-bold text-[#2D3319]">Altura:</span>
+                          <span className="font-body text-[#5A6751]">
+                            {product.dimensions.height} cm
+                          </span>
+                        </div>
+                      )}
+                      {product.dimensions?.width && (
+                        <div className="flex justify-between py-4 border-b-2 border-[#2D3319]/10">
+                          <span className="font-body font-bold text-[#2D3319]">Largura:</span>
+                          <span className="font-body text-[#5A6751]">
+                            {product.dimensions.width} cm
+                          </span>
+                        </div>
+                      )}
+                      {product.dimensions?.length && (
+                        <div className="flex justify-between py-4 border-b-2 border-[#2D3319]/10">
+                          <span className="font-body font-bold text-[#2D3319]">Comprimento:</span>
+                          <span className="font-body text-[#5A6751]">
+                            {product.dimensions.length} cm
+                          </span>
+                        </div>
+                      )}
+                      {product.colors && product.colors.length > 0 && (
+                        <div className="flex justify-between py-4 border-b-2 border-[#2D3319]/10">
+                          <span className="font-body font-bold text-[#2D3319]">
+                            Cores disponíveis:
+                          </span>
+                          <span className="font-body text-[#5A6751]">
+                            {product.colors.join(", ")}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    </>
   );
 };
 

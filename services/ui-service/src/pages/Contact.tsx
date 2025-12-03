@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Header from "@/components/Header";
@@ -16,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { designSystemStyles } from "@/styles/design-system";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -30,6 +32,7 @@ const formSchema = z.object({
 });
 
 const Contact = () => {
+  const [isVisible, setIsVisible] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -38,6 +41,10 @@ const Contact = () => {
       message: "",
     },
   });
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const subject = encodeURIComponent("Novo contato via Site Velure");
@@ -56,175 +63,184 @@ const Contact = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <>
+      <style>{designSystemStyles}</style>
+      <div className="min-h-screen bg-[#FAF7F2]">
+        <Header />
 
-      <main className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">Entre em contato</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Tem dúvidas sobre nossos produtos ou precisa de ajuda com seu pet? Estamos aqui para
-              ajudar!
-            </p>
-          </div>
+        <main className="container mx-auto px-4 lg:px-8 py-12">
+          <div className="max-w-6xl mx-auto">
+            <div className={`text-center mb-16 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+              <span className="font-body text-[#D97757] font-semibold text-sm tracking-widest uppercase mb-4 block">
+                Fale Conosco
+              </span>
+              <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#2D3319] mb-6">
+                Entre em contato
+              </h1>
+              <div className="w-20 h-1 bg-gradient-to-r from-[#D97757] to-[#F4C430] mx-auto mb-6" />
+              <p className="font-body text-xl text-[#5A6751] max-w-2xl mx-auto">
+                Tem dúvidas sobre nossos produtos ou precisa de ajuda com seu pet? Estamos aqui para
+                ajudar!
+              </p>
+            </div>
 
-          <div className="grid lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <Card className="shadow-soft">
-              <CardHeader>
-                <CardTitle className="text-primary">Envie-nos uma mensagem</CardTitle>
-                <CardDescription>
-                  Preencha o formulário abaixo e retornaremos em breve.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Seu nome"
-                              {...field}
-                              className="border-border focus:ring-primary"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+            <div className="grid lg:grid-cols-2 gap-12">
+              {/* Contact Form */}
+              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl observe-animation">
+                <CardHeader className="pt-8 px-8">
+                  <CardTitle className="font-display text-3xl font-bold text-[#2D3319]">
+                    Envie-nos uma mensagem
+                  </CardTitle>
+                  <CardDescription className="font-body text-base text-[#5A6751] mt-2">
+                    Preencha o formulário abaixo e retornaremos em breve.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-8 pb-8">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-body font-semibold text-[#2D3319]">
+                              Nome
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Seu nome"
+                                {...field}
+                                className="font-body border-2 border-[#2D3319]/10 rounded-xl h-12 focus:border-[#D97757]"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>E-mail</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="seu@email.com"
-                              {...field}
-                              className="border-border focus:ring-primary"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-body font-semibold text-[#2D3319]">
+                              E-mail
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="seu@email.com"
+                                {...field}
+                                className="font-body border-2 border-[#2D3319]/10 rounded-xl h-12 focus:border-[#D97757]"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name="message"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mensagem</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Como podemos ajudar?"
-                              className="resize-none border-border focus:ring-primary"
-                              rows={5}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-body font-semibold text-[#2D3319]">
+                              Mensagem
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Como podemos ajudar?"
+                                className="resize-none font-body border-2 border-[#2D3319]/10 rounded-xl focus:border-[#D97757]"
+                                rows={5}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <Button
-                      type="submit"
-                      className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
+                      <Button
+                        type="submit"
+                        className="w-full btn-primary-custom font-body text-lg font-semibold rounded-full h-14 mt-2"
+                      >
+                        Enviar mensagem
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+
+              {/* Contact Information */}
+              <div className="space-y-6">
+                {[
+                  {
+                    icon: MapPin,
+                    title: "Endereço",
+                    content: ["Rua dos Pets, 123", "São Paulo, SP 01234-567"],
+                    color: "from-[#D97757] to-[#C56647]",
+                    delay: "0s",
+                  },
+                  {
+                    icon: Phone,
+                    title: "Telefone",
+                    content: ["(11) 1234-5678", "(11) 98765-4321"],
+                    color: "from-[#8B9A7E] to-[#5A6751]",
+                    delay: "0.1s",
+                  },
+                  {
+                    icon: Mail,
+                    title: "Email",
+                    content: ["info@velure.pet", "support@velure.pet"],
+                    color: "from-[#F4C430] to-[#E5B520]",
+                    delay: "0.2s",
+                  },
+                  {
+                    icon: Clock,
+                    title: "Horário",
+                    content: [
+                      "Segunda - Sexta: 9h - 20h",
+                      "Sábado: 9h - 18h",
+                      "Domingo: 10h - 17h",
+                    ],
+                    color: "from-[#D97757] to-[#C56647]",
+                    delay: "0.3s",
+                  },
+                ].map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <Card
+                      key={index}
+                      className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl card-hover-subtle observe-animation"
+                      style={{ animationDelay: item.delay }}
                     >
-                      Enviar mensagem
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-
-            {/* Contact Information */}
-            <div className="space-y-6">
-              <Card className="shadow-soft">
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-primary rounded-lg p-3">
-                      <MapPin className="h-6 w-6 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Endereço</h3>
-                      <p className="text-muted-foreground mt-1">
-                        Rua dos Pets, 123
-                        <br />
-                        São Paulo, SP 01234-567
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-soft">
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-secondary rounded-lg p-3">
-                      <Phone className="h-6 w-6 text-secondary-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Telefone</h3>
-                      <p className="text-muted-foreground mt-1">
-                        (11) 1234-5678
-                        <br />
-                        (11) 98765-4321
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-soft">
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-accent rounded-lg p-3">
-                      <Mail className="h-6 w-6 text-accent-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Email</h3>
-                      <p className="text-muted-foreground mt-1">
-                        info@velure.pet
-                        <br />
-                        support@velure.pet
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-soft">
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-primary rounded-lg p-3">
-                      <Clock className="h-6 w-6 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Horário</h3>
-                      <div className="text-muted-foreground mt-1">
-                        <p>Segunda - Sexta: 9h - 20h</p>
-                        <p>Sábado: 9h - 18h</p>
-                        <p>Domingo: 10h - 17h</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                      <CardContent className="p-6">
+                        <div className="flex items-start space-x-5">
+                          <div
+                            className={`bg-gradient-to-br ${item.color} rounded-2xl p-4 flex-shrink-0`}
+                          >
+                            <Icon className="h-7 w-7 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-display text-xl font-bold text-[#2D3319] mb-2">
+                              {item.title}
+                            </h3>
+                            <div className="font-body text-[#5A6751] space-y-1">
+                              {item.content.map((line, i) => (
+                                <p key={i}>{line}</p>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </>
   );
 };
 
