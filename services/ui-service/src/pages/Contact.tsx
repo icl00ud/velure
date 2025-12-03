@@ -83,20 +83,20 @@ const Contact = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-[#FAF7F2]">
+      <div className="min-h-screen bg-[#F8FAF5]">
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
           <div className="max-w-6xl mx-auto">
             <div className={`text-center mb-16 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
-              <span className="font-body text-[#D97757] font-semibold text-sm tracking-widest uppercase mb-4 block">
+              <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
                 Fale Conosco
               </span>
-              <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#2D3319] mb-6">
+              <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-6">
                 Entre em contato
               </h1>
-              <div className="w-20 h-1 bg-gradient-to-r from-[#D97757] to-[#F4C430] mx-auto mb-6" />
-              <p className="font-body text-xl text-[#5A6751] max-w-2xl mx-auto">
+              <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mx-auto mb-6" />
+              <p className="font-body text-xl text-[#2D6A4F] max-w-2xl mx-auto">
                 Tem dúvidas sobre nossos produtos ou precisa de ajuda com seu pet? Estamos aqui para
                 ajudar!
               </p>
@@ -104,12 +104,12 @@ const Contact = () => {
 
             <div className="grid lg:grid-cols-2 gap-12">
               {/* Contact Form */}
-              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl observe-animation">
+              <Card className="shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl observe-animation">
                 <CardHeader className="pt-8 px-8">
-                  <CardTitle className="font-display text-3xl font-bold text-[#2D3319]">
+                  <CardTitle className="font-display text-3xl font-bold text-[#1B4332]">
                     Envie-nos uma mensagem
                   </CardTitle>
-                  <CardDescription className="font-body text-base text-[#5A6751] mt-2">
+                  <CardDescription className="font-body text-base text-[#2D6A4F] mt-2">
                     Preencha o formulário abaixo e retornaremos em breve.
                   </CardDescription>
                 </CardHeader>
@@ -121,14 +121,14 @@ const Contact = () => {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-body font-semibold text-[#2D3319]">
+                            <FormLabel className="font-body font-semibold text-[#1B4332]">
                               Nome
                             </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="Seu nome"
                                 {...field}
-                                className="font-body border-2 border-[#2D3319]/10 rounded-xl h-12 focus:border-[#D97757]"
+                                className="font-body border-2 border-[#1B4332]/10 rounded-xl h-12 focus:border-[#52B788]"
                               />
                             </FormControl>
                             <FormMessage />
@@ -141,14 +141,14 @@ const Contact = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-body font-semibold text-[#2D3319]">
+                            <FormLabel className="font-body font-semibold text-[#1B4332]">
                               E-mail
                             </FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="seu@email.com"
                                 {...field}
-                                className="font-body border-2 border-[#2D3319]/10 rounded-xl h-12 focus:border-[#D97757]"
+                                className="font-body border-2 border-[#1B4332]/10 rounded-xl h-12 focus:border-[#52B788]"
                               />
                             </FormControl>
                             <FormMessage />
@@ -161,13 +161,13 @@ const Contact = () => {
                         name="message"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-body font-semibold text-[#2D3319]">
+                            <FormLabel className="font-body font-semibold text-[#1B4332]">
                               Mensagem
                             </FormLabel>
                             <FormControl>
                               <Textarea
                                 placeholder="Como podemos ajudar?"
-                                className="resize-none font-body border-2 border-[#2D3319]/10 rounded-xl focus:border-[#D97757]"
+                                className="resize-none font-body border-2 border-[#1B4332]/10 rounded-xl focus:border-[#52B788]"
                                 rows={5}
                                 {...field}
                               />
@@ -195,21 +195,21 @@ const Contact = () => {
                     icon: MapPin,
                     title: "Endereço",
                     content: ["Rua dos Pets, 123", "São Paulo, SP 01234-567"],
-                    color: "from-[#D97757] to-[#C56647]",
+                    color: "from-[#52B788] to-[#40916C]",
                     delay: "0s",
                   },
                   {
                     icon: Phone,
                     title: "Telefone",
                     content: ["(11) 1234-5678", "(11) 98765-4321"],
-                    color: "from-[#8B9A7E] to-[#5A6751]",
+                    color: "from-[#95D5B2] to-[#2D6A4F]",
                     delay: "0.1s",
                   },
                   {
                     icon: Mail,
                     title: "Email",
                     content: ["info@velure.pet", "support@velure.pet"],
-                    color: "from-[#F4C430] to-[#E5B520]",
+                    color: "from-[#A7C957] to-[#E5B520]",
                     delay: "0.2s",
                   },
                   {
@@ -220,7 +220,7 @@ const Contact = () => {
                       "Sábado: 9h - 18h",
                       "Domingo: 10h - 17h",
                     ],
-                    color: "from-[#D97757] to-[#C56647]",
+                    color: "from-[#52B788] to-[#40916C]",
                     delay: "0.3s",
                   },
                 ].map((item, index) => {
@@ -228,7 +228,7 @@ const Contact = () => {
                   return (
                     <Card
                       key={index}
-                      className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl card-hover-subtle observe-animation"
+                      className="shadow-lg border-2 border-[#1B4332]/10 rounded-3xl card-hover-subtle observe-animation"
                       style={{ animationDelay: item.delay }}
                     >
                       <CardContent className="p-6">
@@ -239,10 +239,10 @@ const Contact = () => {
                             <Icon className="h-7 w-7 text-white" />
                           </div>
                           <div>
-                            <h3 className="font-display text-xl font-bold text-[#2D3319] mb-2">
+                            <h3 className="font-display text-xl font-bold text-[#1B4332] mb-2">
                               {item.title}
                             </h3>
-                            <div className="font-body text-[#5A6751] space-y-1">
+                            <div className="font-body text-[#2D6A4F] space-y-1">
                               {item.content.map((line, i) => (
                                 <p key={i}>{line}</p>
                               ))}

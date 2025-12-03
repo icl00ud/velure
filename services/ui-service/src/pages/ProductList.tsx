@@ -96,31 +96,31 @@ const ProductList = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-[#FAF7F2]">
+      <div className="min-h-screen bg-[#F8FAF5]">
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
           {/* Breadcrumb */}
           <nav className={`mb-8 ${isVisible ? 'page-enter active' : 'page-enter'}`}>
-            <div className="flex items-center space-x-2 text-sm font-body text-[#5A6751]">
-              <Link to="/" className="hover:text-[#D97757] transition-colors">
+            <div className="flex items-center space-x-2 text-sm font-body text-[#2D6A4F]">
+              <Link to="/" className="hover:text-[#52B788] transition-colors">
                 Início
               </Link>
               <span>/</span>
-              <span className="text-[#2D3319] font-semibold">Todos os produtos</span>
+              <span className="text-[#1B4332] font-semibold">Todos os produtos</span>
             </div>
           </nav>
 
           {/* Header Section */}
           <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
-            <span className="font-body text-[#D97757] font-semibold text-sm tracking-widest uppercase mb-4 block">
+            <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
               Catálogo Completo
             </span>
-            <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#2D3319] mb-4">
+            <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-4">
               Todos os produtos
             </h1>
-            <div className="w-20 h-1 bg-gradient-to-r from-[#D97757] to-[#F4C430] mb-6" />
-            <p className="font-body text-xl text-[#5A6751]">
+            <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mb-6" />
+            <p className="font-body text-xl text-[#2D6A4F]">
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -128,7 +128,7 @@ const ProductList = () => {
                 </span>
               ) : (
                 <>
-                  <span className="font-bold text-[#D97757]">{totalCount || 0}</span> produtos
+                  <span className="font-bold text-[#52B788]">{totalCount || 0}</span> produtos
                   disponíveis para seu pet
                 </>
               )}
@@ -136,23 +136,23 @@ const ProductList = () => {
           </div>
 
           {/* Filters */}
-          <Card className="mb-12 shadow-lg border-2 border-[#2D3319]/10 rounded-2xl observe-animation">
+          <Card className="mb-12 shadow-lg border-2 border-[#1B4332]/10 rounded-2xl observe-animation">
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#5A6751]" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
                   <Input
                     placeholder="Buscar produtos..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 font-body border-2 border-[#2D3319]/10 rounded-xl h-12 focus:border-[#D97757]"
+                    className="pl-12 font-body border-2 border-[#1B4332]/10 rounded-xl h-12 focus:border-[#52B788]"
                   />
                 </div>
 
                 {/* Category Filter */}
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="font-body border-2 border-[#2D3319]/10 rounded-xl h-12">
+                  <SelectTrigger className="font-body border-2 border-[#1B4332]/10 rounded-xl h-12">
                     <SelectValue placeholder="Todas as Categorias" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -173,7 +173,7 @@ const ProductList = () => {
 
                 {/* Sort By */}
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="font-body border-2 border-[#2D3319]/10 rounded-xl h-12">
+                  <SelectTrigger className="font-body border-2 border-[#1B4332]/10 rounded-xl h-12">
                     <SelectValue placeholder="Ordenar por" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -191,17 +191,17 @@ const ProductList = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {loading ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20">
-                <Loader2 className="h-16 w-16 animate-spin text-[#D97757] mb-4" />
-                <p className="font-body text-lg text-[#5A6751]">Carregando produtos...</p>
+                <Loader2 className="h-16 w-16 animate-spin text-[#52B788] mb-4" />
+                <p className="font-body text-lg text-[#2D6A4F]">Carregando produtos...</p>
               </div>
             ) : error ? (
               <div className="col-span-full">
-                <Card className="text-center py-16 rounded-3xl border-2 border-[#2D3319]/10">
+                <Card className="text-center py-16 rounded-3xl border-2 border-[#1B4332]/10">
                   <CardContent>
-                    <h3 className="font-display text-2xl font-bold text-[#2D3319] mb-2">
+                    <h3 className="font-display text-2xl font-bold text-[#1B4332] mb-2">
                       Erro ao carregar produtos
                     </h3>
-                    <p className="font-body text-[#5A6751] mb-6">{error}</p>
+                    <p className="font-body text-[#2D6A4F] mb-6">{error}</p>
                     <Button
                       onClick={() => window.location.reload()}
                       className="btn-primary-custom font-body px-8 py-3 rounded-full"
@@ -213,12 +213,12 @@ const ProductList = () => {
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="col-span-full">
-                <Card className="text-center py-16 rounded-3xl border-2 border-[#2D3319]/10">
+                <Card className="text-center py-16 rounded-3xl border-2 border-[#1B4332]/10">
                   <CardContent>
-                    <h3 className="font-display text-2xl font-bold text-[#2D3319] mb-2">
+                    <h3 className="font-display text-2xl font-bold text-[#1B4332] mb-2">
                       Nenhum produto encontrado
                     </h3>
-                    <p className="font-body text-[#5A6751]">
+                    <p className="font-body text-[#2D6A4F]">
                       Tente ajustar seus filtros ou termo de busca
                     </p>
                   </CardContent>
@@ -246,7 +246,7 @@ const ProductList = () => {
                           className={`absolute top-3 right-3 rounded-full bg-white/90 backdrop-blur-sm shadow-lg ${
                             favorites.includes(parseInt(product._id))
                               ? "text-red-500 hover:text-red-600"
-                              : "text-[#5A6751] hover:text-red-500"
+                              : "text-[#2D6A4F] hover:text-red-500"
                           }`}
                           onClick={() => toggleFavorite(product._id)}
                         >
@@ -255,13 +255,13 @@ const ProductList = () => {
                           />
                         </Button>
                         {product.price > 100 && (
-                          <Badge className="absolute top-3 left-3 bg-[#F4C430] text-[#2D3319] font-bold rounded-full px-4 py-1">
+                          <Badge className="absolute top-3 left-3 bg-[#A7C957] text-[#1B4332] font-bold rounded-full px-4 py-1">
                             15% OFF
                           </Badge>
                         )}
                         {product.quantity === 0 && (
                           <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center">
-                            <Badge className="bg-[#2D3319] text-white px-6 py-2 text-base">
+                            <Badge className="bg-[#1B4332] text-white px-6 py-2 text-base">
                               Sem Estoque
                             </Badge>
                           </div>
@@ -270,12 +270,12 @@ const ProductList = () => {
 
                       <div className="p-6 space-y-3">
                         {product.brand && (
-                          <p className="font-body text-xs text-[#8B9A7E] font-semibold uppercase tracking-widest">
+                          <p className="font-body text-xs text-[#95D5B2] font-semibold uppercase tracking-widest">
                             {product.brand}
                           </p>
                         )}
                         <Link to={`/product/${product._id}`} className="block">
-                          <h3 className="font-display text-lg font-bold text-[#2D3319] hover:text-[#D97757] transition-colors line-clamp-2 min-h-[3.5rem]">
+                          <h3 className="font-display text-lg font-bold text-[#1B4332] hover:text-[#52B788] transition-colors line-clamp-2 min-h-[3.5rem]">
                             {product.name}
                           </h3>
                         </Link>
@@ -286,29 +286,29 @@ const ProductList = () => {
                               key={star}
                               className={`h-4 w-4 ${
                                 star <= Math.round(product.rating || 0)
-                                  ? "text-[#F4C430] fill-[#F4C430]"
+                                  ? "text-[#A7C957] fill-[#A7C957]"
                                   : "text-gray-300"
                               }`}
                             />
                           ))}
-                          <span className="font-body text-sm font-semibold text-[#2D3319] ml-2">
+                          <span className="font-body text-sm font-semibold text-[#1B4332] ml-2">
                             {(product.rating || 0).toFixed(1)}
                           </span>
                         </div>
 
                         {product.category && (
-                          <Badge className="bg-[#8B9A7E]/20 text-[#5A6751] border-0 font-body">
+                          <Badge className="bg-[#95D5B2]/20 text-[#2D6A4F] border-0 font-body">
                             {product.category}
                           </Badge>
                         )}
 
                         <div className="space-y-3 pt-2">
                           <div className="flex items-baseline gap-2">
-                            <span className="font-display text-3xl font-bold text-[#D97757]">
+                            <span className="font-display text-3xl font-bold text-[#52B788]">
                               R$ {product.price.toFixed(2)}
                             </span>
                             {product.price > 100 && (
-                              <span className="font-body text-sm text-[#5A6751] line-through">
+                              <span className="font-body text-sm text-[#2D6A4F] line-through">
                                 R$ {(product.price * 1.15).toFixed(2)}
                               </span>
                             )}
@@ -353,7 +353,7 @@ const ProductList = () => {
                 variant="outline"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="font-body border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white rounded-full px-6"
+                className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
                 ← Anterior
               </Button>
@@ -367,21 +367,21 @@ const ProductList = () => {
                       onClick={() => setPage(pageNum)}
                       className={
                         page === pageNum
-                          ? "bg-[#D97757] hover:bg-[#C56647] rounded-full"
-                          : "border-2 border-[#2D3319]/20 rounded-full hover:border-[#D97757]"
+                          ? "bg-[#52B788] hover:bg-[#40916C] rounded-full"
+                          : "border-2 border-[#1B4332]/20 rounded-full hover:border-[#52B788]"
                       }
                     >
                       {pageNum}
                     </Button>
                   );
                 })}
-                {totalPages > 5 && <span className="font-body text-[#5A6751]">...</span>}
+                {totalPages > 5 && <span className="font-body text-[#2D6A4F]">...</span>}
               </div>
               <Button
                 variant="outline"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="font-body border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white rounded-full px-6"
+                className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
                 Próximo →
               </Button>

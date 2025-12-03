@@ -102,41 +102,41 @@ const Orders = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-[#FAF7F2]">
+      <div className="min-h-screen bg-[#F8FAF5]">
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
           <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
-            <span className="font-body text-[#D97757] font-semibold text-sm tracking-widest uppercase mb-4 block">
+            <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
               Minha Conta
             </span>
-            <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#2D3319] mb-4">
+            <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-4">
               Meus Pedidos
             </h1>
-            <div className="w-20 h-1 bg-gradient-to-r from-[#D97757] to-[#F4C430] mb-6" />
-            <p className="font-body text-xl text-[#5A6751]">
+            <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mb-6" />
+            <p className="font-body text-xl text-[#2D6A4F]">
               Acompanhe o status dos seus pedidos
             </p>
           </div>
 
           {isLoading ? (
             <div className="flex flex-col justify-center items-center py-20">
-              <Loader2 className="h-16 w-16 animate-spin text-[#D97757] mb-4" />
-              <p className="font-body text-lg text-[#5A6751]">Carregando pedidos...</p>
+              <Loader2 className="h-16 w-16 animate-spin text-[#52B788] mb-4" />
+              <p className="font-body text-lg text-[#2D6A4F]">Carregando pedidos...</p>
             </div>
           ) : !orders || orders.length === 0 ? (
-            <Card className="text-center py-20 rounded-3xl border-2 border-[#2D3319]/10 shadow-2xl">
+            <Card className="text-center py-20 rounded-3xl border-2 border-[#1B4332]/10 shadow-2xl">
               <CardContent>
                 <div className="relative inline-block mb-8">
-                  <div className="absolute inset-0 bg-[#D97757]/20 blur-3xl" />
-                  <div className="relative bg-gradient-to-br from-[#D97757]/10 to-[#8B9A7E]/10 rounded-full p-8">
-                    <Package className="h-20 w-20 text-[#D97757]" />
+                  <div className="absolute inset-0 bg-[#52B788]/20 blur-3xl" />
+                  <div className="relative bg-gradient-to-br from-[#52B788]/10 to-[#95D5B2]/10 rounded-full p-8">
+                    <Package className="h-20 w-20 text-[#52B788]" />
                   </div>
                 </div>
-                <h3 className="font-display text-3xl font-bold text-[#2D3319] mb-4">
+                <h3 className="font-display text-3xl font-bold text-[#1B4332] mb-4">
                   Nenhum pedido encontrado
                 </h3>
-                <p className="font-body text-lg text-[#5A6751] mb-8 max-w-md mx-auto">
+                <p className="font-body text-lg text-[#2D6A4F] mb-8 max-w-md mx-auto">
                   Você ainda não fez nenhum pedido. Que tal começar a comprar?
                 </p>
                 <Button
@@ -154,15 +154,15 @@ const Orders = () => {
                 return (
                   <Card
                     key={orderId}
-                    className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl card-hover-subtle"
+                    className="shadow-lg border-2 border-[#1B4332]/10 rounded-3xl card-hover-subtle"
                   >
                     <CardHeader className="pb-4">
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className="font-display text-2xl font-bold text-[#2D3319]">
+                          <CardTitle className="font-display text-2xl font-bold text-[#1B4332]">
                             Pedido #{orderId.slice(0, 8)}
                           </CardTitle>
-                          <p className="font-body text-sm text-[#5A6751] mt-2">
+                          <p className="font-body text-sm text-[#2D6A4F] mt-2">
                             {getOrderDate(order).toLocaleDateString("pt-BR", {
                               day: "2-digit",
                               month: "long",
@@ -177,12 +177,12 @@ const Orders = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center py-4 px-6 bg-[#FAF7F2] rounded-2xl">
-                          <span className="font-body text-[#5A6751]">
+                        <div className="flex justify-between items-center py-4 px-6 bg-[#F8FAF5] rounded-2xl">
+                          <span className="font-body text-[#2D6A4F]">
                             {order.items?.length || 0}{" "}
                             {(order.items?.length || 0) === 1 ? "item" : "itens"}
                           </span>
-                          <span className="font-display text-2xl font-bold text-[#D97757]">
+                          <span className="font-display text-2xl font-bold text-[#52B788]">
                             R$ {(order.total || 0).toFixed(2)}
                           </span>
                         </div>
@@ -206,19 +206,19 @@ const Orders = () => {
                 variant="outline"
                 disabled={page === 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="font-body border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white rounded-full px-6"
+                className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
                 ← Anterior
               </Button>
-              <span className="font-body text-[#5A6751] px-4">
-                Página <span className="font-bold text-[#D97757]">{page}</span> de{" "}
-                <span className="font-bold text-[#D97757]">{totalPages}</span>
+              <span className="font-body text-[#2D6A4F] px-4">
+                Página <span className="font-bold text-[#52B788]">{page}</span> de{" "}
+                <span className="font-bold text-[#52B788]">{totalPages}</span>
               </span>
               <Button
                 variant="outline"
                 disabled={page === totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="font-body border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white rounded-full px-6"
+                className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
                 Próxima →
               </Button>

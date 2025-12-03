@@ -1,5 +1,5 @@
 // Velure Design System
-// Warm Editorial Design - Shared styles, colors, fonts, and animations
+// Natural Green Petshop - Shared styles, colors, fonts, and animations
 
 import React from 'react';
 
@@ -9,16 +9,16 @@ export const designSystemStyles = `
   .font-display { font-family: 'Playfair Display', serif; }
   .font-body { font-family: 'Outfit', sans-serif; }
 
-  /* Color Variables */
+  /* Color Variables - Natural Green Palette */
   :root {
-    --color-terracotta: #D97757;
-    --color-terracotta-dark: #C56647;
-    --color-sage: #8B9A7E;
-    --color-sage-dark: #5A6751;
-    --color-warm-yellow: #F4C430;
-    --color-cream: #FAF7F2;
-    --color-charcoal: #2D3319;
-    --color-charcoal-light: #3D4428;
+    --color-green-primary: #52B788;
+    --color-green-medium: #40916C;
+    --color-green-light: #95D5B2;
+    --color-green-dark: #2D6A4F;
+    --color-green-accent: #A7C957;
+    --color-background: #F8FAF5;
+    --color-text-dark: #1B4332;
+    --color-text-medium: #2D6A4F;
   }
 
   /* Grain Texture */
@@ -110,8 +110,8 @@ export const designSystemStyles = `
 
   .product-card:hover {
     transform: translateY(-8px);
-    border-color: var(--color-terracotta);
-    box-shadow: 0 20px 60px rgba(217, 119, 87, 0.25);
+    border-color: var(--color-green-primary);
+    box-shadow: 0 20px 60px rgba(82, 183, 136, 0.25);
   }
 
   /* Category Card Styles */
@@ -122,8 +122,8 @@ export const designSystemStyles = `
 
   .category-card:hover {
     transform: scale(1.05) rotate(2deg);
-    border-color: var(--color-terracotta);
-    box-shadow: 0 20px 60px rgba(217, 119, 87, 0.25);
+    border-color: var(--color-green-primary);
+    box-shadow: 0 20px 60px rgba(82, 183, 136, 0.25);
   }
 
   /* Decorative Border Effect */
@@ -138,7 +138,7 @@ export const designSystemStyles = `
     left: -10px;
     right: -10px;
     bottom: -10px;
-    border: 2px solid var(--color-terracotta);
+    border: 2px solid var(--color-green-primary);
     border-radius: inherit;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -150,11 +150,11 @@ export const designSystemStyles = `
 
   /* Text Shadows */
   .text-shadow-warm {
-    text-shadow: 0 2px 20px rgba(217, 119, 87, 0.15);
+    text-shadow: 0 2px 20px rgba(82, 183, 136, 0.15);
   }
 
   .text-shadow-subtle {
-    text-shadow: 0 1px 10px rgba(45, 51, 25, 0.1);
+    text-shadow: 0 1px 10px rgba(27, 67, 50, 0.1);
   }
 
   /* Diagonal Effects */
@@ -168,32 +168,32 @@ export const designSystemStyles = `
 
   /* Button Styles */
   .btn-primary-custom {
-    background: linear-gradient(135deg, var(--color-terracotta) 0%, var(--color-terracotta-dark) 100%);
-    box-shadow: 0 10px 30px rgba(217, 119, 87, 0.3);
+    background: linear-gradient(135deg, var(--color-green-primary) 0%, var(--color-green-medium) 100%);
+    box-shadow: 0 10px 30px rgba(82, 183, 136, 0.3);
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .btn-primary-custom:hover {
     transform: translateY(-2px);
-    box-shadow: 0 15px 40px rgba(217, 119, 87, 0.4);
+    box-shadow: 0 15px 40px rgba(82, 183, 136, 0.4);
   }
 
   .btn-secondary-custom {
-    border: 3px solid var(--color-charcoal);
-    color: var(--color-charcoal);
+    border: 3px solid var(--color-text-dark);
+    color: var(--color-text-dark);
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .btn-secondary-custom:hover {
-    background: var(--color-charcoal);
+    background: var(--color-text-dark);
     color: white;
     transform: translateY(-2px);
   }
 
   /* Badge Styles */
   .badge-warm {
-    background: rgba(139, 154, 126, 0.2);
-    color: var(--color-sage-dark);
+    background: rgba(149, 213, 178, 0.2);
+    color: var(--color-green-dark);
     border-radius: 9999px;
     padding: 0.5rem 1.5rem;
     font-size: 0.875rem;
@@ -206,23 +206,23 @@ export const designSystemStyles = `
   .section-divider {
     width: 4rem;
     height: 0.25rem;
-    background: linear-gradient(to right, var(--color-terracotta), var(--color-warm-yellow));
+    background: linear-gradient(to right, var(--color-green-primary), var(--color-green-accent));
   }
 
   .section-divider-small {
     width: 4rem;
     height: 0.25rem;
-    background: var(--color-terracotta);
+    background: var(--color-green-primary);
   }
 
   /* Loading Spinner */
   .spinner-warm {
-    color: var(--color-terracotta);
+    color: var(--color-green-primary);
   }
 
   /* Form Inputs */
   .input-warm {
-    border: 2px solid rgba(45, 51, 25, 0.1);
+    border: 2px solid rgba(27, 67, 50, 0.1);
     border-radius: 1rem;
     padding: 1rem 1.5rem;
     transition: all 0.3s ease;
@@ -230,36 +230,36 @@ export const designSystemStyles = `
   }
 
   .input-warm:focus {
-    border-color: var(--color-terracotta);
+    border-color: var(--color-green-primary);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.1);
+    box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.1);
   }
 
   /* Decorative Elements */
   .decorative-circle {
     border-radius: 9999px;
-    border: 4px solid rgba(217, 119, 87, 0.2);
+    border: 4px solid rgba(82, 183, 136, 0.2);
   }
 
   .decorative-blob {
     border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-    background: linear-gradient(135deg, var(--color-terracotta) 0%, var(--color-warm-yellow) 100%);
+    background: linear-gradient(135deg, var(--color-green-primary) 0%, var(--color-green-accent) 100%);
     opacity: 0.1;
   }
 
   /* Backdrop Blur */
   .backdrop-warm {
     backdrop-filter: blur(10px);
-    background: rgba(250, 247, 242, 0.8);
+    background: rgba(248, 250, 245, 0.8);
   }
 
   /* Image Overlays */
   .image-overlay-dark {
-    background: linear-gradient(to top, rgba(45, 51, 25, 0.3), transparent);
+    background: linear-gradient(to top, rgba(27, 67, 50, 0.3), transparent);
   }
 
   .image-overlay-warm {
-    background: linear-gradient(to top, rgba(217, 119, 87, 0.3), transparent);
+    background: linear-gradient(to top, rgba(82, 183, 136, 0.3), transparent);
   }
 
   /* Responsive Typography */
@@ -271,8 +271,8 @@ export const designSystemStyles = `
 
   /* Selection Color */
   ::selection {
-    background: rgba(217, 119, 87, 0.3);
-    color: var(--color-charcoal);
+    background: rgba(82, 183, 136, 0.3);
+    color: var(--color-text-dark);
   }
 
   /* Smooth Scrolling */
@@ -286,16 +286,16 @@ export const designSystemStyles = `
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--color-cream);
+    background: var(--color-background);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--color-terracotta);
+    background: var(--color-green-primary);
     border-radius: 5px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-terracotta-dark);
+    background: var(--color-green-medium);
   }
 `;
 
@@ -329,14 +329,14 @@ export const useScrollAnimation = (callback?: () => void) => {
 
 // Color Constants
 export const colors = {
-  terracotta: '#D97757',
-  terracottaDark: '#C56647',
-  sage: '#8B9A7E',
-  sageDark: '#5A6751',
-  warmYellow: '#F4C430',
-  cream: '#FAF7F2',
-  charcoal: '#2D3319',
-  charcoalLight: '#3D4428',
+  greenPrimary: '#52B788',
+  greenMedium: '#40916C',
+  greenLight: '#95D5B2',
+  greenDark: '#2D6A4F',
+  greenAccent: '#A7C957',
+  background: '#F8FAF5',
+  textDark: '#1B4332',
+  textMedium: '#2D6A4F',
 };
 
 // Animation Delays

@@ -108,12 +108,12 @@ const OrderDetail = () => {
     return (
       <>
         <style>{designSystemStyles}</style>
-        <div className="min-h-screen bg-[#FAF7F2]">
+        <div className="min-h-screen bg-[#F8FAF5]">
           <Header />
           <main className="container mx-auto px-4 lg:px-8 py-12">
             <div className="flex flex-col justify-center items-center py-32">
-              <Loader2 className="h-16 w-16 animate-spin text-[#D97757] mb-4" />
-              <p className="font-body text-lg text-[#5A6751]">Carregando pedido...</p>
+              <Loader2 className="h-16 w-16 animate-spin text-[#52B788] mb-4" />
+              <p className="font-body text-lg text-[#2D6A4F]">Carregando pedido...</p>
             </div>
           </main>
         </div>
@@ -125,21 +125,21 @@ const OrderDetail = () => {
     return (
       <>
         <style>{designSystemStyles}</style>
-        <div className="min-h-screen bg-[#FAF7F2]">
+        <div className="min-h-screen bg-[#F8FAF5]">
           <Header />
           <main className="container mx-auto px-4 lg:px-8 py-12">
-            <Card className="text-center py-20 rounded-3xl border-2 border-[#2D3319]/10 shadow-2xl">
+            <Card className="text-center py-20 rounded-3xl border-2 border-[#1B4332]/10 shadow-2xl">
               <CardContent>
                 <div className="relative inline-block mb-8">
-                  <div className="absolute inset-0 bg-[#D97757]/20 blur-3xl" />
-                  <div className="relative bg-gradient-to-br from-[#D97757]/10 to-[#8B9A7E]/10 rounded-full p-8">
-                    <Package className="h-20 w-20 text-[#D97757]" />
+                  <div className="absolute inset-0 bg-[#52B788]/20 blur-3xl" />
+                  <div className="relative bg-gradient-to-br from-[#52B788]/10 to-[#95D5B2]/10 rounded-full p-8">
+                    <Package className="h-20 w-20 text-[#52B788]" />
                   </div>
                 </div>
-                <h3 className="font-display text-3xl font-bold text-[#2D3319] mb-4">
+                <h3 className="font-display text-3xl font-bold text-[#1B4332] mb-4">
                   Pedido não encontrado
                 </h3>
-                <p className="font-body text-lg text-[#5A6751] mb-8 max-w-md mx-auto">
+                <p className="font-body text-lg text-[#2D6A4F] mb-8 max-w-md mx-auto">
                   O pedido que você está procurando não existe ou foi removido.
                 </p>
                 <Button
@@ -166,24 +166,24 @@ const OrderDetail = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-[#FAF7F2]">
+      <div className="min-h-screen bg-[#F8FAF5]">
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
           <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
             <Link
               to="/orders"
-              className="inline-flex items-center font-body text-[#5A6751] hover:text-[#D97757] transition-colors mb-6 group"
+              className="inline-flex items-center font-body text-[#2D6A4F] hover:text-[#52B788] transition-colors mb-6 group"
             >
               <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
               Voltar para meus pedidos
             </Link>
             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
               <div>
-                <h1 className="font-display text-4xl lg:text-5xl font-bold text-[#2D3319] mb-4">
+                <h1 className="font-display text-4xl lg:text-5xl font-bold text-[#1B4332] mb-4">
                   Pedido #{getOrderId(order).slice(0, 8)}
                 </h1>
-                <p className="font-body text-lg text-[#5A6751]">
+                <p className="font-body text-lg text-[#2D6A4F]">
                   Realizado em{" "}
                   {getOrderDate(order).toLocaleDateString("pt-BR", {
                     day: "2-digit",
@@ -200,9 +200,9 @@ const OrderDetail = () => {
 
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
-              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl">
+              <Card className="shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl">
                 <CardHeader>
-                  <CardTitle className="font-display text-2xl font-bold text-[#2D3319]">
+                  <CardTitle className="font-display text-2xl font-bold text-[#1B4332]">
                     Status do Pedido
                   </CardTitle>
                 </CardHeader>
@@ -290,9 +290,9 @@ const OrderDetail = () => {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl">
+              <Card className="shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl">
                 <CardHeader>
-                  <CardTitle className="font-display text-2xl font-bold text-[#2D3319]">
+                  <CardTitle className="font-display text-2xl font-bold text-[#1B4332]">
                     Itens do Pedido
                   </CardTitle>
                 </CardHeader>
@@ -302,28 +302,28 @@ const OrderDetail = () => {
                       <div key={index}>
                         <div className="flex justify-between items-start py-4">
                           <div>
-                            <p className="font-display text-lg font-bold text-[#2D3319]">
+                            <p className="font-display text-lg font-bold text-[#1B4332]">
                               {item.name}
                             </p>
-                            <p className="font-body text-sm text-[#5A6751] mt-1">
+                            <p className="font-body text-sm text-[#2D6A4F] mt-1">
                               Quantidade: <span className="font-semibold">{item.quantity}</span>
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-display text-xl font-bold text-[#D97757]">
+                            <p className="font-display text-xl font-bold text-[#52B788]">
                               R$ {(item.price * item.quantity).toFixed(2)}
                             </p>
-                            <p className="font-body text-sm text-[#5A6751]">
+                            <p className="font-body text-sm text-[#2D6A4F]">
                               R$ {item.price.toFixed(2)} cada
                             </p>
                           </div>
                         </div>
                         {index < (order.items?.length || 0) - 1 && (
-                          <Separator className="bg-[#2D3319]/20" />
+                          <Separator className="bg-[#1B4332]/20" />
                         )}
                       </div>
                     )) || (
-                      <p className="font-body text-[#5A6751] text-center py-8">
+                      <p className="font-body text-[#2D6A4F] text-center py-8">
                         Nenhum item encontrado
                       </p>
                     )}
@@ -333,24 +333,24 @@ const OrderDetail = () => {
             </div>
 
             <div>
-              <Card className="shadow-2xl border-2 border-[#2D3319]/10 rounded-3xl sticky top-24">
+              <Card className="shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl sticky top-24">
                 <CardHeader>
-                  <CardTitle className="font-display text-2xl font-bold text-[#2D3319]">
+                  <CardTitle className="font-display text-2xl font-bold text-[#1B4332]">
                     Resumo do Pedido
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between py-3 font-body">
-                      <span className="text-[#5A6751]">Subtotal</span>
-                      <span className="font-semibold text-[#2D3319]">
+                      <span className="text-[#2D6A4F]">Subtotal</span>
+                      <span className="font-semibold text-[#1B4332]">
                         R$ {order.total.toFixed(2)}
                       </span>
                     </div>
-                    <Separator className="bg-[#2D3319]/20" />
+                    <Separator className="bg-[#1B4332]/20" />
                     <div className="flex justify-between text-xl pt-2 font-display">
-                      <span className="font-bold text-[#2D3319]">Total</span>
-                      <span className="font-bold text-[#D97757]">
+                      <span className="font-bold text-[#1B4332]">Total</span>
+                      <span className="font-bold text-[#52B788]">
                         R$ {order.total.toFixed(2)}
                       </span>
                     </div>

@@ -68,8 +68,8 @@ const Header = () => {
       <header
         className={`sticky top-0 z-50 w-full transition-all duration-300 ${
           scrolled
-            ? "bg-white/95 backdrop-blur-md shadow-lg border-b-2 border-[#D97757]/20"
-            : "bg-[#FAF7F2]/95 backdrop-blur-sm border-b border-[#2D3319]/10"
+            ? "bg-white/95 backdrop-blur-md shadow-lg border-b-2 border-[#52B788]/20"
+            : "bg-[#F8FAF5]/95 backdrop-blur-sm border-b border-[#1B4332]/10"
         }`}
       >
         <div className="container mx-auto px-4 lg:px-8">
@@ -77,12 +77,12 @@ const Header = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3 group">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#D97757] to-[#C56647] rounded-2xl blur-sm group-hover:blur-md transition-all opacity-50" />
-                <div className="relative bg-gradient-to-br from-[#D97757] to-[#C56647] rounded-2xl p-2.5 transform group-hover:scale-110 transition-transform duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl blur-sm group-hover:blur-md transition-all opacity-50" />
+                <div className="relative bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl p-2.5 transform group-hover:scale-110 transition-transform duration-300">
                   <Heart className="h-6 w-6 text-white fill-white" />
                 </div>
               </div>
-              <span className="font-display font-bold text-2xl text-[#2D3319] group-hover:text-[#D97757] transition-colors">
+              <span className="font-display font-bold text-2xl text-[#1B4332] group-hover:text-[#52B788] transition-colors">
                 Velure
               </span>
             </Link>
@@ -92,10 +92,10 @@ const Header = () => {
               <div className="flex items-center">
                 <Link
                   to="/products"
-                  className="font-body text-[#2D3319] hover:text-[#D97757] transition-colors font-medium relative group"
+                  className="font-body text-[#1B4332] hover:text-[#52B788] transition-colors font-medium relative group"
                 >
                   Produtos
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#D97757] group-hover:w-full transition-all duration-300" />
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#52B788] group-hover:w-full transition-all duration-300" />
                 </Link>
                 {categories.length > 0 && (
                   <DropdownMenu>
@@ -103,17 +103,17 @@ const Header = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 ml-1 hover:bg-[#D97757]/10 hover:text-[#D97757]"
+                        className="h-8 w-8 ml-1 hover:bg-[#52B788]/10 hover:text-[#52B788]"
                       >
                         <ChevronDown className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 bg-white border-2 border-[#2D3319]/10 shadow-2xl rounded-2xl p-2">
+                    <DropdownMenuContent className="w-56 bg-white border-2 border-[#1B4332]/10 shadow-2xl rounded-2xl p-2">
                       {categories.map((category) => (
                         <DropdownMenuItem
                           key={category}
                           asChild
-                          className="rounded-xl font-body hover:bg-[#D97757]/10 hover:text-[#D97757] cursor-pointer"
+                          className="rounded-xl font-body hover:bg-[#52B788]/10 hover:text-[#52B788] cursor-pointer"
                         >
                           <Link to={`/products/${category}`} className="w-full px-3 py-2">
                             {formatCategoryName(category)}
@@ -127,10 +127,10 @@ const Header = () => {
 
               <Link
                 to="/contact"
-                className="font-body text-[#2D3319] hover:text-[#D97757] transition-colors font-medium relative group"
+                className="font-body text-[#1B4332] hover:text-[#52B788] transition-colors font-medium relative group"
               >
                 Contato
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#D97757] group-hover:w-full transition-all duration-300" />
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#52B788] group-hover:w-full transition-all duration-300" />
               </Link>
             </nav>
 
@@ -142,38 +142,38 @@ const Header = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="hover:bg-[#D97757]/10 hover:text-[#D97757]"
+                    className="hover:bg-[#52B788]/10 hover:text-[#52B788]"
                   >
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[280px] sm:w-[320px] bg-[#FAF7F2]">
+                <SheetContent side="left" className="w-[280px] sm:w-[320px] bg-[#F8FAF5]">
                   <SheetHeader>
                     <SheetTitle className="flex items-center space-x-3">
-                      <div className="bg-gradient-to-br from-[#D97757] to-[#C56647] rounded-2xl p-2">
+                      <div className="bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl p-2">
                         <Heart className="h-5 w-5 text-white fill-white" />
                       </div>
-                      <span className="font-display font-bold text-xl text-[#2D3319]">Velure</span>
+                      <span className="font-display font-bold text-xl text-[#1B4332]">Velure</span>
                     </SheetTitle>
                   </SheetHeader>
                   <nav className="flex flex-col space-y-2 mt-8 font-body">
                     <Link
                       to="/products"
-                      className="text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-3 px-4 rounded-xl border-b border-[#2D3319]/10"
+                      className="text-[#1B4332] hover:text-[#52B788] hover:bg-[#52B788]/10 transition-colors py-3 px-4 rounded-xl border-b border-[#1B4332]/10"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Todos os Produtos
                     </Link>
                     {categories.length > 0 && (
                       <div className="space-y-1 pt-2">
-                        <p className="text-sm font-semibold text-[#5A6751] px-4 mb-2">
+                        <p className="text-sm font-semibold text-[#2D6A4F] px-4 mb-2">
                           Categorias
                         </p>
                         {categories.map((category) => (
                           <Link
                             key={category}
                             to={`/products/${category}`}
-                            className="block text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-2 px-6 rounded-xl"
+                            className="block text-[#1B4332] hover:text-[#52B788] hover:bg-[#52B788]/10 transition-colors py-2 px-6 rounded-xl"
                             onClick={() => setMobileMenuOpen(false)}
                           >
                             {formatCategoryName(category)}
@@ -183,7 +183,7 @@ const Header = () => {
                     )}
                     <Link
                       to="/contact"
-                      className="text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-3 px-4 rounded-xl border-t border-[#2D3319]/10 mt-2"
+                      className="text-[#1B4332] hover:text-[#52B788] hover:bg-[#52B788]/10 transition-colors py-3 px-4 rounded-xl border-t border-[#1B4332]/10 mt-2"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Contato
@@ -192,7 +192,7 @@ const Header = () => {
                       <>
                         <Link
                           to="/orders"
-                          className="text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-3 px-4 rounded-xl"
+                          className="text-[#1B4332] hover:text-[#52B788] hover:bg-[#52B788]/10 transition-colors py-3 px-4 rounded-xl"
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           Meus Pedidos
@@ -203,7 +203,7 @@ const Header = () => {
                             handleLogout();
                             setMobileMenuOpen(false);
                           }}
-                          className="text-left text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-3 px-4 rounded-xl"
+                          className="text-left text-[#1B4332] hover:text-[#52B788] hover:bg-[#52B788]/10 transition-colors py-3 px-4 rounded-xl"
                         >
                           Sair
                         </button>
@@ -211,7 +211,7 @@ const Header = () => {
                     ) : (
                       <Link
                         to="/login"
-                        className="text-[#2D3319] hover:text-[#D97757] hover:bg-[#D97757]/10 transition-colors py-3 px-4 rounded-xl"
+                        className="text-[#1B4332] hover:text-[#52B788] hover:bg-[#52B788]/10 transition-colors py-3 px-4 rounded-xl"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Entrar / Cadastrar
@@ -226,11 +226,11 @@ const Header = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="relative hover:bg-[#D97757]/10 hover:text-[#D97757] transition-all"
+                  className="relative hover:bg-[#52B788]/10 hover:text-[#52B788] transition-all"
                 >
                   <ShoppingCart className="h-5 w-5" />
                   {itemsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-gradient-to-br from-[#D97757] to-[#C56647] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg animate-pulse">
+                    <span className="absolute -top-1 -right-1 bg-gradient-to-br from-[#52B788] to-[#40916C] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-lg animate-pulse">
                       {itemsCount}
                     </span>
                   )}
@@ -244,15 +244,15 @@ const Header = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="hover:bg-[#D97757]/10 hover:text-[#D97757]"
+                      className="hover:bg-[#52B788]/10 hover:text-[#52B788]"
                     >
                       <User className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-white border-2 border-[#2D3319]/10 shadow-2xl rounded-2xl p-2">
+                  <DropdownMenuContent className="w-56 bg-white border-2 border-[#1B4332]/10 shadow-2xl rounded-2xl p-2">
                     <DropdownMenuItem
                       asChild
-                      className="rounded-xl font-body hover:bg-[#D97757]/10 hover:text-[#D97757] cursor-pointer"
+                      className="rounded-xl font-body hover:bg-[#52B788]/10 hover:text-[#52B788] cursor-pointer"
                     >
                       <Link to="/orders" className="w-full px-3 py-2">
                         <ShoppingCart className="h-4 w-4 mr-2" />
@@ -261,7 +261,7 @@ const Header = () => {
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleLogout}
-                      className="rounded-xl font-body hover:bg-[#D97757]/10 hover:text-[#D97757] cursor-pointer px-3 py-2"
+                      className="rounded-xl font-body hover:bg-[#52B788]/10 hover:text-[#52B788] cursor-pointer px-3 py-2"
                     >
                       <LogOut className="h-4 w-4 mr-2" />
                       Sair
@@ -273,7 +273,7 @@ const Header = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="hover:bg-[#D97757]/10 hover:text-[#D97757]"
+                    className="hover:bg-[#52B788]/10 hover:text-[#52B788]"
                   >
                     <User className="h-5 w-5" />
                   </Button>

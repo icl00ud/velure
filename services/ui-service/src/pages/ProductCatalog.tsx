@@ -100,24 +100,24 @@ const ProductCatalog = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-[#FAF7F2]">
+      <div className="min-h-screen bg-[#F8FAF5]">
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
           {/* Breadcrumb */}
           <nav className={`mb-8 ${isVisible ? 'page-enter active' : 'page-enter'}`}>
-            <div className="flex items-center space-x-2 text-sm font-body text-[#5A6751]">
-              <Link to="/" className="hover:text-[#D97757] transition-colors">
+            <div className="flex items-center space-x-2 text-sm font-body text-[#2D6A4F]">
+              <Link to="/" className="hover:text-[#52B788] transition-colors">
                 Início
               </Link>
               <span>/</span>
-              <Link to="/products" className="hover:text-[#D97757] transition-colors">
+              <Link to="/products" className="hover:text-[#52B788] transition-colors">
                 Produtos
               </Link>
               {category && (
                 <>
                   <span>/</span>
-                  <span className="text-[#2D3319] font-semibold">{categoryName}</span>
+                  <span className="text-[#1B4332] font-semibold">{categoryName}</span>
                 </>
               )}
             </div>
@@ -125,14 +125,14 @@ const ProductCatalog = () => {
 
           {/* Header */}
           <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
-            <span className="font-body text-[#D97757] font-semibold text-sm tracking-widest uppercase mb-4 block">
+            <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
               {category ? `Categoria: ${categoryName}` : "Catálogo Completo"}
             </span>
-            <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#2D3319] mb-4">
+            <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-4">
               {category ? `Produtos para ${categoryName}` : "Todos os produtos"}
             </h1>
-            <div className="w-20 h-1 bg-gradient-to-r from-[#D97757] to-[#F4C430] mb-6" />
-            <p className="font-body text-xl text-[#5A6751]">
+            <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mb-6" />
+            <p className="font-body text-xl text-[#2D6A4F]">
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -140,32 +140,32 @@ const ProductCatalog = () => {
                 </span>
               ) : (
                 <>
-                  <span className="font-bold text-[#D97757]">{totalCount || 0}</span> produtos encontrados
+                  <span className="font-bold text-[#52B788]">{totalCount || 0}</span> produtos encontrados
                 </>
               )}
             </p>
           </div>
 
           {/* Filters & Search */}
-          <Card className="mb-12 shadow-lg border-2 border-[#2D3319]/10 observe-animation rounded-2xl">
+          <Card className="mb-12 shadow-lg border-2 border-[#1B4332]/10 observe-animation rounded-2xl">
             <CardContent className="p-6">
               <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
                 <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full">
                   {/* Search */}
                   <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#5A6751]" />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
                     <Input
                       placeholder="Buscar produtos..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-12 font-body border-2 border-[#2D3319]/10 rounded-xl focus:border-[#D97757] h-12"
+                      className="pl-12 font-body border-2 border-[#1B4332]/10 rounded-xl focus:border-[#52B788] h-12"
                     />
                   </div>
 
                   {/* Filter */}
                   <Select value={filterBy} onValueChange={setFilterBy}>
-                    <SelectTrigger className="w-full sm:w-48 font-body border-2 border-[#2D3319]/10 rounded-xl h-12">
-                      <Filter className="h-4 w-4 mr-2 text-[#D97757]" />
+                    <SelectTrigger className="w-full sm:w-48 font-body border-2 border-[#1B4332]/10 rounded-xl h-12">
+                      <Filter className="h-4 w-4 mr-2 text-[#52B788]" />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
@@ -177,7 +177,7 @@ const ProductCatalog = () => {
 
                   {/* Sort */}
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-full sm:w-48 font-body border-2 border-[#2D3319]/10 rounded-xl h-12">
+                    <SelectTrigger className="w-full sm:w-48 font-body border-2 border-[#1B4332]/10 rounded-xl h-12">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
@@ -196,7 +196,7 @@ const ProductCatalog = () => {
                     variant={viewMode === "grid" ? "default" : "outline"}
                     size="icon"
                     onClick={() => setViewMode("grid")}
-                    className={viewMode === "grid" ? "bg-[#D97757] hover:bg-[#C56647]" : "hover:bg-[#D97757]/10"}
+                    className={viewMode === "grid" ? "bg-[#52B788] hover:bg-[#40916C]" : "hover:bg-[#52B788]/10"}
                   >
                     <Grid3X3 className="h-4 w-4" />
                   </Button>
@@ -204,7 +204,7 @@ const ProductCatalog = () => {
                     variant={viewMode === "list" ? "default" : "outline"}
                     size="icon"
                     onClick={() => setViewMode("list")}
-                    className={viewMode === "list" ? "bg-[#D97757] hover:bg-[#C56647]" : "hover:bg-[#D97757]/10"}
+                    className={viewMode === "list" ? "bg-[#52B788] hover:bg-[#40916C]" : "hover:bg-[#52B788]/10"}
                   >
                     <List className="h-4 w-4" />
                   </Button>
@@ -223,17 +223,17 @@ const ProductCatalog = () => {
           >
             {loading ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20">
-                <Loader2 className="h-16 w-16 animate-spin text-[#D97757] mb-4" />
-                <p className="font-body text-[#5A6751] text-lg">Carregando produtos...</p>
+                <Loader2 className="h-16 w-16 animate-spin text-[#52B788] mb-4" />
+                <p className="font-body text-[#2D6A4F] text-lg">Carregando produtos...</p>
               </div>
             ) : error ? (
               <div className="col-span-full">
-                <Card className="text-center py-16 rounded-2xl border-2 border-[#2D3319]/10">
+                <Card className="text-center py-16 rounded-2xl border-2 border-[#1B4332]/10">
                   <CardContent>
-                    <h3 className="font-display text-2xl font-bold text-[#2D3319] mb-2">
+                    <h3 className="font-display text-2xl font-bold text-[#1B4332] mb-2">
                       Erro ao carregar produtos
                     </h3>
-                    <p className="font-body text-[#5A6751] mb-6">{error}</p>
+                    <p className="font-body text-[#2D6A4F] mb-6">{error}</p>
                     <Button
                       onClick={() => window.location.reload()}
                       className="btn-primary-custom font-body px-8 py-3 rounded-full"
@@ -268,7 +268,7 @@ const ProductCatalog = () => {
                             className={`absolute top-3 right-3 rounded-full bg-white/90 backdrop-blur-sm shadow-lg ${
                               favorites.includes(parseInt(product._id, 10))
                                 ? "text-red-500 hover:text-red-600"
-                                : "text-[#5A6751] hover:text-red-500"
+                                : "text-[#2D6A4F] hover:text-red-500"
                             }`}
                             onClick={() => toggleFavorite(product._id)}
                           >
@@ -277,25 +277,25 @@ const ProductCatalog = () => {
                             />
                           </Button>
                           {product.price > 100 && (
-                            <Badge className="absolute top-3 left-3 bg-[#F4C430] text-[#2D3319] font-bold rounded-full px-4 py-1">
+                            <Badge className="absolute top-3 left-3 bg-[#A7C957] text-[#1B4332] font-bold rounded-full px-4 py-1">
                               15% OFF
                             </Badge>
                           )}
                           {product.quantity === 0 && (
                             <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center">
-                              <Badge className="bg-[#2D3319] text-white px-6 py-2 text-base">Sem Estoque</Badge>
+                              <Badge className="bg-[#1B4332] text-white px-6 py-2 text-base">Sem Estoque</Badge>
                             </div>
                           )}
                         </div>
 
                         <div className="p-6 space-y-3">
                           {product.brand && (
-                            <p className="font-body text-xs text-[#8B9A7E] font-semibold uppercase tracking-widest">
+                            <p className="font-body text-xs text-[#95D5B2] font-semibold uppercase tracking-widest">
                               {product.brand}
                             </p>
                           )}
                           <Link to={`/product/${product._id}`} className="block">
-                            <h3 className="font-display text-lg font-bold text-[#2D3319] hover:text-[#D97757] transition-colors line-clamp-2 min-h-[3.5rem]">
+                            <h3 className="font-display text-lg font-bold text-[#1B4332] hover:text-[#52B788] transition-colors line-clamp-2 min-h-[3.5rem]">
                               {product.name}
                             </h3>
                           </Link>
@@ -306,29 +306,29 @@ const ProductCatalog = () => {
                                 key={star}
                                 className={`h-4 w-4 ${
                                   star <= Math.round(product.rating || 0)
-                                    ? "text-[#F4C430] fill-[#F4C430]"
+                                    ? "text-[#A7C957] fill-[#A7C957]"
                                     : "text-gray-300"
                                 }`}
                               />
                             ))}
-                            <span className="font-body text-sm font-semibold text-[#2D3319] ml-2">
+                            <span className="font-body text-sm font-semibold text-[#1B4332] ml-2">
                               {(product.rating || 0).toFixed(1)}
                             </span>
                           </div>
 
                           {product.category && (
-                            <Badge className="bg-[#8B9A7E]/20 text-[#5A6751] border-0 font-body">
+                            <Badge className="bg-[#95D5B2]/20 text-[#2D6A4F] border-0 font-body">
                               {product.category}
                             </Badge>
                           )}
 
                           <div className="space-y-3 pt-2">
                             <div className="flex items-baseline gap-2">
-                              <span className="font-display text-3xl font-bold text-[#D97757]">
+                              <span className="font-display text-3xl font-bold text-[#52B788]">
                                 R$ {product.price.toFixed(2)}
                               </span>
                               {product.price > 100 && (
-                                <span className="font-body text-sm text-[#5A6751] line-through">
+                                <span className="font-body text-sm text-[#2D6A4F] line-through">
                                   R$ {(product.price * 1.15).toFixed(2)}
                                 </span>
                               )}
@@ -374,17 +374,17 @@ const ProductCatalog = () => {
                           <div className="flex items-start justify-between">
                             <div>
                               {product.brand && (
-                                <p className="font-body text-xs text-[#8B9A7E] font-semibold uppercase tracking-widest mb-2">
+                                <p className="font-body text-xs text-[#95D5B2] font-semibold uppercase tracking-widest mb-2">
                                   {product.brand}
                                 </p>
                               )}
                               <Link to={`/product/${product._id}`}>
-                                <h3 className="font-display text-2xl font-bold text-[#2D3319] hover:text-[#D97757] transition-colors">
+                                <h3 className="font-display text-2xl font-bold text-[#1B4332] hover:text-[#52B788] transition-colors">
                                   {product.name}
                                 </h3>
                               </Link>
                               {product.description && (
-                                <p className="font-body text-[#5A6751] mt-2 line-clamp-2">
+                                <p className="font-body text-[#2D6A4F] mt-2 line-clamp-2">
                                   {product.description}
                                 </p>
                               )}
@@ -395,7 +395,7 @@ const ProductCatalog = () => {
                               className={`rounded-full ${
                                 favorites.includes(parseInt(product._id, 10))
                                   ? "text-red-500"
-                                  : "text-[#5A6751]"
+                                  : "text-[#2D6A4F]"
                               }`}
                               onClick={() => toggleFavorite(product._id)}
                             >
@@ -407,11 +407,11 @@ const ProductCatalog = () => {
 
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-1">
-                              <Star className="h-5 w-5 text-[#F4C430] fill-[#F4C430]" />
+                              <Star className="h-5 w-5 text-[#A7C957] fill-[#A7C957]" />
                               <span className="font-body text-sm font-semibold">{product.rating}</span>
                             </div>
                             {product.quantity === 0 && (
-                              <Badge className="bg-[#2D3319] text-white">Sem estoque</Badge>
+                              <Badge className="bg-[#1B4332] text-white">Sem estoque</Badge>
                             )}
                             {product.quantity < 10 && product.quantity > 0 && (
                               <Badge className="border-orange-500 text-orange-600">Estoque baixo</Badge>
@@ -419,7 +419,7 @@ const ProductCatalog = () => {
                           </div>
 
                           <div className="flex items-center justify-between pt-4">
-                            <div className="font-display text-3xl font-bold text-[#D97757]">
+                            <div className="font-display text-3xl font-bold text-[#52B788]">
                               R$ {product.price.toFixed(2)}
                             </div>
                             <Button
@@ -448,12 +448,12 @@ const ProductCatalog = () => {
 
           {/* No Results */}
           {filteredProdutos.length === 0 && !loading && (
-            <Card className="text-center py-16 rounded-2xl border-2 border-[#2D3319]/10">
+            <Card className="text-center py-16 rounded-2xl border-2 border-[#1B4332]/10">
               <CardContent>
-                <h3 className="font-display text-3xl font-bold text-[#2D3319] mb-3">
+                <h3 className="font-display text-3xl font-bold text-[#1B4332] mb-3">
                   Nenhum produto encontrado
                 </h3>
-                <p className="font-body text-[#5A6751] text-lg mb-8">
+                <p className="font-body text-[#2D6A4F] text-lg mb-8">
                   Tente ajustar sua busca ou critérios de filtro
                 </p>
                 <Button
@@ -476,7 +476,7 @@ const ProductCatalog = () => {
                 variant="outline"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="font-body border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white rounded-full px-6"
+                className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
                 ← Anterior
               </Button>
@@ -490,21 +490,21 @@ const ProductCatalog = () => {
                       onClick={() => setPage(pageNum)}
                       className={
                         page === pageNum
-                          ? "bg-[#D97757] hover:bg-[#C56647] rounded-full"
-                          : "border-2 border-[#2D3319]/20 rounded-full hover:border-[#D97757]"
+                          ? "bg-[#52B788] hover:bg-[#40916C] rounded-full"
+                          : "border-2 border-[#1B4332]/20 rounded-full hover:border-[#52B788]"
                       }
                     >
                       {pageNum}
                     </Button>
                   );
                 })}
-                {totalPages > 5 && <span className="font-body text-[#5A6751]">...</span>}
+                {totalPages > 5 && <span className="font-body text-[#2D6A4F]">...</span>}
               </div>
               <Button
                 variant="outline"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="font-body border-2 border-[#2D3319] hover:bg-[#2D3319] hover:text-white rounded-full px-6"
+                className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
                 Próximo →
               </Button>
