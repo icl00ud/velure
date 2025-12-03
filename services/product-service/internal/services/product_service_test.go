@@ -535,66 +535,65 @@ func TestUpdateProductQuantity(t *testing.T) {
 		productID       string
 		quantityChange  int
 		currentQuantity int
-		getQuantityErr  error
 		updateErr       error
+		getQuantityErr  error
 		wantError       bool
 		errorContains   string
 	}{
 		{
-			name:            "success - increase quantity",
-			productID:       "123",
-			quantityChange:  5,
-			currentQuantity: 10,
-			getQuantityErr:  nil,
-			updateErr:       nil,
-			wantError:       false,
+			name:           "success - increase quantity",
+			productID:      "123",
+			quantityChange: 5,
+			updateErr:      nil,
+			wantError:      false,
 		},
 		{
-			name:            "success - decrease quantity",
-			productID:       "123",
-			quantityChange:  -5,
-			currentQuantity: 10,
-			getQuantityErr:  nil,
-			updateErr:       nil,
-			wantError:       false,
+			name:           "success - decrease quantity",
+			productID:      "123",
+			quantityChange: -5,
+			updateErr:      nil,
+			wantError:      false,
 		},
 		{
 			name:            "insufficient stock",
 			productID:       "123",
 			quantityChange:  -15,
 			currentQuantity: 10,
+			updateErr:       errors.New("insufficient stock or product not found"),
 			getQuantityErr:  nil,
-			updateErr:       nil,
 			wantError:       true,
-			errorContains:   "insufficient stock",
+			errorContains:   "insufficient stock: current quantity is 10",
 		},
 		{
-			name:            "get quantity error",
+			name:           "update error - generic",
+			productID:      "123",
+			quantityChange: 5,
+			updateErr:      errors.New("database error"),
+			wantError:      true,
+			errorContains:  "database error",
+		},
+		{
+			name:            "insufficient stock - get quantity fails",
 			productID:       "123",
-			quantityChange:  5,
+			quantityChange:  -15,
 			currentQuantity: 0,
+			updateErr:       errors.New("insufficient stock or product not found"),
 			getQuantityErr:  errors.New("product not found"),
-			updateErr:       nil,
 			wantError:       true,
-		},
-		{
-			name:            "update error",
-			productID:       "123",
-			quantityChange:  5,
-			currentQuantity: 10,
-			getQuantityErr:  nil,
-			updateErr:       errors.New("database error"),
-			wantError:       true,
+			errorContains:   "product not found",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(MockProductRepository)
-			mockRepo.On("GetProductQuantity", mock.Anything, tt.productID).Return(tt.currentQuantity, tt.getQuantityErr)
 
-			if tt.getQuantityErr == nil && tt.currentQuantity+tt.quantityChange >= 0 {
-				mockRepo.On("UpdateProductQuantity", mock.Anything, tt.productID, tt.quantityChange).Return(tt.updateErr)
+			// Expect UpdateProductQuantity to be called first
+			mockRepo.On("UpdateProductQuantity", mock.Anything, tt.productID, tt.quantityChange).Return(tt.updateErr)
+
+			// If update fails with specific error, we expect GetProductQuantity
+			if tt.updateErr != nil && tt.updateErr.Error() == "insufficient stock or product not found" {
+				mockRepo.On("GetProductQuantity", mock.Anything, tt.productID).Return(tt.currentQuantity, tt.getQuantityErr)
 			}
 
 			service := NewProductService(mockRepo)

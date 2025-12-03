@@ -212,23 +212,24 @@ func (s *productService) UpdateProductQuantity(ctx context.Context, productID st
 		metrics.InventoryUpdates.WithLabelValues(status).Inc()
 	}()
 
-	// Validate that the update won't result in negative quantity
-	currentQuantity, err := s.repo.GetProductQuantity(ctx, productID)
+	// Attempt atomic update directly
+	err := s.repo.UpdateProductQuantity(ctx, productID, quantityChange)
 	if err != nil {
-		status = "failure"
-		metrics.Errors.WithLabelValues("database").Inc()
-		return err
-	}
+		if err.Error() == "insufficient stock or product not found" {
+			// Fetch current quantity to provide a detailed error message
+			currentQuantity, fetchErr := s.repo.GetProductQuantity(ctx, productID)
+			if fetchErr != nil {
+				status = "failure"
+				metrics.Errors.WithLabelValues("database").Inc()
+				// If we can't get the product, it likely doesn't exist or DB is down
+				return fetchErr
+			}
 
-	newQuantity := currentQuantity + quantityChange
-	if newQuantity < 0 {
-		status = "insufficient_stock"
-		metrics.Errors.WithLabelValues("validation").Inc()
-		return fmt.Errorf("insufficient stock: current quantity is %d, cannot deduct %d", currentQuantity, -quantityChange)
-	}
+			status = "insufficient_stock"
+			metrics.Errors.WithLabelValues("validation").Inc()
+			return fmt.Errorf("insufficient stock: current quantity is %d, cannot deduct %d", currentQuantity, -quantityChange)
+		}
 
-	err = s.repo.UpdateProductQuantity(ctx, productID, quantityChange)
-	if err != nil {
 		status = "failure"
 		metrics.Errors.WithLabelValues("database").Inc()
 		return err

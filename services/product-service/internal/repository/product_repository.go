@@ -473,18 +473,27 @@ func (r *productRepository) UpdateProductQuantity(ctx context.Context, productID
 		return fmt.Errorf("invalid product ID %s: %w", productID, err)
 	}
 
+	filter := bson.M{"_id": objectID}
+	// If deducting, ensure we don't go below zero
+	if quantityChange < 0 {
+		filter["quantity"] = bson.M{"$gte": -quantityChange}
+	}
+
 	// Use $inc to atomically increment/decrement the quantity
 	update := bson.M{
 		"$inc": bson.M{"quantity": quantityChange},
 		"$set": bson.M{"dt_updated": time.Now()},
 	}
 
-	result, err := r.collection.UpdateOne(ctx, bson.M{"_id": objectID}, update)
+	result, err := r.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return fmt.Errorf("failed to update quantity: %w", err)
 	}
 
 	if result.MatchedCount == 0 {
+		if quantityChange < 0 {
+			return fmt.Errorf("insufficient stock or product not found")
+		}
 		return fmt.Errorf("product not found")
 	}
 
