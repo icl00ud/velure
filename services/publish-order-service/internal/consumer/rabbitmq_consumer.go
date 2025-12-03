@@ -104,6 +104,12 @@ func NewRabbitMQConsumer(amqpURL, exchange, queueName string, handler EventHandl
 		return nil, fmt.Errorf("bind queue to order.completed: %w", err)
 	}
 
+	if err := ch.QueueBind(q.Name, "order.failed", exchange, false, nil); err != nil {
+		ch.Close()
+		conn.Close()
+		return nil, fmt.Errorf("bind queue to order.failed: %w", err)
+	}
+
 	if err := ch.Qos(1, 0, false); err != nil {
 		ch.Close()
 		conn.Close()
