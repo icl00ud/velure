@@ -29,8 +29,7 @@ const Orders = () => {
     setIsLoading(true);
     try {
       const result = await orderService.getUserOrders(page, pageSize);
-      console.log('API Order Response:', result);
-
+      
       // Handle different response formats
       let ordersList: Order[] = [];
       if (Array.isArray(result)) {
@@ -43,7 +42,6 @@ const Orders = () => {
         ordersList = result.data;
       }
       
-      console.log('Parsed Orders List:', ordersList);
       setOrders(ordersList || []);
       
       // Handle pagination
@@ -55,7 +53,6 @@ const Orders = () => {
         setTotalPages(1);
       }
     } catch (error) {
-      console.error('Error loading orders:', error);
       setOrders([]);
       toast({
         title: "Erro ao carregar pedidos",
@@ -157,8 +154,7 @@ const Orders = () => {
                 return (
                   <Card
                     key={orderId}
-                    className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl card-hover-subtle observe-animation"
-                    style={{ animationDelay: `${index * 0.1}s` }}
+                    className="shadow-lg border-2 border-[#2D3319]/10 rounded-3xl card-hover-subtle"
                   >
                     <CardHeader className="pb-4">
                       <div className="flex justify-between items-start">
