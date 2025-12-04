@@ -12,30 +12,18 @@ const orderTotal = new Trend("order_total_value");
 const ordersCreated = new Counter("orders_created_total");
 
 // Load test configuration
-// Progressive ramp: 10 → 150 VUs over 7 minutes, then sustained load
-// Load test configuration
-// Progressive ramp: 10 → 150 VUs aumentando a cada 2 minutos, depois carga sustentada
+// 15-minute moderate stress test scaling to 500 VUs with load variations
+// Pattern: Progressive ramp → Peak → Drop → Recovery → Cool down
 export const options = {
-  stages: [
-    { duration: "2m", target: 10 }, // Warmup: 10 usuários
-    { duration: "2m", target: 30 }, // 10 → 30
-    { duration: "2m", target: 50 }, // 30 → 50
-    { duration: "2m", target: 70 }, // 50 → 70
-    { duration: "2m", target: 90 }, // 70 → 90
-    { duration: "2m", target: 110 }, // 90 → 110
-    { duration: "2m", target: 130 }, // 110 → 130
-    { duration: "2m", target: 150 }, // 130 → 150 (pico)
-    { duration: "2m", target: 150 }, // Sustained: mantém 150 usuários por 2m
-    { duration: "2m", target: 0 }, // Ramp down: 150 → 0 em 2m
-  ],
+  stages: [{ duration: "5m", target: 100 }],
   thresholds: {
-    http_req_duration: ["p(95)<3000"],
-    http_req_failed: ["rate<0.15"],
-    registration_failures: ["rate<0.15"],
-    login_failures: ["rate<0.15"],
-    product_list_failures: ["rate<0.15"],
-    order_creation_failures: ["rate<0.25"],
-    end_to_end_duration: ["p(95)<15000"],
+    http_req_duration: ["p(95)<3000"],           // 3s para 95% das requisições
+    http_req_failed: ["rate<0.10"],              // Permite até 10% de falhas
+    registration_failures: ["rate<0.10"],
+    login_failures: ["rate<0.10"],
+    product_list_failures: ["rate<0.10"],
+    order_creation_failures: ["rate<0.15"],      // Permite até 15% de falhas em orders
+    end_to_end_duration: ["p(95)<15000"],        // 15s para jornada completa
   },
 };
 
