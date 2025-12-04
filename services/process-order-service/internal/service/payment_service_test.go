@@ -2,19 +2,24 @@ package service
 
 import (
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/icl00ud/process-order-service/internal/client"
 	"github.com/icl00ud/process-order-service/internal/model"
 )
 
-// Mock publisher for testing
+// Mock publisher for testing (thread-safe for parallel processing)
 type mockPublisher struct {
+	mu          sync.Mutex
 	publishFunc func(evt model.Event) error
 	published   []model.Event
 }
 
 func (m *mockPublisher) Publish(evt model.Event) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if m.published == nil {
 		m.published = []model.Event{}
 	}
@@ -30,8 +35,9 @@ func (m *mockPublisher) Close() error {
 	return nil
 }
 
-// Mock product client for testing
+// Mock product client for testing (thread-safe for parallel processing)
 type mockProductClient struct {
+	mu                 sync.Mutex
 	updateQuantityFunc func(productID string, quantityChange int) error
 	calls              []struct {
 		productID      string
@@ -40,6 +46,9 @@ type mockProductClient struct {
 }
 
 func (m *mockProductClient) UpdateQuantity(productID string, quantityChange int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if m.calls == nil {
 		m.calls = []struct {
 			productID      string
@@ -90,14 +99,16 @@ func TestPaymentService_Process_Success(t *testing.T) {
 		t.Errorf("expected 2 UpdateQuantity calls, got %d", len(client.calls))
 	}
 
-	// Verify quantities were deducted
-	if client.calls[0].productID != "p1" || client.calls[0].quantityChange != -2 {
-		t.Errorf("expected UpdateQuantity(p1, -2), got UpdateQuantity(%s, %d)",
-			client.calls[0].productID, client.calls[0].quantityChange)
+	// Verify quantities were deducted (order not guaranteed due to parallel processing)
+	callMap := make(map[string]int)
+	for _, call := range client.calls {
+		callMap[call.productID] = call.quantityChange
 	}
-	if client.calls[1].productID != "p2" || client.calls[1].quantityChange != -1 {
-		t.Errorf("expected UpdateQuantity(p2, -1), got UpdateQuantity(%s, %d)",
-			client.calls[1].productID, client.calls[1].quantityChange)
+	if callMap["p1"] != -2 {
+		t.Errorf("expected UpdateQuantity(p1, -2), got quantityChange=%d", callMap["p1"])
+	}
+	if callMap["p2"] != -1 {
+		t.Errorf("expected UpdateQuantity(p2, -1), got quantityChange=%d", callMap["p2"])
 	}
 
 	// Verify events were published (processing and completed)
@@ -247,9 +258,10 @@ func TestPaymentService_Process_SecondItemFails(t *testing.T) {
 		t.Error("expected error, got nil")
 	}
 
-	// First item should have been processed, but process stopped at second item
-	if len(client.calls) != 2 {
-		t.Errorf("expected 2 UpdateQuantity calls, got %d", len(client.calls))
+	// With parallel processing, all items are processed concurrently
+	// so all 3 UpdateQuantity calls are made even if one fails
+	if len(client.calls) != 3 {
+		t.Errorf("expected 3 UpdateQuantity calls (parallel processing), got %d", len(client.calls))
 	}
 }
 
