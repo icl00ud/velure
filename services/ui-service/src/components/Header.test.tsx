@@ -214,10 +214,7 @@ describe("Header", () => {
       });
     });
 
-    // NOTE: Radix UI DropdownMenu components use portals that don't work properly in jsdom test environment
-    // The dropdown works correctly in the browser but cannot be properly tested with React Testing Library
-    // See: https://github.com/radix-ui/primitives/discussions/560
-    it.skip("should show My Orders option when authenticated", async () => {
+    it("should show My Orders option when authenticated", async () => {
       const mockToken = {
         accessToken: "mock-token",
         refreshToken: "mock-refresh",
@@ -247,10 +244,7 @@ describe("Header", () => {
       }
     });
 
-    // NOTE: Radix UI DropdownMenu components use portals that don't work properly in jsdom test environment
-    // The dropdown works correctly in the browser but cannot be properly tested with React Testing Library
-    // See: https://github.com/radix-ui/primitives/discussions/560
-    it.skip("should handle logout", async () => {
+    it("should handle logout", async () => {
       const mockToken = {
         accessToken: "mock-token",
         refreshToken: "mock-refresh",
@@ -297,10 +291,7 @@ describe("Header", () => {
       }
     });
 
-    // NOTE: Radix UI DropdownMenu components use portals that don't work properly in jsdom test environment
-    // The dropdown works correctly in the browser but cannot be properly tested with React Testing Library
-    // See: https://github.com/radix-ui/primitives/discussions/560
-    it.skip("should handle logout errors gracefully", async () => {
+    it("should handle logout errors gracefully", async () => {
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const mockToken = {
         accessToken: "mock-token",
