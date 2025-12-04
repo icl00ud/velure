@@ -6,8 +6,8 @@ import (
 
 	"github.com/icl00ud/velure-shared/logger"
 	"product-service/internal/metrics"
-	"product-service/internal/models"
-	"product-service/internal/services"
+	"product-service/internal/model"
+	"product-service/internal/service"
 
 	"github.com/gofiber/fiber/v2"
 )

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/icl00ud/publish-order-service/internal/metrics"
@@ -113,6 +114,7 @@ func (h *SSEHandler) NotifyOrderUpdate(order model.Order) {
 }
 
 type SSERegistry struct {
+	mu          sync.RWMutex
 	subscribers map[string][]chan model.Order
 }
 
@@ -123,6 +125,9 @@ func NewSSERegistry() *SSERegistry {
 }
 
 func (r *SSERegistry) Register(orderID string, ch chan model.Order) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if r.subscribers[orderID] == nil {
 		r.subscribers[orderID] = []chan model.Order{}
 	}
@@ -130,6 +135,9 @@ func (r *SSERegistry) Register(orderID string, ch chan model.Order) {
 }
 
 func (r *SSERegistry) Unregister(orderID string, ch chan model.Order) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	subs := r.subscribers[orderID]
 	for i, sub := range subs {
 		if sub == ch {
@@ -144,13 +152,16 @@ func (r *SSERegistry) Unregister(orderID string, ch chan model.Order) {
 }
 
 func (r *SSERegistry) Broadcast(orderID string, order model.Order) {
-	if subs, ok := r.subscribers[orderID]; ok {
-		for _, ch := range subs {
-			select {
-			case ch <- order:
-			default:
-				logger.Warn("channel full, dropping event", logger.String("order_id", orderID))
-			}
+	r.mu.RLock()
+	subs := make([]chan model.Order, len(r.subscribers[orderID]))
+	copy(subs, r.subscribers[orderID])
+	r.mu.RUnlock()
+
+	for _, ch := range subs {
+		select {
+		case ch <- order:
+		default:
+			logger.Warn("channel full, dropping event", logger.String("order_id", orderID))
 		}
 	}
 }

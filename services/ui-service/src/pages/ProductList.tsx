@@ -1,5 +1,5 @@
 import { Heart, Loader2, Search, ShoppingCart, Star } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import { ProductImageWithFallback } from "@/components/ProductImage";
@@ -36,27 +36,34 @@ const ProductList = () => {
   );
   const { addToCart, getItemQuantity } = useCart();
 
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    setIsVisible(true);
+
+    // Create observer only once
+    observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("animate-in");
+            observerRef.current?.unobserve(entry.target);
           }
         });
       },
       { threshold: 0.1 }
     );
 
-    const elements = document.querySelectorAll(".observe-animation");
-    elements.forEach((element) => observer.observe(element));
+    return () => observerRef.current?.disconnect();
+  }, []);
 
-    return () => observer.disconnect();
-  }, [products]);
+  // Observe new elements when products change
+  useEffect(() => {
+    if (!observerRef.current || loading) return;
+
+    const elements = document.querySelectorAll(".observe-animation:not(.animate-in)");
+    elements.forEach((element) => observerRef.current?.observe(element));
+  }, [products, loading]);
 
   const toggleFavorite = (productId: string) => {
     const numId = parseInt(productId);

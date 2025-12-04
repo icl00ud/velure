@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"product-service/internal/config"
-	"product-service/internal/models"
+	"product-service/internal/model"
 	"product-service/internal/repository"
 
 	"github.com/stretchr/testify/assert"

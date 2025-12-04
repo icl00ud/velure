@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"velure-auth-service/internal/metrics"
-	"velure-auth-service/internal/models"
-	"velure-auth-service/internal/services"
+	"velure-auth-service/internal/model"
+	"velure-auth-service/internal/service"
 
 	"github.com/gin-gonic/gin"
 )

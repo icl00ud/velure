@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"velure-auth-service/internal/models"
+	"velure-auth-service/internal/model"
 
 	"gorm.io/gorm"
 )

@@ -8,10 +8,10 @@ import (
 
 	"velure-auth-service/internal/config"
 	"velure-auth-service/internal/database"
-	"velure-auth-service/internal/handlers"
+	"velure-auth-service/internal/handler"
 	"velure-auth-service/internal/middleware"
-	"velure-auth-service/internal/repositories"
-	"velure-auth-service/internal/services"
+	"velure-auth-service/internal/repository"
+	"velure-auth-service/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/icl00ud/velure-shared/logger"

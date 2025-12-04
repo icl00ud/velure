@@ -10,7 +10,7 @@ import (
 
 	"velure-auth-service/internal/metrics"
 	"velure-auth-service/internal/mocks"
-	"velure-auth-service/internal/models"
+	"velure-auth-service/internal/model"
 	"velure-auth-service/internal/testutil"
 
 	miniredis "github.com/alicebob/miniredis/v2"

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"velure-auth-service/internal/mocks"
-	"velure-auth-service/internal/models"
+	"velure-auth-service/internal/model"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/mock/gomock"

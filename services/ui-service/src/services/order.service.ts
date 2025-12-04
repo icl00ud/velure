@@ -98,16 +98,69 @@ class OrderService {
     return response.json();
   }
 
-  createOrderStatusStream(orderId: string): EventSource {
+  createOrderStatusStream(orderId: string, onMessage: (order: Order) => void, onError?: (error: Event) => void): () => void {
     const tokenString = localStorage.getItem("token");
     if (!tokenString) {
       throw new Error("Usuário não autenticado");
     }
 
     const token = JSON.parse(tokenString);
-    const url = `${this.baseURL}/user/order/status?id=${orderId}&token=${encodeURIComponent(token.accessToken)}`;
-    
-    return new EventSource(url);
+    const url = `${this.baseURL}/user/order/status?id=${orderId}`;
+
+    const abortController = new AbortController();
+
+    const connectSSE = async () => {
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token.accessToken}`,
+            "Accept": "text/event-stream",
+          },
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Falha ao conectar ao stream de status");
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error("Stream não suportado");
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                onMessage(data);
+              } catch {
+                // Ignore parse errors (keepalive messages)
+              }
+            }
+          }
+        }
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          onError?.(error as Event);
+        }
+      }
+    };
+
+    connectSSE();
+
+    return () => abortController.abort();
   }
 
   async updateOrderStatus(orderId: string, status: string): Promise<void> {

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"velure-auth-service/internal/config"
-	"velure-auth-service/internal/models"
+	"velure-auth-service/internal/model"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
