@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"product-service/internal/models"
+	"product-service/internal/model"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

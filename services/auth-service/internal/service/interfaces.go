@@ -1,6 +1,6 @@
 package services
 
-import "velure-auth-service/internal/models"
+import "velure-auth-service/internal/model"
 
 // AuthServiceInterface defines the interface for authentication service operations
 type AuthServiceInterface interface {

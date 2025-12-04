@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"velure-auth-service/internal/config"
-	"velure-auth-service/internal/models"
+	"velure-auth-service/internal/model"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"

@@ -1,6 +1,6 @@
 module github.com/icl00ud/process-order-service
 
-go 1.23.12
+go 1.25.5
 
 require (
 	github.com/icl00ud/velure-shared v0.0.0

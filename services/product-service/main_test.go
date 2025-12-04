@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"product-service/internal/config"
-	"product-service/internal/models"
+	"product-service/internal/model"
 	"product-service/internal/repository"
-	"product-service/internal/services"
+	"product-service/internal/service"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/icl00ud/velure-shared/logger"

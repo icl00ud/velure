@@ -7,7 +7,7 @@ import (
 
 	"github.com/icl00ud/velure-shared/logger"
 	"product-service/internal/metrics"
-	"product-service/internal/models"
+	"product-service/internal/model"
 	"product-service/internal/repository"
 )
 

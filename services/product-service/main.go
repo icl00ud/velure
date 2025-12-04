@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"product-service/internal/config"
-	"product-service/internal/handlers"
+	"product-service/internal/handler"
 	"product-service/internal/middleware"
 	"product-service/internal/repository"
-	"product-service/internal/services"
+	"product-service/internal/service"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"

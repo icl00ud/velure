@@ -24,25 +24,14 @@ const OrderDetail = () => {
     if (!id) return;
 
     loadOrder();
-    const eventSource = orderService.createOrderStatusStream(id);
 
-    eventSource.onmessage = (event) => {
-      try {
-        const updatedOrder = JSON.parse(event.data);
-        setOrder(updatedOrder);
-      } catch (error) {
-        console.error("Failed to parse SSE data:", error);
-      }
-    };
+    const cleanup = orderService.createOrderStatusStream(
+      id,
+      (updatedOrder) => setOrder(updatedOrder),
+      (error) => console.error("SSE connection error:", error)
+    );
 
-    eventSource.onerror = (error) => {
-      console.error("SSE connection error:", error);
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
+    return cleanup;
   }, [id]);
 
   const loadOrder = async () => {

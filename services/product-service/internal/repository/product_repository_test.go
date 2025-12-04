@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"product-service/internal/models"
+	"product-service/internal/model"
 
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"

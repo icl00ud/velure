@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"velure-auth-service/internal/config"
-	"velure-auth-service/internal/handlers"
+	"velure-auth-service/internal/handler"
 	"velure-auth-service/internal/mocks"
 
 	miniredis "github.com/alicebob/miniredis/v2"

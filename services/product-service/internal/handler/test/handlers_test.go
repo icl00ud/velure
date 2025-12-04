@@ -4,7 +4,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"product-service/internal/handlers"
+	"product-service/internal/handler"
 
 	"github.com/gofiber/fiber/v2"
 )

@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 
-	"velure-auth-service/internal/models"
+	"velure-auth-service/internal/model"
 )
 
 // UserRepositoryInterface defines the interface for user repository operations

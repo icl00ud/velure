@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"product-service/internal/models"
+	"product-service/internal/model"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"

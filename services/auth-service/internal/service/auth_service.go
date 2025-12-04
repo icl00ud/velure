@@ -11,8 +11,8 @@ import (
 
 	"velure-auth-service/internal/config"
 	"velure-auth-service/internal/metrics"
-	"velure-auth-service/internal/models"
-	"velure-auth-service/internal/repositories"
+	"velure-auth-service/internal/model"
+	"velure-auth-service/internal/repository"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/icl00ud/velure-shared/logger"

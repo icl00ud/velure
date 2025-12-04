@@ -11,7 +11,7 @@ package mocks
 
 import (
 	reflect "reflect"
-	models "velure-auth-service/internal/models"
+	models "velure-auth-service/internal/model"
 
 	gomock "go.uber.org/mock/gomock"
 )

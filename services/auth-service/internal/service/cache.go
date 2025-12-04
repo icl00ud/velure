@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"velure-auth-service/internal/metrics"
-	"velure-auth-service/internal/models"
+	"velure-auth-service/internal/model"
 )
 
 // CacheEntry representa uma entrada no cache

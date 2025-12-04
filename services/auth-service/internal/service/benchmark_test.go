@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 	"velure-auth-service/internal/config"
-	"velure-auth-service/internal/models"
+	"velure-auth-service/internal/model"
 )
 
 // BenchmarkRegistrationSequential testa registro sequencial (antes)
