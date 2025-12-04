@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"velure-auth-service/internal/config"
 	"velure-auth-service/internal/database"
@@ -81,6 +82,17 @@ func run(log *logger.Logger) error {
 	authService := services.NewAuthService(userRepo, sessionRepo, passwordResetRepo, cfg, redisClient)
 	authService.SyncActiveSessionsMetric(context.Background())
 	authService.SyncTotalUsersMetric(context.Background())
+
+	// Start background metrics sync job (updates gauges every 30s)
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			authService.SyncActiveSessionsMetric(context.Background())
+			authService.SyncTotalUsersMetric(context.Background())
+		}
+	}()
+	log.Info("Background metrics sync started", logger.String("interval", "30s"))
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)

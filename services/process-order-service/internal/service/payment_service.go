@@ -36,8 +36,13 @@ func (s *paymentService) Process(orderID string, items []model.CartItem, amount 
 	start := time.Now()
 
 	// Step 1: Deduct stock for all items in PARALLEL
-	if err := s.deductStockParallel(orderID, items, start); err != nil {
+	shouldContinue, err := s.deductStockParallel(orderID, items, start)
+	if err != nil {
 		return err
+	}
+	if !shouldContinue {
+		// Permanent error occurred, failure event already published, stop processing
+		return nil
 	}
 
 	// Step 2: Publish processing event
@@ -94,7 +99,8 @@ func (s *paymentService) Process(orderID string, items []model.CartItem, amount 
 }
 
 // deductStockParallel processes all inventory updates concurrently
-func (s *paymentService) deductStockParallel(orderID string, items []model.CartItem, start time.Time) error {
+// Returns (shouldContinue, error) where shouldContinue=false means permanent failure was handled
+func (s *paymentService) deductStockParallel(orderID string, items []model.CartItem, start time.Time) (bool, error) {
 	type result struct {
 		item model.CartItem
 		err  error
@@ -159,15 +165,16 @@ func (s *paymentService) deductStockParallel(orderID string, items []model.CartI
 				}(),
 			}
 			if pubErr := s.pub.Publish(failEvt); pubErr != nil {
-				return fmt.Errorf("deduct stock failed: %w; publish failure failed: %v", firstErr, pubErr)
+				return false, fmt.Errorf("deduct stock failed: %w; publish failure failed: %v", firstErr, pubErr)
 			}
-			return nil
+			// Permanent error handled, don't continue processing but no error to return
+			return false, nil
 		}
 
-		return fmt.Errorf("deduct stock for product %s: %w", failedItem.ProductID, firstErr)
+		return false, fmt.Errorf("deduct stock for product %s: %w", failedItem.ProductID, firstErr)
 	}
 
-	return nil
+	return true, nil
 }
 
 // simulatePaymentProcessing simulates payment with context-aware waiting

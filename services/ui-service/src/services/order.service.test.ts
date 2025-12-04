@@ -25,15 +25,9 @@ const cartItems: CartItem[] = [
 ];
 
 describe("orderService", () => {
-  const originalEventSource = global.EventSource;
-
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
-  });
-
-  afterAll(() => {
-    global.EventSource = originalEventSource;
   });
 
   it("creates an order with token and formatted payload", async () => {
@@ -110,23 +104,33 @@ describe("orderService", () => {
     await expect(orderService.getUserOrderById("order-1")).rejects.toThrow("Erro ao buscar pedido");
   });
 
-  it("creates an EventSource stream with the token", () => {
+  it("creates an SSE stream using fetch with auth header", () => {
     localStorage.setItem("token", JSON.stringify(token));
-    const eventSourceSpy = vi.fn();
 
-    class MockEventSource {
-      constructor(public url: string) {
-        eventSourceSpy(url);
-      }
-      close() {}
-    }
+    const mockReader = {
+      read: vi.fn().mockResolvedValue({ done: true, value: undefined }),
+    };
+    const mockBody = {
+      getReader: () => mockReader,
+    };
 
-    global.EventSource = MockEventSource as any;
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      body: mockBody,
+    } as any);
 
-    orderService.createOrderStatusStream("order-1");
+    const onMessage = vi.fn();
+    orderService.createOrderStatusStream("order-1", onMessage);
 
-    expect(eventSourceSpy).toHaveBeenCalledWith(
-      "/api/order/user/order/status?id=order-1&token=token-123",
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/order/user/order/status?id=order-1",
+      expect.objectContaining({
+        method: "GET",
+        headers: expect.objectContaining({
+          Authorization: `Bearer ${token.accessToken}`,
+          Accept: "text/event-stream",
+        }),
+      }),
     );
   });
 
