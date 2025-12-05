@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { useAuth } from "./use-auth";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { authenticationService } from "../services/authentication.service";
 import type { ILoginUser, IRegisterUser } from "../types/user.types";
+import { useAuth } from "./use-auth";
 
 // Mock fetch
 global.fetch = vi.fn();

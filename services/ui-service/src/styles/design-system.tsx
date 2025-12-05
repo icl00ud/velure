@@ -1,7 +1,7 @@
 // Velure Design System
 // Natural Green Petshop - Shared styles, colors, fonts, and animations
 
-import React from 'react';
+import React from "react";
 
 export const designSystemStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap');
@@ -329,14 +329,14 @@ export const useScrollAnimation = (callback?: () => void) => {
 
 // Color Constants
 export const colors = {
-  greenPrimary: '#52B788',
-  greenMedium: '#40916C',
-  greenLight: '#95D5B2',
-  greenDark: '#2D6A4F',
-  greenAccent: '#A7C957',
-  background: '#F8FAF5',
-  textDark: '#1B4332',
-  textMedium: '#2D6A4F',
+  greenPrimary: "#52B788",
+  greenMedium: "#40916C",
+  greenLight: "#95D5B2",
+  greenDark: "#2D6A4F",
+  greenAccent: "#A7C957",
+  background: "#F8FAF5",
+  textDark: "#1B4332",
+  textMedium: "#2D6A4F",
 };
 
 // Animation Delays

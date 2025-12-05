@@ -1,14 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  detectAnimalType,
-  getProductIcon,
-  generateFallbackImages,
-  isValidImageUrl,
-  filterValidImages,
-  combineImagesWithFallbacks,
-  optimizeUnsplashUrl,
-  CATEGORY_ICONS,
   ANIMAL_ICONS,
+  CATEGORY_ICONS,
+  combineImagesWithFallbacks,
+  detectAnimalType,
+  filterValidImages,
+  generateFallbackImages,
+  getProductIcon,
+  isValidImageUrl,
+  optimizeUnsplashUrl,
 } from "./image-utils";
 
 describe("image-utils", () => {

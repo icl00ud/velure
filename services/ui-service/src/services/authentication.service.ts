@@ -31,11 +31,11 @@ class AuthenticationService {
 
     try {
       const token: Token = JSON.parse(tokenString);
-      
+
       // Se validou recentemente, considera válido sem validar novamente
       const now = Date.now();
       const lastValidation = this.getLastValidationTime();
-      
+
       if (lastValidation > 0 && now - lastValidation < this.validationCacheDuration) {
         this.notifyAuthStatusChange(true);
         return;

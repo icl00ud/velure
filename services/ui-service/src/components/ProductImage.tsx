@@ -101,7 +101,12 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
   const getProductIcon = (productName: string): string => {
     const name = productName.toLowerCase();
 
-    if (name.includes("cão") || name.includes("cães") || name.includes("dog") || name.includes("cachorro")) {
+    if (
+      name.includes("cão") ||
+      name.includes("cães") ||
+      name.includes("dog") ||
+      name.includes("cachorro")
+    ) {
       return "🐕";
     } else if (name.includes("gato") || name.includes("cat") || name.includes("felino")) {
       return "🐱";

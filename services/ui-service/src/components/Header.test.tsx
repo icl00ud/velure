@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "../test/test-utils";
 import userEvent from "@testing-library/user-event";
-import Header from "./Header";
-import { cartService } from "../services/cart.service";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { authenticationService } from "../services/authentication.service";
+import { cartService } from "../services/cart.service";
 import { productService } from "../services/product.service";
+import { render, screen, waitFor } from "../test/test-utils";
+import Header from "./Header";
 
 // Mock product service
 vi.mock("../services/product.service", () => ({
@@ -119,9 +119,7 @@ describe("Header", () => {
       // Should only have user and cart icon buttons, no category dropdown
       const buttons = screen.getAllByRole("button");
       // Filter out the category dropdown button
-      const categoryDropdown = buttons.find((btn) =>
-        btn.querySelector('[class*="ChevronDown"]')
-      );
+      const categoryDropdown = buttons.find((btn) => btn.querySelector('[class*="ChevronDown"]'));
       expect(categoryDropdown).toBeUndefined();
     });
   });
@@ -231,9 +229,7 @@ describe("Header", () => {
 
       // Find user menu button (the one without ChevronDown icon)
       const buttons = screen.getAllByRole("button");
-      const userMenuButton = buttons.find(
-        (btn) => !btn.querySelector('[class*="ChevronDown"]')
-      );
+      const userMenuButton = buttons.find((btn) => !btn.querySelector('[class*="ChevronDown"]'));
 
       if (userMenuButton) {
         await user.click(userMenuButton);
@@ -265,9 +261,7 @@ describe("Header", () => {
 
       // Open user menu
       const buttons = screen.getAllByRole("button");
-      const userMenuButton = buttons.find(
-        (btn) => !btn.querySelector('[class*="ChevronDown"]')
-      );
+      const userMenuButton = buttons.find((btn) => !btn.querySelector('[class*="ChevronDown"]'));
 
       if (userMenuButton) {
         await user.click(userMenuButton);
@@ -313,9 +307,7 @@ describe("Header", () => {
       });
 
       const buttons = screen.getAllByRole("button");
-      const userMenuButton = buttons.find(
-        (btn) => !btn.querySelector('[class*="ChevronDown"]')
-      );
+      const userMenuButton = buttons.find((btn) => !btn.querySelector('[class*="ChevronDown"]'));
 
       if (userMenuButton) {
         await user.click(userMenuButton);

@@ -122,7 +122,7 @@ const Cart = () => {
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
-          <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+          <div className={`mb-12 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
             <Link
               to="/"
               className="inline-flex items-center font-body text-[#2D6A4F] hover:text-[#52B788] transition-colors mb-6 group"
@@ -153,8 +153,8 @@ const Cart = () => {
                   Seu carrinho está vazio
                 </h3>
                 <p className="font-body text-lg text-[#2D6A4F] mb-8 max-w-md mx-auto">
-                  Parece que você ainda não adicionou nenhum item ao seu carrinho.
-                  Explore nossos produtos!
+                  Parece que você ainda não adicionou nenhum item ao seu carrinho. Explore nossos
+                  produtos!
                 </p>
                 <Button
                   asChild
@@ -281,9 +281,7 @@ const Cart = () => {
                       </div>
                       <div className="flex justify-between text-[#2D6A4F]">
                         <span>Impostos</span>
-                        <span className="font-semibold text-[#1B4332]">
-                          R$ {tax.toFixed(2)}
-                        </span>
+                        <span className="font-semibold text-[#1B4332]">R$ {tax.toFixed(2)}</span>
                       </div>
                       {appliedDiscount > 0 && (
                         <div className="flex justify-between text-[#95D5B2] font-bold">

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { cartService } from "./cart.service";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Product } from "../types/product.types";
+import { cartService } from "./cart.service";
 
 describe("CartService", () => {
   // Sample product for testing

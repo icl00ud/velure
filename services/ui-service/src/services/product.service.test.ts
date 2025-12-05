@@ -1,7 +1,7 @@
 import { vi } from "vitest";
-import { productService } from "./product.service";
-import { configService } from "./config.service";
 import type { Product } from "../types/product.types";
+import { configService } from "./config.service";
+import { productService } from "./product.service";
 
 const mockProduct: Product = {
   _id: "1",

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor, act } from "@testing-library/react";
-import { ProductImage, ProductImageWithFallback, ProductImageGallery } from "./ProductImage";
+import { act, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { ProductImage, ProductImageGallery, ProductImageWithFallback } from "./ProductImage";
 
 describe("ProductImage", () => {
   it("should render image with correct src and alt", () => {
@@ -42,7 +42,11 @@ describe("ProductImage", () => {
   it("should call onError callback when image fails to load", async () => {
     const onError = vi.fn();
     render(
-      <ProductImage src="https://example.com/broken-image.jpg" alt="Test Product" onError={onError} />
+      <ProductImage
+        src="https://example.com/broken-image.jpg"
+        alt="Test Product"
+        onError={onError}
+      />
     );
 
     const img = screen.getByRole("img");
@@ -67,7 +71,11 @@ describe("ProductImage", () => {
 
   it("should apply custom className", () => {
     const { container } = render(
-      <ProductImage src="https://example.com/image.jpg" alt="Test Product" className="custom-class" />
+      <ProductImage
+        src="https://example.com/image.jpg"
+        alt="Test Product"
+        className="custom-class"
+      />
     );
 
     expect(container.querySelector(".custom-class")).toBeTruthy();
@@ -75,7 +83,11 @@ describe("ProductImage", () => {
 
   it("should reset error state when src changes", async () => {
     const { rerender } = render(
-      <ProductImage src="https://example.com/broken-image.jpg" alt="Test Product" fallbackIcon="🐕" />
+      <ProductImage
+        src="https://example.com/broken-image.jpg"
+        alt="Test Product"
+        fallbackIcon="🐕"
+      />
     );
 
     const img = screen.getByRole("img");
@@ -86,7 +98,9 @@ describe("ProductImage", () => {
     });
 
     // Change src to a new image
-    rerender(<ProductImage src="https://example.com/new-image.jpg" alt="Test Product" fallbackIcon="🐕" />);
+    rerender(
+      <ProductImage src="https://example.com/new-image.jpg" alt="Test Product" fallbackIcon="🐕" />
+    );
 
     // Should show image again, not fallback
     await waitFor(() => {
@@ -191,10 +205,12 @@ describe("ProductImageWithFallback", () => {
     const initialImages = ["https://example.com/broken.jpg"];
     const newImages = ["https://example.com/working.jpg"];
 
-    const { rerender } = render(<ProductImageWithFallback images={initialImages} alt="Test Product" />);
+    const { rerender } = render(
+      <ProductImageWithFallback images={initialImages} alt="Test Product" />
+    );
 
     // Fail the initial image
-    let img = screen.getByRole("img");
+    const img = screen.getByRole("img");
     img.dispatchEvent(new Event("error"));
 
     await waitFor(() => {

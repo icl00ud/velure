@@ -108,7 +108,7 @@ const ProductList = () => {
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
           {/* Breadcrumb */}
-          <nav className={`mb-8 ${isVisible ? 'page-enter active' : 'page-enter'}`}>
+          <nav className={`mb-8 ${isVisible ? "page-enter active" : "page-enter"}`}>
             <div className="flex items-center space-x-2 text-sm font-body text-[#2D6A4F]">
               <Link to="/" className="hover:text-[#52B788] transition-colors">
                 Início
@@ -119,7 +119,7 @@ const ProductList = () => {
           </nav>
 
           {/* Header Section */}
-          <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+          <div className={`mb-12 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
             <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
               Catálogo Completo
             </span>

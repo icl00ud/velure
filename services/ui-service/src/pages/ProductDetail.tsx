@@ -110,7 +110,7 @@ const ProductDetail = () => {
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
           {/* Breadcrumb */}
-          <nav className={`mb-8 ${isVisible ? 'page-enter active' : 'page-enter'}`}>
+          <nav className={`mb-8 ${isVisible ? "page-enter active" : "page-enter"}`}>
             <div className="flex items-center space-x-2 text-sm font-body text-[#2D6A4F]">
               <Link to="/" className="hover:text-[#52B788] transition-colors">
                 Início
@@ -145,7 +145,7 @@ const ProductDetail = () => {
 
           <div className="grid lg:grid-cols-2 gap-12 mb-16">
             {/* Product Images */}
-            <div className={`space-y-6 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+            <div className={`space-y-6 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
               <div className="aspect-square bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-[#1B4332]/10 relative group">
                 <ProductImageWithFallback
                   images={product.images || []}
@@ -188,7 +188,10 @@ const ProductDetail = () => {
             </div>
 
             {/* Product Info */}
-            <div className={`space-y-6 ${isVisible ? 'hero-enter active' : 'hero-enter'}`} style={{ animationDelay: '0.2s' }}>
+            <div
+              className={`space-y-6 ${isVisible ? "hero-enter active" : "hero-enter"}`}
+              style={{ animationDelay: "0.2s" }}
+            >
               <div>
                 {product.brand && (
                   <p className="font-body text-[#95D5B2] font-semibold uppercase tracking-widest text-sm mb-3">
@@ -382,7 +385,9 @@ const ProductDetail = () => {
                       key={index}
                       className="flex items-start space-x-4 bg-white rounded-2xl p-4 border-2 border-[#1B4332]/10"
                     >
-                      <div className={`bg-gradient-to-br ${benefit.color} rounded-xl p-2.5 flex-shrink-0`}>
+                      <div
+                        className={`bg-gradient-to-br ${benefit.color} rounded-xl p-2.5 flex-shrink-0`}
+                      >
                         <Icon className="h-5 w-5 text-white" />
                       </div>
                       <div>

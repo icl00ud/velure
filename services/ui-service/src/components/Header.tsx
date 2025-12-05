@@ -166,9 +166,7 @@ const Header = () => {
                     </Link>
                     {categories.length > 0 && (
                       <div className="space-y-1 pt-2">
-                        <p className="text-sm font-semibold text-[#2D6A4F] px-4 mb-2">
-                          Categorias
-                        </p>
+                        <p className="text-sm font-semibold text-[#2D6A4F] px-4 mb-2">Categorias</p>
                         {categories.map((category) => (
                           <Link
                             key={category}

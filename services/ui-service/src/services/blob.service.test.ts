@@ -1,5 +1,5 @@
-import { blobService } from "./blob.service";
 import { vi } from "vitest";
+import { blobService } from "./blob.service";
 
 const mockFetch = (response: Partial<Response>) => {
   global.fetch = vi.fn().mockResolvedValue({

@@ -7,10 +7,10 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-export const ProtectedRoute = ({ 
-  children, 
-  requireAuth = true, 
-  redirectTo = "/" 
+export const ProtectedRoute = ({
+  children,
+  requireAuth = true,
+  redirectTo = "/",
 }: ProtectedRouteProps) => {
   const { isAuthenticated, isInitializing } = useAuth();
 

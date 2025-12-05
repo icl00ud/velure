@@ -1,8 +1,8 @@
-import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { render, screen } from "@testing-library/react";
-import { ProtectedRoute } from "./ProtectedRoute";
-import { useAuth } from "@/hooks/use-auth";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { vi } from "vitest";
+import { useAuth } from "@/hooks/use-auth";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 vi.mock("@/hooks/use-auth", () => ({
   useAuth: vi.fn(),
@@ -33,7 +33,7 @@ describe("ProtectedRoute", () => {
             }
           />
         </Routes>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     expect(container.querySelector(".animate-spin")).toBeInTheDocument();
@@ -58,7 +58,7 @@ describe("ProtectedRoute", () => {
           />
           <Route path="/login" element={<div>Login Page</div>} />
         </Routes>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     expect(screen.getByText("Login Page")).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe("ProtectedRoute", () => {
             }
           />
         </Routes>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     expect(screen.getByText("Secret content")).toBeInTheDocument();
@@ -107,7 +107,7 @@ describe("ProtectedRoute", () => {
           />
           <Route path="/orders" element={<div>Orders page</div>} />
         </Routes>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     expect(screen.getByText("Orders page")).toBeInTheDocument();
