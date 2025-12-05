@@ -257,3 +257,48 @@ services/*/*.exe
 # Service logs
 services/*/logs/
 services/*/*.log
+
+# CI trigger files (used to force CI runs)
+.ci-trigger
+.ci-trigger-*
+
+# Go compiled binaries (service names match directory names)
+services/auth-service/auth-service
+services/product-service/product-service
+services/process-order-service/process-order-service
+services/publish-order-service/publish-order-service
+
+# Coverage files
+coverage.html
+coverage.out
+coverage_*.out
+
+# Test and debug output
+performance-output.log
+consumer.out
+publisher_unit.out
+repository.out
+database.out
+coverage.sh
+
+# SonarCloud setup docs (should be in wiki/docs, not repo)
+SONARCLOUD_SETUP.md
+
+# DrawIO backup files
+.$*.bkp
+
+# JSON backup files
+*.json.bak
+
+# Terraform state outside infrastructure/terraform
+scripts/terraform.tfstate
+scripts/terraform.tfstate.*
+
+# Terraform plan files (pattern extension)
+tfplan-*
+
+# Helm chart dependencies (downloaded, not source)
+infrastructure/kubernetes/charts/**/charts/*.tgz
+
+# Biome ignore files
+.biomeignore
