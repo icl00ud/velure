@@ -1,6 +1,6 @@
 import { Eye, EyeOff, Heart, Lock, Mail, User } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,8 @@ const Login = () => {
 
   const { login, register, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
 
   useEffect(() => {
     setIsVisible(true);
@@ -40,7 +42,7 @@ const Login = () => {
           title: "Bem-vindo de volta!",
           description: "Você foi autenticado com sucesso.",
         });
-        navigate("/");
+        navigate(from, { replace: true });
       } else {
         if (formData.password !== formData.confirmPassword) {
           toast({
@@ -60,7 +62,7 @@ const Login = () => {
           title: "Conta criada!",
           description: "Bem-vindo ao Velure!",
         });
-        navigate("/");
+        navigate(from, { replace: true });
       }
     } catch (error) {
       toast({
