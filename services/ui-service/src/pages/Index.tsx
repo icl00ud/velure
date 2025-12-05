@@ -83,7 +83,7 @@ const Index = () => {
                 </p>
 
                 <div className="flex flex-wrap gap-4">
-                  <Link to="/products/dogs">
+                  <Link to="/products">
                     <button className="btn-primary-custom font-body px-10 py-4 rounded-full text-white font-semibold text-lg">
                       Explorar Produtos
                     </button>
@@ -295,7 +295,7 @@ const Index = () => {
                 de seus pets
               </p>
 
-              <Link to="/products/dogs">
+              <Link to="/products">
                 <button className="font-body px-12 py-5 rounded-full bg-white text-[#1B4332] font-bold text-lg shadow-2xl hover:scale-105 hover:shadow-[#A7C957]/50 transition-all duration-300">
                   Começar a Comprar
                 </button>
