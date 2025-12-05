@@ -54,64 +54,13 @@ Velure é uma **plataforma de e-commerce cloud-native** desenvolvida para demons
 
 ### Visão Arquitetural
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          AWS Cloud / EKS Cluster                        │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌──────────────┐         ┌──────────────────────────────────────┐    │
-│  │   Route53    │────────▶│     ALB (Ingress Controller)         │    │
-│  │ DNS + Health │         │   - TLS Termination                  │    │
-│  └──────────────┘         │   - Path-based Routing               │    │
-│                           │   - Health Checks                     │    │
-│                           └─────────────┬────────────────────────┘    │
-│                                         │                              │
-│  ┌──────────────────────────────────────┼────────────────────────┐    │
-│  │              Microservices Layer     │                        │    │
-│  │                                      │                        │    │
-│  │  ┌─────────────┐   ┌────────────┐   │   ┌──────────────┐     │    │
-│  │  │ Auth        │   │ Product    │   │   │ Publish-Order│     │    │
-│  │  │ Service     │   │ Service    │   │   │ Service      │     │    │
-│  │  │ Go + Gin    │   │ Go + Fiber │   │   │ Go + SSE     │     │    │
-│  │  │ JWT + OAuth │   │ MongoDB    │   │   │ PostgreSQL   │     │    │
-│  │  └──────┬──────┘   └──────┬─────┘   │   └──────┬───────┘     │    │
-│  │         │                  │         │          │             │    │
-│  │         ▼                  ▼         │          ▼             │    │
-│  │  ┌────────────┐   ┌────────────┐    │   ┌──────────────┐     │    │
-│  │  │ PostgreSQL │   │   Redis    │    │   │  RabbitMQ    │     │    │
-│  │  │  (RDS)     │   │  (Cache)   │    │   │  (AmazonMQ)  │     │    │
-│  │  └────────────┘   └────────────┘    │   └──────┬───────┘     │    │
-│  │                                      │          │             │    │
-│  │                                      │          │ Queue       │    │
-│  │                                      │          │ "orders"    │    │
-│  │                                      │          ▼             │    │
-│  │                                      │   ┌──────────────┐     │    │
-│  │                                      │   │ Process-Order│     │    │
-│  │                                      │   │ Service      │     │    │
-│  │                                      │   │ Async Worker │     │    │
-│  │                                      │   └──────────────┘     │    │
-│  │                                      │                        │    │
-│  │  ┌──────────────────────────────────────────────────────┐     │    │
-│  │  │            UI Service (React SPA)                    │     │    │
-│  │  │  Vite + TypeScript + TailwindCSS + Radix UI          │     │    │
-│  │  └──────────────────────────────────────────────────────┘     │    │
-│  └────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌────────────────────────────────────────────────────────────────┐    │
-│  │              Observability Stack (Monitoring NS)               │    │
-│  │                                                                 │    │
-│  │  ┌────────────┐   ┌─────────────┐   ┌──────────────┐          │    │
-│  │  │ Prometheus │◀──│ ServiceMon  │   │   Grafana    │          │    │
-│  │  │  Metrics   │   │ (exporters) │   │  Dashboards  │          │    │
-│  │  └────────────┘   └─────────────┘   └──────────────┘          │    │
-│  │                                                                 │    │
-│  │  ┌────────────┐   ┌─────────────┐                              │    │
-│  │  │    Loki    │◀──│  Promtail   │   (Logs aggregation)         │    │
-│  │  └────────────┘   └─────────────┘                              │    │
-│  └────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+<div align="center">
+
+![Velure AWS Infrastructure](diagrams/architecture-Velure%20AWS%20Infrastructure.drawio.png)
+
+*Arquitetura de infraestrutura AWS com EKS, multi-AZ, RDS, AmazonMQ e Secrets Manager*
+
+</div>
 
 ### Características Arquiteturais
 
