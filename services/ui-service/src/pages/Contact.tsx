@@ -88,7 +88,7 @@ const Contact = () => {
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
           <div className="max-w-6xl mx-auto">
-            <div className={`text-center mb-16 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+            <div className={`text-center mb-16 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
               <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
                 Fale Conosco
               </span>

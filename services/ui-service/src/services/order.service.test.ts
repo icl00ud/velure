@@ -1,6 +1,6 @@
 import { vi } from "vitest";
-import { orderService } from "./order.service";
 import type { CartItem, Product } from "../types/product.types";
+import { orderService } from "./order.service";
 
 const token = { accessToken: "token-123" };
 
@@ -130,7 +130,7 @@ describe("orderService", () => {
           Authorization: `Bearer ${token.accessToken}`,
           Accept: "text/event-stream",
         }),
-      }),
+      })
     );
   });
 
@@ -141,7 +141,7 @@ describe("orderService", () => {
     } as any);
 
     await expect(orderService.updateOrderStatus("order-1", "shipped")).rejects.toThrow(
-      "Erro ao atualizar status do pedido",
+      "Erro ao atualizar status do pedido"
     );
   });
 

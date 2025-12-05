@@ -105,7 +105,7 @@ const ProductCatalog = () => {
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
           {/* Breadcrumb */}
-          <nav className={`mb-8 ${isVisible ? 'page-enter active' : 'page-enter'}`}>
+          <nav className={`mb-8 ${isVisible ? "page-enter active" : "page-enter"}`}>
             <div className="flex items-center space-x-2 text-sm font-body text-[#2D6A4F]">
               <Link to="/" className="hover:text-[#52B788] transition-colors">
                 Início
@@ -124,7 +124,7 @@ const ProductCatalog = () => {
           </nav>
 
           {/* Header */}
-          <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+          <div className={`mb-12 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
             <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
               {category ? `Categoria: ${categoryName}` : "Catálogo Completo"}
             </span>
@@ -140,7 +140,8 @@ const ProductCatalog = () => {
                 </span>
               ) : (
                 <>
-                  <span className="font-bold text-[#52B788]">{totalCount || 0}</span> produtos encontrados
+                  <span className="font-bold text-[#52B788]">{totalCount || 0}</span> produtos
+                  encontrados
                 </>
               )}
             </p>
@@ -196,7 +197,11 @@ const ProductCatalog = () => {
                     variant={viewMode === "grid" ? "default" : "outline"}
                     size="icon"
                     onClick={() => setViewMode("grid")}
-                    className={viewMode === "grid" ? "bg-[#52B788] hover:bg-[#40916C]" : "hover:bg-[#52B788]/10"}
+                    className={
+                      viewMode === "grid"
+                        ? "bg-[#52B788] hover:bg-[#40916C]"
+                        : "hover:bg-[#52B788]/10"
+                    }
                   >
                     <Grid3X3 className="h-4 w-4" />
                   </Button>
@@ -204,7 +209,11 @@ const ProductCatalog = () => {
                     variant={viewMode === "list" ? "default" : "outline"}
                     size="icon"
                     onClick={() => setViewMode("list")}
-                    className={viewMode === "list" ? "bg-[#52B788] hover:bg-[#40916C]" : "hover:bg-[#52B788]/10"}
+                    className={
+                      viewMode === "list"
+                        ? "bg-[#52B788] hover:bg-[#40916C]"
+                        : "hover:bg-[#52B788]/10"
+                    }
                   >
                     <List className="h-4 w-4" />
                   </Button>
@@ -283,7 +292,9 @@ const ProductCatalog = () => {
                           )}
                           {product.quantity === 0 && (
                             <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center">
-                              <Badge className="bg-[#1B4332] text-white px-6 py-2 text-base">Sem Estoque</Badge>
+                              <Badge className="bg-[#1B4332] text-white px-6 py-2 text-base">
+                                Sem Estoque
+                              </Badge>
                             </div>
                           )}
                         </div>
@@ -408,13 +419,17 @@ const ProductCatalog = () => {
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-1">
                               <Star className="h-5 w-5 text-[#A7C957] fill-[#A7C957]" />
-                              <span className="font-body text-sm font-semibold">{product.rating}</span>
+                              <span className="font-body text-sm font-semibold">
+                                {product.rating}
+                              </span>
                             </div>
                             {product.quantity === 0 && (
                               <Badge className="bg-[#1B4332] text-white">Sem estoque</Badge>
                             )}
                             {product.quantity < 10 && product.quantity > 0 && (
-                              <Badge className="border-orange-500 text-orange-600">Estoque baixo</Badge>
+                              <Badge className="border-orange-500 text-orange-600">
+                                Estoque baixo
+                              </Badge>
                             )}
                           </div>
 

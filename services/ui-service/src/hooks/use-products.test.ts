@@ -1,12 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
-import {
-  useCategories,
-  useProduct,
-  useProducts,
-  useProductsPaginated,
-} from "./use-products";
 import { productService } from "../services/product.service";
+import { useCategories, useProduct, useProducts, useProductsPaginated } from "./use-products";
 
 vi.mock("../services/product.service", () => ({
   productService: {

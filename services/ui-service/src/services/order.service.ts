@@ -1,5 +1,5 @@
-import type { CartItem } from "../types/product.types";
 import { environment } from "../config/environment";
+import type { CartItem } from "../types/product.types";
 
 export interface CreateOrderRequest {
   items: Array<{
@@ -17,7 +17,7 @@ export interface CreateOrderResponse {
 }
 
 class OrderService {
-  private readonly baseURL = environment.ORDER_SERVICE_URL.startsWith('/')
+  private readonly baseURL = environment.ORDER_SERVICE_URL.startsWith("/")
     ? environment.ORDER_SERVICE_URL
     : `${environment.ORDER_SERVICE_URL}/order`;
 
@@ -53,10 +53,7 @@ class OrderService {
     return response.json();
   }
 
-  async getUserOrders(
-    page: number = 1,
-    pageSize: number = 10
-  ): Promise<any> {
+  async getUserOrders(page: number = 1, pageSize: number = 10): Promise<any> {
     const tokenString = localStorage.getItem("token");
     if (!tokenString) {
       throw new Error("Usuário não autenticado");
@@ -98,7 +95,11 @@ class OrderService {
     return response.json();
   }
 
-  createOrderStatusStream(orderId: string, onMessage: (order: Order) => void, onError?: (error: Event) => void): () => void {
+  createOrderStatusStream(
+    orderId: string,
+    onMessage: (order: Order) => void,
+    onError?: (error: Event) => void
+  ): () => void {
     const tokenString = localStorage.getItem("token");
     if (!tokenString) {
       throw new Error("Usuário não autenticado");
@@ -114,8 +115,8 @@ class OrderService {
         const response = await fetch(url, {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${token.accessToken}`,
-            "Accept": "text/event-stream",
+            Authorization: `Bearer ${token.accessToken}`,
+            Accept: "text/event-stream",
           },
           signal: abortController.signal,
         });

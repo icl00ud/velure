@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { authenticationService } from "./authentication.service";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ILoginUser, IRegisterUser, Token } from "../types/user.types";
+import { authenticationService } from "./authentication.service";
 
 // Mock fetch
 global.fetch = vi.fn();

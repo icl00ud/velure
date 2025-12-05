@@ -88,7 +88,7 @@ const Login = () => {
 
         <div className="w-full max-w-md relative z-10">
           {/* Logo */}
-          <div className={`text-center mb-8 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+          <div className={`text-center mb-8 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
             <Link to="/" className="inline-flex items-center space-x-3 mb-6 group">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl blur-md group-hover:blur-lg transition-all opacity-50" />
@@ -105,7 +105,10 @@ const Login = () => {
             </p>
           </div>
 
-          <Card className={`shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl backdrop-blur-sm bg-white/95 ${isVisible ? 'page-enter active' : 'page-enter'}`} style={{ animationDelay: '0.2s' }}>
+          <Card
+            className={`shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl backdrop-blur-sm bg-white/95 ${isVisible ? "page-enter active" : "page-enter"}`}
+            style={{ animationDelay: "0.2s" }}
+          >
             <CardHeader className="text-center pt-8">
               <CardTitle className="font-display text-4xl font-bold text-[#1B4332]">
                 {isLogin ? "Entrar" : "Criar conta"}
@@ -121,7 +124,10 @@ const Login = () => {
               <form onSubmit={handleSubmit} className="space-y-5">
                 {!isLogin && (
                   <div className="space-y-2">
-                    <label htmlFor="name" className="font-body text-sm font-semibold text-[#1B4332]">
+                    <label
+                      htmlFor="name"
+                      className="font-body text-sm font-semibold text-[#1B4332]"
+                    >
                       Nome completo
                     </label>
                     <div className="relative">
@@ -160,7 +166,10 @@ const Login = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="password" className="font-body text-sm font-semibold text-[#1B4332]">
+                  <label
+                    htmlFor="password"
+                    className="font-body text-sm font-semibold text-[#1B4332]"
+                  >
                     Senha
                   </label>
                   <div className="relative">

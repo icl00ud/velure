@@ -21,7 +21,9 @@ const NotFound = () => {
         <div className="fixed top-20 right-10 w-64 h-64 rounded-full bg-[#52B788]/10 blur-3xl pointer-events-none" />
         <div className="fixed bottom-20 left-10 w-80 h-80 rounded-full bg-[#95D5B2]/10 blur-3xl pointer-events-none" />
 
-        <div className={`text-center relative z-10 max-w-2xl mx-auto ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+        <div
+          className={`text-center relative z-10 max-w-2xl mx-auto ${isVisible ? "hero-enter active" : "hero-enter"}`}
+        >
           {/* 404 Illustration */}
           <div className="relative inline-block mb-12">
             <div className="absolute inset-0 bg-[#52B788]/20 blur-3xl" />

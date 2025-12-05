@@ -1,12 +1,12 @@
+import { CheckCircle, Clock, Loader2, Package } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock, Package, CheckCircle, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { orderService, type Order } from "@/services/order.service";
 import { toast } from "@/hooks/use-toast";
+import { type Order, orderService } from "@/services/order.service";
 import { designSystemStyles } from "@/styles/design-system";
 
 const Orders = () => {
@@ -29,7 +29,7 @@ const Orders = () => {
     setIsLoading(true);
     try {
       const result = await orderService.getUserOrders(page, pageSize);
-      
+
       // Handle different response formats
       let ordersList: Order[] = [];
       if (Array.isArray(result)) {
@@ -41,9 +41,9 @@ const Orders = () => {
       } else if (result?.data) {
         ordersList = result.data;
       }
-      
+
       setOrders(ordersList || []);
-      
+
       // Handle pagination
       if (result?.totalPages) {
         setTotalPages(result.totalPages);
@@ -92,7 +92,7 @@ const Orders = () => {
     }
   };
 
-  const getOrderId = (order: Order) => order.id || order._id || 'UNKNOWN';
+  const getOrderId = (order: Order) => order.id || order._id || "UNKNOWN";
   const getOrderDate = (order: Order) => {
     const dateStr = order.created_at || order.createdAt;
     if (!dateStr) return new Date();
@@ -106,7 +106,7 @@ const Orders = () => {
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
-          <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+          <div className={`mb-12 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
             <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
               Minha Conta
             </span>
@@ -114,9 +114,7 @@ const Orders = () => {
               Meus Pedidos
             </h1>
             <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mb-6" />
-            <p className="font-body text-xl text-[#2D6A4F]">
-              Acompanhe o status dos seus pedidos
-            </p>
+            <p className="font-body text-xl text-[#2D6A4F]">Acompanhe o status dos seus pedidos</p>
           </div>
 
           {isLoading ? (

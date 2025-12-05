@@ -1,13 +1,13 @@
+import { ArrowLeft, CheckCircle, Clock, Loader2, Package } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Clock, Package, CheckCircle, Loader2 } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
 import Header from "@/components/Header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { orderService, type Order } from "@/services/order.service";
 import { toast } from "@/hooks/use-toast";
+import { type Order, orderService } from "@/services/order.service";
 import { designSystemStyles } from "@/styles/design-system";
 
 const OrderDetail = () => {
@@ -145,7 +145,7 @@ const OrderDetail = () => {
     );
   }
 
-  const getOrderId = (order: Order) => order.id || order._id || 'UNKNOWN';
+  const getOrderId = (order: Order) => order.id || order._id || "UNKNOWN";
   const getOrderDate = (order: Order) => {
     const dateStr = order.created_at || order.createdAt;
     if (!dateStr) return new Date();
@@ -159,7 +159,7 @@ const OrderDetail = () => {
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">
-          <div className={`mb-12 ${isVisible ? 'hero-enter active' : 'hero-enter'}`}>
+          <div className={`mb-12 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
             <Link
               to="/orders"
               className="inline-flex items-center font-body text-[#2D6A4F] hover:text-[#52B788] transition-colors mb-6 group"
@@ -221,11 +221,15 @@ const OrderDetail = () => {
                               : "text-gray-400"
                           }`}
                         />
-                        <p className={`font-body text-sm font-semibold ${
-                          ["CREATED", "PROCESSING", "COMPLETED"].includes(order.status)
-                            ? "text-green-700"
-                            : "text-gray-500"
-                        }`}>Criado</p>
+                        <p
+                          className={`font-body text-sm font-semibold ${
+                            ["CREATED", "PROCESSING", "COMPLETED"].includes(order.status)
+                              ? "text-green-700"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          Criado
+                        </p>
                       </div>
                       <div
                         className={`p-5 rounded-2xl border-2 ${
@@ -241,11 +245,15 @@ const OrderDetail = () => {
                               : "text-gray-400"
                           }`}
                         />
-                        <p className={`font-body text-sm font-semibold ${
-                          ["PROCESSING", "COMPLETED"].includes(order.status)
-                            ? "text-green-700"
-                            : "text-gray-500"
-                        }`}>Processando</p>
+                        <p
+                          className={`font-body text-sm font-semibold ${
+                            ["PROCESSING", "COMPLETED"].includes(order.status)
+                              ? "text-green-700"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          Processando
+                        </p>
                       </div>
                       <div
                         className={`p-5 rounded-2xl border-2 ${
@@ -259,11 +267,13 @@ const OrderDetail = () => {
                             order.status === "COMPLETED" ? "text-green-600" : "text-gray-400"
                           }`}
                         />
-                        <p className={`font-body text-sm font-semibold ${
-                          order.status === "COMPLETED"
-                            ? "text-green-700"
-                            : "text-gray-500"
-                        }`}>Concluído</p>
+                        <p
+                          className={`font-body text-sm font-semibold ${
+                            order.status === "COMPLETED" ? "text-green-700" : "text-gray-500"
+                          }`}
+                        >
+                          Concluído
+                        </p>
                       </div>
                     </div>
 
@@ -339,9 +349,7 @@ const OrderDetail = () => {
                     <Separator className="bg-[#1B4332]/20" />
                     <div className="flex justify-between text-xl pt-2 font-display">
                       <span className="font-bold text-[#1B4332]">Total</span>
-                      <span className="font-bold text-[#52B788]">
-                        R$ {order.total.toFixed(2)}
-                      </span>
+                      <span className="font-bold text-[#52B788]">R$ {order.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </CardContent>

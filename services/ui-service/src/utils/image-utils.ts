@@ -52,7 +52,12 @@ const ANIMAL_ICONS = {
 export function detectAnimalType(productName: string): keyof typeof ANIMAL_ICONS {
   const name = productName.toLowerCase();
 
-  if (name.includes("cão") || name.includes("cães") || name.includes("dog") || name.includes("cachorro")) {
+  if (
+    name.includes("cão") ||
+    name.includes("cães") ||
+    name.includes("dog") ||
+    name.includes("cachorro")
+  ) {
     return "dogs";
   }
   if (name.includes("gato") || name.includes("cat") || name.includes("felino")) {

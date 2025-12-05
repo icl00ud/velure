@@ -1,6 +1,14 @@
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from "react";
-import type { ILoginResponse, ILoginUser, IRegisterUser, Token } from "../types/user.types";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { configService } from "../services/config.service";
+import type { ILoginResponse, ILoginUser, IRegisterUser, Token } from "../types/user.types";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -82,26 +90,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return token?.accessToken ?? null;
   }, [token]);
 
-  const login = useCallback(async (user: ILoginUser): Promise<ILoginResponse> => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${configService.authenticationServiceUrl}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(user),
-      });
+  const login = useCallback(
+    async (user: ILoginUser): Promise<ILoginResponse> => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${configService.authenticationServiceUrl}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(user),
+        });
 
-      if (!response.ok) {
-        throw new Error("Erro no login");
+        if (!response.ok) {
+          throw new Error("Erro no login");
+        }
+
+        const loginResponse: ILoginResponse = await response.json();
+        saveToken(loginResponse);
+        return loginResponse;
+      } finally {
+        setIsLoading(false);
       }
-
-      const loginResponse: ILoginResponse = await response.json();
-      saveToken(loginResponse);
-      return loginResponse;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [saveToken]);
+    },
+    [saveToken]
+  );
 
   const logout = useCallback(async (): Promise<void> => {
     setIsLoading(true);
@@ -117,43 +128,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [token, clearTokenStorage]);
 
-  const register = useCallback(async (user: IRegisterUser): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${configService.authenticationServiceUrl}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(user),
-      });
+  const register = useCallback(
+    async (user: IRegisterUser): Promise<boolean> => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${configService.authenticationServiceUrl}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(user),
+        });
 
-      if (!response.ok) {
-        throw new Error("Erro no registro");
+        if (!response.ok) {
+          throw new Error("Erro no registro");
+        }
+
+        // Auto-login after registration
+        await login({ email: user.email, password: user.password });
+        return true;
+      } finally {
+        setIsLoading(false);
       }
-
-      // Auto-login after registration
-      await login({ email: user.email, password: user.password });
-      return true;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [login]);
-
-  const value = useMemo(() => ({
-    isAuthenticated,
-    isLoading,
-    isInitializing,
-    token,
-    login,
-    logout,
-    register,
-    getAccessToken,
-  }), [isAuthenticated, isLoading, isInitializing, token, login, logout, register, getAccessToken]);
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+    },
+    [login]
   );
+
+  const value = useMemo(
+    () => ({
+      isAuthenticated,
+      isLoading,
+      isInitializing,
+      token,
+      login,
+      logout,
+      register,
+      getAccessToken,
+    }),
+    [isAuthenticated, isLoading, isInitializing, token, login, logout, register, getAccessToken]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuthContext() {

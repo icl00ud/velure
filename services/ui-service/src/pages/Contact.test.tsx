@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "../test/test-utils";
 import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "../test/test-utils";
 import Contact from "./Contact";
 
 // Mock toast
@@ -60,7 +60,7 @@ describe("Contact Page", () => {
 
     const emailInput = screen.getByLabelText(/e-mail/i);
     await user.type(emailInput, "invalid-email");
-    
+
     const submitButton = screen.getByRole("button", { name: /enviar mensagem/i });
     await user.click(submitButton);
 
@@ -83,10 +83,12 @@ describe("Contact Page", () => {
 
     await waitFor(() => {
       const expectedSubject = encodeURIComponent("Novo contato via Site Velure");
-      expect(window.location.href).toContain(`mailto:israelschroederm@gmail.com?subject=${expectedSubject}`);
+      expect(window.location.href).toContain(
+        `mailto:israelschroederm@gmail.com?subject=${expectedSubject}`
+      );
       expect(window.location.href).toContain("John%20Doe"); // Encoded name
     });
-    
+
     expect(mockToast).toHaveBeenCalledWith({
       title: "Mensagem preparada!",
       description: "Seu cliente de email será aberto para enviar a mensagem.",

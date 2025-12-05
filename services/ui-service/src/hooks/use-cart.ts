@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { cartService } from "../services/cart.service";
 import type { CartItem, Product } from "../types/product.types";
 

@@ -5,10 +5,10 @@ export class ConfigService {
   private readonly authenticationServiceApiUrl: string;
 
   constructor() {
-    this.productServiceApiUrl = environment.PRODUCT_SERVICE_URL.startsWith('/') 
-      ? `${environment.PRODUCT_SERVICE_URL}` 
+    this.productServiceApiUrl = environment.PRODUCT_SERVICE_URL.startsWith("/")
+      ? `${environment.PRODUCT_SERVICE_URL}`
       : `${environment.PRODUCT_SERVICE_URL}/product`;
-    this.authenticationServiceApiUrl = environment.AUTHENTICATION_SERVICE_URL.startsWith('/')
+    this.authenticationServiceApiUrl = environment.AUTHENTICATION_SERVICE_URL.startsWith("/")
       ? `${environment.AUTHENTICATION_SERVICE_URL}`
       : `${environment.AUTHENTICATION_SERVICE_URL}/authentication`;
   }
