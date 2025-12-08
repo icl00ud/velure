@@ -59,7 +59,7 @@ const ProductDetail = () => {
     return (
       <>
         <style>{designSystemStyles}</style>
-        <div className="min-h-screen bg-[#F8FAF5]">
+        <div className="min-h-screen bg-white">
           <Header />
           <div className="flex flex-col items-center justify-center py-32">
             <Loader2 className="h-16 w-16 animate-spin text-[#52B788] mb-4" />
@@ -74,7 +74,7 @@ const ProductDetail = () => {
     return (
       <>
         <style>{designSystemStyles}</style>
-        <div className="min-h-screen bg-[#F8FAF5]">
+        <div className="min-h-screen bg-white">
           <Header />
           <main className="container mx-auto px-4 lg:px-8 py-12">
             <Card className="text-center py-20 rounded-3xl border-2 border-[#1B4332]/10 shadow-2xl">
@@ -105,7 +105,7 @@ const ProductDetail = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-[#F8FAF5]">
+      <div className="min-h-screen bg-white">
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">

@@ -83,7 +83,7 @@ const Login = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-gradient-to-br from-[#F8FAF5] via-[#EDF7ED] to-[#E8F5E9] flex items-center justify-center p-4 grain-texture relative overflow-hidden">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4 grain-texture relative overflow-hidden">
         {/* Decorative Elements */}
         <div className="fixed top-20 right-10 w-64 h-64 rounded-full bg-[#52B788]/10 blur-3xl pointer-events-none" />
         <div className="fixed bottom-20 left-10 w-80 h-80 rounded-full bg-[#95D5B2]/10 blur-3xl pointer-events-none" />
