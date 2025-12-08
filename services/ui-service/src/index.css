@@ -7,7 +7,7 @@
 @layer base {
   :root {
     /* Velure Design System - Natural Green Petshop Palette */
-    --background: 100 55% 98%; /* #F8FAF5 - soft green-tinted background */
+    --background: 0 0% 100%; /* #ffffff - clean white background */
     --foreground: 156 51% 15%; /* #1B4332 - deep green text */
 
     --card: 100 55% 98%;
