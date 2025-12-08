@@ -75,13 +75,7 @@ const Header = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3 group">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl blur-sm group-hover:blur-md transition-all opacity-50" />
-                <div className="relative bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl p-2 transform group-hover:scale-110 transition-transform duration-300">
-                  <img src="/favicon.ico" alt="Velure" className="h-7 w-7" />
-                </div>
-              </div>
+            <Link to="/" className="group">
               <span className="font-display font-bold text-2xl text-[#1B4332] group-hover:text-[#52B788] transition-colors">
                 Velure
               </span>
@@ -149,10 +143,7 @@ const Header = () => {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[280px] sm:w-[320px] bg-[#F8FAF5]">
                   <SheetHeader>
-                    <SheetTitle className="flex items-center space-x-3">
-                      <div className="bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl p-1.5">
-                        <img src="/favicon.ico" alt="Velure" className="h-6 w-6" />
-                      </div>
+                    <SheetTitle>
                       <span className="font-display font-bold text-xl text-[#1B4332]">Velure</span>
                     </SheetTitle>
                   </SheetHeader>
