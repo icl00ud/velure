@@ -201,7 +201,7 @@ const Index = () => {
         </section>
 
         {/* Categories Section - Bento Grid */}
-        <section className="py-32 bg-gradient-to-b from-white to-[#F8FAF5]">
+        <section className="py-32 bg-white">
           <div className="container mx-auto px-4 lg:px-8">
             {/* Section Header */}
             <div className="text-center mb-20 observe-animation">

@@ -68,8 +68,8 @@ const Header = () => {
       <header
         className={`sticky top-0 z-50 w-full transition-all duration-300 ${
           scrolled
-            ? "bg-white/95 backdrop-blur-md shadow-lg border-b-2 border-[#52B788]/20"
-            : "bg-[#F8FAF5]/95 backdrop-blur-sm border-b border-[#1B4332]/10"
+            ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-slate-200"
+            : "bg-white backdrop-blur-sm border-b border-slate-100"
         }`}
       >
         <div className="container mx-auto px-4 lg:px-8">
@@ -141,7 +141,7 @@ const Header = () => {
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[280px] sm:w-[320px] bg-[#F8FAF5]">
+                <SheetContent side="left" className="w-[280px] sm:w-[320px] bg-white">
                   <SheetHeader>
                     <SheetTitle>
                       <span className="font-display font-bold text-xl text-[#1B4332]">Velure</span>
