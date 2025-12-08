@@ -83,7 +83,7 @@ const Contact = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-[#F8FAF5]">
+      <div className="min-h-screen bg-white">
         <Header />
 
         <main className="container mx-auto px-4 lg:px-8 py-12">

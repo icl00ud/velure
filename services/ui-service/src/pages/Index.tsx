@@ -48,7 +48,7 @@ const Index = () => {
   return (
     <>
       <style>{designSystemStyles}</style>
-      <div className="min-h-screen bg-[#F8FAF5] relative overflow-x-hidden">
+      <div className="min-h-screen bg-white relative overflow-x-hidden">
         <Header />
 
         {/* Decorative Elements */}
