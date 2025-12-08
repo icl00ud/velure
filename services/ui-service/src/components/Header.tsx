@@ -1,4 +1,4 @@
-import { ChevronDown, Heart, LogOut, Menu, ShoppingCart, User } from "lucide-react";
+import { ChevronDown, LogOut, Menu, ShoppingCart, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -78,8 +78,8 @@ const Header = () => {
             <Link to="/" className="flex items-center space-x-3 group">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl blur-sm group-hover:blur-md transition-all opacity-50" />
-                <div className="relative bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl p-2.5 transform group-hover:scale-110 transition-transform duration-300">
-                  <Heart className="h-6 w-6 text-white fill-white" />
+                <div className="relative bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl p-2 transform group-hover:scale-110 transition-transform duration-300">
+                  <img src="/favicon.ico" alt="Velure" className="h-7 w-7" />
                 </div>
               </div>
               <span className="font-display font-bold text-2xl text-[#1B4332] group-hover:text-[#52B788] transition-colors">
@@ -150,8 +150,8 @@ const Header = () => {
                 <SheetContent side="left" className="w-[280px] sm:w-[320px] bg-[#F8FAF5]">
                   <SheetHeader>
                     <SheetTitle className="flex items-center space-x-3">
-                      <div className="bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl p-2">
-                        <Heart className="h-5 w-5 text-white fill-white" />
+                      <div className="bg-gradient-to-br from-[#52B788] to-[#40916C] rounded-2xl p-1.5">
+                        <img src="/favicon.ico" alt="Velure" className="h-6 w-6" />
                       </div>
                       <span className="font-display font-bold text-xl text-[#1B4332]">Velure</span>
                     </SheetTitle>
