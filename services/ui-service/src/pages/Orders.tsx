@@ -123,7 +123,7 @@ const Orders = () => {
               <p className="font-body text-lg text-[#2D6A4F]">Carregando pedidos...</p>
             </div>
           ) : !orders || orders.length === 0 ? (
-            <Card className="text-center py-20 rounded-3xl border-2 border-[#1B4332]/10 shadow-2xl">
+            <Card className="text-center py-20 rounded-3xl border border-slate-200 shadow-2xl">
               <CardContent>
                 <div className="relative inline-block mb-8">
                   <div className="absolute inset-0 bg-[#52B788]/20 blur-3xl" />
@@ -152,7 +152,7 @@ const Orders = () => {
                 return (
                   <Card
                     key={orderId}
-                    className="shadow-lg border-2 border-[#1B4332]/10 rounded-3xl card-hover-subtle"
+                    className="shadow-lg border border-slate-200 rounded-3xl card-hover-subtle"
                   >
                     <CardHeader className="pb-4">
                       <div className="flex justify-between items-start">
@@ -204,7 +204,7 @@ const Orders = () => {
                 variant="outline"
                 disabled={page === 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
+                className="font-body border border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
                 ← Anterior
               </Button>
@@ -216,7 +216,7 @@ const Orders = () => {
                 variant="outline"
                 disabled={page === totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
+                className="font-body border border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
                 Próxima →
               </Button>
