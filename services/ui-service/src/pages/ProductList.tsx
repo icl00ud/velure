@@ -143,23 +143,23 @@ const ProductList = () => {
           </div>
 
           {/* Filters */}
-          <Card className="mb-12 shadow-lg border-2 border-[#1B4332]/10 rounded-2xl observe-animation">
+          <Card className="mb-12 shadow-lg border border-slate-200 rounded-2xl observe-animation">
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <Input
                     placeholder="Buscar produtos..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 font-body border-2 border-[#1B4332]/10 rounded-xl h-12 focus:border-[#52B788]"
+                    className="pl-12 font-body border-slate-200 rounded-xl h-12 focus:border-[#52B788]"
                   />
                 </div>
 
                 {/* Category Filter */}
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="font-body border-2 border-[#1B4332]/10 rounded-xl h-12">
+                  <SelectTrigger className="font-body border-slate-200 rounded-xl h-12">
                     <SelectValue placeholder="Todas as Categorias" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -180,7 +180,7 @@ const ProductList = () => {
 
                 {/* Sort By */}
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="font-body border-2 border-[#1B4332]/10 rounded-xl h-12">
+                  <SelectTrigger className="font-body border-slate-200 rounded-xl h-12">
                     <SelectValue placeholder="Ordenar por" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -203,7 +203,7 @@ const ProductList = () => {
               </div>
             ) : error ? (
               <div className="col-span-full">
-                <Card className="text-center py-16 rounded-3xl border-2 border-[#1B4332]/10">
+                <Card className="text-center py-16 rounded-3xl border border-slate-200">
                   <CardContent>
                     <h3 className="font-display text-2xl font-bold text-[#1B4332] mb-2">
                       Erro ao carregar produtos
@@ -220,7 +220,7 @@ const ProductList = () => {
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="col-span-full">
-                <Card className="text-center py-16 rounded-3xl border-2 border-[#1B4332]/10">
+                <Card className="text-center py-16 rounded-3xl border border-slate-200">
                   <CardContent>
                     <h3 className="font-display text-2xl font-bold text-[#1B4332] mb-2">
                       Nenhum produto encontrado
@@ -360,7 +360,7 @@ const ProductList = () => {
                 variant="outline"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
+                className="font-body border border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
                 ← Anterior
               </Button>
@@ -375,7 +375,7 @@ const ProductList = () => {
                       className={
                         page === pageNum
                           ? "bg-[#52B788] hover:bg-[#40916C] rounded-full"
-                          : "border-2 border-[#1B4332]/20 rounded-full hover:border-[#52B788]"
+                          : "border border-[#1B4332]/20 rounded-full hover:border-[#52B788]"
                       }
                     >
                       {pageNum}
@@ -388,7 +388,7 @@ const ProductList = () => {
                 variant="outline"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
+                className="font-body border border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
                 Próximo →
               </Button>

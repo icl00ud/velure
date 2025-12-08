@@ -141,7 +141,7 @@ const Cart = () => {
           </div>
 
           {cartItems.length === 0 ? (
-            <Card className="text-center py-20 rounded-3xl border-2 border-[#1B4332]/10 shadow-2xl">
+            <Card className="text-center py-20 rounded-3xl border border-slate-200 shadow-2xl">
               <CardContent>
                 <div className="relative inline-block mb-8">
                   <div className="absolute inset-0 bg-[#52B788]/20 blur-3xl" />
@@ -168,15 +168,15 @@ const Cart = () => {
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Cart Items */}
               <div className="lg:col-span-2 space-y-6">
-                {cartItems.map((item, index) => (
+                  {cartItems.map((item, index) => (
                   <Card
                     key={item.product._id}
-                    className="shadow-lg border-2 border-[#1B4332]/10 rounded-3xl card-hover-subtle observe-animation"
+                    className="shadow-lg border border-slate-200 rounded-3xl card-hover-subtle observe-animation"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     <CardContent className="p-6">
                       <div className="flex gap-6">
-                        <div className="w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#F8FAF5] to-white">
+                        <div className="w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0 bg-slate-50">
                           <ProductImageWithFallback
                             images={item.product.images || []}
                             alt={item.product.name}
@@ -215,7 +215,7 @@ const Cart = () => {
                           </div>
 
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3 bg-[#F8FAF5] rounded-full p-1">
+                            <div className="flex items-center space-x-3 bg-slate-100 rounded-full p-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -256,7 +256,7 @@ const Cart = () => {
 
               {/* Order Summary */}
               <div className="space-y-6">
-                <Card className="shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl sticky top-24">
+                <Card className="shadow-2xl border border-slate-200 rounded-3xl sticky top-24">
                   <CardContent className="p-8">
                     <h3 className="font-display text-2xl font-bold text-[#1B4332] mb-6">
                       Resumo do pedido
@@ -305,12 +305,12 @@ const Cart = () => {
                           value={promoCode}
                           onChange={(e) => setPromoCode(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && applyPromoCode()}
-                          className="font-body border-2 border-[#1B4332]/10 rounded-xl focus:border-[#52B788]"
+                          className="font-body border-slate-200 rounded-xl focus:border-[#52B788]"
                         />
                         <Button
                           variant="outline"
                           onClick={applyPromoCode}
-                          className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-xl px-6"
+                          className="font-body border-slate-200 hover:bg-[#1B4332] hover:text-white rounded-xl px-6"
                         >
                           Aplicar
                         </Button>
@@ -335,7 +335,7 @@ const Cart = () => {
                 </Card>
 
                 {/* Benefits */}
-                <Card className="shadow-lg border-2 border-[#1B4332]/10 rounded-3xl">
+                <Card className="shadow-lg border border-slate-200 rounded-3xl">
                   <CardContent className="p-6">
                     <h4 className="font-display text-xl font-bold text-[#1B4332] mb-6">
                       Seus benefícios

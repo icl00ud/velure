@@ -77,7 +77,7 @@ const ProductDetail = () => {
         <div className="min-h-screen bg-white">
           <Header />
           <main className="container mx-auto px-4 lg:px-8 py-12">
-            <Card className="text-center py-20 rounded-3xl border-2 border-[#1B4332]/10 shadow-2xl">
+            <Card className="text-center py-20 rounded-3xl border border-slate-200 shadow-2xl">
               <CardContent>
                 <h3 className="font-display text-3xl font-bold text-[#1B4332] mb-4">
                   Produto não encontrado
@@ -146,7 +146,7 @@ const ProductDetail = () => {
           <div className="grid lg:grid-cols-2 gap-12 mb-16">
             {/* Product Images */}
             <div className={`space-y-6 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
-              <div className="aspect-square bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-[#1B4332]/10 relative group">
+              <div className="aspect-square bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-200 relative group">
                 <ProductImageWithFallback
                   images={product.images || []}
                   alt={product.name}
@@ -169,10 +169,10 @@ const ProductDetail = () => {
                       type="button"
                       key={`image-${image}-${index}`}
                       onClick={() => setSelectedImage(index)}
-                      className={`aspect-square bg-white rounded-2xl overflow-hidden border-3 transition-all duration-300 hover:scale-105 ${
+                      className={`aspect-square bg-white rounded-2xl overflow-hidden border transition-all duration-300 hover:scale-105 ${
                         selectedImage === index
                           ? "border-[#52B788] shadow-lg"
-                          : "border-[#1B4332]/10 hover:border-[#52B788]/50"
+                          : "border-slate-200 hover:border-[#52B788]/50"
                       }`}
                     >
                       <ProductImageWithFallback
@@ -229,7 +229,7 @@ const ProductDetail = () => {
                   {product.colors?.map((color) => (
                     <Badge
                       key={`color-${color}`}
-                      className="border-2 border-[#1B4332]/20 text-[#1B4332] bg-white font-body px-4 py-1"
+                      className="border border-slate-200 text-[#1B4332] bg-white font-body px-4 py-1"
                     >
                       {color}
                     </Badge>
@@ -237,7 +237,7 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              <div className="flex items-baseline space-x-4 py-6 border-y-2 border-[#1B4332]/10">
+              <div className="flex items-baseline space-x-4 py-6 border-y border-slate-200">
                 <span className="font-display text-5xl font-bold text-[#52B788]">
                   R$ {product.price.toFixed(2)}
                 </span>
@@ -250,7 +250,7 @@ const ProductDetail = () => {
               )}
 
               {/* Stock Status */}
-              <div className="flex items-center space-x-3 bg-white rounded-2xl p-4 border-2 border-[#1B4332]/10">
+              <div className="flex items-center space-x-3 bg-white rounded-2xl p-4 border border-slate-200">
                 <div
                   className={`w-3 h-3 rounded-full ${inStock ? "bg-green-500" : "bg-red-500"} animate-pulse`}
                 />
@@ -276,7 +276,7 @@ const ProductDetail = () => {
               <div className="space-y-5">
                 <div className="flex items-center space-x-4">
                   <span className="font-body font-bold text-[#1B4332]">Quantidade:</span>
-                  <div className="flex items-center space-x-3 bg-[#F8FAF5] rounded-full p-1 border-2 border-[#1B4332]/10">
+                  <div className="flex items-center space-x-3 bg-slate-100 rounded-full p-1 border border-slate-200">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -314,7 +314,7 @@ const ProductDetail = () => {
                   <Button
                     variant="outline"
                     onClick={handleBuyNow}
-                    className="flex-1 font-body text-lg font-semibold rounded-full h-14 border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white"
+                    className="flex-1 font-body text-lg font-semibold rounded-full h-14 border border-[#1B4332] hover:bg-[#1B4332] hover:text-white"
                     disabled={!inStock}
                   >
                     Comprar agora
@@ -326,10 +326,10 @@ const ProductDetail = () => {
                     variant="outline"
                     size="icon"
                     onClick={() => setIsFavorite(!isFavorite)}
-                    className={`rounded-full h-12 w-12 border-2 ${
+                    className={`rounded-full h-12 w-12 border ${
                       isFavorite
                         ? "text-red-500 border-red-500 bg-red-50"
-                        : "border-[#1B4332]/20 hover:border-red-500 hover:text-red-500"
+                        : "border-slate-200 hover:border-red-500 hover:text-red-500"
                     }`}
                   >
                     <Heart className={`h-5 w-5 ${isFavorite ? "fill-current" : ""}`} />
@@ -344,7 +344,7 @@ const ProductDetail = () => {
                         description: "O link do produto foi copiado para a área de transferência.",
                       });
                     }}
-                    className="rounded-full h-12 w-12 border-2 border-[#1B4332]/20 hover:border-[#52B788] hover:text-[#52B788]"
+                    className="rounded-full h-12 w-12 border border-slate-200 hover:border-[#52B788] hover:text-[#52B788]"
                   >
                     <Share2 className="h-5 w-5" />
                   </Button>
@@ -383,7 +383,7 @@ const ProductDetail = () => {
                   return (
                     <div
                       key={index}
-                      className="flex items-start space-x-4 bg-white rounded-2xl p-4 border-2 border-[#1B4332]/10"
+                      className="flex items-start space-x-4 bg-white rounded-2xl p-4 border border-slate-200"
                     >
                       <div
                         className={`bg-gradient-to-br ${benefit.color} rounded-xl p-2.5 flex-shrink-0`}
@@ -404,10 +404,10 @@ const ProductDetail = () => {
           </div>
 
           {/* Product Details Tabs */}
-          <Card className="shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl observe-animation">
+          <Card className="shadow-2xl border border-slate-200 rounded-3xl observe-animation">
             <CardContent className="p-0">
               <Tabs defaultValue="description" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-[#F8FAF5] rounded-t-3xl p-2">
+                <TabsList className="grid w-full grid-cols-2 bg-slate-100 rounded-t-3xl p-2">
                   <TabsTrigger
                     value="description"
                     className="font-body font-semibold rounded-2xl data-[state=active]:bg-white data-[state=active]:text-[#52B788]"
@@ -444,25 +444,25 @@ const ProductDetail = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {product.sku && (
-                        <div className="flex justify-between py-4 border-b-2 border-[#1B4332]/10">
+                        <div className="flex justify-between py-4 border-b border-slate-200">
                           <span className="font-body font-bold text-[#1B4332]">SKU:</span>
                           <span className="font-body text-[#2D6A4F]">{product.sku}</span>
                         </div>
                       )}
                       {product.brand && (
-                        <div className="flex justify-between py-4 border-b-2 border-[#1B4332]/10">
+                        <div className="flex justify-between py-4 border-b border-slate-200">
                           <span className="font-body font-bold text-[#1B4332]">Marca:</span>
                           <span className="font-body text-[#2D6A4F]">{product.brand}</span>
                         </div>
                       )}
                       {product.category && (
-                        <div className="flex justify-between py-4 border-b-2 border-[#1B4332]/10">
+                        <div className="flex justify-between py-4 border-b border-slate-200">
                           <span className="font-body font-bold text-[#1B4332]">Categoria:</span>
                           <span className="font-body text-[#2D6A4F]">{product.category}</span>
                         </div>
                       )}
                       {product.dimensions?.weight && (
-                        <div className="flex justify-between py-4 border-b-2 border-[#1B4332]/10">
+                        <div className="flex justify-between py-4 border-b border-slate-200">
                           <span className="font-body font-bold text-[#1B4332]">Peso:</span>
                           <span className="font-body text-[#2D6A4F]">
                             {product.dimensions.weight} kg
@@ -470,7 +470,7 @@ const ProductDetail = () => {
                         </div>
                       )}
                       {product.dimensions?.height && (
-                        <div className="flex justify-between py-4 border-b-2 border-[#1B4332]/10">
+                        <div className="flex justify-between py-4 border-b border-slate-200">
                           <span className="font-body font-bold text-[#1B4332]">Altura:</span>
                           <span className="font-body text-[#2D6A4F]">
                             {product.dimensions.height} cm
@@ -478,7 +478,7 @@ const ProductDetail = () => {
                         </div>
                       )}
                       {product.dimensions?.width && (
-                        <div className="flex justify-between py-4 border-b-2 border-[#1B4332]/10">
+                        <div className="flex justify-between py-4 border-b border-slate-200">
                           <span className="font-body font-bold text-[#1B4332]">Largura:</span>
                           <span className="font-body text-[#2D6A4F]">
                             {product.dimensions.width} cm
@@ -486,7 +486,7 @@ const ProductDetail = () => {
                         </div>
                       )}
                       {product.dimensions?.length && (
-                        <div className="flex justify-between py-4 border-b-2 border-[#1B4332]/10">
+                        <div className="flex justify-between py-4 border-b border-slate-200">
                           <span className="font-body font-bold text-[#1B4332]">Comprimento:</span>
                           <span className="font-body text-[#2D6A4F]">
                             {product.dimensions.length} cm
@@ -494,7 +494,7 @@ const ProductDetail = () => {
                         </div>
                       )}
                       {product.colors && product.colors.length > 0 && (
-                        <div className="flex justify-between py-4 border-b-2 border-[#1B4332]/10">
+                        <div className="flex justify-between py-4 border-b border-slate-200">
                           <span className="font-body font-bold text-[#1B4332]">
                             Cores disponíveis:
                           </span>

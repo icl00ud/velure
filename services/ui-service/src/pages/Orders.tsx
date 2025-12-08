@@ -175,7 +175,7 @@ const Orders = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center py-4 px-6 bg-[#F8FAF5] rounded-2xl">
+                        <div className="flex justify-between items-center py-4 px-6 bg-slate-50 rounded-2xl">
                           <span className="font-body text-[#2D6A4F]">
                             {order.items?.length || 0}{" "}
                             {(order.items?.length || 0) === 1 ? "item" : "itens"}
