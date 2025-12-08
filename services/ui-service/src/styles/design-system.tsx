@@ -16,7 +16,7 @@ export const designSystemStyles = `
     --color-green-light: #95D5B2;
     --color-green-dark: #2D6A4F;
     --color-green-accent: #A7C957;
-    --color-background: #F8FAF5;
+    --color-background: #ffffff;
     --color-text-dark: #1B4332;
     --color-text-medium: #2D6A4F;
   }
@@ -334,7 +334,7 @@ export const colors = {
   greenLight: "#95D5B2",
   greenDark: "#2D6A4F",
   greenAccent: "#A7C957",
-  background: "#F8FAF5",
+  background: "#ffffff",
   textDark: "#1B4332",
   textMedium: "#2D6A4F",
 };
