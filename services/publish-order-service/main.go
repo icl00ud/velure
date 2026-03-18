@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -153,21 +154,7 @@ func run(parentCtx context.Context, deps appDeps) error {
 	sseAuthMiddleware := middleware.SSEAuth(cfg.JWTSecret)
 
 	mux := http.NewServeMux()
-	// Support both root paths (local dev with Caddy rewrite) and /api/order (Kubernetes ALB)
-	mux.Handle("/create-order", middleware.CORS(middleware.Logging(middleware.Timeout(5*time.Second)(authMiddleware(http.HandlerFunc(oh.CreateOrder))))))
-	mux.Handle("/update-order-status", middleware.CORS(middleware.Logging(middleware.Timeout(5*time.Second)(http.HandlerFunc(oh.UpdateStatus)))))
-	mux.Handle("/orders", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(http.HandlerFunc(oh.GetOrdersByPage)))))
-	mux.Handle("/user/orders", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrders))))))
-	mux.Handle("/user/order", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrderByID))))))
-	mux.Handle("/user/order/status", middleware.CORS(middleware.Logging(sseAuthMiddleware(http.HandlerFunc(sseHandler.StreamOrderStatus)))))
-
-	// Kubernetes ALB routes (no path rewriting)
-	mux.Handle("/api/order/create-order", middleware.CORS(middleware.Logging(middleware.Timeout(5*time.Second)(authMiddleware(http.HandlerFunc(oh.CreateOrder))))))
-	mux.Handle("/api/order/update-order-status", middleware.CORS(middleware.Logging(middleware.Timeout(5*time.Second)(http.HandlerFunc(oh.UpdateStatus)))))
-	mux.Handle("/api/order/orders", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(http.HandlerFunc(oh.GetOrdersByPage)))))
-	mux.Handle("/api/order/user/orders", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrders))))))
-	mux.Handle("/api/order/user/order", middleware.CORS(middleware.Logging(middleware.Timeout(3*time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrderByID))))))
-	mux.Handle("/api/order/user/order/status", middleware.CORS(middleware.Logging(sseAuthMiddleware(http.HandlerFunc(sseHandler.StreamOrderStatus)))))
+	registerRoutes(mux, oh, sseHandler, authMiddleware, sseAuthMiddleware)
 
 	// Prometheus metrics endpoint
 	mux.Handle("/metrics", promhttp.Handler())
@@ -217,4 +204,72 @@ func run(parentCtx context.Context, deps appDeps) error {
 
 	log.Info("Shutdown complete")
 	return nil
+}
+
+func registerRoutes(
+	mux *http.ServeMux,
+	oh *handler.OrderHandler,
+	sseHandler *handler.SSEHandler,
+	authMiddleware func(http.Handler) http.Handler,
+	sseAuthMiddleware func(http.Handler) http.Handler,
+) {
+	createOrder := middleware.CORS(middleware.Logging(middleware.Timeout(5 * time.Second)(authMiddleware(http.HandlerFunc(oh.CreateOrder)))))
+	updateStatus := middleware.CORS(middleware.Logging(middleware.Timeout(5 * time.Second)(http.HandlerFunc(oh.UpdateStatus))))
+	listOrders := middleware.CORS(middleware.Logging(middleware.Timeout(3 * time.Second)(http.HandlerFunc(oh.GetOrdersByPage))))
+	userOrders := middleware.CORS(middleware.Logging(middleware.Timeout(3 * time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrders)))))
+	userOrderByID := middleware.CORS(middleware.Logging(middleware.Timeout(3 * time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrderByID)))))
+	orderEvents := middleware.CORS(middleware.Logging(sseAuthMiddleware(http.HandlerFunc(sseHandler.StreamOrderStatus))))
+
+	// Legacy routes (keep backward compatibility)
+	mux.Handle("/create-order", createOrder)
+	mux.Handle("/update-order-status", updateStatus)
+	mux.Handle("/orders", listOrders)
+	mux.Handle("/user/orders", userOrders)
+	mux.Handle("/user/order", userOrderByID)
+	mux.Handle("/user/order/status", orderEvents)
+	mux.Handle("/api/order/create-order", createOrder)
+	mux.Handle("/api/order/update-order-status", updateStatus)
+	mux.Handle("/api/order/orders", listOrders)
+	mux.Handle("/api/order/user/orders", userOrders)
+	mux.Handle("/api/order/user/order", userOrderByID)
+	mux.Handle("/api/order/user/order/status", orderEvents)
+
+	// Canonical REST routes (root)
+	mux.Handle("POST /orders", createOrder)
+	mux.Handle("GET /orders", listOrders)
+	mux.Handle("GET /me/orders", userOrders)
+	mux.Handle("GET /me/orders/{id}", withPathIDQuery("id", userOrderByID))
+	mux.Handle("GET /me/orders/{id}/events", withPathIDQuery("id", orderEvents))
+	mux.Handle("PATCH /orders/{id}/status", withPathIDQuery("id", updateStatus))
+
+	// Canonical REST routes (/api prefix)
+	mux.Handle("POST /api/orders", createOrder)
+	mux.Handle("GET /api/orders", listOrders)
+	mux.Handle("GET /api/me/orders", userOrders)
+	mux.Handle("GET /api/me/orders/{id}", withPathIDQuery("id", userOrderByID))
+	mux.Handle("GET /api/me/orders/{id}/events", withPathIDQuery("id", orderEvents))
+	mux.Handle("PATCH /api/orders/{id}/status", withPathIDQuery("id", updateStatus))
+}
+
+func withPathIDQuery(param string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := strings.TrimSpace(r.PathValue(param))
+		if id == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		q := r.URL.Query()
+		if strings.TrimSpace(q.Get("id")) != "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		q.Set("id", id)
+		r2 := r.Clone(r.Context())
+		u := *r.URL
+		u.RawQuery = q.Encode()
+		r2.URL = &u
+		next.ServeHTTP(w, r2)
+	})
 }

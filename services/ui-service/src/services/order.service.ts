@@ -17,9 +17,7 @@ export interface CreateOrderResponse {
 }
 
 class OrderService {
-  private readonly baseURL = environment.ORDER_SERVICE_URL.startsWith("/")
-    ? environment.ORDER_SERVICE_URL
-    : `${environment.ORDER_SERVICE_URL}/order`;
+  private readonly apiBase = environment.ORDER_SERVICE_URL.replace(/\/orders?$/, "");
 
   async createOrder(cartItems: CartItem[]): Promise<CreateOrderResponse> {
     const tokenString = localStorage.getItem("token");
@@ -36,7 +34,7 @@ class OrderService {
       price: item.product.price,
     }));
 
-    const response = await fetch(`${this.baseURL}/create-order`, {
+    const response = await fetch(`${this.apiBase}/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -60,7 +58,7 @@ class OrderService {
     }
 
     const token = JSON.parse(tokenString);
-    const url = `${this.baseURL}/user/orders?page=${page}&pageSize=${pageSize}`;
+    const url = `${this.apiBase}/me/orders?page=${page}&pageSize=${pageSize}`;
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token.accessToken}`,
@@ -81,7 +79,7 @@ class OrderService {
     }
 
     const token = JSON.parse(tokenString);
-    const url = `${this.baseURL}/user/order?id=${orderId}`;
+    const url = `${this.apiBase}/me/orders/${orderId}`;
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token.accessToken}`,
@@ -106,7 +104,7 @@ class OrderService {
     }
 
     const token = JSON.parse(tokenString);
-    const url = `${this.baseURL}/user/order/status?id=${orderId}`;
+    const url = `${this.apiBase}/me/orders/${orderId}/events`;
 
     const abortController = new AbortController();
 
@@ -165,13 +163,12 @@ class OrderService {
   }
 
   async updateOrderStatus(orderId: string, status: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/update-order-status`, {
-      method: "POST",
+    const response = await fetch(`${this.apiBase}/orders/${orderId}/status`, {
+      method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        order_id: orderId,
         status: status,
       }),
     });
@@ -191,7 +188,7 @@ class OrderService {
     pageSize: number;
     totalPages: number;
   }> {
-    const url = `${this.baseURL}/orders?page=${page}&pageSize=${pageSize}`;
+    const url = `${this.apiBase}/orders?page=${page}&pageSize=${pageSize}`;
     const response = await fetch(url);
 
     if (!response.ok) {
