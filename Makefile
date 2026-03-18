@@ -190,3 +190,19 @@ cloud-urls: ## Mostrar URLs de acesso da aplicação na AWS
 	@echo "Status dos Ingresses:"
 	@kubectl get ingress -A 2>/dev/null || echo "  ⚠️  Erro ao buscar ingresses (kubectl configurado?)"
 	@echo ""
+
+# -----------------------------------------------------------------------------
+# Documentação
+# -----------------------------------------------------------------------------
+
+docs-install: ## Instalar dependências da documentação
+	@echo "📦 Instalando dependências da documentação..."
+	cd docs-site && npm install
+
+docs-up: ## Subir o portal de documentação localmente
+	@echo "📚 Iniciando portal de documentação na porta 3000..."
+	cd docs-site && npm run start
+
+docs-build: ## Buildar o portal de documentação para produção
+	@echo "🏗️  Buildando portal de documentação..."
+	cd docs-site && npm run build
