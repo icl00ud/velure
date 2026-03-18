@@ -7,57 +7,57 @@
 ![IaC](https://img.shields.io/badge/IaC-Terraform-purple)
 ![Orchestration](https://img.shields.io/badge/Orchestration-Kubernetes-326CE5)
 
-**Plataforma de e-commerce construída como projeto de aprendizado para demonstrar práticas modernas de DevOps, Cloud-Native Architecture e Site Reliability Engineering (SRE)**
+**An e-commerce platform built as a learning project to demonstrate modern DevOps, Cloud-Native Architecture, and Site Reliability Engineering (SRE) practices**
 
 </div>
 
 ---
 
-## 📚 Documentação
+## 📚 Documentation
 
-Nós movemos toda a nossa extensa documentação (Arquitetura, Setup Local, AWS Deploy, e detalhes de cada Microserviço) para um **Portal de Documentação dedicado**.
+We have moved our extensive documentation (Architecture, Local Setup, AWS Deploy, and Microservices details) to a **dedicated Documentation Portal**.
 
-Para visualizar a documentação completa, você tem duas opções:
+To view the complete documentation, you have two options:
 
-### Opção 1: Visualizar Localmente via Docker (Recomendado)
-O site de documentação foi construído com Docusaurus e empacotado em um container para facilitar o acesso.
+### Option 1: View Locally via Docker (Recommended)
+The documentation site was built with Docusaurus and packaged into a container for easy access.
 
 ```bash
 make docs-up
 ```
-*Isso fará o build do container e abrirá a documentação na porta 3000 em background. Você poderá acessá-la em `http://localhost:3000` no seu navegador.*
+*This will build the container and open the documentation on port 3000 in the background. You can access it at `http://localhost:3000` in your browser.*
 
-Quando terminar, basta rodar:
+When you're done, simply run:
 ```bash
 make docs-down
 ```
 
-### Opção 2: Ler os Arquivos Markdown Diretamente
-Se preferir, você pode navegar pelos arquivos `.md` diretamente aqui no GitHub, dentro da pasta [`docs-site/docs/`](./docs-site/docs/).
-- [Visão Geral](./docs-site/docs/01-overview.md)
+### Option 2: Read the Markdown Files Directly
+If you prefer, you can navigate through the `.md` files directly here on GitHub, inside the [`docs-site/docs/`](./docs-site/docs/) directory.
+- [Overview](./docs-site/docs/01-overview.md)
 - [Quick Start](./docs-site/docs/02-quickstart.md)
-- [Arquitetura Core](./docs-site/docs/03-core-architecture.md)
-- [Documentação dos Microserviços](./docs-site/docs/microservices/)
+- [Core Architecture](./docs-site/docs/03-core-architecture.md)
+- [Microservices Documentation](./docs-site/docs/microservices/)
 
 ---
 
-## 🚀 Quick Start (Resumo)
+## 🚀 Quick Start (Summary)
 
-Se você já conhece o projeto e quer apenas rodar rapidamente a aplicação:
+If you are already familiar with the project and just want to run it quickly:
 
-**Pré-requisitos:** Docker, Make.
-*Aviso: É obrigatório mapear `127.0.0.1 velure.local` no seu `/etc/hosts`.*
+**Prerequisites:** Docker, Make.
+*Warning: It is mandatory to map `127.0.0.1 velure.local` in your `/etc/hosts`.*
 
 ```bash
-# Subir aplicação COMPLETA (infra + services + monitoring) localmente
+# Bring up the ENTIRE application (infra + services + monitoring) locally
 make local-up
 
-# Acesse: https://velure.local
+# Access: https://velure.local
 ```
 
-Para AWS, use `make cloud-up`.
+For AWS, use `make cloud-up`.
 
 ---
-## 📄 Licença
+## 📄 License
 
-Este projeto é licenciado sob a MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

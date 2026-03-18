@@ -4,13 +4,13 @@
 .PHONY: help local-up local-down cloud-up cloud-down cloud-urls
 
 # Default target
-help: ## Mostrar comandos disponíveis
+help: ## Show available commands
 	@echo "╦  ╦┌─┐┬  ┬ ┬┬─┐┌─┐"
 	@echo "╚╗╔╝├┤ │  │ │├┬┘├┤ "
 	@echo " ╚╝ └─┘┴─┘└─┘┴└─└─┘"
 	@echo ""
 	@echo "═══════════════════════════════════════════════════════════════"
-	@echo "                    COMANDOS ESSENCIAIS                        "
+	@echo "                    ESSENTIAL COMMANDS                        "
 	@echo "═══════════════════════════════════════════════════════════════"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -200,12 +200,12 @@ cloud-urls: ## Mostrar URLs de acesso da aplicação na AWS
 # Documentação
 # -----------------------------------------------------------------------------
 
-docs-up: ## Subir o portal de documentação localmente via Docker (Porta 3000)
-	@echo "📚 Buildando e subindo portal de documentação no Docker..."
+docs-up: ## Bring up documentation portal locally via Docker (Port 3000)
+	@echo "📚 Building and starting documentation portal in Docker..."
 	cd docs-site && docker compose up -d --build
-	@echo "✅ Acesse: http://localhost:3000"
+	@echo "✅ Access at: http://localhost:3000"
 
-docs-down: ## Derrubar o portal de documentação e limpar containers
-	@echo "🧹 Derrubando portal de documentação..."
+docs-down: ## Tear down documentation portal and clean containers
+	@echo "🧹 Tearing down documentation portal..."
 	cd docs-site && docker compose down
-	@echo "✅ Portal de documentação offline"
+	@echo "✅ Documentation portal is offline"
