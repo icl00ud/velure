@@ -19,15 +19,18 @@ Nós movemos toda a nossa extensa documentação (Arquitetura, Setup Local, AWS 
 
 Para visualizar a documentação completa, você tem duas opções:
 
-### Opção 1: Visualizar Localmente (Recomendado)
-O site de documentação foi construído com Docusaurus e está dentro da pasta `docs-site/`.
+### Opção 1: Visualizar Localmente via Docker (Recomendado)
+O site de documentação foi construído com Docusaurus e empacotado em um container para facilitar o acesso.
 
 ```bash
-cd docs-site
-npm install
-npm run start
+make docs-up
 ```
-*Isso abrirá a documentação interativa em `http://localhost:3000` no seu navegador.*
+*Isso fará o build do container e abrirá a documentação na porta 3000 em background. Você poderá acessá-la em `http://localhost:3000` no seu navegador.*
+
+Quando terminar, basta rodar:
+```bash
+make docs-down
+```
 
 ### Opção 2: Ler os Arquivos Markdown Diretamente
 Se preferir, você pode navegar pelos arquivos `.md` diretamente aqui no GitHub, dentro da pasta [`docs-site/docs/`](./docs-site/docs/).
@@ -40,7 +43,7 @@ Se preferir, você pode navegar pelos arquivos `.md` diretamente aqui no GitHub,
 
 ## 🚀 Quick Start (Resumo)
 
-Se você já conhece o projeto e quer apenas rodar rapidamente:
+Se você já conhece o projeto e quer apenas rodar rapidamente a aplicação:
 
 **Pré-requisitos:** Docker, Make.
 *Aviso: É obrigatório mapear `127.0.0.1 velure.local` no seu `/etc/hosts`.*
