@@ -6,10 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/icl00ud/publish-order-service/internal/handler"
+	"github.com/icl00ud/publish-order-service/internal/middleware"
 	"github.com/icl00ud/velure-shared/logger"
 
 	"github.com/icl00ud/publish-order-service/internal/config"
@@ -18,6 +23,109 @@ import (
 	"github.com/icl00ud/publish-order-service/internal/publisher"
 	"github.com/icl00ud/publish-order-service/internal/repository"
 )
+
+func TestRegisterRoutes_CanonicalAndLegacyAliases(t *testing.T) {
+	const jwtSecret = "test-secret"
+
+	svc := &routingStubService{}
+	oh := handler.NewOrderHandler(svc, &stubPublisher{})
+	sse := handler.NewSSEHandler(svc)
+
+	mux := http.NewServeMux()
+	registerRoutes(mux, oh, sse, middleware.Auth(jwtSecret), middleware.SSEAuth(jwtSecret))
+
+	authToken := issueTestJWT(t, jwtSecret, "user-1")
+
+	tests := []struct {
+		name           string
+		method         string
+		target         string
+		body           string
+		authHeader     string
+		wantStatusCode int
+		wantLastID     string
+	}{
+		{name: "legacy update alias works", method: http.MethodPost, target: "/update-order-status", body: `{"order_id":"legacy-1","status":"PROCESSING"}`, wantStatusCode: http.StatusOK},
+		{name: "canonical create requires auth", method: http.MethodPost, target: "/orders", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusUnauthorized},
+		{name: "canonical api create requires auth", method: http.MethodPost, target: "/api/orders", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusUnauthorized},
+		{name: "canonical list orders root", method: http.MethodGet, target: "/orders", wantStatusCode: http.StatusOK},
+		{name: "canonical list orders api", method: http.MethodGet, target: "/api/orders", wantStatusCode: http.StatusOK},
+		{name: "canonical me orders root requires auth", method: http.MethodGet, target: "/me/orders", wantStatusCode: http.StatusUnauthorized},
+		{name: "canonical me orders api requires auth", method: http.MethodGet, target: "/api/me/orders", wantStatusCode: http.StatusUnauthorized},
+		{name: "canonical me order by id injects query", method: http.MethodGet, target: "/me/orders/order-123", authHeader: "Bearer " + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-123"},
+		{name: "canonical api me order by id injects query", method: http.MethodGet, target: "/api/me/orders/order-456", authHeader: "Bearer " + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-456"},
+		{name: "canonical events injects query", method: http.MethodGet, target: "/me/orders/order-789/events?token=" + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-789"},
+		{name: "canonical api events injects query", method: http.MethodGet, target: "/api/me/orders/order-890/events?token=" + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-890"},
+		{name: "canonical patch update root", method: http.MethodPatch, target: "/orders/order-123/status", body: `{"order_id":"order-123","status":"COMPLETED"}`, wantStatusCode: http.StatusOK},
+		{name: "canonical patch update api", method: http.MethodPatch, target: "/api/orders/order-456/status", body: `{"order_id":"order-456","status":"FAILED"}`, wantStatusCode: http.StatusOK},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			req := httptest.NewRequest(tt.method, tt.target, strings.NewReader(tt.body)).WithContext(ctx)
+			if tt.authHeader != "" {
+				req.Header.Set("Authorization", tt.authHeader)
+			}
+			if tt.body != "" {
+				req.Header.Set("Content-Type", "application/json")
+			}
+
+			if strings.Contains(tt.target, "/events") {
+				cancel()
+			}
+
+			rr := httptest.NewRecorder()
+			mux.ServeHTTP(rr, req)
+
+			if rr.Code != tt.wantStatusCode {
+				t.Fatalf("unexpected status: got %d want %d", rr.Code, tt.wantStatusCode)
+			}
+			if tt.wantLastID != "" && svc.lastGetOrderByID != tt.wantLastID {
+				t.Fatalf("expected id %q to be passed to handler, got %q", tt.wantLastID, svc.lastGetOrderByID)
+			}
+		})
+	}
+}
+
+func issueTestJWT(t *testing.T, secret, subject string) string {
+	t.Helper()
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{Subject: subject})
+	signed, err := token.SignedString([]byte(secret))
+	if err != nil {
+		t.Fatalf("failed to sign jwt: %v", err)
+	}
+
+	return signed
+}
+
+type routingStubService struct {
+	lastGetOrderByID string
+}
+
+func (s *routingStubService) Create(_ context.Context, userID string, items []model.CartItem) (model.Order, error) {
+	return model.Order{ID: "created-1", UserID: userID, Items: items, Status: model.StatusCreated}, nil
+}
+
+func (s *routingStubService) UpdateStatus(_ context.Context, id, status string) (model.Order, error) {
+	return model.Order{ID: id, Status: status}, nil
+}
+
+func (s *routingStubService) GetOrdersByPage(_ context.Context, page, pageSize int) (*model.PaginatedOrdersResponse, error) {
+	return &model.PaginatedOrdersResponse{Orders: []model.Order{}, Page: page, PageSize: pageSize, TotalPages: 1}, nil
+}
+
+func (s *routingStubService) GetOrdersByUserID(_ context.Context, userID string, page, pageSize int) (*model.PaginatedOrdersResponse, error) {
+	return &model.PaginatedOrdersResponse{Orders: []model.Order{}, Page: page, PageSize: pageSize, TotalPages: 1}, nil
+}
+
+func (s *routingStubService) GetOrderByID(_ context.Context, userID, orderID string) (model.Order, error) {
+	s.lastGetOrderByID = orderID
+	return model.Order{ID: orderID, UserID: userID, Status: model.StatusCreated}, nil
+}
 
 func TestRunWithInjectedDependencies(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)

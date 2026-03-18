@@ -46,7 +46,7 @@ describe("orderService", () => {
 
     const result = await orderService.createOrder(cartItems);
 
-    expect(fetch).toHaveBeenCalledWith("/api/order/create-order", {
+    expect(fetch).toHaveBeenCalledWith("/api/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -86,7 +86,7 @@ describe("orderService", () => {
 
     const result = await orderService.getUserOrders(2, 5);
 
-    expect(fetch).toHaveBeenCalledWith("/api/order/user/orders?page=2&pageSize=5", {
+    expect(fetch).toHaveBeenCalledWith("/api/me/orders?page=2&pageSize=5", {
       headers: {
         Authorization: `Bearer ${token.accessToken}`,
       },
@@ -102,6 +102,11 @@ describe("orderService", () => {
     } as any);
 
     await expect(orderService.getUserOrderById("order-1")).rejects.toThrow("Erro ao buscar pedido");
+    expect(fetch).toHaveBeenCalledWith("/api/me/orders/order-1", {
+      headers: {
+        Authorization: `Bearer ${token.accessToken}`,
+      },
+    });
   });
 
   it("creates an SSE stream using fetch with auth header", () => {
@@ -123,7 +128,7 @@ describe("orderService", () => {
     orderService.createOrderStatusStream("order-1", onMessage);
 
     expect(fetch).toHaveBeenCalledWith(
-      "/api/order/user/order/status?id=order-1",
+      "/api/me/orders/order-1/events",
       expect.objectContaining({
         method: "GET",
         headers: expect.objectContaining({
@@ -143,6 +148,15 @@ describe("orderService", () => {
     await expect(orderService.updateOrderStatus("order-1", "shipped")).rejects.toThrow(
       "Erro ao atualizar status do pedido"
     );
+    expect(fetch).toHaveBeenCalledWith("/api/orders/order-1/status", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        status: "shipped",
+      }),
+    });
   });
 
   it("retrieves orders by page", async () => {
@@ -161,7 +175,7 @@ describe("orderService", () => {
 
     const result = await orderService.getOrdersByPage(1, 10);
 
-    expect(fetch).toHaveBeenCalledWith("/api/order/orders?page=1&pageSize=10");
+    expect(fetch).toHaveBeenCalledWith("/api/orders?page=1&pageSize=10");
     expect(result).toEqual(pagedOrders);
   });
 });
