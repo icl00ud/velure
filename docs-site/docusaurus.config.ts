@@ -7,7 +7,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'Velure Docs',
   tagline: 'E-commerce Microservices Platform',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/architecture.png',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -74,8 +74,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/architecture.png',
     colorMode: {
       respectPrefersColorScheme: true,
     },
@@ -83,14 +82,14 @@ const config: Config = {
       title: 'Velure Docs',
       logo: {
         alt: 'Velure Docs Logo',
-        src: 'img/logo.svg',
+        src: 'img/architecture.png',
       },
       items: [
         {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: 'Tutorial',
+          label: 'Docs',
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
@@ -107,8 +106,8 @@ const config: Config = {
           title: 'Docs',
           items: [
             {
-              label: 'Tutorial',
-              to: '/docs/intro',
+              label: 'Overview',
+              to: '/docs/overview',
             },
           ],
         },
