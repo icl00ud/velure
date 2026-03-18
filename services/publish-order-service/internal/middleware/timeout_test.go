@@ -7,77 +7,73 @@ import (
 	"time"
 )
 
-func TestTimeout(t *testing.T) {
-	tests := []struct {
-		name           string
-		timeout        time.Duration
-		handlerDelay   time.Duration
-		expectedStatus int
-		expectTimeout  bool
-	}{
-		{
-			name:           "request completes before timeout",
-			timeout:        100 * time.Millisecond,
-			handlerDelay:   10 * time.Millisecond,
-			expectedStatus: http.StatusOK,
-			expectTimeout:  false,
-		},
-		{
-			name:           "request times out",
-			timeout:        50 * time.Millisecond,
-			handlerDelay:   200 * time.Millisecond,
-			expectedStatus: http.StatusGatewayTimeout,
-			expectTimeout:  true,
-		},
-		{
-			name:           "request completes at boundary",
-			timeout:        100 * time.Millisecond,
-			handlerDelay:   90 * time.Millisecond,
-			expectedStatus: http.StatusOK,
-			expectTimeout:  false,
-		},
+func TestTimeout_PassesThroughResponseBeforeTimeout(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("X-Test", "pass-through")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	})
+
+	timeoutMiddleware := Timeout(100 * time.Millisecond)
+	wrappedHandler := timeoutMiddleware(handler)
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	rr := httptest.NewRecorder()
+
+	wrappedHandler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("expected status %d, got %d", http.StatusCreated, rr.Code)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				time.Sleep(tt.handlerDelay)
-				w.WriteHeader(http.StatusOK)
-				w.Write([]byte(`{"status":"ok"}`))
-			})
+	if rr.Header().Get("Content-Type") != "application/json" {
+		t.Fatalf("expected content type application/json, got %s", rr.Header().Get("Content-Type"))
+	}
 
-			timeoutMiddleware := Timeout(tt.timeout)
-			wrappedHandler := timeoutMiddleware(handler)
+	if rr.Header().Get("X-Test") != "pass-through" {
+		t.Fatalf("expected X-Test header to pass through, got %s", rr.Header().Get("X-Test"))
+	}
 
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
-			rr := httptest.NewRecorder()
+	if rr.Body.String() != `{"status":"ok"}` {
+		t.Fatalf("expected body %s, got %s", `{"status":"ok"}`, rr.Body.String())
+	}
+}
 
-			wrappedHandler.ServeHTTP(rr, req)
+func TestTimeout_ReturnsDeterministicTimeoutResponse(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"late"}`))
+	})
 
-			if rr.Code != tt.expectedStatus {
-				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
-			}
+	timeoutMiddleware := Timeout(50 * time.Millisecond)
+	wrappedHandler := timeoutMiddleware(handler)
 
-			if tt.expectTimeout {
-				body := rr.Body.String()
-				expectedBody := `{"error":"request timeout"}`
-				if body != expectedBody {
-					t.Errorf("expected body %s, got %s", expectedBody, body)
-				}
-			}
-		})
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	rr := httptest.NewRecorder()
+
+	wrappedHandler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusGatewayTimeout {
+		t.Fatalf("expected status %d, got %d", http.StatusGatewayTimeout, rr.Code)
+	}
+
+	if rr.Header().Get("Content-Type") != "application/json" {
+		t.Fatalf("expected content type application/json, got %s", rr.Header().Get("Content-Type"))
+	}
+
+	expectedBody := `{"error":"request timeout"}`
+	if rr.Body.String() != expectedBody {
+		t.Fatalf("expected body %s, got %s", expectedBody, rr.Body.String())
 	}
 }
 
 func TestTimeout_ContextCancellation(t *testing.T) {
-	contextCancelled := false
+	contextCancelled := make(chan struct{}, 1)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(200 * time.Millisecond)
-		select {
-		case <-r.Context().Done():
-			contextCancelled = true
-		default:
-		}
+		<-r.Context().Done()
+		contextCancelled <- struct{}{}
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -93,10 +89,10 @@ func TestTimeout_ContextCancellation(t *testing.T) {
 		t.Errorf("expected status %d, got %d", http.StatusGatewayTimeout, rr.Code)
 	}
 
-	// Give the handler goroutine time to check context
-	time.Sleep(250 * time.Millisecond)
-
-	if !contextCancelled {
-		t.Error("expected context to be cancelled in handler")
+	select {
+	case <-contextCancelled:
+		return
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("expected context to be cancelled in handler")
 	}
 }

@@ -178,6 +178,58 @@ func TestGetProductsREST(t *testing.T) {
 	mockService.AssertExpectations(t)
 }
 
+func TestGetProductsREST_PaginationValidation(t *testing.T) {
+	tests := []struct {
+		name           string
+		url            string
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "page below minimum",
+			url:            "/products?page=0&limit=10",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedBody:   "Invalid page parameter: must be greater than or equal to 1",
+		},
+		{
+			name:           "limit below minimum",
+			url:            "/products?page=1&limit=0",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedBody:   "Invalid limit/pageSize parameter: must be between 1 and 100",
+		},
+		{
+			name:           "limit above maximum",
+			url:            "/products?page=1&limit=101",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedBody:   "Invalid limit/pageSize parameter: must be between 1 and 100",
+		},
+		{
+			name:           "legacy pageSize below minimum",
+			url:            "/products?page=1&pageSize=0",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedBody:   "Invalid limit/pageSize parameter: must be between 1 and 100",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := NewProductHandler(new(MockProductService))
+			app := fiber.New()
+			app.Get("/products", handler.GetProductsREST)
+
+			req := httptest.NewRequest("GET", tt.url, nil)
+			resp, err := app.Test(req)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+
+			body, readErr := io.ReadAll(resp.Body)
+			assert.NoError(t, readErr)
+			assert.Contains(t, string(body), tt.expectedBody)
+		})
+	}
+}
+
 func TestGetAllProducts(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -359,6 +411,52 @@ func TestGetProductsByPage(t *testing.T) {
 	}
 }
 
+func TestGetProductsByPage_PaginationValidation(t *testing.T) {
+	tests := []struct {
+		name           string
+		url            string
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "page below minimum",
+			url:            "/products?page=0&pageSize=10",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedBody:   "Invalid page parameter: must be greater than or equal to 1",
+		},
+		{
+			name:           "pageSize below minimum",
+			url:            "/products?page=1&pageSize=0",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedBody:   "Invalid pageSize parameter: must be between 1 and 100",
+		},
+		{
+			name:           "pageSize above maximum",
+			url:            "/products?page=1&pageSize=101",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedBody:   "Invalid pageSize parameter: must be between 1 and 100",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := NewProductHandler(new(MockProductService))
+			app := fiber.New()
+			app.Get("/products", handler.GetProductsByPage)
+
+			req := httptest.NewRequest("GET", tt.url, nil)
+			resp, err := app.Test(req)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+
+			body, readErr := io.ReadAll(resp.Body)
+			assert.NoError(t, readErr)
+			assert.Contains(t, string(body), tt.expectedBody)
+		})
+	}
+}
+
 func TestGetProductsByPageAndCategory(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -433,6 +531,52 @@ func TestGetProductsByPageAndCategory(t *testing.T) {
 			if tt.page == "1" && tt.pageSize == "10" && tt.category != "" {
 				mockService.AssertExpectations(t)
 			}
+		})
+	}
+}
+
+func TestGetProductsByPageAndCategory_PaginationValidation(t *testing.T) {
+	tests := []struct {
+		name           string
+		url            string
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "page below minimum",
+			url:            "/products?page=0&pageSize=10&category=Electronics",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedBody:   "Invalid page parameter: must be greater than or equal to 1",
+		},
+		{
+			name:           "pageSize below minimum",
+			url:            "/products?page=1&pageSize=0&category=Electronics",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedBody:   "Invalid pageSize parameter: must be between 1 and 100",
+		},
+		{
+			name:           "pageSize above maximum",
+			url:            "/products?page=1&pageSize=101&category=Electronics",
+			expectedStatus: fiber.StatusBadRequest,
+			expectedBody:   "Invalid pageSize parameter: must be between 1 and 100",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := NewProductHandler(new(MockProductService))
+			app := fiber.New()
+			app.Get("/products", handler.GetProductsByPageAndCategory)
+
+			req := httptest.NewRequest("GET", tt.url, nil)
+			resp, err := app.Test(req)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+
+			body, readErr := io.ReadAll(resp.Body)
+			assert.NoError(t, readErr)
+			assert.Contains(t, string(body), tt.expectedBody)
 		})
 	}
 }
