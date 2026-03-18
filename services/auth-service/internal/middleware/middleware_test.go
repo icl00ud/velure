@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -11,87 +12,49 @@ import (
 func TestCORS(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	tests := []struct {
-		name           string
-		method         string
-		expectedStatus int
-		checkHeaders   bool
-	}{
-		{
-			name:           "OPTIONS request returns 204",
-			method:         "OPTIONS",
-			expectedStatus: http.StatusNoContent,
-			checkHeaders:   true,
-		},
-		{
-			name:           "GET request passes through",
-			method:         "GET",
-			expectedStatus: http.StatusOK,
-			checkHeaders:   true,
-		},
-		{
-			name:           "POST request passes through",
-			method:         "POST",
-			expectedStatus: http.StatusOK,
-			checkHeaders:   true,
-		},
-		{
-			name:           "PUT request passes through",
-			method:         "PUT",
-			expectedStatus: http.StatusOK,
-			checkHeaders:   true,
-		},
-		{
-			name:           "DELETE request passes through",
-			method:         "DELETE",
-			expectedStatus: http.StatusOK,
-			checkHeaders:   true,
-		},
+	t.Setenv("CORS_ALLOWED_ORIGINS", "https://example.com,https://shop.velure.local")
+
+	router := gin.New()
+	router.Use(CORS())
+	router.GET("/test", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req.Header.Set("Origin", "https://example.com")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, w.Code)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			router := gin.New()
-			router.Use(CORS())
-			router.Any("/test", func(c *gin.Context) {
-				c.Status(http.StatusOK)
-			})
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://example.com" {
+		t.Fatalf("expected Access-Control-Allow-Origin to echo allowed origin, got %q", got)
+	}
 
-			req := httptest.NewRequest(tt.method, "/test", nil)
-			w := httptest.NewRecorder()
+	if got := w.Header().Get("Access-Control-Allow-Credentials"); got != "true" {
+		t.Fatalf("expected Access-Control-Allow-Credentials true, got %q", got)
+	}
 
-			router.ServeHTTP(w, req)
+	if got := w.Header().Get("Access-Control-Allow-Methods"); got != "POST, OPTIONS, GET, PUT, DELETE" {
+		t.Fatalf("unexpected Access-Control-Allow-Methods: %q", got)
+	}
 
-			if w.Code != tt.expectedStatus {
-				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
-			}
+	allowHeaders := w.Header().Get("Access-Control-Allow-Headers")
+	if allowHeaders == "" {
+		t.Fatal("expected Access-Control-Allow-Headers to be set")
+	}
 
-			if tt.checkHeaders {
-				// Verify CORS headers are set
-				headers := map[string]string{
-					"Access-Control-Allow-Origin":      "*",
-					"Access-Control-Allow-Credentials": "true",
-					"Access-Control-Allow-Methods":     "POST, OPTIONS, GET, PUT, DELETE",
-				}
-
-				for key, expected := range headers {
-					actual := w.Header().Get(key)
-					if actual != expected {
-						t.Errorf("Header %s: expected '%s', got '%s'", key, expected, actual)
-					}
-				}
-
-				// Check that Access-Control-Allow-Headers is set
-				allowHeaders := w.Header().Get("Access-Control-Allow-Headers")
-				if allowHeaders == "" {
-					t.Error("Access-Control-Allow-Headers should be set")
-				}
-			}
-		})
+	for _, header := range []string{"Content-Type", "Authorization", "origin"} {
+		if !strings.Contains(allowHeaders, header) {
+			t.Fatalf("expected Access-Control-Allow-Headers to contain %q, got %q", header, allowHeaders)
+		}
 	}
 }
 
-func TestCORS_HeadersContent(t *testing.T) {
+func TestCORS_DefaultAllowlist(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	router := gin.New()
@@ -100,24 +63,87 @@ func TestCORS_HeadersContent(t *testing.T) {
 		c.Status(http.StatusOK)
 	})
 
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req.Header.Set("Origin", "https://velure.local")
 	w := httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)
 
-	// Verify specific headers that should be allowed
-	allowHeaders := w.Header().Get("Access-Control-Allow-Headers")
-	expectedHeaders := []string{
-		"Content-Type",
-		"Authorization",
-		"accept",
-		"origin",
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://velure.local" {
+		t.Fatalf("expected default allowed origin to be echoed, got %q", got)
+	}
+}
+
+func TestCORS_DisallowedOriginDoesNotSetAllowOrigin(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Setenv("CORS_ALLOWED_ORIGINS", "https://example.com")
+
+	router := gin.New()
+	router.Use(CORS())
+	router.GET("/test", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req.Header.Set("Origin", "https://evil.com")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Fatalf("expected Access-Control-Allow-Origin to be empty for disallowed origin, got %q", got)
 	}
 
-	for _, header := range expectedHeaders {
-		if !contains(allowHeaders, header) {
-			t.Errorf("Access-Control-Allow-Headers should contain '%s', got '%s'", header, allowHeaders)
-		}
+	if got := w.Header().Get("Access-Control-Allow-Credentials"); got != "" {
+		t.Fatalf("expected Access-Control-Allow-Credentials to be empty for disallowed origin, got %q", got)
+	}
+}
+
+func TestCORS_MissingOriginDoesNotSetAllowOrigin(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Setenv("CORS_ALLOWED_ORIGINS", "https://example.com")
+
+	router := gin.New()
+	router.Use(CORS())
+	router.GET("/test", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Fatalf("expected Access-Control-Allow-Origin to be empty when Origin is missing, got %q", got)
+	}
+}
+
+func TestCORS_OPTIONSReturnsNoContent(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Setenv("CORS_ALLOWED_ORIGINS", "https://example.com")
+
+	router := gin.New()
+	router.Use(CORS())
+	router.Any("/test", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodOptions, "/test", nil)
+	req.Header.Set("Origin", "https://example.com")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, w.Code)
+	}
+
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "https://example.com" {
+		t.Fatalf("expected Access-Control-Allow-Origin to echo allowed origin, got %q", got)
 	}
 }
 
@@ -171,20 +197,4 @@ func TestLogger_WithMultipleRequests(t *testing.T) {
 			t.Errorf("Method %s: expected status %d, got %d", tt.method, tt.expectedStatus, w.Code)
 		}
 	}
-}
-
-// Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) &&
-		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
-		containsMiddle(s, substr)))
-}
-
-func containsMiddle(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

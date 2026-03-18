@@ -183,14 +183,15 @@ func TestSetupRouter_HasMiddleware(t *testing.T) {
 
 	// Make a request to test that middleware is applied
 	req := httptest.NewRequest("OPTIONS", "/health", nil)
+	req.Header.Set("Origin", "https://velure.local")
 	w := httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)
 
-	// CORS middleware should set headers
+	// CORS middleware should set headers only for allowed origins
 	corsHeader := w.Header().Get("Access-Control-Allow-Origin")
-	if corsHeader == "" {
-		t.Error("Expected CORS headers to be set by middleware")
+	if corsHeader != "https://velure.local" {
+		t.Errorf("expected allowed origin echo, got %q", corsHeader)
 	}
 }
 

@@ -75,7 +75,7 @@ func run(deps appDependencies) error {
 	if log == nil {
 		log = logger.NewNop()
 	}
-	
+
 	// Load environment variables from .env file if it exists
 	if err := deps.loadEnv(); err != nil {
 		log.Info("No .env file found, using system environment variables")
@@ -156,7 +156,7 @@ func setupFiberApp(service services.ProductService) *fiber.App {
 		return err
 	})
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
+		AllowOrigins: resolveAllowedOrigins(),
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 	app.Use(middleware.PrometheusMiddleware())
@@ -202,6 +202,30 @@ func setupFiberApp(service services.ProductService) *fiber.App {
 	registerProductRoutes(apiProducts)
 
 	return app
+}
+
+func resolveAllowedOrigins() string {
+	const defaultAllowedOrigins = "https://velure.local"
+
+	rawOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if rawOrigins == "" {
+		return defaultAllowedOrigins
+	}
+
+	origins := strings.Split(rawOrigins, ",")
+	filtered := make([]string, 0, len(origins))
+	for _, origin := range origins {
+		trimmed := strings.TrimSpace(origin)
+		if trimmed != "" {
+			filtered = append(filtered, trimmed)
+		}
+	}
+
+	if len(filtered) == 0 {
+		return defaultAllowedOrigins
+	}
+
+	return strings.Join(filtered, ",")
 }
 
 // maskURI masks sensitive information in MongoDB URI for logging

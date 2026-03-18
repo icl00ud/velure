@@ -126,6 +126,43 @@ func TestMaskURI_DoesNotExposePassword(t *testing.T) {
 	}
 }
 
+func TestResolveAllowedOrigins(t *testing.T) {
+	tests := []struct {
+		name     string
+		envValue string
+		expected string
+	}{
+		{
+			name:     "uses default when env missing",
+			envValue: "",
+			expected: "https://velure.local",
+		},
+		{
+			name:     "uses single origin from env",
+			envValue: "https://app.example.com",
+			expected: "https://app.example.com",
+		},
+		{
+			name:     "uses trimmed comma separated origins",
+			envValue: " https://app.example.com , https://admin.example.com ",
+			expected: "https://app.example.com,https://admin.example.com",
+		},
+		{
+			name:     "falls back to default when env has only blanks",
+			envValue: "   ,   ",
+			expected: "https://velure.local",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("CORS_ALLOWED_ORIGINS", tt.envValue)
+			actual := resolveAllowedOrigins()
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
 type fakeRepo struct {
 	createCalls []models.CreateProductRequest
 	count       int64

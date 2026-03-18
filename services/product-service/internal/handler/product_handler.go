@@ -16,6 +16,8 @@ type ProductHandler struct {
 	service services.ProductService
 }
 
+const maxPageSize = 100
+
 func NewProductHandler(service services.ProductService) *ProductHandler {
 	return &ProductHandler{
 		service: service,
@@ -76,10 +78,16 @@ func (h *ProductHandler) GetProductsREST(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter")
 	}
+	if page < 1 {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter: must be greater than or equal to 1")
+	}
 
 	pageSize, err := strconv.Atoi(pageSizeStr)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid limit/pageSize parameter")
+	}
+	if pageSize < 1 || pageSize > maxPageSize {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid limit/pageSize parameter: must be between 1 and 100")
 	}
 
 	metrics.ProductQueries.WithLabelValues("list").Inc()
@@ -110,10 +118,16 @@ func (h *ProductHandler) GetProductsByPage(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter")
 	}
+	if page < 1 {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter: must be greater than or equal to 1")
+	}
 
 	pageSize, err := strconv.Atoi(pageSizeStr)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter")
+	}
+	if pageSize < 1 || pageSize > maxPageSize {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter: must be between 1 and 100")
 	}
 
 	metrics.ProductQueries.WithLabelValues("list").Inc()
@@ -158,10 +172,16 @@ func (h *ProductHandler) GetProductsByPageAndCategory(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter")
 	}
+	if page < 1 {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter: must be greater than or equal to 1")
+	}
 
 	pageSize, err := strconv.Atoi(pageSizeStr)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter")
+	}
+	if pageSize < 1 || pageSize > maxPageSize {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter: must be between 1 and 100")
 	}
 
 	response, err := h.service.GetProductsByPageAndCategory(c.Context(), page, pageSize, category)
