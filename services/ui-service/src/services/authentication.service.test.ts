@@ -50,6 +50,10 @@ describe("AuthenticationService", () => {
       const storedToken = JSON.parse(localStorage.getItem("token")!);
       expect(storedToken.accessToken).toBe(mockToken.accessToken);
       expect(storedToken.refreshToken).toBe(mockToken.refreshToken);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/sessions"),
+        expect.objectContaining({ method: "POST" })
+      );
     });
 
     it("should throw error on failed login", async () => {
@@ -101,6 +105,14 @@ describe("AuthenticationService", () => {
 
       expect(result).toBe(true);
       expect(localStorage.getItem("token")).toBeNull();
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/sessions/current"),
+        expect.objectContaining({
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken: mockToken.refreshToken }),
+        })
+      );
     });
 
     it("should throw error on failed logout", async () => {
@@ -151,7 +163,7 @@ describe("AuthenticationService", () => {
 
       expect(result).toBe(true);
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/register"),
+        expect.stringContaining("/api/users"),
         expect.objectContaining({
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -160,7 +172,7 @@ describe("AuthenticationService", () => {
       );
       // Verify auto-login was called
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("/login"),
+        expect.stringContaining("/api/sessions"),
         expect.objectContaining({
           method: "POST",
         })
@@ -219,6 +231,10 @@ describe("AuthenticationService", () => {
 
       const result = await authenticationService.isAuthenticated();
       expect(result).toBe(true);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/api/tokens/introspect"),
+        expect.objectContaining({ method: "POST" })
+      );
     });
 
     it("should return false when token is invalid", async () => {

@@ -19,8 +19,12 @@ The **Publish Order Service** is responsible for initiating the order lifecycle 
 
 ## Endpoints
 
-- `POST /api/order/create-order`: Initiates a new order and publishes it to RabbitMQ.
-- `GET /api/order/user/order/status?id=X`: Establishes an SSE connection to stream real-time order status updates back to the client.
+- `POST /api/orders`: Initiates a new order and publishes it to RabbitMQ.
+- `GET /api/orders`: Lists orders.
+- `GET /api/me/orders`: Lists orders for the authenticated user.
+- `GET /api/me/orders/{id}`: Retrieves a single authenticated user's order by ID.
+- `GET /api/me/orders/{id}/events`: Establishes an SSE connection to stream real-time order status updates.
+- `PATCH /api/orders/{id}/status`: Updates order status from downstream processing events.
 
 ## Architecture & Conventions
 

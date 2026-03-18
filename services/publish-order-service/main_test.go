@@ -24,7 +24,7 @@ import (
 	"github.com/icl00ud/publish-order-service/internal/repository"
 )
 
-func TestRegisterRoutes_CanonicalAndLegacyAliases(t *testing.T) {
+func TestRegisterRoutes_CanonicalOnly(t *testing.T) {
 	const jwtSecret = "test-secret"
 
 	svc := &routingStubService{}
@@ -45,19 +45,21 @@ func TestRegisterRoutes_CanonicalAndLegacyAliases(t *testing.T) {
 		wantStatusCode int
 		wantLastID     string
 	}{
-		{name: "legacy update alias works", method: http.MethodPost, target: "/update-order-status", body: `{"order_id":"legacy-1","status":"PROCESSING"}`, wantStatusCode: http.StatusOK},
-		{name: "canonical create requires auth", method: http.MethodPost, target: "/orders", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusUnauthorized},
-		{name: "canonical api create requires auth", method: http.MethodPost, target: "/api/orders", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusUnauthorized},
-		{name: "canonical list orders root", method: http.MethodGet, target: "/orders", wantStatusCode: http.StatusOK},
-		{name: "canonical list orders api", method: http.MethodGet, target: "/api/orders", wantStatusCode: http.StatusOK},
-		{name: "canonical me orders root requires auth", method: http.MethodGet, target: "/me/orders", wantStatusCode: http.StatusUnauthorized},
-		{name: "canonical me orders api requires auth", method: http.MethodGet, target: "/api/me/orders", wantStatusCode: http.StatusUnauthorized},
-		{name: "canonical me order by id injects query", method: http.MethodGet, target: "/me/orders/order-123", authHeader: "Bearer " + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-123"},
-		{name: "canonical api me order by id injects query", method: http.MethodGet, target: "/api/me/orders/order-456", authHeader: "Bearer " + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-456"},
-		{name: "canonical events injects query", method: http.MethodGet, target: "/me/orders/order-789/events?token=" + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-789"},
-		{name: "canonical api events injects query", method: http.MethodGet, target: "/api/me/orders/order-890/events?token=" + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-890"},
-		{name: "canonical patch update root", method: http.MethodPatch, target: "/orders/order-123/status", body: `{"order_id":"order-123","status":"COMPLETED"}`, wantStatusCode: http.StatusOK},
-		{name: "canonical patch update api", method: http.MethodPatch, target: "/api/orders/order-456/status", body: `{"order_id":"order-456","status":"FAILED"}`, wantStatusCode: http.StatusOK},
+		{name: "legacy update alias removed", method: http.MethodPost, target: "/update-order-status", body: `{"order_id":"legacy-1","status":"PROCESSING"}`, wantStatusCode: http.StatusNotFound},
+		{name: "legacy create alias removed", method: http.MethodPost, target: "/create-order", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusNotFound},
+		{name: "root create route removed", method: http.MethodPost, target: "/orders", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusNotFound},
+		{name: "canonical create requires auth", method: http.MethodPost, target: "/api/orders", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusUnauthorized},
+		{name: "root list route removed", method: http.MethodGet, target: "/orders", wantStatusCode: http.StatusNotFound},
+		{name: "canonical list orders", method: http.MethodGet, target: "/api/orders", wantStatusCode: http.StatusOK},
+		{name: "root me orders route removed", method: http.MethodGet, target: "/me/orders", wantStatusCode: http.StatusNotFound},
+		{name: "canonical me orders requires auth", method: http.MethodGet, target: "/api/me/orders", wantStatusCode: http.StatusUnauthorized},
+		{name: "root me order by id route removed", method: http.MethodGet, target: "/me/orders/order-123", authHeader: "Bearer " + authToken, wantStatusCode: http.StatusNotFound},
+		{name: "canonical me order by id injects query", method: http.MethodGet, target: "/api/me/orders/order-456", authHeader: "Bearer " + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-456"},
+		{name: "root events route removed", method: http.MethodGet, target: "/me/orders/order-789/events?token=" + authToken, wantStatusCode: http.StatusNotFound},
+		{name: "canonical events injects query", method: http.MethodGet, target: "/api/me/orders/order-890/events?token=" + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-890"},
+		{name: "root patch update route removed", method: http.MethodPatch, target: "/orders/order-123/status", body: `{"order_id":"order-123","status":"COMPLETED"}`, wantStatusCode: http.StatusNotFound},
+		{name: "canonical patch update", method: http.MethodPatch, target: "/api/orders/order-456/status", body: `{"order_id":"order-456","status":"FAILED"}`, wantStatusCode: http.StatusOK},
+		{name: "legacy api order namespace removed", method: http.MethodPost, target: "/api/order/create-order", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusNotFound},
 	}
 
 	for _, tt := range tests {
@@ -208,7 +210,6 @@ func TestRunWithInjectedDependencies(t *testing.T) {
 }
 
 func TestMainUsesInjectedFactoryAndHandlesSignal(t *testing.T) {
-	// Touch defaultDeps to keep coverage meaningful without invoking real connections.
 	if d := defaultDeps(); d.newRepo == nil {
 		t.Fatal("default deps not initialized")
 	}

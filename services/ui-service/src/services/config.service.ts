@@ -8,9 +8,13 @@ export class ConfigService {
     this.productServiceApiUrl = environment.PRODUCT_SERVICE_URL.startsWith("/")
       ? `${environment.PRODUCT_SERVICE_URL}`
       : `${environment.PRODUCT_SERVICE_URL}/product`;
-    this.authenticationServiceApiUrl = environment.AUTHENTICATION_SERVICE_URL.startsWith("/")
-      ? `${environment.AUTHENTICATION_SERVICE_URL}`
-      : `${environment.AUTHENTICATION_SERVICE_URL}/authentication`;
+    const authUrl = environment.AUTHENTICATION_SERVICE_URL.replace(/\/+$/, "");
+    const normalizedAuthUrl = authUrl
+      .replace(/\/authentication$/, "/api")
+      .replace(/\/api\/auth$/, "/api");
+    this.authenticationServiceApiUrl = normalizedAuthUrl.endsWith("/api")
+      ? normalizedAuthUrl
+      : `${normalizedAuthUrl}/api`;
   }
 
   get productServiceUrl(): string {

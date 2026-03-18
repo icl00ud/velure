@@ -13,9 +13,13 @@ The **Process Order Service** is responsible for executing the asynchronous back
 ## Core Responsibilities
 
 1. **Order Processing:** Acting as a background worker that consumes `order.created` messages from the `orders` queue in RabbitMQ.
-2. **Inventory Validation:** Making synchronous HTTP calls to the **Product Service** to verify product availability and prices before processing the order.
+2. **Inventory Validation:** Making synchronous HTTP calls to the **Product Service** to update and validate inventory before processing the order.
 3. **Payment Logic:** Simulating payment processing and determining the final state of an order (`COMPLETED` or `FAILED`).
 4. **Status Updates:** Publishing order status update events back to RabbitMQ for the **Publish Order Service** to process and notify the user.
+
+## Downstream API Contract
+
+- `PATCH /api/products/{id}/inventory`: Decrements inventory for each order item and returns an error when inventory is invalid or unavailable.
 
 ## Architecture & Conventions
 

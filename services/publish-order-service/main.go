@@ -156,7 +156,6 @@ func run(parentCtx context.Context, deps appDeps) error {
 	mux := http.NewServeMux()
 	registerRoutes(mux, oh, sseHandler, authMiddleware, sseAuthMiddleware)
 
-	// Prometheus metrics endpoint
 	mux.Handle("/metrics", promhttp.Handler())
 
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -220,29 +219,6 @@ func registerRoutes(
 	userOrderByID := middleware.CORS(middleware.Logging(middleware.Timeout(3 * time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrderByID)))))
 	orderEvents := middleware.CORS(middleware.Logging(sseAuthMiddleware(http.HandlerFunc(sseHandler.StreamOrderStatus))))
 
-	// Legacy routes (keep backward compatibility)
-	mux.Handle("/create-order", createOrder)
-	mux.Handle("/update-order-status", updateStatus)
-	mux.Handle("/orders", listOrders)
-	mux.Handle("/user/orders", userOrders)
-	mux.Handle("/user/order", userOrderByID)
-	mux.Handle("/user/order/status", orderEvents)
-	mux.Handle("/api/order/create-order", createOrder)
-	mux.Handle("/api/order/update-order-status", updateStatus)
-	mux.Handle("/api/order/orders", listOrders)
-	mux.Handle("/api/order/user/orders", userOrders)
-	mux.Handle("/api/order/user/order", userOrderByID)
-	mux.Handle("/api/order/user/order/status", orderEvents)
-
-	// Canonical REST routes (root)
-	mux.Handle("POST /orders", createOrder)
-	mux.Handle("GET /orders", listOrders)
-	mux.Handle("GET /me/orders", userOrders)
-	mux.Handle("GET /me/orders/{id}", withPathIDQuery("id", userOrderByID))
-	mux.Handle("GET /me/orders/{id}/events", withPathIDQuery("id", orderEvents))
-	mux.Handle("PATCH /orders/{id}/status", withPathIDQuery("id", updateStatus))
-
-	// Canonical REST routes (/api prefix)
 	mux.Handle("POST /api/orders", createOrder)
 	mux.Handle("GET /api/orders", listOrders)
 	mux.Handle("GET /api/me/orders", userOrders)

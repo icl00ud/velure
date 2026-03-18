@@ -33,13 +33,12 @@ func TestSetupRoutes(t *testing.T) {
 	}
 
 	expectedRoutes := map[string]string{
-		"POST /authentication/register":               "POST",
-		"POST /authentication/login":                  "POST",
-		"POST /authentication/validateToken":          "POST",
-		"GET /authentication/users":                   "GET",
-		"GET /authentication/user/id/:id":             "GET",
-		"GET /authentication/user/email/:email":       "GET",
-		"DELETE /authentication/logout/:refreshToken": "DELETE",
+		"POST /api/sessions":           "POST",
+		"DELETE /api/sessions/current": "DELETE",
+		"POST /api/users":              "POST",
+		"GET /api/users":               "GET",
+		"GET /api/users/:id":           "GET",
+		"POST /api/tokens/introspect":  "POST",
 	}
 
 	foundRoutes := make(map[string]bool)

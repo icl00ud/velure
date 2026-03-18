@@ -1,15 +1,10 @@
 {
-	# Email para Let's Encrypt
 	email admin@velure.local
-	
-	# Modo de desenvolvimento: usa certificados internos
-	# Para produção, remover esta linha e configurar domínio real
+
 	local_certs
-	
-	# Disable automatic HTTPS for localhost
+
 	auto_https disable_redirects
-	
-	# Logs estruturados
+
 	log {
 		output file /var/log/caddy/access.log {
 			roll_size 100mb
@@ -20,9 +15,7 @@
 	}
 }
 
-# Domínio local (desenvolvimento)
 velure.local {
-	# Logs por domínio
 	log {
 		output file /var/log/caddy/velure.log {
 			roll_size 50mb
@@ -31,67 +24,46 @@ velure.local {
 		format json
 	}
 
-	# Headers de segurança
 	header {
-		# HSTS
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-		# XSS Protection
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "SAMEORIGIN"
 		X-XSS-Protection "1; mode=block"
-		# Referrer Policy
 		Referrer-Policy "strict-origin-when-cross-origin"
-		
-		# Permissions Policy
+
 		Permissions-Policy "geolocation=(), microphone=(), camera=()"
-		
-		# CSP (Content Security Policy) - ajustar conforme necessário
+
 		Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; img-src 'self' https: data: blob: unsplash.com *.unsplash.com;"
-		# Remove headers que expõem info
 		-Server
 		-X-Powered-By
 	}
 
-	# CORS headers
 	@options {
 		method OPTIONS
 	}
 	handle @options {
 		header Access-Control-Allow-Origin "*"
-		header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+		header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
 		header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
 		header Access-Control-Max-Age "3600"
 		respond 204
 	}
 
-	# Health check agregado de todos os serviços
 	handle /health {
 		header Content-Type "application/json"
-		respond `{"status":"healthy","timestamp":"{time.now.unix}","proxy":"caddy v2.8","services":{"auth":"/api/auth/health","product":"/api/product/health","orders":"/api/order/health"}}` 200
+		respond `{"status":"healthy","timestamp":"{time.now.unix}","proxy":"caddy v2.8","services":{"auth":"/api/users","product":"/api/products","orders":"/api/orders"}}` 200
 	}
 
-	# API Gateway - Auth Service
-	@auth_routes path /api/auth/*
+	@auth_routes path /api/sessions /api/sessions/* /api/users /api/users/* /api/tokens /api/tokens/*
 	handle @auth_routes {
-		uri strip_prefix /api/auth
 		reverse_proxy auth-service:3020 {
-			# Rewrite path para adicionar /authentication
-			rewrite /authentication{uri}
-			
-			# Health check
 			health_uri /health
 			health_interval 10s
 			health_timeout 5s
 			health_status 2xx
-			
-			# Headers para preservar client info
 			header_up X-Real-IP {remote_host}
-			
-			# CORS
 			header_down Access-Control-Allow-Origin "*"
 			header_down Access-Control-Allow-Credentials "true"
-			
-			# Timeout otimizado para operações de autenticação
 			transport http {
 				dial_timeout 10s
 				response_header_timeout 60s
@@ -101,47 +73,33 @@ velure.local {
 		}
 	}
 
-	# API Gateway - Product Service
-	@product_routes path /api/product/*
+	@product_routes path /api/products /api/products/*
 	handle @product_routes {
-		uri strip_prefix /api
 		reverse_proxy product-service:3010 {
 			health_uri /health
 			health_interval 10s
 			health_timeout 5s
 			health_status 2xx
-			
 			header_up X-Real-IP {remote_host}
-			
 			header_down Access-Control-Allow-Origin "*"
 			header_down Access-Control-Allow-Credentials "true"
-			
-			# Cache headers para produtos (5 minutos)
 			header_down Cache-Control "public, max-age=300"
 		}
 	}
 
-	# API Gateway - Order Service (REST + SSE)
-	@order_routes path /api/order/*
+	@order_routes path /api/orders /api/orders/* /api/me/*
 	handle @order_routes {
-		uri strip_prefix /api/order
 		reverse_proxy publish-order-service:3030 {
 			health_uri /health
 			health_interval 10s
 			health_timeout 5s
 			health_status 2xx
-			
-			# SSE requer flush imediato
 			flush_interval -1
-			
 			header_up X-Real-IP {remote_host}
-			
 			header_down Access-Control-Allow-Origin "*"
 			header_down Access-Control-Allow-Credentials "true"
 			header_down Cache-Control "no-cache"
 			header_down X-Accel-Buffering "no"
-			
-			# Timeout longo para SSE
 			transport http {
 				dial_timeout 10s
 				read_timeout 7200s
@@ -150,29 +108,26 @@ velure.local {
 		}
 	}
 
-	# Frontend - UI Service (SPA)
 	handle /* {
 		reverse_proxy ui-service:8080 {
 			health_uri /health
 			health_interval 30s
 			health_timeout 5s
 			health_status 2xx
-			
+
 			header_up X-Real-IP {remote_host}
 		}
 	}
 
-	# Compressão automática (gzip, zstd, brotli)
 	encode gzip zstd
 
-	# Error pages customizadas com JSON
 	handle_errors {
 		@5xx expression `{http.error.status_code} >= 500`
 		handle @5xx {
 			header Content-Type "application/json"
 			respond `{"error":"Erro interno do servidor","message":"Por favor, tente novamente mais tarde","status":{http.error.status_code}}` {http.error.status_code}
 		}
-		
+
 		@4xx expression `{http.error.status_code} >= 400 && {http.error.status_code} < 500`
 		handle @4xx {
 			header Content-Type "application/json"
@@ -180,31 +135,3 @@ velure.local {
 		}
 	}
 }
-
-# Configuração para produção (comentado)
-# api.velure.com.br {
-# 	log {
-# 		output file /var/log/caddy/api-velure.log
-# 		format json
-# 	}
-#
-# 	# Mesmos handles de /api/* acima, mas sem o prefixo /api
-# 	handle /auth* {
-# 		reverse_proxy auth-service:3001 { ... }
-# 	}
-# 	# ... outros serviços
-# }
-
-# velure.com.br, www.velure.com.br {
-# 	log {
-# 		output file /var/log/caddy/www-velure.log
-# 		format json
-# 	}
-#
-# 	# Redirect www to non-www
-# 	@www host www.velure.com.br
-# 	redir @www https://velure.com.br{uri} permanent
-#
-# 	# Frontend
-# 	reverse_proxy ui-service:80 { ... }
-# }

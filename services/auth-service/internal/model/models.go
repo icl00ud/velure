@@ -70,6 +70,10 @@ type ValidateTokenRequest struct {
 	AccessToken string `json:"token" binding:"required"`
 }
 
+type LogoutRequest struct {
+	RefreshToken string `json:"refreshToken" binding:"required"`
+}
+
 type ValidateTokenResponse struct {
 	IsValid bool `json:"isValid"`
 }

@@ -1,6 +1,8 @@
 package client
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,16 +16,30 @@ func TestNewProductClient(t *testing.T) {
 }
 
 func TestProductClient_UpdateQuantity_Success(t *testing.T) {
-	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			t.Errorf("expected POST request, got %s", r.Method)
+		if r.Method != http.MethodPatch {
+			t.Errorf("expected PATCH request, got %s", r.Method)
 		}
-		if r.URL.Path != "/product/updateQuantity" {
-			t.Errorf("expected path /product/updateQuantity, got %s", r.URL.Path)
+		if r.URL.Path != "/api/products/product123/inventory" {
+			t.Errorf("expected path /api/products/product123/inventory, got %s", r.URL.Path)
 		}
 		if r.Header.Get("Content-Type") != "application/json" {
 			t.Errorf("expected Content-Type application/json, got %s", r.Header.Get("Content-Type"))
+		}
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("failed reading body: %v", err)
+		}
+		var payload map[string]int
+		if err := json.Unmarshal(body, &payload); err != nil {
+			t.Errorf("failed unmarshalling body: %v", err)
+		}
+		if _, exists := payload["product_id"]; exists {
+			t.Errorf("product_id should not be sent in body")
+		}
+		if payload["quantity_change"] != -2 {
+			t.Errorf("expected quantity_change -2, got %d", payload["quantity_change"])
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -40,7 +56,6 @@ func TestProductClient_UpdateQuantity_Success(t *testing.T) {
 }
 
 func TestProductClient_UpdateQuantity_ErrorResponse(t *testing.T) {
-	// Create a test server that returns an error
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error":"insufficient stock"}`))
@@ -53,14 +68,12 @@ func TestProductClient_UpdateQuantity_ErrorResponse(t *testing.T) {
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
-	// Expect PermanentError for 400 Bad Request
 	if _, ok := err.(*PermanentError); !ok {
 		t.Errorf("expected PermanentError, got %T: %v", err, err)
 	}
 }
 
 func TestProductClient_UpdateQuantity_NonJSONError(t *testing.T) {
-	// Create a test server that returns non-JSON error
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`Internal Server Error`))
@@ -73,7 +86,6 @@ func TestProductClient_UpdateQuantity_NonJSONError(t *testing.T) {
 	if err == nil {
 		t.Error("expected error, got nil")
 	}
-	// Expect TransientError for 500 Internal Server Error
 	if _, ok := err.(*TransientError); !ok {
 		t.Errorf("expected TransientError, got %T: %v", err, err)
 	}
@@ -89,10 +101,7 @@ func TestProductClient_UpdateQuantity_InvalidURL(t *testing.T) {
 }
 
 func TestProductClient_UpdateQuantity_Timeout(t *testing.T) {
-	// Create a test server that delays response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Server responds immediately for this test
-		// The actual timeout is 10 seconds in the client
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer server.Close()
@@ -106,7 +115,6 @@ func TestProductClient_UpdateQuantity_Timeout(t *testing.T) {
 }
 
 func TestProductClient_UpdateQuantity_PositiveChange(t *testing.T) {
-	// Test with positive quantity change (adding stock back)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))

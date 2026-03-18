@@ -34,12 +34,10 @@ func main() {
 }
 
 func run(log *logger.Logger) error {
-	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		log.Info("No .env file found, using environment variables")
 	}
 
-	// Load configuration
 	log.Info("Loading configuration")
 	cfg := config.Load()
 	log.Info("Configuration loaded",
@@ -47,7 +45,6 @@ func run(log *logger.Logger) error {
 		logger.Int("db_port", cfg.Database.Port),
 		logger.String("db_name", cfg.Database.Database))
 
-	// Initialize database
 	log.Info("Connecting to database")
 	db, err := database.Connect(cfg.Database)
 	if err != nil {
@@ -55,14 +52,12 @@ func run(log *logger.Logger) error {
 	}
 	log.Info("Database connected")
 
-	// Auto migrate
 	log.Info("Running migrations")
 	if err := database.Migrate(db); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 	log.Info("Migrations completed")
 
-	// Initialize Redis
 	log.Info("Connecting to Redis", logger.String("addr", cfg.Redis.Addr))
 	redisClient, err := connectRedis(cfg.Redis)
 	if err != nil {
@@ -71,19 +66,16 @@ func run(log *logger.Logger) error {
 	defer redisClient.Close()
 	log.Info("Redis connected")
 
-	// Initialize repositories
 	log.Info("Initializing repositories")
 	userRepo := repositories.NewUserRepository(db)
 	sessionRepo := repositories.NewSessionRepository(db)
 	passwordResetRepo := repositories.NewPasswordResetRepository(db)
 
-	// Initialize services
 	log.Info("Initializing services")
 	authService := services.NewAuthService(userRepo, sessionRepo, passwordResetRepo, cfg, redisClient)
 	authService.SyncActiveSessionsMetric(context.Background())
 	authService.SyncTotalUsersMetric(context.Background())
 
-	// Start background metrics sync job (updates gauges every 30s)
 	go func() {
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
@@ -94,14 +86,11 @@ func run(log *logger.Logger) error {
 	}()
 	log.Info("Background metrics sync started", logger.String("interval", "30s"))
 
-	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
 
-	// Set up router with all middleware and routes
 	log.Info("Setting up HTTP router")
 	router := setupRouter(cfg, authHandler)
 
-	// Start server
 	port := os.Getenv("AUTH_SERVICE_APP_PORT")
 	if port == "" {
 		port = "3020"
@@ -134,59 +123,38 @@ func connectRedis(cfg config.RedisConfig) (*redis.Client, error) {
 }
 
 func setupRoutes(router *gin.Engine, authHandler *handlers.AuthHandler) {
-	// Support both /authentication (local dev with Caddy rewrite) and /api/auth (Kubernetes ALB)
-	auth := router.Group("/authentication")
+	api := router.Group("/api")
 	{
-		auth.POST("/register", authHandler.Register)
-		auth.POST("/login", authHandler.Login)
-		auth.POST("/validateToken", authHandler.ValidateToken)
-		auth.GET("/users", authHandler.GetUsers)
-		auth.GET("/user/id/:id", authHandler.GetUserByID)
-		auth.GET("/user/email/:email", authHandler.GetUserByEmail)
-		auth.DELETE("/logout/:refreshToken", authHandler.Logout)
-	}
-
-	// Kubernetes ALB routes (no path rewriting)
-	apiAuth := router.Group("/api/auth")
-	{
-		apiAuth.POST("/register", authHandler.Register)
-		apiAuth.POST("/login", authHandler.Login)
-		apiAuth.POST("/validateToken", authHandler.ValidateToken)
-		apiAuth.GET("/users", authHandler.GetUsers)
-		apiAuth.GET("/user/id/:id", authHandler.GetUserByID)
-		apiAuth.GET("/user/email/:email", authHandler.GetUserByEmail)
-		apiAuth.DELETE("/logout/:refreshToken", authHandler.Logout)
+		api.POST("/sessions", authHandler.Login)
+		api.DELETE("/sessions/current", authHandler.Logout)
+		api.POST("/users", authHandler.Register)
+		api.GET("/users", authHandler.GetUsers)
+		api.GET("/users/:id", authHandler.GetUserByID)
+		api.POST("/tokens/introspect", authHandler.ValidateToken)
 	}
 }
 
 func setupRouter(cfg *config.Config, authHandler *handlers.AuthHandler) *gin.Engine {
-	// Set gin mode
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Initialize router without default middleware
 	router := gin.New()
 	router.Use(gin.Recovery())
 
-	// Rate limiter global
-	rateLimiter := middleware.NewRateLimiter(100, 200) // 100 req/s, burst 200
+	rateLimiter := middleware.NewRateLimiter(100, 200)
 
-	// Middleware
 	router.Use(middleware.CORS())
 	router.Use(middleware.Logger())
 	router.Use(middleware.PrometheusMiddleware())
 	router.Use(rateLimiter.Middleware())
 
-	// Prometheus metrics endpoint
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-	// Health endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	// Routes
 	setupRoutes(router, authHandler)
 
 	return router

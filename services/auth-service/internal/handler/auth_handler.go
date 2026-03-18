@@ -30,7 +30,6 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	// Criar usuário (chamada direta, sem overhead de goroutine)
 	user, err := h.authService.CreateUser(req)
 	if err != nil {
 		if err.Error() == "user already exists" {
@@ -61,7 +60,6 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// Fazer login (chamada direta, sem overhead de goroutine)
 	response, err := h.authService.Login(req)
 	if err != nil {
 		if err.Error() == "invalid credentials" {
@@ -103,7 +101,22 @@ func (h *AuthHandler) ValidateToken(c *gin.Context) {
 }
 
 func (h *AuthHandler) GetUsers(c *gin.Context) {
-	// Verifica se há parâmetros de paginação
+	email := c.Query("email")
+	if email != "" {
+		user, err := h.authService.GetUserByEmail(email)
+		if err != nil {
+			if err.Error() == "user not found" {
+				c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, user)
+		return
+	}
+
 	pageStr := c.Query("page")
 	pageSizeStr := c.Query("pageSize")
 
@@ -122,7 +135,6 @@ func (h *AuthHandler) GetUsers(c *gin.Context) {
 		}
 	}
 
-	// Fallback para retornar todos os usuários
 	users, err := h.authService.GetUsers()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -174,13 +186,13 @@ func (h *AuthHandler) GetUserByEmail(c *gin.Context) {
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-	refreshToken := c.Param("refreshToken")
-	if refreshToken == "" {
+	var req models.LogoutRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "refresh token is required"})
 		return
 	}
 
-	if err := h.authService.Logout(refreshToken); err != nil {
+	if err := h.authService.Logout(req.RefreshToken); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

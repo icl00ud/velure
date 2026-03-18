@@ -3,7 +3,7 @@ import { configService } from "./config.service";
 
 class AuthenticationService {
   private authStatusListeners: Set<(status: boolean) => void> = new Set();
-  private validationCacheDuration: number = 5 * 60 * 1000; // 5 minutos
+  private validationCacheDuration: number = 5 * 60 * 1000;
 
   constructor() {
     this.checkInitialAuthStatus();
@@ -32,7 +32,6 @@ class AuthenticationService {
     try {
       const token: Token = JSON.parse(tokenString);
 
-      // Se validou recentemente, considera válido sem validar novamente
       const now = Date.now();
       const lastValidation = this.getLastValidationTime();
 
@@ -64,7 +63,6 @@ class AuthenticationService {
 
   subscribeToAuthStatus(callback: (status: boolean) => void): () => void {
     this.authStatusListeners.add(callback);
-    // Envia o status atual imediatamente quando alguém se inscreve
     const tokenString = localStorage.getItem("token");
     callback(!!tokenString);
     return () => this.authStatusListeners.delete(callback);
@@ -76,7 +74,7 @@ class AuthenticationService {
 
   async login(user: ILoginUser): Promise<ILoginResponse> {
     try {
-      const response = await fetch(`${configService.authenticationServiceUrl}/login`, {
+      const response = await fetch(`${configService.authenticationServiceUrl}/sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +88,7 @@ class AuthenticationService {
 
       const loginResponse: ILoginResponse = await response.json();
       localStorage.setItem("token", JSON.stringify(loginResponse));
-      this.setLastValidationTime(Date.now()); // Marca como validado
+      this.setLastValidationTime(Date.now());
       this.notifyAuthStatusChange(true);
       console.log("Login realizado com sucesso.");
       return loginResponse;
@@ -102,19 +100,20 @@ class AuthenticationService {
 
   async logout(refreshToken: string): Promise<boolean> {
     try {
-      const response = await fetch(
-        `${configService.authenticationServiceUrl}/logout/${refreshToken}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${configService.authenticationServiceUrl}/sessions/current`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
 
       if (!response.ok) {
         throw new Error("Erro no logout");
       }
 
       localStorage.removeItem("token");
-      this.clearLastValidationTime(); // Reseta o cache de validação
+      this.clearLastValidationTime();
       this.notifyAuthStatusChange(false);
       console.log("Logout realizado com sucesso.");
       return true;
@@ -126,7 +125,7 @@ class AuthenticationService {
 
   async register(user: IRegisterUser): Promise<boolean> {
     try {
-      const response = await fetch(`${configService.authenticationServiceUrl}/register`, {
+      const response = await fetch(`${configService.authenticationServiceUrl}/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -140,7 +139,6 @@ class AuthenticationService {
 
       console.log("Registro realizado com sucesso.");
 
-      // Auto-login após registro bem-sucedido
       await this.login({ email: user.email, password: user.password });
 
       return true;
@@ -172,7 +170,7 @@ class AuthenticationService {
 
   private async validateToken(token: Token): Promise<boolean> {
     try {
-      const response = await fetch(`${configService.authenticationServiceUrl}/validateToken`, {
+      const response = await fetch(`${configService.authenticationServiceUrl}/tokens/introspect`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
