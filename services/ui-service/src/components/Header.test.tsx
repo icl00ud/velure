@@ -276,8 +276,12 @@ describe("Header", () => {
         await waitFor(
           () => {
             expect(global.fetch).toHaveBeenCalledWith(
-              expect.stringContaining("/logout/"),
-              expect.any(Object)
+              expect.stringContaining("/api/sessions/current"),
+              expect.objectContaining({
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refreshToken: "mock-refresh" }),
+              })
             );
           },
           { timeout: 2000 }

@@ -51,7 +51,6 @@ var defaultDeps = appDependencies{
 
 var log *logger.Logger
 
-// fatalf is a variable to allow tests to replace the fatal behavior
 var fatalf = func(v ...interface{}) {
 	if log != nil {
 		log.Fatal("fatal error", logger.Any("error", v))
@@ -71,17 +70,14 @@ func main() {
 }
 
 func run(deps appDependencies) error {
-	// Ensure log is initialized
 	if log == nil {
 		log = logger.NewNop()
 	}
 
-	// Load environment variables from .env file if it exists
 	if err := deps.loadEnv(); err != nil {
 		log.Info("No .env file found, using system environment variables")
 	}
 
-	// Initialize configuration
 	cfg := config.New()
 
 	log.Info("Starting Product Service",
@@ -107,7 +103,6 @@ func run(deps appDependencies) error {
 		defer redisClose()
 	}
 
-	// Initialize services
 	service := deps.newSvc(repo)
 	service.SyncProductCatalogMetric(context.Background())
 
@@ -123,11 +118,9 @@ func run(deps appDependencies) error {
 }
 
 func setupFiberApp(service services.ProductService) *fiber.App {
-	// Initialize handlers
 	handler := handlers.NewProductHandler(service)
 	healthHandler := handlers.NewHealthHandler()
 
-	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
@@ -140,7 +133,6 @@ func setupFiberApp(service services.ProductService) *fiber.App {
 		},
 	})
 
-	// Middleware - custom request logging
 	app.Use(func(c *fiber.Ctx) error {
 		path := c.Path()
 		if path == "/metrics" || path == "/health" {
@@ -161,10 +153,8 @@ func setupFiberApp(service services.ProductService) *fiber.App {
 	}))
 	app.Use(middleware.PrometheusMiddleware())
 
-	// Routes
 	api := app.Group("/")
 
-	// Prometheus metrics endpoint with error handling
 	metricsHandler := promhttp.HandlerFor(
 		prometheus.DefaultGatherer,
 		promhttp.HandlerOpts{
@@ -173,33 +163,16 @@ func setupFiberApp(service services.ProductService) *fiber.App {
 	)
 	app.Get("/metrics", adaptor.HTTPHandler(metricsHandler))
 
-	// Health routes
 	api.Get("/health", healthHandler.Check)
-
-	// Helper function to register product routes on a group
-	registerProductRoutes := func(g fiber.Router) {
-		g.Get("/", handler.GetAllProducts)
-		g.Get("/products/search", handler.SearchProducts)
-		g.Get("/products", handler.GetProductsREST)
-		g.Get("/getProductsByName/:name", handler.GetProductsByName)
-		g.Get("/getProductsByPage", handler.GetProductsByPage)
-		g.Get("/getProductsByPageAndCategory", handler.GetProductsByPageAndCategory)
-		g.Get("/getProductsCount", handler.GetProductsCount)
-		g.Get("/categories", handler.GetCategories)
-		g.Get("/:id", handler.GetProductById)
-		g.Post("/", handler.CreateProduct)
-		g.Post("/updateQuantity", handler.UpdateProductQuantity)
-		g.Delete("/deleteProductsByName/:name", handler.DeleteProductsByName)
-		g.Delete("/deleteProductById/:id", handler.DeleteProductById)
-	}
-
-	// Product routes - local dev with Caddy rewrite
-	products := api.Group("/product")
-	registerProductRoutes(products)
-
-	// Kubernetes ALB routes (no path rewriting)
-	apiProducts := api.Group("/api/product")
-	registerProductRoutes(apiProducts)
+	products := api.Group("/api/products")
+	products.Get("", handler.GetProducts)
+	products.Get("/categories", handler.GetCategories)
+	products.Get("/count", handler.GetProductsCount)
+	products.Post("", handler.CreateProduct)
+	products.Patch("/:id/inventory", handler.PatchProductInventory)
+	products.Put("/:id", handler.UpdateProduct)
+	products.Delete("/:id", handler.DeleteProductById)
+	products.Get("/:id", handler.GetProductById)
 
 	return app
 }
@@ -228,7 +201,6 @@ func resolveAllowedOrigins() string {
 	return strings.Join(filtered, ",")
 }
 
-// maskURI masks sensitive information in MongoDB URI for logging
 func maskURI(uri string) string {
 	if len(uri) > 20 && uri[:10] == "mongodb://" {
 		if idx := strings.Index(uri, "://"); idx != -1 {

@@ -13,13 +13,17 @@ The **Auth Service** is responsible for user authentication and authorization wi
 ## Core Responsibilities
 
 1. **User Management:** Securely storing user credentials and managing user profiles using PostgreSQL.
-2. **Authentication:** Providing endpoints for user registration and login.
+2. **Authentication:** Exposing canonical session and user endpoints.
 3. **Session Management:** Issuing JWT (JSON Web Tokens) for authenticated sessions and managing token caching/invalidation via Redis.
 
 ## Key Endpoints
 
-- `POST /api/auth/register`: Registers a new user.
-- `POST /api/auth/login`: Authenticates a user and returns a JWT.
+- `POST /api/sessions`: Authenticates a user and returns a JWT.
+- `DELETE /api/sessions/current`: Ends the current authenticated session.
+- `POST /api/users`: Registers a new user.
+- `GET /api/users`: Lists users and supports filtering (for example, by email).
+- `GET /api/users/{id}`: Retrieves a specific user by ID.
+- `POST /api/tokens/introspect`: Validates and inspects a token.
 
 ## Architecture & Conventions
 

@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 const TOKEN_KEY = "token";
 const VALIDATION_KEY = "lastValidation";
-const VALIDATION_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const VALIDATION_CACHE_DURATION = 5 * 60 * 1000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<Token | null>(null);
@@ -34,7 +34,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthenticated = useMemo(() => token !== null, [token]);
 
-  // Load token from storage on mount
   useEffect(() => {
     const loadToken = async () => {
       try {
@@ -46,7 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const parsedToken: Token = JSON.parse(storedToken);
 
-        // Check if recently validated (skip validation if cached)
         const lastValidation = localStorage.getItem(VALIDATION_KEY);
         const now = Date.now();
 
@@ -56,7 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // Validate token with server
         const isValid = await validateTokenWithServer(parsedToken.accessToken);
         if (isValid) {
           setToken(parsedToken);
@@ -94,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (user: ILoginUser): Promise<ILoginResponse> => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${configService.authenticationServiceUrl}/login`, {
+        const response = await fetch(`${configService.authenticationServiceUrl}/sessions`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(user),
@@ -115,14 +112,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      if (token?.refreshToken) {
-        await fetch(`${configService.authenticationServiceUrl}/logout/${token.refreshToken}`, {
-          method: "DELETE",
-        });
-      }
-    } finally {
+      setIsLoading(true);
+      try {
+        if (token?.refreshToken) {
+          await fetch(`${configService.authenticationServiceUrl}/sessions/current`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refreshToken: token.refreshToken }),
+          });
+        }
+      } finally {
       clearTokenStorage();
       setIsLoading(false);
     }
@@ -132,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (user: IRegisterUser): Promise<boolean> => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${configService.authenticationServiceUrl}/register`, {
+        const response = await fetch(`${configService.authenticationServiceUrl}/users`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(user),
@@ -142,7 +141,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error("Erro no registro");
         }
 
-        // Auto-login after registration
         await login({ email: user.email, password: user.password });
         return true;
       } finally {
@@ -179,7 +177,7 @@ export function useAuthContext() {
 
 async function validateTokenWithServer(accessToken: string): Promise<boolean> {
   try {
-    const response = await fetch(`${configService.authenticationServiceUrl}/validateToken`, {
+    const response = await fetch(`${configService.authenticationServiceUrl}/tokens/introspect`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token: accessToken }),

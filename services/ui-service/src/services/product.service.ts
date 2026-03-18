@@ -39,7 +39,7 @@ class ProductService {
     totalPages: number;
   }> {
     try {
-      const url = `${configService.productServiceUrl}/getProductsByPage?page=${page}&pageSize=${pageSize}`;
+      const url = `${configService.productServiceUrl}?page=${page}&limit=${pageSize}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Erro ao buscar produtos paginados");
@@ -64,7 +64,7 @@ class ProductService {
     totalPages: number;
   }> {
     try {
-      const url = `${configService.productServiceUrl}/getProductsByPageAndCategory?page=${page}&pageSize=${pageSize}&category=${productCategory}`;
+      const url = `${configService.productServiceUrl}?page=${page}&limit=${pageSize}&category=${productCategory}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Erro ao buscar produtos por categoria");
@@ -92,7 +92,7 @@ class ProductService {
 
   async getProductsCount(): Promise<number> {
     try {
-      const url = `${configService.productServiceUrl}/getProductsCount`;
+      const url = `${configService.productServiceUrl}/count`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Erro ao buscar contagem de produtos");

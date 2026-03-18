@@ -372,6 +372,23 @@ func TestAuthHandler_GetUsers(t *testing.T) {
 		checkResponse  func(t *testing.T, w *httptest.ResponseRecorder)
 	}{
 		{
+			name:        "get user by email lookup",
+			queryParams: "?email=user1@example.com",
+			setupMock: func() {
+				mockService.EXPECT().
+					GetUserByEmail("user1@example.com").
+					Return(&models.UserResponse{ID: 1, Name: "User 1", Email: "user1@example.com"}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
+				var user models.UserResponse
+				json.Unmarshal(w.Body.Bytes(), &user)
+				if user.Email != "user1@example.com" {
+					t.Errorf("Expected email user1@example.com, got %s", user.Email)
+				}
+			},
+		},
+		{
 			name:        "get all users",
 			queryParams: "",
 			setupMock: func() {
@@ -666,14 +683,16 @@ func TestAuthHandler_Logout(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		refreshToken   string
+		requestBody    interface{}
 		setupMock      func()
 		expectedStatus int
 		checkResponse  func(t *testing.T, body map[string]interface{})
 	}{
 		{
-			name:         "successful logout",
-			refreshToken: "valid-refresh-token",
+			name: "successful logout",
+			requestBody: map[string]string{
+				"refreshToken": "valid-refresh-token",
+			},
 			setupMock: func() {
 				mockService.EXPECT().
 					Logout("valid-refresh-token").
@@ -687,8 +706,21 @@ func TestAuthHandler_Logout(t *testing.T) {
 			},
 		},
 		{
-			name:         "internal server error",
-			refreshToken: "token",
+			name:           "missing refresh token",
+			requestBody:    map[string]string{},
+			setupMock:      func() {},
+			expectedStatus: http.StatusBadRequest,
+			checkResponse: func(t *testing.T, body map[string]interface{}) {
+				if body["error"] == nil {
+					t.Error("Expected error in response")
+				}
+			},
+		},
+		{
+			name: "internal server error",
+			requestBody: map[string]string{
+				"refreshToken": "token",
+			},
 			setupMock: func() {
 				mockService.EXPECT().
 					Logout("token").
@@ -708,9 +740,11 @@ func TestAuthHandler_Logout(t *testing.T) {
 			tt.setupMock()
 
 			router := setupTestRouter()
-			router.DELETE("/logout/:refreshToken", handler.Logout)
+			router.DELETE("/sessions/current", handler.Logout)
 
-			req := httptest.NewRequest(http.MethodDelete, "/logout/"+tt.refreshToken, nil)
+			body, _ := json.Marshal(tt.requestBody)
+			req := httptest.NewRequest(http.MethodDelete, "/sessions/current", bytes.NewBuffer(body))
+			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
@@ -747,7 +781,8 @@ func TestAuthHandler_Logout_MissingToken(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Params = []gin.Param{{Key: "refreshToken", Value: ""}}
+	c.Request = httptest.NewRequest(http.MethodDelete, "/sessions/current", bytes.NewBuffer([]byte(`{}`)))
+	c.Request.Header.Set("Content-Type", "application/json")
 
 	handler.Logout(c)
 

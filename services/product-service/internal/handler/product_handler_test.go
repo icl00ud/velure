@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockProductService is a mock implementation of ProductService
 type MockProductService struct {
 	mock.Mock
 }
@@ -102,73 +101,61 @@ func (m *MockProductService) UpdateProductQuantity(ctx context.Context, productI
 	return args.Error(0)
 }
 
-func TestSearchProducts(t *testing.T) {
-	tests := []struct {
-		name           string
-		query          string
-		mockReturn     []models.ProductResponse
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name:  "success",
-			query: "toy",
-			mockReturn: []models.ProductResponse{
-				{ID: "1", Name: "toy"},
-			},
-			expectedStatus: fiber.StatusOK,
-		},
-		{
-			name:           "missing query",
-			query:          "",
-			expectedStatus: fiber.StatusBadRequest,
-		},
-		{
-			name:           "service error",
-			query:          "toy",
-			mockError:      errors.New("lookup failed"),
-			expectedStatus: fiber.StatusInternalServerError,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(MockProductService)
-			if tt.query != "" {
-				mockService.On("GetProductsByName", mock.Anything, tt.query).Return(tt.mockReturn, tt.mockError)
-			}
-
-			handler := NewProductHandler(mockService)
-			app := fiber.New()
-			app.Get("/products/search", handler.SearchProducts)
-
-			url := "/products/search"
-			if tt.query != "" {
-				url += "?q=" + tt.query
-			}
-
-			req := httptest.NewRequest("GET", url, nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-		})
-	}
-}
-
-func TestGetProductsREST(t *testing.T) {
+func TestGetProducts_ListAll(t *testing.T) {
 	mockService := new(MockProductService)
-	mockService.On("GetProductsByPage", mock.Anything, 1, 5).Return(&models.PaginatedProductsResponse{
-		Products:   []models.ProductResponse{{ID: "1", Name: "item"}},
-		Page:       1,
-		PageSize:   5,
-		TotalCount: 1,
-		TotalPages: 1,
-	}, nil)
+	mockService.On("GetAllProducts", mock.Anything).Return([]models.ProductResponse{{ID: "1", Name: "p1"}}, nil)
 
 	handler := NewProductHandler(mockService)
 	app := fiber.New()
-	app.Get("/products", handler.GetProductsREST)
+	app.Get("/products", handler.GetProducts)
+
+	req := httptest.NewRequest("GET", "/products", nil)
+	resp, err := app.Test(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+	mockService.AssertExpectations(t)
+}
+
+func TestGetProducts_FilterByName(t *testing.T) {
+	mockService := new(MockProductService)
+	mockService.On("GetProductsByName", mock.Anything, "toy").Return([]models.ProductResponse{{ID: "1", Name: "toy"}}, nil)
+
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Get("/products", handler.GetProducts)
+
+	req := httptest.NewRequest("GET", "/products?name=toy", nil)
+	resp, err := app.Test(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+	mockService.AssertExpectations(t)
+}
+
+func TestGetProducts_FilterByQ(t *testing.T) {
+	mockService := new(MockProductService)
+	mockService.On("GetProductsByName", mock.Anything, "book").Return([]models.ProductResponse{{ID: "1", Name: "book"}}, nil)
+
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Get("/products", handler.GetProducts)
+
+	req := httptest.NewRequest("GET", "/products?q=book", nil)
+	resp, err := app.Test(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+	mockService.AssertExpectations(t)
+}
+
+func TestGetProducts_Paginated(t *testing.T) {
+	mockService := new(MockProductService)
+	mockService.On("GetProductsByPage", mock.Anything, 1, 5).Return(&models.PaginatedProductsResponse{Products: []models.ProductResponse{{ID: "1", Name: "item"}}, Page: 1, PageSize: 5, TotalCount: 1, TotalPages: 1}, nil)
+
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Get("/products", handler.GetProducts)
 
 	req := httptest.NewRequest("GET", "/products?page=1&limit=5", nil)
 	resp, err := app.Test(req)
@@ -178,540 +165,178 @@ func TestGetProductsREST(t *testing.T) {
 	mockService.AssertExpectations(t)
 }
 
-func TestGetProductsREST_PaginationValidation(t *testing.T) {
+func TestGetProducts_PaginatedByCategory(t *testing.T) {
+	mockService := new(MockProductService)
+	mockService.On("GetProductsByPageAndCategory", mock.Anything, 1, 10, "Electronics").Return(&models.PaginatedProductsResponse{Products: []models.ProductResponse{{ID: "1", Name: "Phone"}}, Page: 1, PageSize: 10, TotalCount: 1, TotalPages: 1}, nil)
+
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Get("/products", handler.GetProducts)
+
+	req := httptest.NewRequest("GET", "/products?page=1&limit=10&category=Electronics", nil)
+	resp, err := app.Test(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+	mockService.AssertExpectations(t)
+}
+
+func TestGetProducts_ValidationErrors(t *testing.T) {
 	tests := []struct {
-		name           string
-		url            string
-		expectedStatus int
-		expectedBody   string
+		name string
+		url  string
+		msg  string
 	}{
-		{
-			name:           "page below minimum",
-			url:            "/products?page=0&limit=10",
-			expectedStatus: fiber.StatusBadRequest,
-			expectedBody:   "Invalid page parameter: must be greater than or equal to 1",
-		},
-		{
-			name:           "limit below minimum",
-			url:            "/products?page=1&limit=0",
-			expectedStatus: fiber.StatusBadRequest,
-			expectedBody:   "Invalid limit/pageSize parameter: must be between 1 and 100",
-		},
-		{
-			name:           "limit above maximum",
-			url:            "/products?page=1&limit=101",
-			expectedStatus: fiber.StatusBadRequest,
-			expectedBody:   "Invalid limit/pageSize parameter: must be between 1 and 100",
-		},
-		{
-			name:           "legacy pageSize below minimum",
-			url:            "/products?page=1&pageSize=0",
-			expectedStatus: fiber.StatusBadRequest,
-			expectedBody:   "Invalid limit/pageSize parameter: must be between 1 and 100",
-		},
+		{name: "missing limit", url: "/products?page=1", msg: "both page and limit query parameters are required"},
+		{name: "invalid page", url: "/products?page=x&limit=10", msg: "Invalid page parameter"},
+		{name: "page below minimum", url: "/products?page=0&limit=10", msg: "Invalid page parameter: must be greater than or equal to 1"},
+		{name: "invalid limit", url: "/products?page=1&limit=x", msg: "Invalid limit parameter"},
+		{name: "limit below minimum", url: "/products?page=1&limit=0", msg: "Invalid limit parameter: must be between 1 and 100"},
+		{name: "category without pagination", url: "/products?category=books", msg: "category filter requires page and limit query parameters"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewProductHandler(new(MockProductService))
 			app := fiber.New()
-			app.Get("/products", handler.GetProductsREST)
+			app.Get("/products", handler.GetProducts)
 
 			req := httptest.NewRequest("GET", tt.url, nil)
 			resp, err := app.Test(req)
 
 			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
+			assert.Equal(t, fiber.StatusBadRequest, resp.StatusCode)
 
 			body, readErr := io.ReadAll(resp.Body)
 			assert.NoError(t, readErr)
-			assert.Contains(t, string(body), tt.expectedBody)
+			assert.Contains(t, string(body), tt.msg)
 		})
 	}
 }
 
-func TestGetAllProducts(t *testing.T) {
-	tests := []struct {
-		name           string
-		mockReturn     []models.ProductResponse
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name: "success",
-			mockReturn: []models.ProductResponse{
-				{ID: "1", Name: "Product 1", Price: 10.0},
-				{ID: "2", Name: "Product 2", Price: 20.0},
-			},
-			mockError:      nil,
-			expectedStatus: 200,
-		},
-		{
-			name:           "service error",
-			mockReturn:     nil,
-			mockError:      errors.New("database error"),
-			expectedStatus: 500,
-		},
-	}
+func TestGetProductByID(t *testing.T) {
+	mockService := new(MockProductService)
+	mockService.On("GetProductById", mock.Anything, "123").Return(&models.ProductResponse{ID: "123", Name: "item"}, nil)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(MockProductService)
-			mockService.On("GetAllProducts", mock.Anything).Return(tt.mockReturn, tt.mockError)
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Get("/products/:id", handler.GetProductById)
 
-			handler := NewProductHandler(mockService)
-			app := fiber.New()
-			app.Get("/products", handler.GetAllProducts)
+	req := httptest.NewRequest("GET", "/products/123", nil)
+	resp, err := app.Test(req)
 
-			req := httptest.NewRequest("GET", "/products", nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-			mockService.AssertExpectations(t)
-		})
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+	mockService.AssertExpectations(t)
 }
 
-func TestGetProductsByName(t *testing.T) {
-	tests := []struct {
-		name           string
-		productName    string
-		mockReturn     []models.ProductResponse
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name:        "success",
-			productName: "TestProduct",
-			mockReturn: []models.ProductResponse{
-				{ID: "1", Name: "TestProduct", Price: 10.0},
-			},
-			mockError:      nil,
-			expectedStatus: 200,
-		},
-		{
-			name:           "service error",
-			productName:    "TestProduct",
-			mockReturn:     nil,
-			mockError:      errors.New("database error"),
-			expectedStatus: 500,
-		},
-	}
+func TestGetProductByID_NotFound(t *testing.T) {
+	mockService := new(MockProductService)
+	mockService.On("GetProductById", mock.Anything, "missing").Return((*models.ProductResponse)(nil), errors.New("product not found"))
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(MockProductService)
-			mockService.On("GetProductsByName", mock.Anything, tt.productName).Return(tt.mockReturn, tt.mockError)
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Get("/products/:id", handler.GetProductById)
 
-			handler := NewProductHandler(mockService)
-			app := fiber.New()
-			app.Get("/products/:name", handler.GetProductsByName)
+	req := httptest.NewRequest("GET", "/products/missing", nil)
+	resp, err := app.Test(req)
 
-			req := httptest.NewRequest("GET", "/products/"+tt.productName, nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-			mockService.AssertExpectations(t)
-		})
-	}
-}
-
-func TestGetProductsByPage(t *testing.T) {
-	tests := []struct {
-		name           string
-		page           string
-		pageSize       string
-		mockReturn     *models.PaginatedProductsResponse
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name:     "success",
-			page:     "1",
-			pageSize: "10",
-			mockReturn: &models.PaginatedProductsResponse{
-				Products:   []models.ProductResponse{{ID: "1", Name: "Product 1"}},
-				TotalCount: 1,
-				Page:       1,
-				PageSize:   10,
-				TotalPages: 1,
-			},
-			mockError:      nil,
-			expectedStatus: 200,
-		},
-		{
-			name:           "missing page parameter",
-			page:           "",
-			pageSize:       "10",
-			mockReturn:     nil,
-			mockError:      nil,
-			expectedStatus: 400,
-		},
-		{
-			name:           "missing pageSize parameter",
-			page:           "1",
-			pageSize:       "",
-			mockReturn:     nil,
-			mockError:      nil,
-			expectedStatus: 400,
-		},
-		{
-			name:           "invalid page parameter",
-			page:           "invalid",
-			pageSize:       "10",
-			mockReturn:     nil,
-			mockError:      nil,
-			expectedStatus: 400,
-		},
-		{
-			name:           "invalid pageSize parameter",
-			page:           "1",
-			pageSize:       "invalid",
-			mockReturn:     nil,
-			mockError:      nil,
-			expectedStatus: 400,
-		},
-		{
-			name:           "service error",
-			page:           "1",
-			pageSize:       "10",
-			mockReturn:     nil,
-			mockError:      errors.New("database error"),
-			expectedStatus: 500,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(MockProductService)
-			if tt.page != "" && tt.pageSize != "" && tt.page != "invalid" && tt.pageSize != "invalid" {
-				mockService.On("GetProductsByPage", mock.Anything, 1, 10).Return(tt.mockReturn, tt.mockError)
-			}
-
-			handler := NewProductHandler(mockService)
-			app := fiber.New()
-			app.Get("/products", handler.GetProductsByPage)
-
-			url := "/products"
-			if tt.page != "" || tt.pageSize != "" {
-				url += "?page=" + tt.page + "&pageSize=" + tt.pageSize
-			}
-
-			req := httptest.NewRequest("GET", url, nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-			if tt.page != "" && tt.pageSize != "" && tt.page != "invalid" && tt.pageSize != "invalid" {
-				mockService.AssertExpectations(t)
-			}
-		})
-	}
-}
-
-func TestGetProductsByPage_PaginationValidation(t *testing.T) {
-	tests := []struct {
-		name           string
-		url            string
-		expectedStatus int
-		expectedBody   string
-	}{
-		{
-			name:           "page below minimum",
-			url:            "/products?page=0&pageSize=10",
-			expectedStatus: fiber.StatusBadRequest,
-			expectedBody:   "Invalid page parameter: must be greater than or equal to 1",
-		},
-		{
-			name:           "pageSize below minimum",
-			url:            "/products?page=1&pageSize=0",
-			expectedStatus: fiber.StatusBadRequest,
-			expectedBody:   "Invalid pageSize parameter: must be between 1 and 100",
-		},
-		{
-			name:           "pageSize above maximum",
-			url:            "/products?page=1&pageSize=101",
-			expectedStatus: fiber.StatusBadRequest,
-			expectedBody:   "Invalid pageSize parameter: must be between 1 and 100",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			handler := NewProductHandler(new(MockProductService))
-			app := fiber.New()
-			app.Get("/products", handler.GetProductsByPage)
-
-			req := httptest.NewRequest("GET", tt.url, nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-
-			body, readErr := io.ReadAll(resp.Body)
-			assert.NoError(t, readErr)
-			assert.Contains(t, string(body), tt.expectedBody)
-		})
-	}
-}
-
-func TestGetProductsByPageAndCategory(t *testing.T) {
-	tests := []struct {
-		name           string
-		page           string
-		pageSize       string
-		category       string
-		mockReturn     *models.PaginatedProductsResponse
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name:     "success",
-			page:     "1",
-			pageSize: "10",
-			category: "Electronics",
-			mockReturn: &models.PaginatedProductsResponse{
-				Products:   []models.ProductResponse{{ID: "1", Name: "Product 1", Category: "Electronics"}},
-				TotalCount: 1,
-				Page:       1,
-				PageSize:   10,
-				TotalPages: 1,
-			},
-			mockError:      nil,
-			expectedStatus: 200,
-		},
-		{
-			name:           "missing category",
-			page:           "1",
-			pageSize:       "10",
-			category:       "",
-			mockReturn:     nil,
-			mockError:      nil,
-			expectedStatus: 400,
-		},
-		{
-			name:           "invalid page",
-			page:           "invalid",
-			pageSize:       "10",
-			category:       "Electronics",
-			mockReturn:     nil,
-			mockError:      nil,
-			expectedStatus: 400,
-		},
-		{
-			name:           "service error",
-			page:           "1",
-			pageSize:       "10",
-			category:       "Electronics",
-			mockReturn:     nil,
-			mockError:      errors.New("database error"),
-			expectedStatus: 500,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(MockProductService)
-			if tt.page == "1" && tt.pageSize == "10" && tt.category != "" {
-				mockService.On("GetProductsByPageAndCategory", mock.Anything, 1, 10, tt.category).Return(tt.mockReturn, tt.mockError)
-			}
-
-			handler := NewProductHandler(mockService)
-			app := fiber.New()
-			app.Get("/products", handler.GetProductsByPageAndCategory)
-
-			url := "/products?page=" + tt.page + "&pageSize=" + tt.pageSize + "&category=" + tt.category
-			req := httptest.NewRequest("GET", url, nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-			if tt.page == "1" && tt.pageSize == "10" && tt.category != "" {
-				mockService.AssertExpectations(t)
-			}
-		})
-	}
-}
-
-func TestGetProductsByPageAndCategory_PaginationValidation(t *testing.T) {
-	tests := []struct {
-		name           string
-		url            string
-		expectedStatus int
-		expectedBody   string
-	}{
-		{
-			name:           "page below minimum",
-			url:            "/products?page=0&pageSize=10&category=Electronics",
-			expectedStatus: fiber.StatusBadRequest,
-			expectedBody:   "Invalid page parameter: must be greater than or equal to 1",
-		},
-		{
-			name:           "pageSize below minimum",
-			url:            "/products?page=1&pageSize=0&category=Electronics",
-			expectedStatus: fiber.StatusBadRequest,
-			expectedBody:   "Invalid pageSize parameter: must be between 1 and 100",
-		},
-		{
-			name:           "pageSize above maximum",
-			url:            "/products?page=1&pageSize=101&category=Electronics",
-			expectedStatus: fiber.StatusBadRequest,
-			expectedBody:   "Invalid pageSize parameter: must be between 1 and 100",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			handler := NewProductHandler(new(MockProductService))
-			app := fiber.New()
-			app.Get("/products", handler.GetProductsByPageAndCategory)
-
-			req := httptest.NewRequest("GET", tt.url, nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-
-			body, readErr := io.ReadAll(resp.Body)
-			assert.NoError(t, readErr)
-			assert.Contains(t, string(body), tt.expectedBody)
-		})
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusNotFound, resp.StatusCode)
 }
 
 func TestGetProductsCount(t *testing.T) {
-	tests := []struct {
-		name           string
-		mockReturn     *models.CountResponse
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name:           "success",
-			mockReturn:     &models.CountResponse{Count: 100},
-			mockError:      nil,
-			expectedStatus: 200,
-		},
-		{
-			name:           "service error",
-			mockReturn:     nil,
-			mockError:      errors.New("database error"),
-			expectedStatus: 500,
-		},
-	}
+	mockService := new(MockProductService)
+	mockService.On("GetProductsCount", mock.Anything).Return(&models.CountResponse{Count: 100}, nil)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(MockProductService)
-			mockService.On("GetProductsCount", mock.Anything).Return(tt.mockReturn, tt.mockError)
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Get("/products/count", handler.GetProductsCount)
 
-			handler := NewProductHandler(mockService)
-			app := fiber.New()
-			app.Get("/count", handler.GetProductsCount)
+	req := httptest.NewRequest("GET", "/products/count", nil)
+	resp, err := app.Test(req)
 
-			req := httptest.NewRequest("GET", "/count", nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-			mockService.AssertExpectations(t)
-		})
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+	mockService.AssertExpectations(t)
 }
 
 func TestGetCategories(t *testing.T) {
-	tests := []struct {
-		name           string
-		mockReturn     []string
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name:           "success",
-			mockReturn:     []string{"Electronics", "Books", "Clothing"},
-			mockError:      nil,
-			expectedStatus: 200,
-		},
-		{
-			name:           "service error",
-			mockReturn:     nil,
-			mockError:      errors.New("database error"),
-			expectedStatus: 500,
-		},
-	}
+	mockService := new(MockProductService)
+	mockService.On("GetCategories", mock.Anything).Return([]string{"Electronics", "Books"}, nil)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(MockProductService)
-			mockService.On("GetCategories", mock.Anything).Return(tt.mockReturn, tt.mockError)
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Get("/products/categories", handler.GetCategories)
 
-			handler := NewProductHandler(mockService)
-			app := fiber.New()
-			app.Get("/categories", handler.GetCategories)
+	req := httptest.NewRequest("GET", "/products/categories", nil)
+	resp, err := app.Test(req)
 
-			req := httptest.NewRequest("GET", "/categories", nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-			mockService.AssertExpectations(t)
-		})
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+	mockService.AssertExpectations(t)
 }
 
 func TestCreateProduct(t *testing.T) {
+	mockService := new(MockProductService)
+	requestBody := models.CreateProductRequest{Name: "New Product", Price: 99.99}
+	mockService.On("CreateProduct", mock.Anything, requestBody).Return(&models.ProductResponse{ID: "123", Name: "New Product", Price: 99.99}, nil)
+
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Post("/products", handler.CreateProduct)
+
+	jsonBody, _ := json.Marshal(requestBody)
+	req := httptest.NewRequest("POST", "/products", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := app.Test(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusCreated, resp.StatusCode)
+	mockService.AssertExpectations(t)
+}
+
+func TestDeleteProductByID(t *testing.T) {
+	mockService := new(MockProductService)
+	mockService.On("DeleteProductById", mock.Anything, "123").Return(nil)
+
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Delete("/products/:id", handler.DeleteProductById)
+
+	req := httptest.NewRequest("DELETE", "/products/123", nil)
+	resp, err := app.Test(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusNoContent, resp.StatusCode)
+	mockService.AssertExpectations(t)
+}
+
+func TestPatchProductInventory(t *testing.T) {
 	tests := []struct {
 		name           string
+		pathID         string
 		requestBody    interface{}
-		mockReturn     *models.ProductResponse
 		mockError      error
 		expectedStatus int
 	}{
-		{
-			name: "success",
-			requestBody: models.CreateProductRequest{
-				Name:  "New Product",
-				Price: 99.99,
-			},
-			mockReturn: &models.ProductResponse{
-				ID:    "123",
-				Name:  "New Product",
-				Price: 99.99,
-			},
-			mockError:      nil,
-			expectedStatus: 201,
-		},
-		{
-			name:           "invalid request body",
-			requestBody:    "invalid json",
-			mockReturn:     nil,
-			mockError:      nil,
-			expectedStatus: 400,
-		},
-		{
-			name: "service error",
-			requestBody: models.CreateProductRequest{
-				Name:  "New Product",
-				Price: 99.99,
-			},
-			mockReturn:     nil,
-			mockError:      errors.New("database error"),
-			expectedStatus: 500,
-		},
+		{name: "success", pathID: "123", requestBody: map[string]int{"quantity_change": -2}, expectedStatus: fiber.StatusOK},
+		{name: "invalid body", pathID: "123", requestBody: "invalid json", expectedStatus: fiber.StatusBadRequest},
+		{name: "service error", pathID: "123", requestBody: map[string]int{"quantity_change": -10}, mockError: errors.New("insufficient stock"), expectedStatus: fiber.StatusBadRequest},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockService := new(MockProductService)
-			if req, ok := tt.requestBody.(models.CreateProductRequest); ok {
-				mockService.On("CreateProduct", mock.Anything, req).Return(tt.mockReturn, tt.mockError)
+			if tt.pathID != "" {
+				if payload, ok := tt.requestBody.(map[string]int); ok {
+					mockService.On("UpdateProductQuantity", mock.Anything, tt.pathID, payload["quantity_change"]).Return(tt.mockError)
+				}
 			}
 
 			handler := NewProductHandler(mockService)
 			app := fiber.New()
-			app.Post("/products", handler.CreateProduct)
+			app.Patch("/products/:id/inventory", handler.PatchProductInventory)
 
 			var body io.Reader
 			if str, ok := tt.requestBody.(string); ok {
@@ -721,7 +346,7 @@ func TestCreateProduct(t *testing.T) {
 				body = bytes.NewBuffer(jsonBody)
 			}
 
-			req := httptest.NewRequest("POST", "/products", body)
+			req := httptest.NewRequest("PATCH", "/products/"+tt.pathID+"/inventory", body)
 			req.Header.Set("Content-Type", "application/json")
 			resp, err := app.Test(req)
 
@@ -731,153 +356,18 @@ func TestCreateProduct(t *testing.T) {
 	}
 }
 
-func TestDeleteProductsByName(t *testing.T) {
-	tests := []struct {
-		name           string
-		productName    string
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name:           "success",
-			productName:    "TestProduct",
-			mockError:      nil,
-			expectedStatus: 204,
-		},
-		{
-			name:           "service error",
-			productName:    "TestProduct",
-			mockError:      errors.New("database error"),
-			expectedStatus: 500,
-		},
-	}
+func TestUpdateProduct_NotImplemented(t *testing.T) {
+	handler := NewProductHandler(new(MockProductService))
+	app := fiber.New()
+	app.Put("/products/:id", handler.UpdateProduct)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(MockProductService)
-			mockService.On("DeleteProductsByName", mock.Anything, tt.productName).Return(tt.mockError)
+	req := httptest.NewRequest("PUT", "/products/123", nil)
+	resp, err := app.Test(req)
 
-			handler := NewProductHandler(mockService)
-			app := fiber.New()
-			app.Delete("/products/:name", handler.DeleteProductsByName)
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusNotImplemented, resp.StatusCode)
 
-			req := httptest.NewRequest("DELETE", "/products/"+tt.productName, nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-			mockService.AssertExpectations(t)
-		})
-	}
-}
-
-func TestDeleteProductById(t *testing.T) {
-	tests := []struct {
-		name           string
-		productID      string
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name:           "success",
-			productID:      "123",
-			mockError:      nil,
-			expectedStatus: 204,
-		},
-		{
-			name:           "service error",
-			productID:      "123",
-			mockError:      errors.New("database error"),
-			expectedStatus: 500,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(MockProductService)
-			mockService.On("DeleteProductById", mock.Anything, tt.productID).Return(tt.mockError)
-
-			handler := NewProductHandler(mockService)
-			app := fiber.New()
-			app.Delete("/products/:id", handler.DeleteProductById)
-
-			req := httptest.NewRequest("DELETE", "/products/"+tt.productID, nil)
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-			mockService.AssertExpectations(t)
-		})
-	}
-}
-
-func TestUpdateProductQuantity(t *testing.T) {
-	tests := []struct {
-		name           string
-		requestBody    interface{}
-		mockError      error
-		expectedStatus int
-	}{
-		{
-			name: "success",
-			requestBody: models.UpdateQuantityRequest{
-				ProductID:      "123",
-				QuantityChange: 5,
-			},
-			mockError:      nil,
-			expectedStatus: 200,
-		},
-		{
-			name:           "invalid request body",
-			requestBody:    "invalid json",
-			mockError:      nil,
-			expectedStatus: 400,
-		},
-		{
-			name: "missing product ID",
-			requestBody: models.UpdateQuantityRequest{
-				ProductID:      "",
-				QuantityChange: 5,
-			},
-			mockError:      nil,
-			expectedStatus: 400,
-		},
-		{
-			name: "service error",
-			requestBody: models.UpdateQuantityRequest{
-				ProductID:      "123",
-				QuantityChange: 5,
-			},
-			mockError:      errors.New("insufficient stock"),
-			expectedStatus: 400,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(MockProductService)
-			if req, ok := tt.requestBody.(models.UpdateQuantityRequest); ok && req.ProductID != "" {
-				mockService.On("UpdateProductQuantity", mock.Anything, req.ProductID, req.QuantityChange).Return(tt.mockError)
-			}
-
-			handler := NewProductHandler(mockService)
-			app := fiber.New()
-			app.Post("/quantity", handler.UpdateProductQuantity)
-
-			var body io.Reader
-			if str, ok := tt.requestBody.(string); ok {
-				body = bytes.NewBufferString(str)
-			} else {
-				jsonBody, _ := json.Marshal(tt.requestBody)
-				body = bytes.NewBuffer(jsonBody)
-			}
-
-			req := httptest.NewRequest("POST", "/quantity", body)
-			req.Header.Set("Content-Type", "application/json")
-			resp, err := app.Test(req)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expectedStatus, resp.StatusCode)
-		})
-	}
+	body, readErr := io.ReadAll(resp.Body)
+	assert.NoError(t, readErr)
+	assert.Contains(t, string(body), "product update is not implemented yet")
 }

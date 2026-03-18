@@ -17,16 +17,16 @@ sequenceDiagram
     participant ProcessService as Process Order Service
     participant ProductService as Product Service
 
-    Frontend->>PublishService: POST /api/order/create-order
+    Frontend->>PublishService: POST /api/orders
     PublishService->>DB: Save order (Status: CREATED)
     PublishService->>RabbitMQ: Publish event `order.created`
     PublishService-->>Frontend: Return Order ID
 
-    Frontend->>PublishService: GET /api/order/user/order/status?id=X
+    Frontend->>PublishService: GET /api/me/orders/{id}/events
     PublishService-->>Frontend: Open SSE Stream
 
     RabbitMQ->>ProcessService: Consume `order.created` queue
-    ProcessService->>ProductService: HTTP GET Inventory Check
+    ProcessService->>ProductService: PATCH /api/products/{id}/inventory
     ProductService-->>ProcessService: Inventory Status
     
     alt Inventory Available & Payment Success

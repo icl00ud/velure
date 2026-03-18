@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"product-service/internal/config"
@@ -343,4 +345,62 @@ func TestMain_FatalOnRunError(t *testing.T) {
 
 	main()
 	assert.True(t, called)
+}
+
+func TestSetupFiberApp_RegistersCanonicalProductRoutes(t *testing.T) {
+	app := setupFiberApp(services.NewProductService(&fakeRepo{}))
+
+	tests := []struct {
+		name       string
+		method     string
+		path       string
+		body       string
+		wantStatus int
+	}{
+		{name: "products list", method: http.MethodGet, path: "/api/products", wantStatus: fiber.StatusOK},
+		{name: "product by id", method: http.MethodGet, path: "/api/products/507f1f77bcf86cd799439011", wantStatus: fiber.StatusOK},
+		{name: "create product", method: http.MethodPost, path: "/api/products", body: `{"name":"p","price":10}`, wantStatus: fiber.StatusCreated},
+		{name: "update product not implemented", method: http.MethodPut, path: "/api/products/507f1f77bcf86cd799439011", wantStatus: fiber.StatusNotImplemented},
+		{name: "delete product", method: http.MethodDelete, path: "/api/products/507f1f77bcf86cd799439011", wantStatus: fiber.StatusNoContent},
+		{name: "categories", method: http.MethodGet, path: "/api/products/categories", wantStatus: fiber.StatusOK},
+		{name: "count", method: http.MethodGet, path: "/api/products/count", wantStatus: fiber.StatusOK},
+		{name: "inventory patch", method: http.MethodPatch, path: "/api/products/507f1f77bcf86cd799439011/inventory", body: `{"quantity_change":-1}`, wantStatus: fiber.StatusOK},
+		{name: "health", method: http.MethodGet, path: "/health", wantStatus: fiber.StatusOK},
+		{name: "metrics", method: http.MethodGet, path: "/metrics", wantStatus: fiber.StatusOK},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
+			if tt.body != "" {
+				req.Header.Set("Content-Type", "application/json")
+			}
+
+			resp, err := app.Test(req)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+		})
+	}
+}
+
+func TestSetupFiberApp_DoesNotRegisterLegacyProductAliases(t *testing.T) {
+	app := setupFiberApp(services.NewProductService(&fakeRepo{}))
+
+	legacyRoutes := []struct {
+		method string
+		path   string
+	}{
+		{method: http.MethodGet, path: "/product/getProductsByPage?page=1&pageSize=10"},
+		{method: http.MethodGet, path: "/product/getProductsByName/toy"},
+		{method: http.MethodGet, path: "/api/product/getProductsCount"},
+		{method: http.MethodPost, path: "/product/updateQuantity"},
+		{method: http.MethodDelete, path: "/api/product/deleteProductById/507f1f77bcf86cd799439011"},
+	}
+
+	for _, route := range legacyRoutes {
+		req := httptest.NewRequest(route.method, route.path, nil)
+		resp, err := app.Test(req)
+		assert.NoError(t, err)
+		assert.Equal(t, fiber.StatusNotFound, resp.StatusCode)
+	}
 }

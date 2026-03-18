@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/icl00ud/velure-shared/logger"
 	"product-service/internal/metrics"
 	"product-service/internal/model"
 	"product-service/internal/service"
@@ -24,14 +23,6 @@ func NewProductHandler(service services.ProductService) *ProductHandler {
 	}
 }
 
-func (h *ProductHandler) GetAllProducts(c *fiber.Ctx) error {
-	products, err := h.service.GetAllProducts(c.Context())
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	return c.JSON(products)
-}
-
 func (h *ProductHandler) GetProductById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -48,124 +39,41 @@ func (h *ProductHandler) GetProductById(c *fiber.Ctx) error {
 	return c.JSON(product)
 }
 
-func (h *ProductHandler) GetProductsByName(c *fiber.Ctx) error {
-	name := c.Params("name")
+func (h *ProductHandler) GetProducts(c *fiber.Ctx) error {
+	name := c.Query("name")
 	if name == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Product name is required")
+		name = c.Query("q")
 	}
 
-	products, err := h.service.GetProductsByName(c.Context(), name)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	if name != "" {
+		products, err := h.service.GetProductsByName(c.Context(), name)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		return c.JSON(products)
 	}
-	return c.JSON(products)
-}
 
-// GetProductsREST is a REST-style endpoint that accepts both 'limit' and 'pageSize' query parameters
-func (h *ProductHandler) GetProductsREST(c *fiber.Ctx) error {
 	pageStr := c.Query("page")
-	// Accept both 'limit' (REST-style) and 'pageSize' (legacy) - prefer 'limit'
 	pageSizeStr := c.Query("limit")
 	if pageSizeStr == "" {
 		pageSizeStr = c.Query("pageSize")
 	}
-
-	if pageStr == "" || pageSizeStr == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Missing query parameters (page and limit/pageSize required)")
-	}
-
-	page, err := strconv.Atoi(pageStr)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter")
-	}
-	if page < 1 {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter: must be greater than or equal to 1")
-	}
-
-	pageSize, err := strconv.Atoi(pageSizeStr)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid limit/pageSize parameter")
-	}
-	if pageSize < 1 || pageSize > maxPageSize {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid limit/pageSize parameter: must be between 1 and 100")
-	}
-
-	metrics.ProductQueries.WithLabelValues("list").Inc()
-	opStart := time.Now()
-
-	response, err := h.service.GetProductsByPage(c.Context(), page, pageSize)
-	if err != nil {
-		metrics.Errors.WithLabelValues("database").Inc()
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
-	metrics.ProductOperationDuration.WithLabelValues("list").Observe(time.Since(opStart).Seconds())
-	metrics.SearchResultsReturned.Observe(float64(len(response.Products)))
-
-	return c.JSON(response)
-}
-
-// GetProductsByPage is the legacy endpoint that requires 'pageSize'
-func (h *ProductHandler) GetProductsByPage(c *fiber.Ctx) error {
-	pageStr := c.Query("page")
-	pageSizeStr := c.Query("pageSize")
-
-	if pageStr == "" || pageSizeStr == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Missing query parameters")
-	}
-
-	page, err := strconv.Atoi(pageStr)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter")
-	}
-	if page < 1 {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid page parameter: must be greater than or equal to 1")
-	}
-
-	pageSize, err := strconv.Atoi(pageSizeStr)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter")
-	}
-	if pageSize < 1 || pageSize > maxPageSize {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter: must be between 1 and 100")
-	}
-
-	metrics.ProductQueries.WithLabelValues("list").Inc()
-	opStart := time.Now()
-
-	response, err := h.service.GetProductsByPage(c.Context(), page, pageSize)
-	if err != nil {
-		metrics.Errors.WithLabelValues("database").Inc()
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-
-	metrics.ProductOperationDuration.WithLabelValues("list").Observe(time.Since(opStart).Seconds())
-	metrics.SearchResultsReturned.Observe(float64(len(response.Products)))
-
-	return c.JSON(response)
-}
-
-// SearchProducts is a REST-style search endpoint that accepts 'q' query parameter
-func (h *ProductHandler) SearchProducts(c *fiber.Ctx) error {
-	query := c.Query("q")
-	if query == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Search query parameter 'q' is required")
-	}
-
-	products, err := h.service.GetProductsByName(c.Context(), query)
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	return c.JSON(products)
-}
-
-func (h *ProductHandler) GetProductsByPageAndCategory(c *fiber.Ctx) error {
-	pageStr := c.Query("page")
-	pageSizeStr := c.Query("pageSize")
 	category := c.Query("category")
 
-	if pageStr == "" || pageSizeStr == "" || category == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Missing query parameters")
+	if pageStr == "" && pageSizeStr == "" {
+		if category != "" {
+			return fiber.NewError(fiber.StatusBadRequest, "category filter requires page and limit query parameters")
+		}
+
+		products, err := h.service.GetAllProducts(c.Context())
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		return c.JSON(products)
+	}
+
+	if pageStr == "" || pageSizeStr == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "both page and limit query parameters are required")
 	}
 
 	page, err := strconv.Atoi(pageStr)
@@ -178,16 +86,29 @@ func (h *ProductHandler) GetProductsByPageAndCategory(c *fiber.Ctx) error {
 
 	pageSize, err := strconv.Atoi(pageSizeStr)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter")
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid limit parameter")
 	}
 	if pageSize < 1 || pageSize > maxPageSize {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid pageSize parameter: must be between 1 and 100")
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid limit parameter: must be between 1 and 100")
 	}
 
-	response, err := h.service.GetProductsByPageAndCategory(c.Context(), page, pageSize, category)
+	metrics.ProductQueries.WithLabelValues("list").Inc()
+	opStart := time.Now()
+
+	var response *models.PaginatedProductsResponse
+	if category != "" {
+		response, err = h.service.GetProductsByPageAndCategory(c.Context(), page, pageSize, category)
+	} else {
+		response, err = h.service.GetProductsByPage(c.Context(), page, pageSize)
+	}
 	if err != nil {
+		metrics.Errors.WithLabelValues("database").Inc()
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
+
+	metrics.ProductOperationDuration.WithLabelValues("list").Observe(time.Since(opStart).Seconds())
+	metrics.SearchResultsReturned.Observe(float64(len(response.Products)))
+
 	return c.JSON(response)
 }
 
@@ -220,18 +141,6 @@ func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(product)
 }
 
-func (h *ProductHandler) DeleteProductsByName(c *fiber.Ctx) error {
-	name := c.Params("name")
-	if name == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Product name is required")
-	}
-
-	if err := h.service.DeleteProductsByName(c.Context(), name); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-	}
-	return c.SendStatus(fiber.StatusNoContent)
-}
-
 func (h *ProductHandler) DeleteProductById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -244,22 +153,32 @@ func (h *ProductHandler) DeleteProductById(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-func (h *ProductHandler) UpdateProductQuantity(c *fiber.Ctx) error {
-	logger.Debug("UpdateProductQuantity received", logger.String("body", string(c.Body())))
+func (h *ProductHandler) UpdateProduct(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Product ID is required")
+	}
 
-	var req models.UpdateQuantityRequest
+	return fiber.NewError(fiber.StatusNotImplemented, "product update is not implemented yet")
+}
+
+type updateInventoryRequest struct {
+	QuantityChange int `json:"quantity_change"`
+}
+
+func (h *ProductHandler) PatchProductInventory(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "Product ID is required")
+	}
+
+	var req updateInventoryRequest
 	if err := c.BodyParser(&req); err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
 	}
 
-	logger.Debug("Parsed UpdateQuantityRequest", logger.String("product_id", req.ProductID), logger.Int("quantity_change", req.QuantityChange))
-
-	if req.ProductID == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "Product ID is required")
-	}
-
 	opStart := time.Now()
-	if err := h.service.UpdateProductQuantity(c.Context(), req.ProductID, req.QuantityChange); err != nil {
+	if err := h.service.UpdateProductQuantity(c.Context(), id, req.QuantityChange); err != nil {
 		metrics.Errors.WithLabelValues("inventory").Inc()
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}

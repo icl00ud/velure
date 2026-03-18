@@ -144,9 +144,7 @@ class OrderService {
               try {
                 const data = JSON.parse(line.slice(6));
                 onMessage(data);
-              } catch {
-                // Ignore parse errors (keepalive messages)
-              }
+              } catch {}
             }
           }
         }
@@ -201,7 +199,7 @@ class OrderService {
 
 export interface Order {
   id: string;
-  _id?: string; // Support for MongoDB _id
+  _id?: string;
   user_id: string;
   items: Array<{
     product_id: string;
@@ -212,9 +210,9 @@ export interface Order {
   total: number;
   status: string;
   created_at: string;
-  createdAt?: string; // Support for camelCase
+  createdAt?: string;
   updated_at: string;
-  updatedAt?: string; // Support for camelCase
+  updatedAt?: string;
 }
 
 export const orderService = new OrderService();
