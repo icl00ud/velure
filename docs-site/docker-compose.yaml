@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    container_name: velure-docs
+    restart: unless-stopped

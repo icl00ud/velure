@@ -195,14 +195,17 @@ cloud-urls: ## Mostrar URLs de acesso da aplicação na AWS
 # Documentação
 # -----------------------------------------------------------------------------
 
-docs-install: ## Instalar dependências da documentação
-	@echo "📦 Instalando dependências da documentação..."
-	cd docs-site && npm install
 
-docs-up: ## Subir o portal de documentação localmente
-	@echo "📚 Iniciando portal de documentação na porta 3000..."
-	cd docs-site && npm run start
+# -----------------------------------------------------------------------------
+# Documentação
+# -----------------------------------------------------------------------------
 
-docs-build: ## Buildar o portal de documentação para produção
-	@echo "🏗️  Buildando portal de documentação..."
-	cd docs-site && npm run build
+docs-up: ## Subir o portal de documentação localmente via Docker (Porta 3000)
+	@echo "📚 Buildando e subindo portal de documentação no Docker..."
+	cd docs-site && docker compose up -d --build
+	@echo "✅ Acesse: http://localhost:3000"
+
+docs-down: ## Derrubar o portal de documentação e limpar containers
+	@echo "🧹 Derrubando portal de documentação..."
+	cd docs-site && docker compose down
+	@echo "✅ Portal de documentação offline"
