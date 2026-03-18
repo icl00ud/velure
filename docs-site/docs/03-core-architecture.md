@@ -1,6 +1,6 @@
 # Core Architecture & Event Flow
 
-Velure relies on an event-driven microservices architecture to handle its core business processes, particularly the order lifecycle. This approach ensures high availability, loose coupling, and scalability across the platform without relying on a single centralized database.
+Velure relies on an event-driven Microservices architecture to handle its core business processes, particularly the order lifecycle. This approach ensures high availability, loose coupling, and scalability across the platform without relying on a single centralized database.
 
 ## Order Lifecycle Event Flow
 

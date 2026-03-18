@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Overview
 
-Welcome to the Velure documentation. Velure is an e-commerce microservices platform built as a learning project for cloud-native architecture and DevSecOps practices.
+Welcome to the Velure documentation. Velure is an e-commerce Microservices platform built as a learning project for cloud-native architecture and DevSecOps practices.
 
 ## High-Level Architecture
 
