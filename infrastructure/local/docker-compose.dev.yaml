@@ -65,4 +65,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  # After adding/removing packages: rebuild image and recreate volume.
+  # docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml down -v
+  # docker-compose -f docker-compose.yaml -f docker-compose.dev.yaml up --build -d
   ui_node_modules:
