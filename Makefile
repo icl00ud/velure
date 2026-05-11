@@ -5,7 +5,7 @@ GO_MODULES := $(shell find services -mindepth 2 -maxdepth 2 -name go.mod -exec d
 UI_DIR := services/ui-service
 DOCS_DIR := docs-site
 
-.PHONY: help local-up local-down local-dev cloud-up cloud-down cloud-urls docs-up docs-down test docs-build lint check
+.PHONY: help local-up local-down local-dev local-dev-down cloud-up cloud-down cloud-urls docs-up docs-down test docs-build lint check
 
 # Default target
 help: ## Show available commands
@@ -99,7 +99,26 @@ local-dev: ## Start stack with hot-reload (Air for Go services, Vite HMR for UI)
 	@echo "  UI           — Vite HMR updates browser instantly on .tsx/.ts change"
 	@echo ""
 	@echo "Watch logs:  docker logs -f <container-name>"
-	@echo "Stop:        make local-down"
+	@echo "Stop:        make local-dev-down"
+	@echo ""
+
+local-dev-down: ## Stop the hot-reload dev stack and remove all volumes (including ui_node_modules)
+	@echo "Stopping the dev environment..."
+	@echo ""
+	cd infrastructure/local && docker-compose \
+		-f docker-compose.yaml \
+		-f docker-compose.dev.yaml \
+		down -v --remove-orphans
+	@echo ""
+	@echo "Pruning unused Docker resources..."
+	docker system prune -f --volumes
+	@echo ""
+	@echo "Removing Docker networks..."
+	docker network rm local_auth 2>/dev/null || true
+	docker network rm local_order 2>/dev/null || true
+	docker network rm local_frontend 2>/dev/null || true
+	@echo ""
+	@echo "Dev environment removed."
 	@echo ""
 
 # =============================================================================
