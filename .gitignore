@@ -1,6 +1,10 @@
 # Velure - Microservices Platform
 # Comprehensive .gitignore for the reorganized repository structure
 
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
 # =============================================================================
 # Binaries and executables
 # =============================================================================
