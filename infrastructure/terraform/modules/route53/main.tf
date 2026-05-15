@@ -11,7 +11,6 @@ resource "aws_route53_zone" "main" {
       Environment = var.environment
     }
   )
-
 }
 
 # Data source para buscar o Load Balancer criado pelo AWS LB Controller
@@ -37,7 +36,7 @@ resource "aws_route53_record" "main" {
   }
 }
 
-# Health Check para o domínio principal (opcional mas recomendado)
+# Health Check para o domínio principal
 resource "aws_route53_health_check" "main" {
   count             = var.enable_health_check ? 1 : 0
   fqdn              = var.domain_name

@@ -51,7 +51,6 @@ resource "aws_eks_cluster" "main" {
     public_access_cidrs     = ["0.0.0.0/0"] # Restringir em produção
   }
 
-  # CloudWatch logs disabled to avoid conflicts
   enabled_cluster_log_types = []
 
   tags = var.tags
@@ -140,8 +139,6 @@ resource "aws_eks_node_group" "main" {
     ignore_changes = [scaling_config[0].desired_size]
   }
 }
-
-
 
 # OIDC Provider para IRSA (IAM Roles for Service Accounts)
 data "tls_certificate" "cluster" {

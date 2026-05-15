@@ -173,5 +173,3 @@ resource "aws_route_table_association" "private_secondary" {
   subnet_id      = aws_subnet.private_secondary.id
   route_table_id = aws_route_table.private.id
 }
-
-# VPC Flow Logs removed to avoid CloudWatch Log Group conflicts

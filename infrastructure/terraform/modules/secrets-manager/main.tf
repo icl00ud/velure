@@ -1,5 +1,3 @@
-# AWS Secrets Manager for Velure secrets
-
 # RDS Auth Database Secret
 resource "aws_secretsmanager_secret" "rds_auth" {
   name        = "${var.project_name}/${var.environment}/rds-auth"
@@ -119,22 +117,3 @@ resource "aws_secretsmanager_secret_version" "mongodb" {
     url = var.mongodb_connection_string
   })
 }
-
-# Redis Secret REMOVED
-# Redis runs in-cluster via Helm Chart (velure-datastores)
-# Only needed if using AWS ElastiCache (managed Redis service)
-#
-# If you migrate to ElastiCache in the future, uncomment this:
-# resource "aws_secretsmanager_secret" "redis" {
-#   name        = "${var.project_name}/${var.environment}/redis"
-#   description = "Redis connection details"
-#   tags = merge(var.tags, { Name = "${var.project_name}-${var.environment}-redis", Service = "cache" })
-# }
-# resource "aws_secretsmanager_secret_version" "redis" {
-#   secret_id = aws_secretsmanager_secret.redis.id
-#   secret_string = jsonencode({
-#     host     = var.redis_host
-#     port     = var.redis_port
-#     password = var.redis_password
-#   })
-# }

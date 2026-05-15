@@ -141,15 +141,9 @@ module "route53" {
   domain_name         = var.domain_name
   enable_health_check = var.enable_route53_health_check
   health_check_path   = var.route53_health_check_path
-  create_dns_record   = false # Set to true AFTER ALB is created by Helm deployment
+  create_dns_record   = false
   tags                = var.tags
 }
-
-# IMPORTANTE: Route53 DNS Record Configuration
-# 1. Primeiro deployment: create_dns_record = false (apenas cria Hosted Zone)
-# 2. Após deploy do Helm (ALB criado): create_dns_record = true
-# 3. Copie os nameservers da Hosted Zone e configure no Registro.br
-#    Outputs: module.route53.name_servers
 
 # Secrets Manager Module for centralized secrets
 module "secrets_manager" {
@@ -183,9 +177,6 @@ module "secrets_manager" {
   # MongoDB Atlas
   mongodb_connection_string = var.mongodb_connection_string
 
-  # Redis variables removed - Redis runs in-cluster via Helm Chart
-  # If migrating to ElastiCache, uncomment variables in modules/secrets-manager/variables.tf
-
   depends_on = [
     module.rds_auth,
     module.rds_orders,
@@ -193,8 +184,6 @@ module "secrets_manager" {
   ]
 }
 
-# Null Resource to cleanup Kubernetes-created AWS resources before destroy
-# This prevents "DependencyViolation" errors when destroying VPC/subnets
 resource "null_resource" "cleanup_k8s_resources" {
   # Trigger recreates if cluster name changes
   triggers = {

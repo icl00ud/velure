@@ -20,9 +20,6 @@ resource "aws_db_parameter_group" "main" {
   family = "postgres17"
 
   # Otimizações para free tier / low resource
-  # Valores em formato numérico conforme requisito do AWS RDS
-  # shared_buffers e effective_cache_size: 8KB blocks
-  # work_mem e maintenance_work_mem: kilobytes
   parameter {
     name         = "shared_buffers"
     value        = "16384" # 128MB = 16384 blocks de 8KB
@@ -88,16 +85,13 @@ resource "aws_db_instance" "main" {
   maintenance_window         = "sun:03:00-sun:04:00"
 
   # Backup
-  backup_retention_period  = 1 # Free Tier limit
+  backup_retention_period  = 1
   backup_window            = "02:00-03:00"
   delete_automated_backups = true
-  skip_final_snapshot      = true # CUIDADO: Em produção, sempre fazer snapshot final
-  # final_snapshot_identifier = "${var.identifier}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+  skip_final_snapshot      = true
 
-  # Monitoring - CloudWatch logs disabled to avoid conflicts
   enabled_cloudwatch_logs_exports = []
   monitoring_interval             = 0 # Desabilitar enhanced monitoring para economizar
-  # monitoring_role_arn           = aws_iam_role.rds_monitoring.arn
 
   # Performance Insights (desabilitado para economizar)
   performance_insights_enabled = false
@@ -105,7 +99,6 @@ resource "aws_db_instance" "main" {
   # Multi-AZ (desabilitado para economizar)
   multi_az = false
 
-  # Deletion protection
   deletion_protection = false # Facilitar cleanup, mas em prod deve ser true
 
   tags = merge(
@@ -117,9 +110,7 @@ resource "aws_db_instance" "main" {
 
   lifecycle {
     ignore_changes = [
-      password, # Ignorar mudanças de senha após criação inicial
+      password,
     ]
   }
 }
-
-# CloudWatch Log Groups removed to avoid conflicts

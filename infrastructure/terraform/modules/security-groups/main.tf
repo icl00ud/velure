@@ -54,7 +54,7 @@ resource "aws_security_group" "rds" {
   description = "Security group for RDS PostgreSQL instances"
   vpc_id      = var.vpc_id
 
-  # Permite PostgreSQL apenas dos EKS nodes
+  # Permite apenas dos EKS nodes
   ingress {
     description     = "Allow PostgreSQL from EKS nodes"
     from_port       = 5432
@@ -89,7 +89,7 @@ resource "aws_security_group" "rds" {
   )
 }
 
-# Security Group para Load Balancer (será usado pelo AWS Load Balancer Controller)
+# Security Group para Load Balancer
 resource "aws_security_group" "alb" {
   name        = "${var.project_name}-${var.environment}-alb-sg"
   description = "Security group for Application Load Balancer"
