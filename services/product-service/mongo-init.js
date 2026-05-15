@@ -9,8 +9,8 @@ function printLargeText(text, numLines) {
   }
 }
 
-var rootUsername = "root";
-var rootPassword = "root";
+var rootUsername = process.env.MONGO_INITDB_ROOT_USERNAME || "velure_user";
+var rootPassword = process.env.MONGO_INITDB_ROOT_PASSWORD || "velure_password";
 
 var conn = new Mongo();
 var adminDB = conn.getDB("admin");
@@ -18,20 +18,34 @@ var adminDB = conn.getDB("admin");
 // Autentica no banco de administração
 adminDB.auth(rootUsername, rootPassword);
 
-var dbName = "velure_database";
+var dbName = "product_service";
 var collectionName = "products";
 
 var db = conn.getDB(dbName);
 
+// Pula tudo se já houver produtos (idempotente)
+if (db.getCollection(collectionName).countDocuments({}) > 0) {
+  print("ℹ️  Skipping seed — products already present");
+  quit(0);
+}
+
 // Cria a collection se não existir
-db.createCollection(collectionName);
+try {
+  db.createCollection(collectionName);
+} catch (e) {
+  print("Collection exists: " + e.message);
+}
 
 // Cria o usuário com permissão de readWrite no banco de dados especificado
-db.createUser({
-  user: rootUsername,
-  pwd: rootPassword,
-  roles: [{ role: "readWrite", db: dbName }],
-});
+try {
+  db.createUser({
+    user: rootUsername,
+    pwd: rootPassword,
+    roles: [{ role: "readWrite", db: dbName }],
+  });
+} catch (e) {
+  print("User creation skipped: " + e.message);
+}
 
 // Produtos realistas de petshop
 const realisticProducts = [
@@ -43,7 +57,7 @@ const realisticProducts = [
     rating: 4.7,
     category: "Alimentação",
     disponibility: true,
-    quantity_warehouse: 45,
+    quantity: 45,
     images: [
       "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400&h=300&fit=crop&q=80&seed=1",
@@ -61,7 +75,7 @@ const realisticProducts = [
     rating: 4.8,
     category: "Brinquedos",
     disponibility: true,
-    quantity_warehouse: 32,
+    quantity: 32,
     images: [
       "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&h=300&fit=crop&q=80&seed=3",
@@ -79,7 +93,7 @@ const realisticProducts = [
     rating: 4.6,
     category: "Acessórios",
     disponibility: true,
-    quantity_warehouse: 28,
+    quantity: 28,
     images: [
       "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=300&fit=crop&q=80&seed=5",
@@ -97,7 +111,7 @@ const realisticProducts = [
     rating: 4.9,
     category: "Camas e Descanso",
     disponibility: true,
-    quantity_warehouse: 15,
+    quantity: 15,
     images: [
       "https://images.unsplash.com/photo-1558617047-ac1a6b5abbd7?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1558617047-ac1a6b5abbd7?w=400&h=300&fit=crop&q=80&seed=7",
@@ -115,7 +129,7 @@ const realisticProducts = [
     rating: 4.4,
     category: "Petiscos",
     disponibility: true,
-    quantity_warehouse: 67,
+    quantity: 67,
     images: [
       "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400&h=300&fit=crop&q=80&seed=9",
       "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400&h=300&fit=crop&q=80&seed=10",
@@ -135,7 +149,7 @@ const realisticProducts = [
     rating: 4.6,
     category: "Alimentação",
     disponibility: true,
-    quantity_warehouse: 38,
+    quantity: 38,
     images: [
       "https://images.unsplash.com/photo-1571566882372-1598d88abd90?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1571566882372-1598d88abd90?w=400&h=300&fit=crop&q=80&seed=12",
@@ -153,7 +167,7 @@ const realisticProducts = [
     rating: 4.8,
     category: "Brinquedos",
     disponibility: true,
-    quantity_warehouse: 12,
+    quantity: 12,
     images: [
       "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=400&h=300&fit=crop&q=80&seed=14",
@@ -171,7 +185,7 @@ const realisticProducts = [
     rating: 4.5,
     category: "Higiene",
     disponibility: true,
-    quantity_warehouse: 22,
+    quantity: 22,
     images: [
       "https://placehold.co/400x300/4169E1/FFFFFF?text=Cat+Litter+Box",
       "https://placehold.co/400x300/4169E1/FFFFFF?text=Cat+Litter+Box&seed=1",
@@ -189,7 +203,7 @@ const realisticProducts = [
     rating: 4.7,
     category: "Alimentação",
     disponibility: true,
-    quantity_warehouse: 89,
+    quantity: 89,
     images: [
       "https://images.unsplash.com/photo-1571566882372-1598d88abd90?w=400&h=300&fit=crop&q=80&seed=16",
       "https://images.unsplash.com/photo-1571566882372-1598d88abd90?w=400&h=300&fit=crop&q=80&seed=17",
@@ -207,7 +221,7 @@ const realisticProducts = [
     rating: 4.3,
     category: "Brinquedos",
     disponibility: true,
-    quantity_warehouse: 54,
+    quantity: 54,
     images: [
       "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=400&h=300&fit=crop&q=80&seed=19",
       "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=400&h=300&fit=crop&q=80&seed=20",
@@ -227,7 +241,7 @@ const realisticProducts = [
     rating: 4.5,
     category: "Alimentação",
     disponibility: true,
-    quantity_warehouse: 76,
+    quantity: 76,
     images: [
       "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400&h=300&fit=crop&q=80&seed=22",
@@ -245,7 +259,7 @@ const realisticProducts = [
     rating: 4.7,
     category: "Gaiolas",
     disponibility: true,
-    quantity_warehouse: 8,
+    quantity: 8,
     images: [
       "https://images.unsplash.com/photo-1555169062-013468b47731?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1555169062-013468b47731?w=400&h=300&fit=crop&q=80&seed=24",
@@ -263,7 +277,7 @@ const realisticProducts = [
     rating: 4.4,
     category: "Suplementos",
     disponibility: true,
-    quantity_warehouse: 45,
+    quantity: 45,
     images: [
       "https://placehold.co/400x300/228B22/FFFFFF?text=Bird+Vitamins",
       "https://placehold.co/400x300/228B22/FFFFFF?text=Bird+Vitamins&seed=1",
@@ -283,7 +297,7 @@ const realisticProducts = [
     rating: 4.6,
     category: "Alimentação",
     disponibility: true,
-    quantity_warehouse: 98,
+    quantity: 98,
     images: [
       "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=300&fit=crop&q=80&seed=26",
@@ -301,7 +315,7 @@ const realisticProducts = [
     rating: 4.5,
     category: "Aquários",
     disponibility: true,
-    quantity_warehouse: 18,
+    quantity: 18,
     images: [
       "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80&seed=28",
@@ -319,7 +333,7 @@ const realisticProducts = [
     rating: 4.8,
     category: "Aquários",
     disponibility: true,
-    quantity_warehouse: 6,
+    quantity: 6,
     images: [
       "https://images.unsplash.com/photo-1554263897-4bfa012dcac0?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1554263897-4bfa012dcac0?w=400&h=300&fit=crop&q=80&seed=30",
@@ -339,7 +353,7 @@ const realisticProducts = [
     rating: 4.5,
     category: "Acessórios",
     disponibility: true,
-    quantity_warehouse: 41,
+    quantity: 41,
     images: [
       "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=300&fit=crop&q=80&seed=34",
       "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=300&fit=crop&q=80&seed=35",
@@ -357,7 +371,7 @@ const realisticProducts = [
     rating: 4.6,
     category: "Acessórios",
     disponibility: true,
-    quantity_warehouse: 34,
+    quantity: 34,
     images: [
       "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1623387641168-d9803ddd3f35?w=400&h=300&fit=crop&q=80&seed=37",
@@ -375,7 +389,7 @@ const realisticProducts = [
     rating: 4.7,
     category: "Petiscos",
     disponibility: true,
-    quantity_warehouse: 78,
+    quantity: 78,
     images: [
       "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400&h=300&fit=crop&q=80&seed=39",
       "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400&h=300&fit=crop&q=80&seed=40",
@@ -393,7 +407,7 @@ const realisticProducts = [
     rating: 4.4,
     category: "Higiene",
     disponibility: true,
-    quantity_warehouse: 52,
+    quantity: 52,
     images: [
       "https://placehold.co/400x300/87CEEB/000000?text=Puppy+Pads",
       "https://placehold.co/400x300/87CEEB/000000?text=Puppy+Pads&seed=1",
@@ -411,7 +425,7 @@ const realisticProducts = [
     rating: 4.3,
     category: "Vestuário",
     disponibility: true,
-    quantity_warehouse: 27,
+    quantity: 27,
     images: [
       "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&h=300&fit=crop&q=80&seed=42",
@@ -431,7 +445,7 @@ const realisticProducts = [
     rating: 4.8,
     category: "Acessórios",
     disponibility: true,
-    quantity_warehouse: 19,
+    quantity: 19,
     images: [
       "https://images.unsplash.com/photo-1573865526739-10c1dd85fd5f?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1573865526739-10c1dd85fd5f?w=400&h=300&fit=crop&q=80&seed=44",
@@ -449,7 +463,7 @@ const realisticProducts = [
     rating: 4.5,
     category: "Higiene",
     disponibility: true,
-    quantity_warehouse: 65,
+    quantity: 65,
     images: [
       "https://placehold.co/400x300/DDA0DD/000000?text=Cat+Litter",
       "https://placehold.co/400x300/DDA0DD/000000?text=Cat+Litter&seed=1",
@@ -467,7 +481,7 @@ const realisticProducts = [
     rating: 4.6,
     category: "Brinquedos",
     disponibility: true,
-    quantity_warehouse: 23,
+    quantity: 23,
     images: [
       "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=400&h=300&fit=crop&q=80&seed=46",
       "https://images.unsplash.com/photo-1545249390-6bdfa286032f?w=400&h=300&fit=crop&q=80&seed=47",
@@ -485,7 +499,7 @@ const realisticProducts = [
     rating: 4.7,
     category: "Higiene",
     disponibility: true,
-    quantity_warehouse: 38,
+    quantity: 38,
     images: [
       "https://placehold.co/400x300/FF69B4/FFFFFF?text=Pet+Brush",
       "https://placehold.co/400x300/FF69B4/FFFFFF?text=Pet+Brush&seed=1",
@@ -503,7 +517,7 @@ const realisticProducts = [
     rating: 4.4,
     category: "Camas e Descanso",
     disponibility: true,
-    quantity_warehouse: 16,
+    quantity: 16,
     images: [
       "https://images.unsplash.com/photo-1558617047-ac1a6b5abbd7?w=400&h=300&fit=crop&q=80&seed=49",
       "https://images.unsplash.com/photo-1558617047-ac1a6b5abbd7?w=400&h=300&fit=crop&q=80&seed=50",
@@ -523,7 +537,7 @@ const realisticProducts = [
     rating: 4.5,
     category: "Gaiolas",
     disponibility: true,
-    quantity_warehouse: 11,
+    quantity: 11,
     images: [
       "https://placehold.co/400x300/FFD700/000000?text=Hamster+Cage",
       "https://placehold.co/400x300/FFD700/000000?text=Hamster+Cage&seed=1",
@@ -541,7 +555,7 @@ const realisticProducts = [
     rating: 4.6,
     category: "Alimentação",
     disponibility: true,
-    quantity_warehouse: 47,
+    quantity: 47,
     images: [
       "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=300&fit=crop&q=80&seed=52",
@@ -559,7 +573,7 @@ const realisticProducts = [
     rating: 4.7,
     category: "Brinquedos",
     disponibility: true,
-    quantity_warehouse: 31,
+    quantity: 31,
     images: [
       "https://placehold.co/400x300/FF6347/FFFFFF?text=Exercise+Wheel",
       "https://placehold.co/400x300/FF6347/FFFFFF?text=Exercise+Wheel&seed=1",
@@ -579,7 +593,7 @@ const realisticProducts = [
     rating: 4.3,
     category: "Higiene",
     disponibility: true,
-    quantity_warehouse: 67,
+    quantity: 67,
     images: [
       "https://placehold.co/400x300/9370DB/FFFFFF?text=Pet+Shampoo",
       "https://placehold.co/400x300/9370DB/FFFFFF?text=Pet+Shampoo&seed=1",
@@ -597,7 +611,7 @@ const realisticProducts = [
     rating: 4.7,
     category: "Transporte",
     disponibility: true,
-    quantity_warehouse: 4,
+    quantity: 4,
     images: [
       "https://images.unsplash.com/photo-1598214960667-8c35c096dd3e?w=400&h=300&fit=crop&q=80",
       "https://images.unsplash.com/photo-1598214960667-8c35c096dd3e?w=400&h=300&fit=crop&q=80&seed=32",
@@ -615,7 +629,7 @@ const realisticProducts = [
     rating: 4.6,
     category: "Camas e Descanso",
     disponibility: true,
-    quantity_warehouse: 14,
+    quantity: 14,
     images: [
       "https://placehold.co/400x300/FF8C00/FFFFFF?text=Heated+Blanket",
       "https://placehold.co/400x300/FF8C00/FFFFFF?text=Heated+Blanket&seed=1",
@@ -633,7 +647,7 @@ const realisticProducts = [
     rating: 4.8,
     category: "Saúde",
     disponibility: true,
-    quantity_warehouse: 25,
+    quantity: 25,
     images: [
       "https://placehold.co/400x300/DC143C/FFFFFF?text=First+Aid+Kit",
       "https://placehold.co/400x300/DC143C/FFFFFF?text=First+Aid+Kit&seed=1",
@@ -651,7 +665,7 @@ const realisticProducts = [
     rating: 4.5,
     category: "Tecnologia",
     disponibility: true,
-    quantity_warehouse: 18,
+    quantity: 18,
     images: [
       "https://placehold.co/400x300/4169E1/FFFFFF?text=GPS+Tracker",
       "https://placehold.co/400x300/4169E1/FFFFFF?text=GPS+Tracker&seed=1",
@@ -664,7 +678,12 @@ const realisticProducts = [
   }
 ];
 
-// Insere os produtos realistas
+// Seed idempotente: pula se já houver produtos
+var existing = db.getCollection(collectionName).countDocuments({});
+if (existing > 0) {
+  print("ℹ️  Skipping seed — " + existing + " products already present");
+  quit(0);
+}
 db.getCollection(collectionName).insertMany(realisticProducts);
 
 printLargeText("✅ Database with realistic pet products created successfully!", 8);
