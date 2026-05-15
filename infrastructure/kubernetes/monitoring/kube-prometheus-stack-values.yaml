@@ -244,8 +244,8 @@ additionalPrometheusRulesMap:
               severity: critical
               service: auth
             annotations:
-              summary: "Auth service está down"
-              description: "O serviço de autenticação não está respondendo"
+              summary: "Auth service is down"
+              description: "The authentication service is not responding"
 
       - name: velure.product
         interval: 30s
@@ -259,8 +259,8 @@ additionalPrometheusRulesMap:
               severity: warning
               service: product
             annotations:
-              summary: "Cache hit rate baixo"
-              description: "Taxa de cache hit abaixo de 50% nos últimos 5 minutos"
+              summary: "Cache hit rate low"
+              description: "Cache hit rate below 50% over the last 5 minutes"
 
           - alert: ProductServiceDown
             expr: up{job="velure-product"} == 0
@@ -269,7 +269,7 @@ additionalPrometheusRulesMap:
               severity: critical
               service: product
             annotations:
-              summary: "Product service está down"
+              summary: "Product service is down"
 
       - name: velure.orders
         interval: 30s

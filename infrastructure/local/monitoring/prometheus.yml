@@ -1,15 +1,15 @@
 # Prometheus Configuration for Velure Microservices
-# Coleta métricas de todos os serviços da aplicação
+# Scrapes metrics from every application service
 
 global:
-  scrape_interval: 15s      # Coleta métricas a cada 15 segundos
-  evaluation_interval: 15s  # Avalia regras a cada 15 segundos
+  scrape_interval: 15s      # Scrape metrics every 15 seconds
+  evaluation_interval: 15s  # Evaluate rules every 15 seconds
   scrape_timeout: 10s
   external_labels:
     cluster: 'velure-local'
     environment: 'development'
 
-# Configuração de scraping dos serviços
+# Service scrape configuration
 scrape_configs:
   # Prometheus self-monitoring
   - job_name: 'prometheus'

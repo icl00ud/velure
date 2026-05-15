@@ -1,40 +1,40 @@
-# Define o número de réplicas para o Deployment
+# Number of Deployment replicas
 replicaCount: 2
 
-# Configuração da imagem do Docker
+# Docker image configuration
 image:
   repository: icl00ud/velure-auth
   pullPolicy: Always
   tag: "latest"
 
-# Segredos para repositórios privados (opcional, vazio para públicos)
+# Secrets for private registries (optional; empty for public)
 imagePullSecrets: []
 
-# Sobrescrever nomes padrão
+# Override default names
 nameOverride: ""
 fullnameOverride: ""
 
-# Configurações da conta de serviço
+# Service account configuration
 serviceAccount:
   create: true
   automount: true
   annotations: {}
   name: ""
 
-# Anotações e rótulos personalizados para pods
+# Custom pod annotations and labels
 podAnnotations: {}
 podLabels: {}
 
-# Contexto de segurança do Pod
+# Pod security context
 podSecurityContext: {}
 securityContext: {}
 
-# Configurações do serviço (ClusterIP expõe o serviço internamente)
+# Service configuration (ClusterIP exposes the service internally)
 service:
   type: ClusterIP
   port: 3020
 
-# Configuração de Ingress (desativado por enquanto)
+# Ingress configuration
 ingress:
   enabled: true
   className: "alb"
@@ -55,7 +55,7 @@ ingress:
           pathType: Prefix
   tls: []
 
-# Recursos de CPU e memória para o container
+# Container CPU and memory resources
 resources:
   limits:
     cpu: "250m"
@@ -64,7 +64,7 @@ resources:
     cpu: "250m"
     memory: "256Mi"
 
-# Probes de liveness e readiness
+# Liveness and readiness probes
 livenessProbe:
   httpGet:
     path: /health
@@ -74,7 +74,7 @@ readinessProbe:
     path: /health
     port: http
 
-# Configuração de autoscaling
+# Autoscaling configuration
 autoscaling:
   enabled: true
   minReplicas: 2
@@ -82,11 +82,11 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   targetMemoryUtilizationPercentage: 65
 
-# Volumes adicionais (se necessário)
+# Additional volumes (if needed)
 volumes: []
 volumeMounts: []
 
-# Seletores e tolerâncias para nós
+# Node selectors and tolerations
 nodeSelector: {}
 tolerations: []
 affinity: {}

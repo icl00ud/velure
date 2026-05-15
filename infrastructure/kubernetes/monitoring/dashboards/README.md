@@ -1,76 +1,76 @@
 # Grafana Dashboards - Velure
 
-Este diretório contém dashboards pré-configurados para monitoramento dos microserviços Velure.
+This directory contains preconfigured dashboards for monitoring the Velure microservices.
 
-## Dashboards Disponíveis
+## Available Dashboards
 
-- `microservices-overview-dashboard.json`: status dos serviços, taxa de requisições, latência p95/p99, erro %, cache hit rate (Auth e Product), CPU/mem por serviço e profundidade de fila RabbitMQ.
-- `overview-dashboard.json`: visão enxuta/legada de saúde geral (status, taxas de erro e latência).
-- `auth-service-dashboard.json`: login/registro/token, tráfego HTTP, erros, sessões, cache hit rate (Redis) e hits vs misses.
-- `product-service-dashboard.json`: operações de produto, cache (hit/miss + latência), inventário, buscas e MongoDB.
-- `publish-order-service-dashboard.json`: criação/publicação de pedidos, SSE, estados, banco de dados e métricas de fila.
-- `process-order-service-dashboard.json`: consumo de mensagens, workers, estoque/pagamento, chamadas para Product Service e tamanho da fila.
+- `microservices-overview-dashboard.json`: service status, request rate, p95/p99 latency, error %, cache hit rate (Auth and Product), CPU/memory per service, and RabbitMQ queue depth.
+- `overview-dashboard.json`: lean/legacy view of overall health (status, error rate, latency).
+- `auth-service-dashboard.json`: login/register/token, HTTP traffic, errors, sessions, cache hit rate (Redis), and hits vs misses.
+- `product-service-dashboard.json`: product operations, cache (hit/miss + latency), inventory, searches, and MongoDB.
+- `publish-order-service-dashboard.json`: order creation/publishing, SSE, states, database, and queue metrics.
+- `process-order-service-dashboard.json`: message consumption, workers, inventory/payment, calls into Product Service, and queue size.
 
-## Como Importar Dashboards
+## How to Import Dashboards
 
-### Método 1: Via UI do Grafana (Recomendado)
+### Method 1: via the Grafana UI (recommended)
 
-1. Acesse o Grafana:
+1. Open Grafana:
    ```bash
    kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
    ```
-   Abra: http://localhost:3000 (admin/admin)
+   Then visit: http://localhost:3000 (admin/admin)
 
-2. No menu lateral, clique em **Dashboards** → **Import**
+2. From the sidebar, click **Dashboards** → **Import**
 
-3. Clique em **Upload JSON file**
+3. Click **Upload JSON file**
 
-4. Selecione o arquivo `.json` desejado (ex: `microservices-overview-dashboard.json`)
+4. Select the desired `.json` file (e.g. `microservices-overview-dashboard.json`)
 
-5. Selecione o datasource **Prometheus**
+5. Pick the **Prometheus** datasource
 
-6. Clique em **Import**
+6. Click **Import**
 
-### Método 2: Via ConfigMap (Automático)
+### Method 2: via ConfigMap (automatic)
 
 ```bash
-# Criar/atualizar ConfigMap com TODOS os dashboards deste diretório
+# Create/update a ConfigMap with ALL the dashboards in this directory
 kubectl create configmap velure-grafana-dashboards \
   --from-file=infrastructure/kubernetes/monitoring/dashboards/ \
   -n monitoring \
   -o yaml --dry-run=client | kubectl apply -f -
 
-# Adicionar/atualizar label para o Grafana detectar
+# Apply the label Grafana watches for
 kubectl label configmap velure-grafana-dashboards \
   grafana_dashboard=1 \
   -n monitoring --overwrite
 
-# Reiniciar Grafana para carregar
+# Restart Grafana so the dashboards are loaded
 kubectl rollout restart deployment/kube-prometheus-stack-grafana -n monitoring
 ```
 
-Os dashboards aparecerão automaticamente na pasta **Velure** do Grafana.
+The dashboards will appear under the **Velure** folder in Grafana.
 
-## Criar Dashboards Customizados
+## Creating Custom Dashboards
 
-### Usando Queries PromQL
+### Using PromQL queries
 
-Você pode criar seus próprios dashboards usando as queries da documentação:
-- Ver: `docs/PROMETHEUS_METRICS.md`
+You can build your own dashboards from the queries documented in:
+- `docs/PROMETHEUS_METRICS.md`
 
-### Exemplos de Queries Úteis
+### Useful Query Examples
 
-**Taxa de Requisições:**
+**Request Rate:**
 ```promql
 sum(rate(auth_http_requests_total[5m])) by (status)
 ```
 
-**Latência p95:**
+**p95 Latency:**
 ```promql
 histogram_quantile(0.95, rate(auth_http_request_duration_seconds_bucket[5m]))
 ```
 
-**Taxa de Erros:**
+**Error Rate:**
 ```promql
 rate(auth_errors_total[5m])
 ```
@@ -81,21 +81,21 @@ rate(product_cache_hits_total[5m]) /
 (rate(product_cache_hits_total[5m]) + rate(product_cache_misses_total[5m]))
 ```
 
-**Pedidos Processados:**
+**Orders Processed:**
 ```promql
 rate(process_order_processed_total[5m]) * 60
 ```
 
-## Dashboards Adicionais / Customizações
+## Additional Dashboards / Customization
 
-- Os dashboards de Auth, Product, Publish Order e Process Order já estão versionados aqui. Duplique-os no Grafana se precisar de filtros/labels específicos do seu ambiente.
-- Para infraestrutura use os dashboards padrão do kube-prometheus-stack:
+- The Auth, Product, Publish Order, and Process Order dashboards are versioned here. Duplicate them in Grafana if you need environment-specific filters/labels.
+- For infrastructure, use the dashboards bundled with kube-prometheus-stack:
   - **Kubernetes / Compute Resources / Cluster**
   - **Kubernetes / Compute Resources / Namespace (Pods)**
   - **Kubernetes / Compute Resources / Pod**
   - **Node Exporter / Nodes**
 
-## Estrutura de Dashboard Recomendada
+## Recommended Dashboard Structure
 
 ```
 ┌─────────────────────────────────────┐
@@ -115,57 +115,57 @@ rate(process_order_processed_total[5m]) * 60
 
 ## Troubleshooting
 
-### Dashboards não aparecem
+### Dashboards do not show up
 
 ```bash
-# Verificar se ConfigMap foi criado
+# Verify the ConfigMap exists
 kubectl get configmap velure-grafana-dashboards -n monitoring
 
-# Verificar label
+# Check the label
 kubectl get configmap velure-grafana-dashboards -n monitoring --show-labels
 
-# Ver logs do Grafana
+# Check Grafana logs
 kubectl logs -n monitoring -l app.kubernetes.io/name=grafana
 ```
 
-### Métricas não aparecem
+### Metrics do not show up
 
 ```bash
-# Verificar se Prometheus está scrapando
+# Verify Prometheus is scraping
 kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
-# Acesse: http://localhost:9090/targets
+# Open: http://localhost:9090/targets
 
-# Verificar ServiceMonitors
+# Check ServiceMonitors
 kubectl get servicemonitor -A
 
-# Testar endpoint de métricas diretamente
+# Hit the metrics endpoint directly
 kubectl port-forward <pod-name> 8080:8080
 curl http://localhost:8080/metrics
 ```
 
-### Datasource não conecta
+### Datasource will not connect
 
 ```bash
-# Verificar se Prometheus está rodando
+# Check Prometheus is running
 kubectl get pods -n monitoring -l app.kubernetes.io/name=prometheus
 
-# Testar conectividade
+# Test connectivity
 kubectl exec -it -n monitoring <grafana-pod> -- \
   wget -O- http://kube-prometheus-stack-prometheus:9090/-/healthy
 ```
 
-## Alertas no Grafana
+## Grafana Alerts
 
-Você pode configurar alertas diretamente nos dashboards:
+You can configure alerts directly inside a dashboard:
 
-1. Edite um painel
-2. Vá para a aba **Alert**
-3. Configure condições (ex: error rate > 5)
-4. Configure notification channel (Slack, email, etc.)
+1. Edit a panel
+2. Open the **Alert** tab
+3. Configure the condition (e.g. error rate > 5)
+4. Configure the notification channel (Slack, email, etc.)
 
-**Nota**: Recomendamos usar o Alertmanager do Prometheus para alertas mais robustos (já configurado).
+**Note**: prefer Prometheus Alertmanager for robust alerting (already configured).
 
-## Referências
+## References
 
 - [Grafana Documentation](https://grafana.com/docs/grafana/latest/)
 - [Prometheus Query Examples](https://prometheus.io/docs/prometheus/latest/querying/examples/)

@@ -119,7 +119,7 @@
 		@4xx expression `{http.error.status_code} >= 400 && {http.error.status_code} < 500`
 		handle @4xx {
 			header Content-Type "application/json"
-			respond `{"error":"Requisição inválida","message":"Verifique os dados e tente novamente","status":{http.error.status_code}}` {http.error.status_code}
+			respond `{"error":"Bad request","message":"Check your input and try again","status":{http.error.status_code}}` {http.error.status_code}
 		}
 	}
 }

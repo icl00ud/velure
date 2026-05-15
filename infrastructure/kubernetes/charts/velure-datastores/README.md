@@ -1,165 +1,165 @@
 # Velure Datastores Helm Chart
 
-Este chart unificado implanta MongoDB, Redis e RabbitMQ para o ambiente Velure.
+Unified chart that deploys MongoDB, Redis, and RabbitMQ for the Velure environment.
 
-## ⚠️ Importante: Chart com Dependências
+## ⚠️ Important: chart has dependencies
 
-**Este é um umbrella chart** que depende de charts do Bitnami. Antes de instalar, você **DEVE** baixar as dependências:
+**This is an umbrella chart** that depends on Bitnami charts. Before installing you **MUST** download the dependencies:
 
 ```bash
-# Opção 1: Build (baixa e salva em charts/)
+# Option 1: build (downloads and stores under charts/)
 helm dependency build infrastructure/kubernetes/charts/velure-datastores
 
-# Opção 2: Update (baixa e atualiza sempre)
+# Option 2: update (downloads and refreshes every time)
 helm dependency update infrastructure/kubernetes/charts/velure-datastores
 
-# Depois instalar normalmente
+# Then install normally
 helm upgrade --install velure-datastores infrastructure/kubernetes/charts/velure-datastores -n datastores
 ```
 
-**Dependências externas (Bitnami):**
+**External dependencies (Bitnami):**
 - `mongodb`: v14.12.1
 - `redis`: v18.19.1
 - `rabbitmq`: v13.0.1
 
-**⚠️ Sem executar `helm dependency build/update` primeiro, você receberá o erro:**
+**⚠️ Skipping `helm dependency build/update` will produce:**
 ```
 Error: found in Chart.yaml, but missing in charts/ directory: mongodb, redis, rabbitmq
 ```
 
 ---
 
-## ⚠️ Ambientes
+## ⚠️ Environments
 
-**Este chart é adequado para ambientes de desenvolvimento e teste.** Para produção, recomenda-se usar serviços gerenciados:
+**Suitable for development and test environments.** For production, prefer managed services:
 - **MongoDB** → Amazon DocumentDB
 - **Redis** → Amazon ElastiCache
 - **RabbitMQ** → Amazon MQ
 
-## Componentes
+## Components
 
 ### MongoDB
-- **Uso**: Product Service (catálogo de produtos)
+- **Use**: Product Service (product catalog)
 - **Database**: `productdb`
 - **User**: `productuser`
-- **Porta**: 27017
+- **Port**: 27017
 
 ### Redis
-- **Uso**: Caching (Product Service, Auth Service)
-- **Porta**: 6379
+- **Use**: caching (Product Service, Auth Service)
+- **Port**: 6379
 
 ### RabbitMQ
-- **Uso**: Message broker entre publish-order e process-order services
-- **Porta**: 5672 (AMQP), 15672 (Management UI)
+- **Use**: message broker between publish-order and process-order services
+- **Ports**: 5672 (AMQP), 15672 (Management UI)
 - **Exchanges**: `orders` (topic)
 - **Queues**:
   - `process-order-queue`
   - `publish-order-status-updates`
 
-## Instalação
+## Install
 
 ```bash
-# 1. Adicionar repositório Bitnami
+# 1. Add the Bitnami repository
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 
-# 2. Baixar dependências do chart (OBRIGATÓRIO!)
+# 2. Download chart dependencies (REQUIRED!)
 helm dependency build infrastructure/kubernetes/charts/velure-datastores
 
-# 3. Criar namespace
+# 3. Create the namespace
 kubectl create namespace datastores
 
-# 4. Instalar chart
+# 4. Install the chart
 helm install velure-datastores infrastructure/kubernetes/charts/velure-datastores \
   --namespace datastores \
   --create-namespace
 
-# Ou usar values customizados
+# Or with custom values
 helm install velure-datastores infrastructure/kubernetes/charts/velure-datastores \
   --namespace datastores \
   --values custom-values.yaml
 ```
 
-**⚠️ IMPORTANTE:** Nunca pule o passo 2 (`helm dependency build`). Sem ele, a instalação falhará.
+**⚠️ IMPORTANT:** never skip step 2 (`helm dependency build`). The install will fail without it.
 
-## Verificação
+## Verify
 
 ```bash
-# Ver pods
+# Pods
 kubectl get pods -n datastores
 
-# Ver services
+# Services
 kubectl get svc -n datastores
 
-# Ver PVCs
+# PVCs
 kubectl get pvc -n datastores
 
-# Logs do MongoDB
+# MongoDB logs
 kubectl logs -n datastores -l app.kubernetes.io/name=mongodb
 
-# Logs do Redis
+# Redis logs
 kubectl logs -n datastores -l app.kubernetes.io/name=redis
 
-# Logs do RabbitMQ
+# RabbitMQ logs
 kubectl logs -n datastores -l app.kubernetes.io/name=rabbitmq
 ```
 
-## Acesso aos Serviços
+## Service Access
 
 ### MongoDB
 ```bash
-# Connection string interno
+# Internal connection string
 mongodb://productuser:product_password@velure-datastores-mongodb:27017/productdb
 
-# Port-forward para acesso local
+# Port-forward for local access
 kubectl port-forward -n datastores svc/velure-datastores-mongodb 27017:27017
 
-# Conectar via CLI
+# Connect via CLI
 kubectl exec -it -n datastores velure-datastores-mongodb-0 -- mongosh -u productuser -p product_password productdb
 ```
 
 ### Redis
 ```bash
-# Connection string interno
+# Internal connection string
 redis://:redis_password@velure-datastores-redis-master:6379
 
 # Port-forward
 kubectl port-forward -n datastores svc/velure-datastores-redis-master 6379:6379
 
-# Conectar via CLI
+# Connect via CLI
 kubectl exec -it -n datastores velure-datastores-redis-master-0 -- redis-cli -a redis_password
 ```
 
 ### RabbitMQ
 ```bash
-# AMQP URL interno
+# Internal AMQP URL
 amqp://publisher-order:publisher_password@velure-datastores-rabbitmq:5672/
 
 # Management UI port-forward
 kubectl port-forward -n datastores svc/velure-datastores-rabbitmq 15672:15672
 
-# Acessar: http://localhost:15672
+# Open: http://localhost:15672
 # User: admin
 # Password: admin_password
 ```
 
-## Configuração
+## Configuration
 
-### Desabilitar Componentes
+### Disable components
 
 ```yaml
 # values.yaml
 mongodb:
-  enabled: false  # Desabilita MongoDB
+  enabled: false  # disable MongoDB
 
 redis:
-  enabled: false  # Desabilita Redis
+  enabled: false  # disable Redis
 
 rabbitmq:
-  enabled: false  # Desabilita RabbitMQ
+  enabled: false  # disable RabbitMQ
 ```
 
-### Alterar Recursos
+### Adjust resources
 
 ```yaml
 mongodb:
@@ -172,89 +172,89 @@ mongodb:
       memory: 512Mi
 ```
 
-### Persistência
+### Persistence
 
 ```yaml
 mongodb:
   persistence:
     enabled: true
-    storageClass: "gp3"  # Ou "standard" para development
+    storageClass: "gp3"  # or "standard" for development
     size: 20Gi
 ```
 
 ## Troubleshooting
 
-### MongoDB não inicia
+### MongoDB does not start
 ```bash
-# Verificar logs
+# Check logs
 kubectl logs -n datastores -l app.kubernetes.io/name=mongodb
 
-# Verificar PVC
+# Check PVC
 kubectl get pvc -n datastores
 
-# Descrever pod
+# Describe pod
 kubectl describe pod -n datastores -l app.kubernetes.io/name=mongodb
 ```
 
-### RabbitMQ - Queues não criadas
+### RabbitMQ — queues are not created
 ```bash
-# Verificar se definitions foram carregadas
+# Check whether definitions loaded
 kubectl exec -n datastores velure-datastores-rabbitmq-0 -- rabbitmqctl list_queues
 
-# Recriar load definition secret
+# Recreate the load-definition secret
 kubectl delete secret -n datastores rabbitmq-load-definition
 helm upgrade velure-datastores ./velure-datastores -n datastores
 ```
 
-### Redis - Connection refused
+### Redis — connection refused
 ```bash
-# Verificar se está rodando
+# Check pod state
 kubectl get pods -n datastores -l app.kubernetes.io/name=redis
 
-# Testar conexão
+# Test the connection
 kubectl exec -it -n datastores velure-datastores-redis-master-0 -- redis-cli ping
 ```
 
-## Backup e Restore
+## Backup and Restore
 
-### MongoDB Backup
+### MongoDB backup
 ```bash
-# Criar backup
+# Create a backup
 kubectl exec -n datastores velure-datastores-mongodb-0 -- \
   mongodump --uri="mongodb://productuser:product_password@localhost:27017/productdb" \
   --out=/tmp/backup
 
-# Copiar para local
+# Copy it locally
 kubectl cp datastores/velure-datastores-mongodb-0:/tmp/backup ./mongodb-backup
 ```
 
-### Redis Backup
+### Redis backup
 ```bash
 # Trigger BGSAVE
 kubectl exec -n datastores velure-datastores-redis-master-0 -- redis-cli -a redis_password BGSAVE
 
-# Copiar RDB file
+# Copy the RDB file
 kubectl cp datastores/velure-datastores-redis-master-0:/data/dump.rdb ./redis-backup.rdb
 ```
 
-## Desinstalação
+## Uninstall
 
 ```bash
-# Remover chart (mantém PVCs)
+# Remove the chart (PVCs are kept)
 helm uninstall velure-datastores -n datastores
 
-# Remover PVCs também
+# Remove PVCs too
 kubectl delete pvc -n datastores --all
 
-# Remover namespace
+# Remove the namespace
 kubectl delete namespace datastores
 ```
 
-## Monitoramento
+## Monitoring
 
-Todos os componentes exportam métricas Prometheus quando `metrics.enabled: true`:
+All components export Prometheus metrics when `metrics.enabled: true`:
 - MongoDB: `:9216/metrics`
 - Redis: `:9121/metrics`
 - RabbitMQ: `:15692/metrics`
 
-ServiceMonitors são criados automaticamente para scraping pelo Prometheus Operator.
+ServiceMonitors are created automatically for scraping by the Prometheus Operator.

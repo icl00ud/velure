@@ -25,7 +25,7 @@ mongodb:
 redis:
   host: velure-datastores-redis-master.datastores.svc.cluster.local
   port: "6379"
-  # Se usar senha, crie um Secret e informe o nome
+  # When using a password, create a Secret and set its name here
   passwordSecretName: "redis"
 
 # This is for the secretes for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/

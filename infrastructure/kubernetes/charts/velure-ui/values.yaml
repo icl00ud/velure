@@ -1,4 +1,4 @@
-# Configurações padrão para velure-ui.
+# Default values for velure-ui.
 replicaCount: 1
 
 image:
