@@ -31,7 +31,7 @@ func NewDistributedCache(cleanupInterval time.Duration) *DistributedCache {
 		stop:    make(chan struct{}),
 	}
 
-	// Goroutine para limpar entradas expiradas
+	// Goroutine that evicts expired entries
 	go dc.cleanupExpired()
 
 	return dc
@@ -56,7 +56,7 @@ func (dc *DistributedCache) cleanupExpired() {
 	}
 }
 
-// Set armazena um valor no cache com TTL
+// Set stores a value in the cache with a TTL
 func (dc *DistributedCache) Set(key string, value interface{}, ttl time.Duration) {
 	entry := &CacheEntry{
 		Data:      value,
@@ -65,7 +65,7 @@ func (dc *DistributedCache) Set(key string, value interface{}, ttl time.Duration
 	dc.data.Store(key, entry)
 }
 
-// Get recupera um valor do cache
+// Get retrieves a value from the cache
 func (dc *DistributedCache) Get(key string) (interface{}, bool) {
 	value, ok := dc.data.Load(key)
 	if !ok {
@@ -84,37 +84,37 @@ func (dc *DistributedCache) Get(key string) (interface{}, bool) {
 	return entry.Data, true
 }
 
-// Delete remove um valor do cache
+// Delete removes a value from the cache
 func (dc *DistributedCache) Delete(key string) {
 	dc.data.Delete(key)
 }
 
-// GetOrCompute recupera do cache ou computa o valor em paralelo
+// GetOrCompute fetches from cache or computes the value in parallel
 func (dc *DistributedCache) GetOrCompute(
 	ctx context.Context,
 	key string,
 	ttl time.Duration,
 	compute func() (interface{}, error),
 ) (interface{}, error) {
-	// Tentar obter do cache primeiro
+	// Try the cache first
 	if value, ok := dc.Get(key); ok {
 		return value, nil
 	}
 
-	// Canal para resultado da computação
+	// Channel for the compute result
 	type result struct {
 		data interface{}
 		err  error
 	}
 	resultChan := make(chan result, 1)
 
-	// Computar valor em goroutine
+	// Compute the value in a goroutine
 	go func() {
 		data, err := compute()
 		resultChan <- result{data, err}
 	}()
 
-	// Aguardar resultado com timeout
+	// Wait for the result with a timeout
 	select {
 	case res := <-resultChan:
 		if res.err == nil {
@@ -126,7 +126,7 @@ func (dc *DistributedCache) GetOrCompute(
 	}
 }
 
-// BatchGet recupera múltiplos valores do cache em paralelo
+// BatchGet retrieves multiple values from the cache in parallel
 func (dc *DistributedCache) BatchGet(keys []string) map[string]interface{} {
 	results := make(map[string]interface{}, len(keys))
 	var mu sync.Mutex
@@ -148,7 +148,7 @@ func (dc *DistributedCache) BatchGet(keys []string) map[string]interface{} {
 	return results
 }
 
-// BatchSet armazena múltiplos valores no cache em paralelo
+// BatchSet stores multiple values in the cache in parallel
 func (dc *DistributedCache) BatchSet(items map[string]interface{}, ttl time.Duration) {
 	var wg sync.WaitGroup
 
@@ -163,7 +163,7 @@ func (dc *DistributedCache) BatchSet(items map[string]interface{}, ttl time.Dura
 	wg.Wait()
 }
 
-// Stop para a goroutine de limpeza
+// Stop halts the cleanup goroutine
 func (dc *DistributedCache) Stop() {
 	dc.cleanup.Stop()
 	select {
@@ -173,7 +173,7 @@ func (dc *DistributedCache) Stop() {
 	}
 }
 
-// UserCache é um cache especializado para usuários
+// UserCache is a cache specialized for users
 type UserCache struct {
 	cache *DistributedCache
 	ttl   time.Duration
@@ -236,7 +236,7 @@ func userEmailCacheKey(email string) string {
 	return "user:email:" + email
 }
 
-// SessionCache é um cache especializado para sessões
+// SessionCache is a cache specialized for sessions
 type SessionCache struct {
 	cache *DistributedCache
 	ttl   time.Duration
@@ -274,7 +274,7 @@ func sessionCacheKey(token string) string {
 	return "session:" + token
 }
 
-// SerializeToJSON serializa qualquer struct para JSON em goroutine
+// SerializeToJSON marshals any struct to JSON in a goroutine
 func SerializeToJSON(v interface{}) ([]byte, error) {
 	type result struct {
 		data []byte
@@ -291,7 +291,7 @@ func SerializeToJSON(v interface{}) ([]byte, error) {
 	return res.data, res.err
 }
 
-// DeserializeFromJSON desserializa JSON para struct em goroutine
+// DeserializeFromJSON unmarshals JSON into a struct in a goroutine
 func DeserializeFromJSON(data []byte, v interface{}) error {
 	errChan := make(chan error, 1)
 

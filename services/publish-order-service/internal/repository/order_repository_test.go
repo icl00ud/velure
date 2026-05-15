@@ -63,7 +63,7 @@ func TestPostgresOrderRepository_Save(t *testing.T) {
 		t.Errorf("Save retornou erro: %v", err)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -95,7 +95,7 @@ func TestPostgresOrderRepository_SaveExecError(t *testing.T) {
 		t.Fatal("esperava erro ao executar Save, obteve nil")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -140,7 +140,7 @@ func TestPostgresOrderRepository_Find(t *testing.T) {
 		t.Errorf("Find retornou %+v; want %+v", got, order)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -185,7 +185,7 @@ func TestPostgresOrderRepository_FindByUserID(t *testing.T) {
 		t.Errorf("FindByUserID retornou %+v; want %+v", got, order)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -210,7 +210,7 @@ func TestPostgresOrderRepository_GetOrdersCount(t *testing.T) {
 		t.Errorf("GetOrdersCount retornou %d; want 42", count)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -236,7 +236,7 @@ func TestPostgresOrderRepository_GetOrdersCountByUserID(t *testing.T) {
 		t.Errorf("GetOrdersCountByUserID retornou %d; want 5", count)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -283,7 +283,7 @@ func TestPostgresOrderRepository_GetOrdersByPage(t *testing.T) {
 		t.Errorf("Orders length = %d, want 2", len(result.Orders))
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -305,7 +305,7 @@ func TestPostgresOrderRepository_GetOrdersByPage_QueryError(t *testing.T) {
 		t.Fatal("esperava erro de query, obteve nil")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -333,7 +333,7 @@ func TestPostgresOrderRepository_GetOrdersByPage_CountError(t *testing.T) {
 		t.Fatal("esperava erro ao buscar count, obteve nil")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -360,7 +360,7 @@ func TestPostgresOrderRepository_GetOrdersByPage_ScanErrorContinues(t *testing.T
 
 	result, err := repo.GetOrdersByPage(context.Background(), 1, 10)
 	if err != nil {
-		t.Fatalf("não esperava erro apesar do scan: %v", err)
+		t.Fatalf("expected no error despite the scan: %v", err)
 	}
 	if result.TotalCount != 1 {
 		t.Fatalf("TotalCount = %d, esperava 1", result.TotalCount)
@@ -369,7 +369,7 @@ func TestPostgresOrderRepository_GetOrdersByPage_ScanErrorContinues(t *testing.T
 		t.Fatalf("esperava 0 orders após erro de scan, obteve %d", len(result.Orders))
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -413,7 +413,7 @@ func TestPostgresOrderRepository_GetOrdersByUserID(t *testing.T) {
 		t.Errorf("Orders length = %d, want 1", len(result.Orders))
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -434,7 +434,7 @@ func TestPostgresOrderRepository_GetOrdersByUserID_QueryError(t *testing.T) {
 		t.Fatal("esperava erro de query, obteve nil")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }
 
@@ -463,6 +463,6 @@ func TestPostgresOrderRepository_GetOrdersByUserID_CountError(t *testing.T) {
 		t.Fatal("esperava erro de count, obteve nil")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("expectations não atendidas: %v", err)
+		t.Errorf("unmet expectations: %v", err)
 	}
 }

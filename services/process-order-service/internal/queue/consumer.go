@@ -114,10 +114,10 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(model.Event
 				logger.Int64("retry_count", retryCount))
 
 			if err := handler(evt); err != nil {
-				// Verifica se é erro permanente
+				// Check whether this is a permanent error
 				var permErr *client.PermanentError
 				if errors.As(err, &permErr) {
-					// Erro permanente (ex: produto não encontrado) - envia para DLQ imediatamente
+					// Permanent error (e.g. product not found) — route directly to the DLQ
 					d.Nack(false, false)
 					r.logger.Error("permanent error - sending to DLQ",
 						logger.Err(err),

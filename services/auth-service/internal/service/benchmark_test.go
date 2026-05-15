@@ -36,9 +36,9 @@ func BenchmarkRegistrationSequential(b *testing.B) {
 	})
 }
 
-// BenchmarkRegistrationParallel testa registro paralelo (depois)
+// BenchmarkRegistrationParallel benchmarks parallel registration
 func BenchmarkRegistrationParallel(b *testing.B) {
-	// Setup com otimizações
+	// Setup with optimizations
 	cfg := &config.Config{
 		Performance: config.PerformanceConfig{
 			BcryptCost:    10,
@@ -65,7 +65,7 @@ func BenchmarkRegistrationParallel(b *testing.B) {
 	})
 }
 
-// BenchmarkLoginWithoutCache testa login sem cache
+// BenchmarkLoginWithoutCache benchmarks login without cache
 func BenchmarkLoginWithoutCache(b *testing.B) {
 	cfg := &config.Config{
 		Performance: config.PerformanceConfig{
@@ -77,7 +77,7 @@ func BenchmarkLoginWithoutCache(b *testing.B) {
 
 	service := setupTestService(cfg)
 
-	// Criar usuário de teste
+	// Create a test user
 	req := models.CreateUserRequest{
 		Name:     "Test User",
 		Email:    "test@example.com",
@@ -98,7 +98,7 @@ func BenchmarkLoginWithoutCache(b *testing.B) {
 	})
 }
 
-// BenchmarkLoginWithCache testa login com cache
+// BenchmarkLoginWithCache benchmarks login with cache
 func BenchmarkLoginWithCache(b *testing.B) {
 	cfg := &config.Config{
 		Performance: config.PerformanceConfig{
@@ -111,7 +111,7 @@ func BenchmarkLoginWithCache(b *testing.B) {
 
 	service := setupTestService(cfg)
 
-	// Criar usuário de teste
+	// Create a test user
 	req := models.CreateUserRequest{
 		Name:     "Test User",
 		Email:    "test@example.com",
@@ -122,13 +122,13 @@ func BenchmarkLoginWithCache(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			// Validar token (cache hit após primeira vez)
+			// Validate token (cache hit after the first call)
 			_, _ = service.ValidateAccessToken(resp.AccessToken)
 		}
 	})
 }
 
-// BenchmarkTokenGenerationSequential testa geração sequencial de tokens
+// BenchmarkTokenGenerationSequential benchmarks sequential token generation
 func BenchmarkTokenGenerationSequential(b *testing.B) {
 	cfg := &config.Config{
 		JWT: config.JWTConfig{
@@ -146,7 +146,7 @@ func BenchmarkTokenGenerationSequential(b *testing.B) {
 	}
 }
 
-// BenchmarkTokenGenerationParallel testa geração paralela de tokens
+// BenchmarkTokenGenerationParallel benchmarks parallel token generation
 func BenchmarkTokenGenerationParallel(b *testing.B) {
 	cfg := &config.Config{
 		JWT: config.JWTConfig{
@@ -161,7 +161,7 @@ func BenchmarkTokenGenerationParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		i := 0
 		for pb.Next() {
-			// Simular geração paralela
+			// Simulate parallel generation
 			done := make(chan bool, 2)
 
 			go func() {
@@ -181,7 +181,7 @@ func BenchmarkTokenGenerationParallel(b *testing.B) {
 	})
 }
 
-// BenchmarkValidationParallel testa validação paralela de campos
+// BenchmarkValidationParallel benchmarks parallel field validation
 func BenchmarkValidationParallel(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
@@ -198,7 +198,7 @@ func BenchmarkCacheGetOrCompute(b *testing.B) {
 	defer cache.Stop()
 
 	compute := func() (interface{}, error) {
-		time.Sleep(10 * time.Millisecond) // Simular operação custosa
+		time.Sleep(10 * time.Millisecond) // simulate a costly operation
 		return "computed value", nil
 	}
 
@@ -213,7 +213,7 @@ func BenchmarkCacheGetOrCompute(b *testing.B) {
 	})
 }
 
-// BenchmarkBatchCacheOperations testa operações em lote
+// BenchmarkBatchCacheOperations benchmarks batch cache operations
 func BenchmarkBatchCacheOperations(b *testing.B) {
 	cache := NewDistributedCache(1 * time.Minute)
 	defer cache.Stop()
@@ -241,7 +241,7 @@ func BenchmarkBatchCacheOperations(b *testing.B) {
 	})
 }
 
-// BenchmarkWorkerPool testa worker pool do bcrypt
+// BenchmarkWorkerPool benchmarks the bcrypt worker pool
 func BenchmarkWorkerPool(b *testing.B) {
 	workerPool := make(chan struct{}, 10)
 
@@ -249,7 +249,7 @@ func BenchmarkWorkerPool(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			workerPool <- struct{}{}         // acquire
-			time.Sleep(1 * time.Millisecond) // simular trabalho
+			time.Sleep(1 * time.Millisecond) // simulate work
 			<-workerPool                     // release
 		}
 	})

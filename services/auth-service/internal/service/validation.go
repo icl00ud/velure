@@ -12,7 +12,7 @@ import (
 var (
 	emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
-	// Pool de validadores para processar validações em paralelo
+	// Pool of validators that run validations in parallel
 	validationPool = sync.Pool{
 		New: func() interface{} {
 			return &validator{}
@@ -28,31 +28,31 @@ type ValidationResult struct {
 	Field   string
 }
 
-// ValidateRegistrationAsync executa validações em paralelo
+// ValidateRegistrationAsync runs validations in parallel
 func ValidateRegistrationAsync(ctx context.Context, name, email, password string) []ValidationResult {
 	results := make([]ValidationResult, 3)
 	var wg sync.WaitGroup
 	wg.Add(3)
 
-	// Goroutine 1: Validar nome
+	// Goroutine 1: validate name
 	go func() {
 		defer wg.Done()
 		results[0] = validateName(name)
 	}()
 
-	// Goroutine 2: Validar email
+	// Goroutine 2: validate email
 	go func() {
 		defer wg.Done()
 		results[1] = validateEmail(email)
 	}()
 
-	// Goroutine 3: Validar password
+	// Goroutine 3: validate password
 	go func() {
 		defer wg.Done()
 		results[2] = validatePassword(password)
 	}()
 
-	// Aguardar com timeout
+	// Wait with a timeout
 	done := make(chan struct{})
 	go func() {
 		wg.Wait()
@@ -108,7 +108,7 @@ func validatePassword(password string) ValidationResult {
 	return ValidationResult{IsValid: true, Field: "password"}
 }
 
-// NormalizeEmail normaliza o email (lowercase, trim)
+// NormalizeEmail lowercases and trims the email
 func NormalizeEmail(email string) string {
 	return strings.TrimSpace(strings.ToLower(email))
 }

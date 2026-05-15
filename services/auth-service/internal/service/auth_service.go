@@ -28,11 +28,11 @@ type AuthService struct {
 	config            *config.Config
 	bcryptWorkerPool  chan struct{}
 	redis             *redis.Client
-	tokenCache        sync.Map // fallback cache se redis falhar
+	tokenCache        sync.Map // fallback cache if redis fails
 }
 
-// userCacheEntry é usado para serializar/deserializar usuários no cache Redis
-// O campo Password é incluído aqui porque models.User tem json:"-" que exclui a senha
+// userCacheEntry serializes/deserializes users in the Redis cache.
+// Password is included here because models.User uses json:"-" to omit it.
 type userCacheEntry struct {
 	ID        uint      `json:"id"`
 	Name      string    `json:"name"`
@@ -49,7 +49,7 @@ func NewAuthService(
 	config *config.Config,
 	redisClient *redis.Client,
 ) *AuthService {
-	// Worker pool limita operações bcrypt concorrentes (CPU-bound)
+	// Worker pool caps concurrent bcrypt operations (CPU-bound)
 	workerPoolSize := config.Performance.BcryptWorkers
 	if workerPoolSize <= 0 {
 		workerPoolSize = 10 // default
@@ -84,7 +84,7 @@ func (s *AuthService) CreateUser(req models.CreateUserRequest) (*models.Registra
 		return nil, errors.New("user already exists")
 	}
 
-	// Hash password com worker pool (evita sobrecarga CPU)
+	// Hash password through the worker pool (caps CPU pressure)
 	s.bcryptWorkerPool <- struct{}{} // acquire worker
 	hashedPassword, err := s.hashPasswordOptimized(req.Password)
 	<-s.bcryptWorkerPool // release worker
@@ -108,7 +108,7 @@ func (s *AuthService) CreateUser(req models.CreateUserRequest) (*models.Registra
 		return nil, fmt.Errorf("error creating user: %w", err)
 	}
 
-	// Criar session com tokens (versão síncrona otimizada)
+	// Create the token session (synchronous, optimized).
 	session, err := s.updateOrCreateSession(user.ID)
 	if err != nil {
 		metrics.RegistrationAttempts.WithLabelValues("failure").Inc()
@@ -116,8 +116,8 @@ func (s *AuthService) CreateUser(req models.CreateUserRequest) (*models.Registra
 		return nil, fmt.Errorf("error creating session: %w", err)
 	}
 
-	// Cacheia o usuário recém-registrado para acelerar o primeiro login
-	// Nota: Usamos userCacheEntry para incluir a senha no cache (json:"-" exclui do json.Marshal normal)
+	// Cache the freshly-registered user to speed up the first login.
+	// Note: userCacheEntry is used to include the password in cache (json:"-" omits it from json.Marshal).
 	if s.redis != nil {
 		ctx := context.Background()
 		cacheEntry := userCacheEntry{
@@ -135,9 +135,9 @@ func (s *AuthService) CreateUser(req models.CreateUserRequest) (*models.Registra
 		}
 	}
 
-	// PERFORMANCE: Métricas de count removidas - devem ser coletadas por job periódico
-	// para evitar sobrecarga de queries COUNT durante picos de carga
-	// TODO: Implementar cronjob para atualizar total_users e active_sessions a cada 30s
+	// PERFORMANCE: count metrics removed — they should be gathered by a periodic job
+	// to avoid hammering the DB with COUNT queries during traffic spikes.
+	// TODO: implement a cronjob that refreshes total_users and active_sessions every 30s.
 
 	metrics.RegistrationAttempts.WithLabelValues("success").Inc()
 
@@ -225,7 +225,7 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 		return nil, errors.New("invalid credentials")
 	}
 
-	// Criar session com tokens (versão síncrona otimizada)
+	// Create the token session (synchronous, optimized).
 	session, err := s.updateOrCreateSession(user.ID)
 	if err != nil {
 		status = "failure"
@@ -233,8 +233,8 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 		return nil, fmt.Errorf("error creating session: %w", err)
 	}
 
-	// PERFORMANCE: Métrica de count removida - deve ser coletada por job periódico
-	// para evitar sobrecarga de queries COUNT durante picos de carga
+	// PERFORMANCE: count metric removed — should be gathered by a periodic job
+	// to avoid hammering the DB with COUNT queries during traffic spikes.
 
 	status = "success"
 	return &models.LoginResponse{
@@ -244,7 +244,7 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 }
 
 func (s *AuthService) ValidateAccessToken(token string) (*models.User, error) {
-	// Cache lookup (evita parsing e DB query repetidos)
+	// Cache lookup (avoids repeated parsing and DB queries)
 	if s.config.Performance.EnableCache {
 		if cachedUser, ok := s.tokenCache.Load(token); ok {
 			if user, ok := cachedUser.(*models.User); ok {
@@ -536,9 +536,9 @@ func (s *AuthService) hashPasswordOptimized(password string) ([]byte, error) {
 	return bcrypt.GenerateFromPassword([]byte(password), cost)
 }
 
-// updateOrCreateSessionAsync versão async DEPRECATED - use updateOrCreateSession
-// Mantido para compatibilidade, mas redireciona para versão síncrona (linha 294)
-// PERFORMANCE: Async overhead removido, JWT signing é rápido (~1ms) e não justifica goroutines
+// updateOrCreateSessionAsync is the DEPRECATED async variant — use updateOrCreateSession.
+// Kept for compatibility, but it forwards to the synchronous version (line 294).
+// PERFORMANCE: async overhead removed — JWT signing is fast (~1ms) and does not justify goroutines.
 func (s *AuthService) updateOrCreateSessionAsync(userID uint) (*models.Session, error) {
 	return s.updateOrCreateSession(userID)
 }

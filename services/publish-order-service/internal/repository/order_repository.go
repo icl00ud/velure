@@ -34,8 +34,8 @@ func NewOrderRepository(dsn string) (OrderRepository, error) {
 		return nil, err
 	}
 
-	// Configurar connection pool para evitar esgotamento de conexões RDS
-	// Cálculo: 2-3 pods × 15 conns = 30-45 conexões totais
+	// Configure connection pool to avoid exhausting RDS connections.
+	// Math: 2-3 pods × 15 conns = 30-45 total connections.
 	db.SetMaxOpenConns(15)
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(5 * time.Minute)

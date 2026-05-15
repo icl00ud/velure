@@ -1,127 +1,127 @@
 # Auth Service - Prometheus Metrics
 
-Este documento descreve todas as métricas customizadas expostas pelo auth-service no endpoint `/metrics`.
+This document describes every custom metric exposed by auth-service on the `/metrics` endpoint.
 
-## Métricas de Login
+## Login Metrics
 
 ### `auth_login_attempts_total` (Counter)
-Número total de tentativas de login.
+Total login attempts.
 - **Labels**: `status` (success, failure)
-- **Uso**: Monitorar taxa de sucesso/falha de autenticação
+- **Use**: track authentication success/failure rate
 
 ### `auth_login_duration_seconds` (Histogram)
-Duração das requisições de login em segundos.
+Login request duration in seconds.
 - **Labels**: `status` (success, failure)
-- **Buckets**: Default Prometheus
-- **Uso**: Detectar lentidão no processo de autenticação
+- **Buckets**: Prometheus defaults
+- **Use**: detect slowdowns in the authentication flow
 
-## Métricas de Registro
+## Registration Metrics
 
 ### `auth_registration_attempts_total` (Counter)
-Número total de tentativas de registro.
+Total registration attempts.
 - **Labels**: `status` (success, failure, conflict)
-- **Uso**: Monitorar taxa de sucesso de novos registros
+- **Use**: track new-registration success rate
 
 ### `auth_registration_duration_seconds` (Histogram)
-Duração das requisições de registro em segundos.
-- **Buckets**: Default Prometheus
-- **Uso**: Identificar lentidão na criação de usuários
+Registration request duration in seconds.
+- **Buckets**: Prometheus defaults
+- **Use**: spot slow user creation
 
-## Métricas de Tokens
+## Token Metrics
 
 ### `auth_token_validations_total` (Counter)
-Número total de validações de token.
+Total token validations.
 - **Labels**: `result` (valid, invalid)
-- **Uso**: Detectar alto volume de tokens inválidos (possível ataque)
+- **Use**: detect a spike of invalid tokens (possible attack)
 
 ### `auth_token_generations_total` (Counter)
-Número total de tokens JWT gerados.
-- **Uso**: Rastrear volume de autenticações bem-sucedidas
+Total JWTs issued.
+- **Use**: measure volume of successful authentications
 
 ### `auth_token_generation_duration_seconds` (Histogram)
-Duração da geração de tokens em segundos.
+JWT generation duration in seconds.
 - **Buckets**: [.001, .005, .01, .025, .05, .1]
-- **Uso**: Monitorar performance da geração de JWT
+- **Use**: monitor JWT generation performance
 
-## Métricas de Sessões
+## Session Metrics
 
 ### `auth_active_sessions` (Gauge)
-Número atual de sessões ativas.
-- **Uso**: Monitorar carga de usuários conectados
+Currently active sessions.
+- **Use**: track concurrent connected users
 
 ### `auth_logout_requests_total` (Counter)
-Número total de requisições de logout.
-- **Uso**: Rastrear volume de desconexões
+Total logout requests.
+- **Use**: measure disconnection volume
 
-## Métricas de Usuários
+## User Metrics
 
 ### `auth_total_users` (Gauge)
-Número total de usuários registrados.
-- **Uso**: Acompanhar crescimento da base de usuários
+Total registered users.
+- **Use**: follow user-base growth
 
 ### `auth_user_queries_total` (Counter)
-Número total de consultas de usuário.
+Total user lookups.
 - **Labels**: `type` (by_id, by_email, list)
-- **Uso**: Identificar padrões de uso da API
+- **Use**: spot API usage patterns
 
-## Métricas de Banco de Dados
+## Database Metrics
 
 ### `auth_database_queries_total` (Counter)
-Número total de queries executadas no banco.
+Total DB queries executed.
 - **Labels**: `operation` (select, insert, update, delete)
-- **Uso**: Monitorar volume de operações no banco
+- **Use**: monitor DB load
 
 ### `auth_database_query_duration_seconds` (Histogram)
-Duração das queries no banco de dados.
+DB query duration.
 - **Labels**: `operation` (select, insert, update, delete)
 - **Buckets**: [.001, .005, .01, .025, .05, .1, .25]
-- **Uso**: Detectar queries lentas
+- **Use**: catch slow queries
 
-## Métricas de Erros
+## Error Metrics
 
 ### `auth_errors_total` (Counter)
-Número total de erros.
+Total errors.
 - **Labels**: `type` (validation, database, auth, internal)
-- **Uso**: Alertar sobre problemas no serviço
+- **Use**: alert on service issues
 
-## Métricas HTTP (Middleware)
+## HTTP Metrics (Middleware)
 
 ### `auth_http_requests_total` (Counter)
-Número total de requisições HTTP.
+Total HTTP requests.
 - **Labels**: `method`, `endpoint`, `status`
-- **Uso**: Monitorar tráfego e status codes
+- **Use**: track traffic and status codes
 
 ### `auth_http_request_duration_seconds` (Histogram)
-Duração das requisições HTTP.
+HTTP request duration.
 - **Labels**: `method`, `endpoint`
-- **Buckets**: Default Prometheus
-- **Uso**: Identificar endpoints lentos
+- **Buckets**: Prometheus defaults
+- **Use**: spot slow endpoints
 
-## Queries PromQL Úteis
+## Useful PromQL Queries
 
 ```promql
-# Taxa de sucesso de login (últimos 5 minutos)
+# Login success rate (last 5 minutes)
 rate(auth_login_attempts_total{status="success"}[5m]) / rate(auth_login_attempts_total[5m])
 
-# Tempo médio de login
+# Average login time
 histogram_quantile(0.95, rate(auth_login_duration_seconds_bucket[5m]))
 
-# Taxa de erros
+# Error rate
 rate(auth_errors_total[5m])
 
-# Requests por segundo
+# Requests per second
 rate(auth_http_requests_total[1m])
 
-# Latência p95 dos endpoints
+# Endpoint p95 latency
 histogram_quantile(0.95, rate(auth_http_request_duration_seconds_bucket[5m]))
 
-# Tokens inválidos por minuto
+# Invalid tokens per minute
 rate(auth_token_validations_total{result="invalid"}[1m]) * 60
 ```
 
-## Alertas Sugeridos
+## Suggested Alerts
 
-1. **Alta taxa de falhas de login**: `rate(auth_login_attempts_total{status="failure"}[5m]) > 10`
-2. **Muitos erros**: `rate(auth_errors_total[5m]) > 5`
-3. **Latência alta**: `histogram_quantile(0.95, rate(auth_login_duration_seconds_bucket[5m])) > 1`
-4. **Tokens inválidos (possível ataque)**: `rate(auth_token_validations_total{result="invalid"}[1m]) > 50`
+1. **High login failure rate**: `rate(auth_login_attempts_total{status="failure"}[5m]) > 10`
+2. **Too many errors**: `rate(auth_errors_total[5m]) > 5`
+3. **High latency**: `histogram_quantile(0.95, rate(auth_login_duration_seconds_bucket[5m])) > 1`
+4. **Invalid tokens (possible attack)**: `rate(auth_token_validations_total{result="invalid"}[1m]) > 50`
