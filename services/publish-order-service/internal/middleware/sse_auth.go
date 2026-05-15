@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/shared/logger"
 )
 
 // SSEAuth is a middleware for SSE connections that accepts token from query parameter

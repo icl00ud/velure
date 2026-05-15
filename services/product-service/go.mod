@@ -1,11 +1,11 @@
-module product-service
+module github.com/icl00ud/velure/services/product-service
 
 go 1.25.5
 
 require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/gofiber/fiber/v2 v2.52.9
-	github.com/icl00ud/velure-shared v0.0.0
+	github.com/icl00ud/velure/shared v0.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/redis/go-redis/v9 v9.7.3
@@ -13,7 +13,7 @@ require (
 	go.mongodb.org/mongo-driver v1.17.1
 )
 
-replace github.com/icl00ud/velure-shared => ../../shared
+replace github.com/icl00ud/velure/shared => ../../shared
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect

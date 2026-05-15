@@ -8,7 +8,7 @@ COPY shared /shared
 
 COPY services/publish-order-service/go.mod services/publish-order-service/go.sum ./
 
-RUN go mod edit -replace github.com/icl00ud/velure-shared=/shared
+RUN go mod edit -replace github.com/icl00ud/velure/shared=/shared
 
 RUN go mod download
 
@@ -22,7 +22,7 @@ WORKDIR /app
 
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /build/publish-order-service ./publish-order-service
-COPY --from=build /build/internal/migrations ./internal/migrations
+COPY --from=build /build/migrations ./migrations
 
 USER 1000:1000
 EXPOSE 8080

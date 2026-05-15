@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/shared/logger"
 )
 
 // skipLoggingPaths contains paths that should not be logged

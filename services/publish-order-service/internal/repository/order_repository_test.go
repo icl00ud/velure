@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/icl00ud/publish-order-service/internal/model"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
 	_ "github.com/lib/pq"
 )
 

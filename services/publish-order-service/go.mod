@@ -1,4 +1,4 @@
-module github.com/icl00ud/publish-order-service
+module github.com/icl00ud/velure/services/publish-order-service
 
 go 1.25.5
 
@@ -7,7 +7,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/google/uuid v1.6.0
-	github.com/icl00ud/velure-shared v0.0.0
+	github.com/icl00ud/velure/shared v0.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/prometheus/client_golang v1.19.1
@@ -16,7 +16,7 @@ require (
 	golang.org/x/sync v0.17.0
 )
 
-replace github.com/icl00ud/velure-shared => ../../shared
+replace github.com/icl00ud/velure/shared => ../../shared
 
 require (
 	dario.cat/mergo v1.0.1 // indirect

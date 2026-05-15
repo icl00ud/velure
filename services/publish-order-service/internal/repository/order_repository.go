@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/icl00ud/publish-order-service/internal/model"
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
+	"github.com/icl00ud/velure/shared/logger"
 )
 
 type OrderRepository interface {

@@ -10,45 +10,45 @@ func TestNewPaginatedOrdersResponse(t *testing.T) {
 	}
 
 	tests := []struct {
-		name              string
-		totalCount        int64
-		page              int
-		pageSize          int
+		name               string
+		totalCount         int64
+		page               int
+		pageSize           int
 		expectedTotalPages int
 	}{
 		{
-			name:              "exact division",
-			totalCount:        20,
-			page:              1,
-			pageSize:          10,
+			name:               "exact division",
+			totalCount:         20,
+			page:               1,
+			pageSize:           10,
 			expectedTotalPages: 2,
 		},
 		{
-			name:              "with remainder",
-			totalCount:        25,
-			page:              1,
-			pageSize:          10,
+			name:               "with remainder",
+			totalCount:         25,
+			page:               1,
+			pageSize:           10,
 			expectedTotalPages: 3,
 		},
 		{
-			name:              "single page",
-			totalCount:        5,
-			page:              1,
-			pageSize:          10,
+			name:               "single page",
+			totalCount:         5,
+			page:               1,
+			pageSize:           10,
 			expectedTotalPages: 1,
 		},
 		{
-			name:              "zero items",
-			totalCount:        0,
-			page:              1,
-			pageSize:          10,
+			name:               "zero items",
+			totalCount:         0,
+			page:               1,
+			pageSize:           10,
 			expectedTotalPages: 0,
 		},
 		{
-			name:              "page size 1",
-			totalCount:        100,
-			page:              50,
-			pageSize:          1,
+			name:               "page size 1",
+			totalCount:         100,
+			page:               50,
+			pageSize:           1,
 			expectedTotalPages: 100,
 		},
 	}

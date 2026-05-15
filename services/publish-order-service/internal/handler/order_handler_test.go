@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/icl00ud/publish-order-service/internal/middleware"
-	"github.com/icl00ud/publish-order-service/internal/model"
-	"github.com/icl00ud/publish-order-service/internal/service"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/middleware"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/service"
 )
 
 type fakeRepo struct {

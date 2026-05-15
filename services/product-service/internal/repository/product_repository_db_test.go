@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"product-service/internal/model"
+	"github.com/icl00ud/velure/services/product-service/internal/model"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"

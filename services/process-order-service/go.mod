@@ -1,16 +1,16 @@
-module github.com/icl00ud/process-order-service
+module github.com/icl00ud/velure/services/process-order-service
 
 go 1.25.5
 
 require (
-	github.com/icl00ud/velure-shared v0.0.0
+	github.com/icl00ud/velure/shared v0.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/rabbitmq/amqp091-go v1.10.0
 	golang.org/x/sync v0.13.0
 )
 
-replace github.com/icl00ud/velure-shared => ../../shared
+replace github.com/icl00ud/velure/shared => ../../shared
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect

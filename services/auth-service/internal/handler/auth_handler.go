@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"velure-auth-service/internal/metrics"
-	"velure-auth-service/internal/model"
-	"velure-auth-service/internal/service"
+	"github.com/icl00ud/velure/services/auth-service/internal/metrics"
+	"github.com/icl00ud/velure/services/auth-service/internal/model"
+	"github.com/icl00ud/velure/services/auth-service/internal/service"
 
 	"github.com/gin-gonic/gin"
 )

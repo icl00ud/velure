@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"product-service/internal/metrics"
+	"github.com/icl00ud/velure/services/product-service/internal/metrics"
 
 	"github.com/gofiber/fiber/v2"
 )

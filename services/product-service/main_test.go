@@ -9,13 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	"product-service/internal/config"
-	"product-service/internal/model"
-	"product-service/internal/repository"
-	"product-service/internal/service"
+	"github.com/icl00ud/velure/services/product-service/internal/config"
+	"github.com/icl00ud/velure/services/product-service/internal/model"
+	"github.com/icl00ud/velure/services/product-service/internal/repository"
+	"github.com/icl00ud/velure/services/product-service/internal/service"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/shared/logger"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -2,10 +2,10 @@ package services
 
 import (
 	"context"
+	"github.com/icl00ud/velure/services/auth-service/internal/config"
+	"github.com/icl00ud/velure/services/auth-service/internal/model"
 	"testing"
 	"time"
-	"velure-auth-service/internal/config"
-	"velure-auth-service/internal/model"
 )
 
 // BenchmarkRegistrationSequential testa registro sequencial (antes)

@@ -5,13 +5,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"velure-auth-service/internal/config"
-	"velure-auth-service/internal/handler"
-	"velure-auth-service/internal/mocks"
+	"github.com/icl00ud/velure/services/auth-service/internal/config"
+	"github.com/icl00ud/velure/services/auth-service/internal/handler"
+	"github.com/icl00ud/velure/services/auth-service/internal/mocks"
 
 	miniredis "github.com/alicebob/miniredis/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/shared/logger"
 	"go.uber.org/mock/gomock"
 )
 

@@ -13,15 +13,15 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/icl00ud/publish-order-service/internal/handler"
-	"github.com/icl00ud/publish-order-service/internal/middleware"
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/handler"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/middleware"
+	"github.com/icl00ud/velure/shared/logger"
 
-	"github.com/icl00ud/publish-order-service/internal/config"
-	"github.com/icl00ud/publish-order-service/internal/consumer"
-	"github.com/icl00ud/publish-order-service/internal/model"
-	"github.com/icl00ud/publish-order-service/internal/publisher"
-	"github.com/icl00ud/publish-order-service/internal/repository"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/config"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/consumer"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/publisher"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/repository"
 )
 
 func TestRegisterRoutes_CanonicalOnly(t *testing.T) {
@@ -192,7 +192,7 @@ func TestRunWithInjectedDependencies(t *testing.T) {
 	if !fakeRepo.migrationsRan {
 		t.Fatal("expected migrations to run")
 	}
-	if fakeRepo.migrationsPath != "./internal/migrations" {
+	if fakeRepo.migrationsPath != "./migrations" {
 		t.Fatalf("unexpected migrations path: %s", fakeRepo.migrationsPath)
 	}
 	if !fakeServer.started || !fakeServer.shutDown {

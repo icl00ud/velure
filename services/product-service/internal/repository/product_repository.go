@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"product-service/internal/metrics"
-	"product-service/internal/model"
+	"github.com/icl00ud/velure/services/product-service/internal/metrics"
+	"github.com/icl00ud/velure/services/product-service/internal/model"
 
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/shared/logger"
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

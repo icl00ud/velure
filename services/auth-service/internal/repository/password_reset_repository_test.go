@@ -3,8 +3,8 @@ package repositories
 import (
 	"testing"
 
-	"velure-auth-service/internal/model"
-	"velure-auth-service/internal/testutil"
+	"github.com/icl00ud/velure/services/auth-service/internal/model"
+	"github.com/icl00ud/velure/services/auth-service/internal/testutil"
 
 	"gorm.io/gorm"
 )

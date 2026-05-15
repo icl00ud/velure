@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/icl00ud/process-order-service/internal/client"
-	"github.com/icl00ud/process-order-service/internal/model"
+	"github.com/icl00ud/velure/services/process-order-service/internal/client"
+	"github.com/icl00ud/velure/services/process-order-service/internal/model"
+	"github.com/icl00ud/velure/shared/logger"
 	"github.com/rabbitmq/amqp091-go"
-	"github.com/icl00ud/velure-shared/logger"
 )
 
 type stubChannel struct {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/shared/logger"
 	"github.com/rabbitmq/amqp091-go"
 )
 

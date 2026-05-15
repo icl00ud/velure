@@ -6,16 +6,16 @@ import (
 	"os"
 	"strings"
 
-	"product-service/internal/config"
-	"product-service/internal/handler"
-	"product-service/internal/middleware"
-	"product-service/internal/repository"
-	"product-service/internal/service"
+	"github.com/icl00ud/velure/services/product-service/internal/config"
+	"github.com/icl00ud/velure/services/product-service/internal/handler"
+	"github.com/icl00ud/velure/services/product-service/internal/middleware"
+	"github.com/icl00ud/velure/services/product-service/internal/repository"
+	"github.com/icl00ud/velure/services/product-service/internal/service"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/shared/logger"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -59,7 +59,7 @@ var fatalf = func(v ...interface{}) {
 
 func main() {
 	log = logger.Init(logger.Config{
-		ServiceName: "product-service",
+		ServiceName: "github.com/icl00ud/velure/services/product-service",
 		Level:       os.Getenv("LOG_LEVEL"),
 		UseColor:    os.Getenv("LOG_COLOR") != "false",
 	})

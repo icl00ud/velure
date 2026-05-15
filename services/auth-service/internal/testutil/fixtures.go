@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"velure-auth-service/internal/config"
-	"velure-auth-service/internal/model"
+	"github.com/icl00ud/velure/services/auth-service/internal/config"
+	"github.com/icl00ud/velure/services/auth-service/internal/model"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"

@@ -9,13 +9,13 @@ import (
 	"sync"
 	"time"
 
-	"velure-auth-service/internal/config"
-	"velure-auth-service/internal/metrics"
-	"velure-auth-service/internal/model"
-	"velure-auth-service/internal/repository"
+	"github.com/icl00ud/velure/services/auth-service/internal/config"
+	"github.com/icl00ud/velure/services/auth-service/internal/metrics"
+	"github.com/icl00ud/velure/services/auth-service/internal/model"
+	"github.com/icl00ud/velure/services/auth-service/internal/repository"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/shared/logger"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"

@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/icl00ud/process-order-service/internal/client"
-	"github.com/icl00ud/process-order-service/internal/model"
+	"github.com/icl00ud/velure/services/process-order-service/internal/client"
+	"github.com/icl00ud/velure/services/process-order-service/internal/model"
 )
 
 // Mock publisher for testing (thread-safe for parallel processing)

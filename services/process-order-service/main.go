@@ -11,12 +11,12 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/icl00ud/process-order-service/internal/client"
-	"github.com/icl00ud/process-order-service/internal/config"
-	"github.com/icl00ud/process-order-service/internal/handler"
-	"github.com/icl00ud/process-order-service/internal/queue"
-	"github.com/icl00ud/process-order-service/internal/service"
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/services/process-order-service/internal/client"
+	"github.com/icl00ud/velure/services/process-order-service/internal/config"
+	"github.com/icl00ud/velure/services/process-order-service/internal/handler"
+	"github.com/icl00ud/velure/services/process-order-service/internal/queue"
+	"github.com/icl00ud/velure/services/process-order-service/internal/service"
+	"github.com/icl00ud/velure/shared/logger"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )

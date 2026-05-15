@@ -8,7 +8,7 @@ COPY shared /shared
 
 COPY services/auth-service/go.mod services/auth-service/go.sum ./
 
-RUN go mod edit -replace github.com/icl00ud/velure-shared=/shared
+RUN go mod edit -replace github.com/icl00ud/velure/shared=/shared
 
 RUN go mod download
 
@@ -23,9 +23,6 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
 COPY --from=builder /app/main .
-
-COPY services/auth-service/wait-for-it.sh .
-RUN chmod +x wait-for-it.sh
 
 RUN addgroup -S app && adduser -S app -G app
 USER app

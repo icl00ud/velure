@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"velure-auth-service/internal/metrics"
+	"github.com/icl00ud/velure/services/auth-service/internal/metrics"
 )
 
 // PrometheusMiddleware tracks HTTP request metrics

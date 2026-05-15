@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/shared/logger"
 
-	"github.com/icl00ud/process-order-service/internal/metrics"
-	"github.com/icl00ud/process-order-service/internal/model"
-	"github.com/icl00ud/process-order-service/internal/queue"
-	"github.com/icl00ud/process-order-service/internal/service"
+	"github.com/icl00ud/velure/services/process-order-service/internal/metrics"
+	"github.com/icl00ud/velure/services/process-order-service/internal/model"
+	"github.com/icl00ud/velure/services/process-order-service/internal/queue"
+	"github.com/icl00ud/velure/services/process-order-service/internal/service"
 )
 
 type OrderConsumer struct {

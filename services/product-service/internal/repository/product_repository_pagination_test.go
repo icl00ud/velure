@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/integration/mtest"
 
-	"product-service/internal/model"
+	"github.com/icl00ud/velure/services/product-service/internal/model"
 )
 
 func TestGetAllProducts_CacheHit(t *testing.T) {

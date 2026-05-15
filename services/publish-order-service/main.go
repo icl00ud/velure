@@ -13,15 +13,15 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/icl00ud/publish-order-service/internal/config"
-	"github.com/icl00ud/publish-order-service/internal/consumer"
-	"github.com/icl00ud/publish-order-service/internal/database"
-	"github.com/icl00ud/publish-order-service/internal/handler"
-	"github.com/icl00ud/publish-order-service/internal/middleware"
-	"github.com/icl00ud/publish-order-service/internal/publisher"
-	"github.com/icl00ud/publish-order-service/internal/repository"
-	"github.com/icl00ud/publish-order-service/internal/service"
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/config"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/consumer"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/database"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/handler"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/middleware"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/publisher"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/repository"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/service"
+	"github.com/icl00ud/velure/shared/logger"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -111,7 +111,7 @@ func run(parentCtx context.Context, deps appDeps) error {
 
 	if dbRepo, ok := repo.(dbProvider); ok {
 		log.Info("Running migrations")
-		if err := deps.runMigrations(dbRepo.DB(), "./internal/migrations"); err != nil {
+		if err := deps.runMigrations(dbRepo.DB(), "./migrations"); err != nil {
 			return fmt.Errorf("migration error: %w", err)
 		}
 		log.Info("Migrations completed")

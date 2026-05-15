@@ -5,8 +5,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"product-service/internal/model"
-	"product-service/internal/service"
+	"github.com/icl00ud/velure/services/product-service/internal/model"
+	"github.com/icl00ud/velure/services/product-service/internal/service"
 )
 
 // stubProductService implements services.ProductService for handler error-path tests.

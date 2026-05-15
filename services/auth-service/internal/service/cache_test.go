@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"velure-auth-service/internal/model"
+	"github.com/icl00ud/velure/services/auth-service/internal/model"
 )
 
 func TestDistributedCache_SetGetAndExpire(t *testing.T) {

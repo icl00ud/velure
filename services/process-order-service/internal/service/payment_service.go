@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/icl00ud/process-order-service/internal/client"
-	"github.com/icl00ud/process-order-service/internal/metrics"
-	"github.com/icl00ud/process-order-service/internal/model"
-	"github.com/icl00ud/process-order-service/internal/queue"
+	"github.com/icl00ud/velure/services/process-order-service/internal/client"
+	"github.com/icl00ud/velure/services/process-order-service/internal/metrics"
+	"github.com/icl00ud/velure/services/process-order-service/internal/model"
+	"github.com/icl00ud/velure/services/process-order-service/internal/queue"
 )
 
 type PaymentService interface {

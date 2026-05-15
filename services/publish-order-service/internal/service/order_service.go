@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/icl00ud/publish-order-service/internal/model"
-	"github.com/icl00ud/publish-order-service/internal/repository"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/repository"
 )
 
 var ErrNoItems = errors.New("no items in the cart")

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/icl00ud/velure-shared/logger"
-	"product-service/internal/metrics"
-	"product-service/internal/model"
-	"product-service/internal/repository"
+	"github.com/icl00ud/velure/services/product-service/internal/metrics"
+	"github.com/icl00ud/velure/services/product-service/internal/model"
+	"github.com/icl00ud/velure/services/product-service/internal/repository"
+	"github.com/icl00ud/velure/shared/logger"
 )
 
 type ProductService interface {

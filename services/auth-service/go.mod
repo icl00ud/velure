@@ -1,4 +1,4 @@
-module velure-auth-service
+module github.com/icl00ud/velure/services/auth-service
 
 go 1.25.5
 
@@ -7,7 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
-	github.com/icl00ud/velure-shared v0.0.0
+	github.com/icl00ud/velure/shared v0.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.19.1
 	github.com/redis/go-redis/v9 v9.16.0
@@ -18,7 +18,7 @@ require (
 	gorm.io/gorm v1.30.0
 )
 
-replace github.com/icl00ud/velure-shared => ../../shared
+replace github.com/icl00ud/velure/shared => ../../shared
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect

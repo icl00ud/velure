@@ -6,7 +6,7 @@ COPY shared /shared
 
 COPY services/process-order-service/go.mod services/process-order-service/go.sum ./
 
-RUN go mod edit -replace github.com/icl00ud/velure-shared=/shared
+RUN go mod edit -replace github.com/icl00ud/velure/shared=/shared
 
 RUN go mod download
 

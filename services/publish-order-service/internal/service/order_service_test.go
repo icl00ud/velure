@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/icl00ud/publish-order-service/internal/model"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
 )
 
 // Mock repository for testing

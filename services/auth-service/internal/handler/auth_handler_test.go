@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"velure-auth-service/internal/mocks"
-	"velure-auth-service/internal/model"
+	"github.com/icl00ud/velure/services/auth-service/internal/mocks"
+	"github.com/icl00ud/velure/services/auth-service/internal/model"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/mock/gomock"

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"product-service/internal/model"
+	"github.com/icl00ud/velure/services/product-service/internal/model"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

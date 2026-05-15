@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"velure-auth-service/internal/metrics"
-	"velure-auth-service/internal/mocks"
-	"velure-auth-service/internal/model"
-	"velure-auth-service/internal/testutil"
+	"github.com/icl00ud/velure/services/auth-service/internal/metrics"
+	"github.com/icl00ud/velure/services/auth-service/internal/mocks"
+	"github.com/icl00ud/velure/services/auth-service/internal/model"
+	"github.com/icl00ud/velure/services/auth-service/internal/testutil"
 
 	miniredis "github.com/alicebob/miniredis/v2"
 	"github.com/go-redis/redismock/v9"

@@ -14,12 +14,12 @@ func TestNewPaginatedUsersResponse(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		users          []UserResponse
-		totalCount     int64
-		page           int
-		pageSize       int
-		expectedPages  int
+		name          string
+		users         []UserResponse
+		totalCount    int64
+		page          int
+		pageSize      int
+		expectedPages int
 	}{
 		{
 			name:          "3 users, page 1, pageSize 10",

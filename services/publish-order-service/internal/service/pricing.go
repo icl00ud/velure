@@ -1,6 +1,6 @@
 package service
 
-import "github.com/icl00ud/publish-order-service/internal/model"
+import "github.com/icl00ud/velure/services/publish-order-service/internal/model"
 
 type PricingCalculator interface {
 	Calculate(items []model.CartItem) float64

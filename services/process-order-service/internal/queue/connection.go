@@ -3,7 +3,7 @@ package queue
 import (
 	"fmt"
 
-	"github.com/icl00ud/velure-shared/logger"
+	"github.com/icl00ud/velure/shared/logger"
 )
 
 type RabbitMQConnection struct {

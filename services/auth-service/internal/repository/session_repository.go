@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"velure-auth-service/internal/model"
+	"github.com/icl00ud/velure/services/auth-service/internal/model"
 
 	"gorm.io/gorm"
 )
