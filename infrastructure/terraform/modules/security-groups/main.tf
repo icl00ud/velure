@@ -1,10 +1,10 @@
-# Security Group para EKS Nodes
+# Security Group for EKS nodes
 resource "aws_security_group" "eks_node" {
   name        = "${var.project_name}-${var.environment}-eks-node-sg"
   description = "Security group for EKS worker nodes"
   vpc_id      = var.vpc_id
 
-  # Permite comunicação entre nodes
+  # Allow node-to-node traffic
   ingress {
     description = "Allow nodes to communicate with each other"
     from_port   = 0
@@ -13,7 +13,7 @@ resource "aws_security_group" "eks_node" {
     self        = true
   }
 
-  # Permite comunicação do control plane com os nodes
+  # Allow control-plane-to-node traffic
   ingress {
     description = "Allow worker Kubelets and pods to receive communication from the cluster control plane"
     from_port   = 1025
@@ -22,7 +22,7 @@ resource "aws_security_group" "eks_node" {
     cidr_blocks = [var.vpc_cidr]
   }
 
-  # Permite HTTPS do control plane
+  # Allow HTTPS from the control plane
   ingress {
     description = "Allow pods running extension API servers to receive communication from cluster control plane"
     from_port   = 443

@@ -67,7 +67,7 @@ variable "eks_cluster_version" {
 variable "node_instance_type" {
   description = "EC2 instance type for EKS nodes (t3.micro for cost optimization)"
   type        = string
-  default     = "t3.small" # t3.micro não é suportado pelo EKS, t3.small é o mínimo
+  default     = "t3.small" # t3.micro is not supported by EKS; t3.small is the minimum
 }
 
 variable "node_desired_size" {

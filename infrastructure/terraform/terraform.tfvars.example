@@ -17,8 +17,8 @@ vpc_cidr           = "10.0.0.0/16"
 public_subnet_cidr = "10.0.1.0/24"
 private_subnet_cidr = "10.0.10.0/24"
 
-# Para criar uma segunda subnet privada na mesma AZ (requisito RDS)
-# Você pode adicionar mais subnets se quiser expandir futuramente
+# Used to create a second private subnet in the same AZ (RDS requirement).
+# Add more subnets here if you want to scale out later.
 private_subnet_secondary_cidr = "10.0.11.0/24"
 
 # ===========================
@@ -27,7 +27,7 @@ private_subnet_secondary_cidr = "10.0.11.0/24"
 eks_cluster_version = "1.29"
 
 # Node Group Configuration
-# ATENÇÃO: t3.small é o MÍNIMO para EKS, t3.micro não é suportado
+# NOTE: t3.small is the MINIMUM for EKS — t3.micro is not supported.
 node_instance_type = "t3.small"
 node_disk_size     = 20
 
@@ -36,11 +36,11 @@ node_min_size     = 1
 node_desired_size = 2
 node_max_size     = 2
 
-# Para economizar ainda mais, considere Spot Instances:
-# node_capacity_type = "SPOT"  # Economiza ~70%, mas pode ser interrompido
+# To save even more, consider Spot Instances:
+# node_capacity_type = "SPOT"  # ~70% cheaper, but can be reclaimed at any time
 
 # ===========================
-# RDS Configuration (Comum para Auth e Orders)
+# RDS Configuration (shared between Auth and Orders)
 # ===========================
 rds_instance_class    = "db.t4g.micro"  # Free Tier
 rds_allocated_storage = 20              # Free Tier: 20GB
@@ -52,80 +52,80 @@ rds_engine_version    = "17.4"          # PostgreSQL 17.4
 rds_auth_db_name   = "velure_auth"
 rds_auth_username  = "postgres"
 
-# 🔐 IMPORTANTE: Altere esta senha!
-# Use um gerenciador de senhas para gerar uma senha forte
-# Exemplo: openssl rand -base64 32
+# 🔐 IMPORTANT: change this password!
+# Use a password manager to generate a strong one.
+# Example: openssl rand -base64 32
 rds_auth_password = "CHANGE_ME_AUTH_PASSWORD_HERE"
 
 # ===========================
 # RDS Orders Service
-# (Compartilhado entre publish-order e process-order)
+# (shared between publish-order and process-order)
 # ===========================
 rds_orders_db_name   = "velure_orders"
 rds_orders_username  = "postgres"
 
-# 🔐 IMPORTANTE: Altere esta senha!
+# 🔐 IMPORTANT: change this password!
 rds_orders_password = "CHANGE_ME_ORDERS_PASSWORD_HERE"
 
 # ===========================
 # Amazon MQ (RabbitMQ) Configuration
 # ===========================
-amazonmq_instance_type  = "mq.t3.micro"      # Custo: ~$60-70/mês
-amazonmq_deployment_mode = "SINGLE_INSTANCE"  # Para produção: ACTIVE_STANDBY_MULTI_AZ
+amazonmq_instance_type   = "mq.t3.micro"      # Cost: ~$60-70/month
+amazonmq_deployment_mode = "SINGLE_INSTANCE"  # For production: ACTIVE_STANDBY_MULTI_AZ
 
 rabbitmq_admin_username = "admin"
 
-# 🔐 IMPORTANTE: Altere esta senha!
+# 🔐 IMPORTANT: change this password!
 rabbitmq_admin_password = "CHANGE_ME_RABBITMQ_PASSWORD_HERE"
 
 # ===========================
-# Tags Comuns
+# Common Tags
 # ===========================
-# Todas as tags serão aplicadas a todos os recursos
-# Útil para cost tracking e organização
+# All tags are applied to every resource.
+# Useful for cost tracking and organization.
 tags = {
   Project     = "velure"
   Environment = "production"
   ManagedBy   = "terraform"
-  Owner       = "seu-nome-aqui"
+  Owner       = "your-name-here"
   CostCenter  = "personal-project"
 }
 
 # ===========================
-# Observações Importantes
+# Notes
 # ===========================
 #
-# 1. CUSTOS:
-#    - EKS Cluster: $72/mês
-#    - 2x t3.small: ~$30/mês
-#    - 1x NAT Gateway: ~$32/mês + data transfer
-#    - RDS Free Tier: $0 (primeiro ano, 750h/mês)
-#    - Total: ~$140-150/mês
+# 1. COSTS:
+#    - EKS Cluster: $72/month
+#    - 2x t3.small: ~$30/month
+#    - 1x NAT Gateway: ~$32/month + data transfer
+#    - RDS Free Tier: $0 (first year, 750h/month)
+#    - Total: ~$140-150/month
 #
-# 2. FREE TIER RDS:
-#    - db.t4g.micro: 750h/mês (suficiente para 1 instância 24/7)
+# 2. RDS FREE TIER:
+#    - db.t4g.micro: 750h/month (enough for one instance 24/7)
 #    - 20GB storage
-#    - Se você tiver 2 instâncias, apenas uma estará no Free Tier
+#    - With two instances, only one will fall under the free tier.
 #
 # 3. SINGLE AZ:
-#    - Esta configuração usa apenas 1 Availability Zone
-#    - Não é recomendado para produção real
-#    - Economiza ~$64/mês em NAT Gateways
+#    - This setup uses only one Availability Zone.
+#    - Not recommended for real production.
+#    - Saves ~$64/month in NAT Gateways.
 #
-# 4. SEGURANÇA:
-#    - Nunca commite este arquivo com senhas reais
-#    - Use um gerenciador de senhas
-#    - Considere AWS Secrets Manager + External Secrets Operator
+# 4. SECURITY:
+#    - Never commit this file with real passwords.
+#    - Use a password manager.
+#    - Consider AWS Secrets Manager + External Secrets Operator.
 #
 # 5. MONGODB:
-#    - Você já tem MongoDB no Atlas
-#    - Não incluímos DocumentDB para economizar custos
+#    - We assume MongoDB is hosted on Atlas.
+#    - DocumentDB is not included, to keep costs down.
 #
 # 6. REDIS:
-#    - Será deployado IN-CLUSTER via Helm
-#    - Não usamos ElastiCache para economizar
+#    - Deployed in-cluster via Helm.
+#    - ElastiCache is not used, to keep costs down.
 #
 # 7. RABBITMQ:
-#    - Amazon MQ (RabbitMQ gerenciado): ~$60-70/mês (mq.t3.micro)
-#    - Mais confiável que RabbitMQ in-cluster
-#    - Não precisa de manutenção ou troubleshooting
+#    - Amazon MQ (managed RabbitMQ): ~$60-70/month (mq.t3.micro)
+#    - More reliable than RabbitMQ in-cluster.
+#    - No maintenance or troubleshooting required.

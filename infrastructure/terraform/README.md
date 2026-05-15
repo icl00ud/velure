@@ -1,13 +1,13 @@
 # Velure - Terraform Infrastructure
 
-Infraestrutura como código para deploy do Velure na AWS usando EKS.
+Infrastructure-as-Code for deploying Velure on AWS using EKS.
 
-## 📋 Pré-requisitos
+## 📋 Prerequisites
 
 ```bash
 # AWS CLI v2
 aws --version  # >= 2.0.0
-aws configure  # Configurar credenciais
+aws configure  # Configure credentials
 
 # Terraform
 terraform --version  # >= 1.6.0
@@ -19,96 +19,96 @@ kubectl version --client  # >= 1.28.0
 helm version  # >= 3.0.0
 ```
 
-## 💰 Estimativa de Custos
+## 💰 Cost Estimate
 
-**AVISO**: Este é um setup otimizado para projetos pessoais, mas ainda gera custos.
+**WARNING**: This is a setup tuned for personal projects, but it still incurs costs.
 
-| Recurso | Especificação | Custo Mensal (us-east-1) |
-|---------|--------------|--------------------------|
+| Resource | Specification | Monthly cost (us-east-1) |
+|----------|---------------|--------------------------|
 | EKS Cluster | 1 cluster | $72.00 |
 | EC2 Nodes | 2x t3.small (on-demand) | ~$30.00 |
 | NAT Gateway | 1x + data transfer | ~$32.00 + transfer |
-| RDS Auth | db.t4g.micro (Free Tier) | $0.00 (750h/mês) |
-| RDS Orders | db.t4g.micro (Free Tier) | $0.00 (750h/mês) |
+| RDS Auth | db.t4g.micro (Free Tier) | $0.00 (750h/month) |
+| RDS Orders | db.t4g.micro (Free Tier) | $0.00 (750h/month) |
 | EBS Volumes | 2x 20GB gp3 (nodes) | ~$3.20 |
 | VPC | 1 VPC + subnets | $0.00 |
-| CloudWatch Logs | ~5GB/mês | ~$2.50 |
-| **TOTAL** | | **~$140-150/mês** |
+| CloudWatch Logs | ~5GB/month | ~$2.50 |
+| **TOTAL** | | **~$140-150/month** |
 
-### ⚠️ Free Tier (primeiro ano AWS)
-- RDS: 750h/mês de db.t4g.micro (suficiente para 1 instância 24/7)
-- EBS: 30GB de armazenamento gp3
+### ⚠️ Free Tier (first AWS year)
+- RDS: 750h/month of db.t4g.micro (enough for one instance 24/7)
+- EBS: 30GB of gp3 storage
 
-### 💡 Dicas para Redução de Custos
-1. **Pare os nodes quando não estiver usando**: `kubectl scale deployment --all --replicas=0`
-2. **Delete a infra nos finais de semana**: `terraform destroy`
-3. **Use Spot Instances**: Trocar node_instance_type para spot (economia de ~70%)
-4. **Monitore custos**: AWS Cost Explorer + Budget Alerts
+### 💡 Cost Reduction Tips
+1. **Stop the nodes when not in use**: `kubectl scale deployment --all --replicas=0`
+2. **Tear the infra down on weekends**: `terraform destroy`
+3. **Use Spot Instances**: switch node_instance_type to spot (~70% savings)
+4. **Monitor costs**: AWS Cost Explorer + Budget Alerts
 
 ## 🚀 Deploy
 
-### 1. Clonar e Configurar
+### 1. Clone and Configure
 
 ```bash
 cd terraform/
 
-# Copiar exemplo de variáveis
+# Copy the variables example
 cp terraform.tfvars.example terraform.tfvars
 
-# Editar variáveis (principalmente senhas!)
+# Edit variables (especially passwords!)
 vim terraform.tfvars
 ```
 
-### 2. Inicializar Terraform
+### 2. Initialize Terraform
 
 ```bash
 terraform init
 ```
 
-### 3. Validar Configuração
+### 3. Validate Configuration
 
 ```bash
 terraform validate
 terraform fmt -recursive
 ```
 
-### 4. Revisar Plano
+### 4. Review the Plan
 
 ```bash
 terraform plan -out=tfplan
 
-# Revisar cuidadosamente:
-# - Recursos que serão criados
-# - Custos estimados
+# Review carefully:
+# - Resources that will be created
+# - Estimated costs
 # - Security groups
 ```
 
-### 5. Aplicar Infraestrutura
+### 5. Apply Infrastructure
 
 ```bash
 terraform apply tfplan
 
-# Aguardar ~15-20 minutos
-# EKS cluster demora para criar
+# Wait ~15-20 minutes
+# The EKS cluster takes a while to come up
 ```
 
-### 6. Configurar kubectl
+### 6. Configure kubectl
 
 ```bash
-# Obter comando para configurar kubectl
+# Get the command to configure kubectl
 terraform output -raw kubeconfig_command | bash
 
-# Testar conectividade
+# Test connectivity
 kubectl get nodes
 kubectl get pods -A
 ```
 
-## 🔧 Pós-Deploy
+## 🔧 Post-Deploy
 
-### 1. Instalar AWS Load Balancer Controller
+### 1. Install AWS Load Balancer Controller
 
 ```bash
-# Criar ServiceAccount com IRSA
+# Create the ServiceAccount with IRSA
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: ServiceAccount
@@ -119,7 +119,7 @@ metadata:
     eks.amazonaws.com/role-arn: $(terraform output -raw alb_controller_role_arn)
 EOF
 
-# Instalar via Helm
+# Install via Helm
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update
 
@@ -129,11 +129,11 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   --set serviceAccount.create=false \
   --set serviceAccount.name=aws-load-balancer-controller
 
-# Verificar
+# Verify
 kubectl get deployment -n kube-system aws-load-balancer-controller
 ```
 
-### 2. Instalar Redis (In-Cluster)
+### 2. Install Redis (In-Cluster)
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -147,12 +147,12 @@ helm install redis bitnami/redis \
   --set master.resources.limits.memory=512Mi \
   --set master.resources.limits.cpu=200m
 
-# Obter senha
+# Get the password
 export REDIS_PASSWORD=$(kubectl get secret redis -o jsonpath="{.data.redis-password}" | base64 -d)
 echo "Redis Password: $REDIS_PASSWORD"
 ```
 
-### 3. Instalar RabbitMQ (In-Cluster)
+### 3. Install RabbitMQ (In-Cluster)
 
 ```bash
 helm install rabbitmq bitnami/rabbitmq \
@@ -164,12 +164,12 @@ helm install rabbitmq bitnami/rabbitmq \
   --set resources.limits.memory=512Mi \
   --set resources.limits.cpu=200m
 
-# Obter senha
+# Get the password
 export RABBITMQ_PASSWORD=$(kubectl get secret rabbitmq -o jsonpath="{.data.rabbitmq-password}" | base64 -d)
 echo "RabbitMQ Password: $RABBITMQ_PASSWORD"
 ```
 
-### 4. Configurar Secrets das Aplicações
+### 4. Configure Application Secrets
 
 ```bash
 # RDS Auth Service
@@ -189,15 +189,15 @@ kubectl create secret generic orders-db-secret \
   --from-literal=database=velure_orders
 ```
 
-## 📊 Monitoramento
+## 📊 Monitoring
 
 ### CloudWatch Logs
 
 ```bash
-# Verificar logs do EKS
+# Check EKS logs
 aws logs tail /aws/eks/velure-cluster/cluster --follow
 
-# Verificar logs do RDS
+# Check RDS logs
 aws logs tail /aws/rds/instance/velure-auth-db/postgresql --follow
 ```
 
@@ -216,58 +216,58 @@ kubectl get events -A --sort-by='.lastTimestamp'
 
 ## 🛠️ Troubleshooting
 
-### Nodes não conectam ao cluster
+### Nodes do not join the cluster
 
 ```bash
-# Verificar security groups
+# Check security groups
 aws ec2 describe-security-groups \
   --group-ids $(terraform output -raw eks_node_security_group_id)
 
-# Verificar logs do node
+# Check the node console output
 aws ec2 get-console-output --instance-id <instance-id>
 ```
 
-### RDS inacessível
+### RDS is unreachable
 
 ```bash
-# Testar conectividade de um pod
+# Test connectivity from a pod
 kubectl run -it --rm debug --image=postgres:16-alpine --restart=Never -- \
   psql -h $(terraform output -raw rds_auth_address) -U postgres -d velure_auth
 
-# Verificar security group
+# Check the security group
 aws ec2 describe-security-groups \
   --group-ids $(terraform output -raw rds_security_group_id)
 ```
 
-### ALB não cria
+### ALB is not created
 
 ```bash
-# Verificar logs do controller
+# Check the controller logs
 kubectl logs -n kube-system deployment/aws-load-balancer-controller
 
-# Verificar IAM role
+# Check the IAM role
 aws iam get-role --role-name $(terraform output -raw alb_controller_role_name)
 ```
 
-## 🗑️ Destruir Infraestrutura
+## 🗑️ Destroy Infrastructure
 
 ```bash
-# AVISO: Isso deletará TUDO, incluindo dados do RDS!
+# WARNING: This will delete EVERYTHING, including RDS data!
 
-# 1. Deletar LoadBalancers criados pelo controller
+# 1. Delete LoadBalancers created by the controller
 kubectl delete ingress --all -A
 kubectl delete service --field-selector spec.type=LoadBalancer -A
 
-# 2. Aguardar ALBs serem deletados (~2 minutos)
+# 2. Wait for the ALBs to be deleted (~2 minutes)
 aws elbv2 describe-load-balancers --query 'LoadBalancers[].LoadBalancerName'
 
-# 3. Destruir com Terraform
+# 3. Destroy with Terraform
 terraform destroy
 
-# Confirmar com "yes"
+# Confirm with "yes"
 ```
 
-## 📁 Estrutura
+## 📁 Structure
 
 ```
 terraform/
@@ -285,26 +285,26 @@ terraform/
 
 ## 🔐 Security Best Practices
 
-- ✅ IMDSv2 enforced nos nodes
-- ✅ Security groups com least privilege
-- ✅ RDS em private subnet
+- ✅ IMDSv2 enforced on nodes
+- ✅ Least-privilege security groups
+- ✅ RDS in private subnet
 - ✅ Encryption at rest (EBS + RDS)
-- ✅ CloudWatch logs habilitados
+- ✅ CloudWatch logs enabled
 - ✅ IRSA (IAM Roles for Service Accounts)
-- ✅ Secrets via Kubernetes Secrets (considere External Secrets Operator)
-- ✅ Network policies (a implementar)
+- ✅ Secrets via Kubernetes Secrets (consider External Secrets Operator)
+- ✅ Network policies (to implement)
 
-## 📚 Próximos Passos
+## 📚 Next Steps
 
-1. **External Secrets Operator**: Integrar com AWS Secrets Manager
-2. **Network Policies**: Isolar comunicação entre pods
-3. **Pod Security Standards**: Enforçar PSS restricted
-4. **Prometheus + Grafana**: Monitoramento avançado
-5. **ArgoCD**: GitOps para deployments
-6. **Cert-Manager**: TLS automático
-7. **Karpenter**: Autoscaling mais eficiente que Cluster Autoscaler
+1. **External Secrets Operator**: integrate with AWS Secrets Manager
+2. **Network Policies**: isolate pod-to-pod traffic
+3. **Pod Security Standards**: enforce PSS restricted
+4. **Prometheus + Grafana**: advanced monitoring
+5. **ArgoCD**: GitOps for deployments
+6. **Cert-Manager**: automatic TLS
+7. **Karpenter**: autoscaling more efficient than Cluster Autoscaler
 
-## 🔗 Referências
+## 🔗 References
 
 - [EKS Best Practices](https://aws.github.io/aws-eks-best-practices/)
 - [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)

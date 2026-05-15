@@ -1,6 +1,6 @@
-# DB Subnet Group (precisa de pelo menos 2 subnets em AZs diferentes)
-# Como estamos usando apenas 1 AZ, vamos criar uma segunda subnet na mesma AZ
-# Isso não é ideal para produção, mas economiza custos
+# DB Subnet Group (requires at least 2 subnets in different AZs)
+# Since we use a single AZ, we create a second subnet in the same AZ.
+# Not ideal for production, but it saves costs.
 
 resource "aws_db_subnet_group" "main" {
   name       = "${var.identifier}-subnet-group"
@@ -19,10 +19,10 @@ resource "aws_db_parameter_group" "main" {
   name   = "${var.identifier}-pg"
   family = "postgres17"
 
-  # Otimizações para free tier / low resource
+  # Optimizations for free tier / low-resource setups
   parameter {
     name         = "shared_buffers"
-    value        = "16384" # 128MB = 16384 blocks de 8KB
+    value        = "16384" # 128MB = 16384 blocks of 8KB
     apply_method = "pending-reboot"
   }
 

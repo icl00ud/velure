@@ -47,8 +47,8 @@ resource "aws_eks_cluster" "main" {
   vpc_config {
     subnet_ids              = concat(var.private_subnet_ids, var.public_subnet_ids)
     endpoint_private_access = true
-    endpoint_public_access  = true          # Necessário para acesso via kubectl
-    public_access_cidrs     = ["0.0.0.0/0"] # Restringir em produção
+    endpoint_public_access  = true          # Required for kubectl access
+    public_access_cidrs     = ["0.0.0.0/0"] # Restrict in production
   }
 
   enabled_cluster_log_types = []

@@ -6,10 +6,10 @@ provider "aws" {
   }
 }
 
-# Data source para obter account ID
+# Data source for account ID
 data "aws_caller_identity" "current" {}
 
-# Data source para obter partition (aws, aws-cn, aws-us-gov)
+# Data source for partition (aws, aws-cn, aws-us-gov)
 data "aws_partition" "current" {}
 
 # VPC Module
