@@ -13,6 +13,14 @@ services:
     volumes:
       - ../..:/workspace
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   product-service:
     build:
@@ -23,6 +31,14 @@ services:
     volumes:
       - ../..:/workspace
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   publish-order-service:
     build:
@@ -33,6 +49,14 @@ services:
     volumes:
       - ../..:/workspace
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   process-order-service:
     build:
@@ -43,6 +67,14 @@ services:
     volumes:
       - ../..:/workspace
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   # -------------------------
   # UI — Vite dev server (HMR)
@@ -63,6 +95,14 @@ services:
       VITE_ORDER_SERVICE_URL: /api/orders
       VITE_HMR_CLIENT_PORT: "80"
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
 volumes:
   # After adding/removing packages: rebuild image and recreate volume.
