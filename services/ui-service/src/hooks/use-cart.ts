@@ -23,16 +23,16 @@ export function useCart() {
   }, []);
 
   const addToCart = useCallback((product: any, quantity: number = 1) => {
-    // Validar produto antes de normalizar
+    // Validate the product before normalizing
     if (!product || (!product._id && !product.id)) {
-      console.error("Produto inválido:", product);
+      console.error("Invalid product:", product);
       return;
     }
 
-    // Normalizar o produto para garantir que tenha _id
+    // Normalize the product so it always has _id
     const normalizedProduct = {
       ...product,
-      _id: product._id || product.id, // Usar _id se existir, senão usar id
+      _id: product._id || product.id, // prefer _id; fall back to id
     };
 
     cartService.addToCart(normalizedProduct, quantity);

@@ -12,14 +12,14 @@ class CartService {
 
   subscribeToCart(callback: (cart: CartItem[]) => void): () => void {
     this.cartListeners.add(callback);
-    // Enviar estado atual imediatamente
+    // Send the current state immediately
     callback([...this.cart]);
-    // Retornar função de unsubscribe
+    // Return the unsubscribe function
     return () => this.cartListeners.delete(callback);
   }
 
   private notifyCartChange(): void {
-    // Criar uma cópia profunda para evitar problemas de referência
+    // Deep copy to avoid reference issues
     const cartCopy = this.cart.map((item) => ({
       ...item,
       product: { ...item.product },
@@ -30,16 +30,16 @@ class CartService {
   }
 
   addToCart(product: any, quantity: number = 1): void {
-    // Validar produto antes de normalizar
+    // Validate the product before normalizing
     if (!product || (!product._id && !product.id)) {
-      console.error("Produto inválido:", product);
+      console.error("Invalid product:", product);
       return;
     }
 
-    // Normalizar o produto para garantir que tenha _id
+    // Normalize the product so it always has _id
     const normalizedProduct = {
       ...product,
-      _id: product._id || product.id, // Usar _id se existir, senão usar id
+      _id: product._id || product.id, // prefer _id; fall back to id
     };
 
     const existingItemIndex = this.cart.findIndex(
@@ -53,7 +53,7 @@ class CartService {
       );
     } else {
       const newItem: CartItem = {
-        product: { ...normalizedProduct }, // Criar cópia do produto normalizado
+        product: { ...normalizedProduct }, // copy the normalized product
         quantity: Math.min(quantity, this.maxQuantity),
       };
       this.cart.push(newItem);
@@ -143,7 +143,7 @@ class CartService {
       const cartData = JSON.stringify(this.cart);
       localStorage.setItem(this.localStorageKey, cartData);
     } catch (error) {
-      console.error("Falha ao salvar no LocalStorage:", error);
+      console.error("Failed to save to LocalStorage:", error);
     }
   }
 
@@ -159,7 +159,7 @@ class CartService {
         this.cart = [];
       }
     } catch (error) {
-      console.error("Falha ao carregar do LocalStorage:", error);
+      console.error("Failed to load from LocalStorage:", error);
       this.cart = [];
     }
   }

@@ -17,7 +17,7 @@ const mockedService = vi.mocked(productService);
 
 const mockProduct = {
   _id: "1",
-  name: "Ração Premium",
+  name: "Premium Food",
   price: 99.9,
   rating: 4.5,
   quantity: 10,

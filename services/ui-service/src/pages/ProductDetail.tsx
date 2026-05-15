@@ -44,8 +44,8 @@ const ProductDetail = () => {
     if (!product) return;
     addToCart(product, quantity);
     toast({
-      title: "Adicionado ao carrinho!",
-      description: `${quantity} x ${product.name} adicionado ao seu carrinho.`,
+      title: "Added to cart!",
+      description: `${quantity} x ${product.name} added to your cart.`,
     });
   };
 
@@ -63,7 +63,7 @@ const ProductDetail = () => {
           <Header />
           <div className="flex flex-col items-center justify-center py-32">
             <Loader2 className="h-16 w-16 animate-spin text-[#52B788] mb-4" />
-            <span className="font-body text-lg text-[#2D6A4F]">Carregando produto...</span>
+            <span className="font-body text-lg text-[#2D6A4F]">Loading product...</span>
           </div>
         </div>
       </>
@@ -80,16 +80,16 @@ const ProductDetail = () => {
             <Card className="text-center py-20 rounded-3xl border border-slate-200 shadow-2xl">
               <CardContent>
                 <h3 className="font-display text-3xl font-bold text-[#1B4332] mb-4">
-                  Produto não encontrado
+                  Product not found
                 </h3>
                 <p className="font-body text-lg text-[#2D6A4F] mb-8">
-                  {error || "O produto que você está procurando não existe."}
+                  {error || "The product you're looking for doesn't exist."}
                 </p>
                 <Button
                   asChild
                   className="btn-primary-custom font-body px-10 py-4 rounded-full text-lg"
                 >
-                  <Link to="/products">Ver todos os produtos</Link>
+                  <Link to="/products">See all products</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -113,11 +113,11 @@ const ProductDetail = () => {
           <nav className={`mb-8 ${isVisible ? "page-enter active" : "page-enter"}`}>
             <div className="flex items-center space-x-2 text-sm font-body text-[#2D6A4F]">
               <Link to="/" className="hover:text-[#52B788] transition-colors">
-                Início
+                Home
               </Link>
               <span>/</span>
               <Link to="/products" className="hover:text-[#52B788] transition-colors">
-                Produtos
+                Products
               </Link>
               {product.category && (
                 <>
@@ -140,7 +140,7 @@ const ProductDetail = () => {
             className="inline-flex items-center font-body text-[#2D6A4F] hover:text-[#52B788] transition-colors mb-8 group"
           >
             <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Voltar para produtos
+            Back to products
           </Link>
 
           <div className="grid lg:grid-cols-2 gap-12 mb-16">
@@ -156,7 +156,7 @@ const ProductDetail = () => {
                 {!inStock && (
                   <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center">
                     <Badge className="bg-[#1B4332] text-white px-8 py-3 text-lg">
-                      Produto Esgotado
+                      Out of stock
                     </Badge>
                   </div>
                 )}
@@ -239,7 +239,7 @@ const ProductDetail = () => {
 
               <div className="flex items-baseline space-x-4 py-6 border-y border-slate-200">
                 <span className="font-display text-5xl font-bold text-[#52B788]">
-                  R$ {product.price.toFixed(2)}
+                  ${product.price.toFixed(2)}
                 </span>
               </div>
 
@@ -257,17 +257,17 @@ const ProductDetail = () => {
                 <span
                   className={`font-body font-semibold ${inStock ? "text-green-600" : "text-red-600"}`}
                 >
-                  {inStock ? `Em estoque (${product.quantity} disponíveis)` : "Produto esgotado"}
+                  {inStock ? `In stock (${product.quantity} available)` : "Out of stock"}
                 </span>
               </div>
 
               {cartQuantity > 0 && (
                 <div className="bg-gradient-to-r from-[#52B788]/10 to-[#95D5B2]/10 rounded-2xl p-5 flex items-center justify-between border-2 border-[#52B788]/20">
                   <span className="font-body font-bold text-[#52B788]">
-                    Você já tem {cartQuantity} unidade(s) no carrinho
+                    You already have {cartQuantity} unit(s) in the cart
                   </span>
                   <Button asChild variant="link" className="text-[#52B788] font-bold p-0 h-auto">
-                    <Link to="/cart">Ver carrinho →</Link>
+                    <Link to="/cart">View cart →</Link>
                   </Button>
                 </div>
               )}
@@ -275,7 +275,7 @@ const ProductDetail = () => {
               {/* Quantity & Actions */}
               <div className="space-y-5">
                 <div className="flex items-center space-x-4">
-                  <span className="font-body font-bold text-[#1B4332]">Quantidade:</span>
+                  <span className="font-body font-bold text-[#1B4332]">Quantity:</span>
                   <div className="flex items-center space-x-3 bg-slate-100 rounded-full p-1 border border-slate-200">
                     <Button
                       variant="ghost"
@@ -308,7 +308,7 @@ const ProductDetail = () => {
                     disabled={!inStock}
                   >
                     <ShoppingCart className="h-5 w-5 mr-2" />
-                    Adicionar ao carrinho
+                    Add to cart
                   </Button>
 
                   <Button
@@ -317,7 +317,7 @@ const ProductDetail = () => {
                     className="flex-1 font-body text-lg font-semibold rounded-full h-14 border border-[#1B4332] hover:bg-[#1B4332] hover:text-white"
                     disabled={!inStock}
                   >
-                    Comprar agora
+                    Buy now
                   </Button>
                 </div>
 
@@ -340,8 +340,8 @@ const ProductDetail = () => {
                     onClick={() => {
                       navigator.clipboard.writeText(window.location.href);
                       toast({
-                        title: "Link copiado!",
-                        description: "O link do produto foi copiado para a área de transferência.",
+                        title: "Link copied!",
+                        description: "The product link has been copied to your clipboard.",
                       });
                     }}
                     className="rounded-full h-12 w-12 border border-slate-200 hover:border-[#52B788] hover:text-[#52B788]"
@@ -356,26 +356,26 @@ const ProductDetail = () => {
                 {[
                   {
                     icon: Truck,
-                    title: "Frete grátis",
-                    description: "Em pedidos acima de R$ 100",
+                    title: "Free shipping",
+                    description: "On orders above $100",
                     color: "from-[#52B788] to-[#40916C]",
                   },
                   {
                     icon: RotateCcw,
-                    title: "Devolução em 30 dias",
-                    description: "Garantia de dinheiro de volta",
+                    title: "30-day returns",
+                    description: "Money-back guarantee",
                     color: "from-[#95D5B2] to-[#2D6A4F]",
                   },
                   {
                     icon: Shield,
-                    title: "Garantia de qualidade",
-                    description: "Produtos premium",
+                    title: "Quality guaranteed",
+                    description: "Premium products",
                     color: "from-[#A7C957] to-[#E5B520]",
                   },
                   {
                     icon: Award,
-                    title: "Aprovado por veterinários",
-                    description: "Confiável por profissionais",
+                    title: "Vet-approved",
+                    description: "Trusted by professionals",
                     color: "from-[#52B788] to-[#40916C]",
                   },
                 ].map((benefit) => {
@@ -412,24 +412,24 @@ const ProductDetail = () => {
                     value="description"
                     className="font-body font-semibold rounded-2xl data-[state=active]:bg-white data-[state=active]:text-[#52B788]"
                   >
-                    Descrição
+                    Description
                   </TabsTrigger>
                   <TabsTrigger
                     value="specifications"
                     className="font-body font-semibold rounded-2xl data-[state=active]:bg-white data-[state=active]:text-[#52B788]"
                   >
-                    Especificações
+                    Specifications
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="description" className="p-8">
                   <div className="space-y-4">
                     <h3 className="font-display text-3xl font-bold text-[#1B4332]">
-                      Descrição do Produto
+                      Product Description
                     </h3>
                     <div className="w-16 h-1 bg-[#52B788]" />
                     <p className="font-body text-lg text-[#2D6A4F] leading-relaxed">
-                      {product.description || "Nenhuma descrição disponível para este produto."}
+                      {product.description || "No description available for this product."}
                     </p>
                   </div>
                 </TabsContent>
@@ -438,7 +438,7 @@ const ProductDetail = () => {
                   <div className="space-y-6">
                     <div>
                       <h3 className="font-display text-3xl font-bold text-[#1B4332]">
-                        Especificações
+                        Specifications
                       </h3>
                       <div className="w-16 h-1 bg-[#52B788] mt-4" />
                     </div>
@@ -451,19 +451,19 @@ const ProductDetail = () => {
                       )}
                       {product.brand && (
                         <div className="flex justify-between py-4 border-b border-slate-200">
-                          <span className="font-body font-bold text-[#1B4332]">Marca:</span>
+                          <span className="font-body font-bold text-[#1B4332]">Brand:</span>
                           <span className="font-body text-[#2D6A4F]">{product.brand}</span>
                         </div>
                       )}
                       {product.category && (
                         <div className="flex justify-between py-4 border-b border-slate-200">
-                          <span className="font-body font-bold text-[#1B4332]">Categoria:</span>
+                          <span className="font-body font-bold text-[#1B4332]">Category:</span>
                           <span className="font-body text-[#2D6A4F]">{product.category}</span>
                         </div>
                       )}
                       {product.dimensions?.weight && (
                         <div className="flex justify-between py-4 border-b border-slate-200">
-                          <span className="font-body font-bold text-[#1B4332]">Peso:</span>
+                          <span className="font-body font-bold text-[#1B4332]">Weight:</span>
                           <span className="font-body text-[#2D6A4F]">
                             {product.dimensions.weight} kg
                           </span>
@@ -471,7 +471,7 @@ const ProductDetail = () => {
                       )}
                       {product.dimensions?.height && (
                         <div className="flex justify-between py-4 border-b border-slate-200">
-                          <span className="font-body font-bold text-[#1B4332]">Altura:</span>
+                          <span className="font-body font-bold text-[#1B4332]">Height:</span>
                           <span className="font-body text-[#2D6A4F]">
                             {product.dimensions.height} cm
                           </span>
@@ -479,7 +479,7 @@ const ProductDetail = () => {
                       )}
                       {product.dimensions?.width && (
                         <div className="flex justify-between py-4 border-b border-slate-200">
-                          <span className="font-body font-bold text-[#1B4332]">Largura:</span>
+                          <span className="font-body font-bold text-[#1B4332]">Width:</span>
                           <span className="font-body text-[#2D6A4F]">
                             {product.dimensions.width} cm
                           </span>
@@ -487,7 +487,7 @@ const ProductDetail = () => {
                       )}
                       {product.dimensions?.length && (
                         <div className="flex justify-between py-4 border-b border-slate-200">
-                          <span className="font-body font-bold text-[#1B4332]">Comprimento:</span>
+                          <span className="font-body font-bold text-[#1B4332]">Length:</span>
                           <span className="font-body text-[#2D6A4F]">
                             {product.dimensions.length} cm
                           </span>
@@ -496,7 +496,7 @@ const ProductDetail = () => {
                       {product.colors && product.colors.length > 0 && (
                         <div className="flex justify-between py-4 border-b border-slate-200">
                           <span className="font-body font-bold text-[#1B4332]">
-                            Cores disponíveis:
+                            Available colors:
                           </span>
                           <span className="font-body text-[#2D6A4F]">
                             {product.colors.join(", ")}

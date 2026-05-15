@@ -56,8 +56,8 @@ const OrderDetail = () => {
       setOrder(result);
     } catch (error) {
       toast({
-        title: "Erro ao carregar pedido",
-        description: error instanceof Error ? error.message : "Tente novamente mais tarde",
+        title: "Failed to load order",
+        description: error instanceof Error ? error.message : "Please try again later",
         variant: "destructive",
       });
     } finally {
@@ -87,14 +87,14 @@ const OrderDetail = () => {
         return (
           <Badge className={`${baseClasses} bg-amber-100 text-amber-700 border border-amber-200`}>
             <Clock className="h-4 w-4 mr-2" />
-            Aguardando
+            Pending
           </Badge>
         );
       case "PROCESSING":
         return (
           <Badge className={`${baseClasses} bg-blue-100 text-blue-700 border border-blue-200`}>
             <Truck className="h-4 w-4 mr-2" />
-            Processando
+            Processing
           </Badge>
         );
       case "COMPLETED":
@@ -103,13 +103,13 @@ const OrderDetail = () => {
             className={`${baseClasses} bg-emerald-100 text-emerald-700 border border-emerald-200`}
           >
             <CheckCircle className="h-4 w-4 mr-2" />
-            Concluído
+            Completed
           </Badge>
         );
       case "FAILED":
         return (
           <Badge className={`${baseClasses} bg-red-100 text-red-700 border border-red-200`}>
-            Falhou
+            Failed
           </Badge>
         );
       default:
@@ -144,7 +144,7 @@ const OrderDetail = () => {
           <main className="container mx-auto px-4 lg:px-8 py-16">
             <div className="flex flex-col justify-center items-center py-32">
               <Loader2 className="h-10 w-10 animate-spin text-slate-400" />
-              <p className="text-slate-500 mt-6">Carregando pedido...</p>
+              <p className="text-slate-500 mt-6">Loading order...</p>
             </div>
           </main>
         </div>
@@ -162,15 +162,15 @@ const OrderDetail = () => {
             <Card className="text-center py-16 rounded-2xl border border-slate-200">
               <CardContent>
                 <Package className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-800 mb-2">Pedido não encontrado</h3>
+                <h3 className="text-xl font-semibold text-slate-800 mb-2">Order not found</h3>
                 <p className="text-slate-500 mb-8">
-                  O pedido que você está procurando não existe ou foi removido.
+                  The order you're looking for doesn't exist or has been removed.
                 </p>
                 <Button
                   asChild
                   className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8"
                 >
-                  <Link to="/orders">Voltar para meus pedidos</Link>
+                  <Link to="/orders">Back to my orders</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -201,17 +201,17 @@ const OrderDetail = () => {
               className="inline-flex items-center text-sm text-slate-500 hover:text-slate-800 transition-colors mb-6 group"
             >
               <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-              Voltar para meus pedidos
+              Back to my orders
             </Link>
 
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 mb-1">
-                  Pedido #{getOrderId(order).slice(0, 8).toUpperCase()}
+                  Order #{getOrderId(order).slice(0, 8).toUpperCase()}
                 </h1>
                 <p className="text-slate-500">
-                  Realizado em{" "}
-                  {getOrderDate(order).toLocaleDateString("pt-BR", {
+                  Placed on{" "}
+                  {getOrderDate(order).toLocaleDateString("en-US", {
                     day: "2-digit",
                     month: "long",
                     year: "numeric",
@@ -230,7 +230,7 @@ const OrderDetail = () => {
               <Card className="card-hover border border-slate-200 rounded-2xl bg-white">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-lg font-semibold text-slate-900">
-                    Acompanhamento do Pedido
+                    Order Tracking
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -269,7 +269,7 @@ const OrderDetail = () => {
                               : "text-slate-400"
                           }`}
                         >
-                          Criado
+                          Created
                         </p>
                       </div>
 
@@ -295,7 +295,7 @@ const OrderDetail = () => {
                               : "text-slate-400"
                           }`}
                         >
-                          Processando
+                          Processing
                         </p>
                       </div>
 
@@ -321,7 +321,7 @@ const OrderDetail = () => {
                               : "text-slate-400"
                           }`}
                         >
-                          Concluído
+                          Completed
                         </p>
                       </div>
                     </div>
@@ -333,7 +333,7 @@ const OrderDetail = () => {
               <Card className="card-hover border border-slate-200 rounded-2xl bg-white">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-lg font-semibold text-slate-900">
-                    Itens do Pedido
+                    Order Items
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -344,19 +344,19 @@ const OrderDetail = () => {
                           <div>
                             <p className="font-medium text-slate-900">{item.name}</p>
                             <p className="text-sm text-slate-500 mt-0.5">
-                              {item.quantity} {item.quantity > 1 ? "unidades" : "unidade"} × R${" "}
+                              {item.quantity} {item.quantity > 1 ? "units" : "unit"} × ${" "}
                               {(item.price ?? 0).toFixed(2)}
                             </p>
                           </div>
                           <p className="font-semibold text-slate-900">
-                            R$ {((item.price ?? 0) * (item.quantity ?? 0)).toFixed(2)}
+                            ${((item.price ?? 0) * (item.quantity ?? 0)).toFixed(2)}
                           </p>
                         </div>
                         {index < (order.items?.length || 0) - 1 && (
                           <Separator className="bg-slate-100" />
                         )}
                       </div>
-                    )) || <p className="text-slate-500 text-center py-8">Nenhum item encontrado</p>}
+                    )) || <p className="text-slate-500 text-center py-8">No items found</p>}
                   </div>
                 </CardContent>
               </Card>
@@ -367,7 +367,7 @@ const OrderDetail = () => {
               <Card className="card-hover border border-slate-200 rounded-2xl bg-white sticky top-24">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-lg font-semibold text-slate-900">
-                    Resumo do Pedido
+                    Order Summary
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -375,27 +375,27 @@ const OrderDetail = () => {
                     <div className="flex justify-between py-2">
                       <span className="text-slate-500">Subtotal</span>
                       <span className="font-medium text-slate-900">
-                        R$ {(order.total ?? 0).toFixed(2)}
+                        ${(order.total ?? 0).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between py-2">
-                      <span className="text-slate-500">Entrega</span>
-                      <span className="font-medium text-emerald-600">Grátis</span>
+                      <span className="text-slate-500">Shipping</span>
+                      <span className="font-medium text-emerald-600">Free</span>
                     </div>
                     <Separator className="bg-slate-100" />
                     <div className="flex justify-between items-baseline pt-2">
                       <span className="font-semibold text-slate-900">Total</span>
                       <span className="text-2xl font-bold text-slate-900">
-                        R$ {(order.total ?? 0).toFixed(2)}
+                        ${(order.total ?? 0).toFixed(2)}
                       </span>
                     </div>
                   </div>
 
                   <div className="mt-8 pt-6 border-t border-slate-100">
                     <p className="text-sm text-slate-500 text-center">
-                      Precisa de ajuda?{" "}
+                      Need help?{" "}
                       <Link to="/contact" className="text-slate-900 font-medium hover:underline">
-                        Entre em contato
+                        Get in touch
                       </Link>
                     </p>
                   </div>

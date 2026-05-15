@@ -178,19 +178,19 @@ describe("ProductImageWithFallback", () => {
   });
 
   it("should detect product type from alt text and use appropriate icon", () => {
-    render(<ProductImageWithFallback images={[]} alt="Ração para gatos" />);
+    render(<ProductImageWithFallback images={[]} alt="Cat food" />);
 
     expect(screen.getByText("🐱")).toBeTruthy();
   });
 
   it("should detect bird products", () => {
-    render(<ProductImageWithFallback images={[]} alt="Gaiola para pássaro" />);
+    render(<ProductImageWithFallback images={[]} alt="Bird cage" />);
 
     expect(screen.getByText("🐦")).toBeTruthy();
   });
 
   it("should detect fish products", () => {
-    render(<ProductImageWithFallback images={[]} alt="Aquário para peixe" />);
+    render(<ProductImageWithFallback images={[]} alt="Fish aquarium" />);
 
     expect(screen.getByText("🐟")).toBeTruthy();
   });

@@ -1,8 +1,8 @@
 /**
- * Utilitários para URLs de imagem e fallbacks
+ * Utilities for image URLs and fallbacks
  */
 
-// Configuração das APIs de imagem
+// Image API configuration
 const IMAGE_CONFIG = {
   unsplash: {
     baseUrl: "https://images.unsplash.com",
@@ -20,22 +20,22 @@ const IMAGE_CONFIG = {
   },
 };
 
-// Mapeamento de categorias para ícones
+// Category → icon mapping
 const CATEGORY_ICONS = {
-  Alimentação: "🍽️",
-  Brinquedos: "🎾",
-  Acessórios: "🎀",
-  "Camas e Descanso": "🛏️",
-  Higiene: "🧼",
-  Transporte: "🧳",
-  Gaiolas: "🏠",
-  Aquários: "🐠",
-  Suplementos: "💊",
-  Roupas: "👕",
+  Food: "🍽️",
+  Toys: "🎾",
+  Accessories: "🎀",
+  "Beds & Rest": "🛏️",
+  Hygiene: "🧼",
+  Transport: "🧳",
+  Cages: "🏠",
+  Aquariums: "🐠",
+  Supplements: "💊",
+  Apparel: "👕",
   default: "🐕",
 };
 
-// Mapeamento de tipos de animal para ícones
+// Animal type → icon mapping
 const ANIMAL_ICONS = {
   dogs: "🐕",
   cats: "🐱",
@@ -47,37 +47,35 @@ const ANIMAL_ICONS = {
 };
 
 /**
- * Detecta o tipo de animal baseado no nome do produto
+ * Detects the animal type from the product name.
  */
 export function detectAnimalType(productName: string): keyof typeof ANIMAL_ICONS {
   const name = productName.toLowerCase();
 
   if (
-    name.includes("cão") ||
-    name.includes("cães") ||
     name.includes("dog") ||
-    name.includes("cachorro")
+    name.includes("puppy") ||
+    name.includes("canine")
   ) {
     return "dogs";
   }
-  if (name.includes("gato") || name.includes("cat") || name.includes("felino")) {
+  if (name.includes("cat") || name.includes("kitten") || name.includes("feline")) {
     return "cats";
   }
   if (
-    name.includes("pássaro") ||
     name.includes("bird") ||
-    name.includes("canário") ||
-    name.includes("papagaio")
+    name.includes("canary") ||
+    name.includes("parrot")
   ) {
     return "birds";
   }
-  if (name.includes("peixe") || name.includes("fish") || name.includes("aquário")) {
+  if (name.includes("fish") || name.includes("aquarium")) {
     return "fish";
   }
   if (name.includes("hamster")) {
     return "hamsters";
   }
-  if (name.includes("coelho") || name.includes("rabbit")) {
+  if (name.includes("rabbit") || name.includes("bunny")) {
     return "rabbits";
   }
 
@@ -85,21 +83,21 @@ export function detectAnimalType(productName: string): keyof typeof ANIMAL_ICONS
 }
 
 /**
- * Gera ícone apropriado baseado no produto
+ * Returns an icon for the given product.
  */
 export function getProductIcon(productName: string, category?: string): string {
-  // Primeiro tenta por categoria
+  // Try by category first
   if (category && CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS]) {
     return CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
   }
 
-  // Depois por tipo de animal
+  // Then by animal type
   const animalType = detectAnimalType(productName);
   return ANIMAL_ICONS[animalType];
 }
 
 /**
- * Gera URLs de fallback para imagens
+ * Generates fallback image URLs.
  */
 export function generateFallbackImages(
   productName: string,
@@ -110,7 +108,7 @@ export function generateFallbackImages(
   const _icon = getProductIcon(productName, category);
   const encodedText = encodeURIComponent(`${category || "Pet"} Product`);
 
-  // Adicionar diferentes variações de placeholder
+  // Different placeholder variants
   const colors = ["8B4513", "228B22", "4169E1", "FF6347", "9370DB"];
 
   for (let i = 0; i < Math.min(count, colors.length); i++) {
@@ -120,7 +118,7 @@ export function generateFallbackImages(
     );
   }
 
-  // Se precisar de mais imagens, usar Picsum com diferentes seeds
+  // If more images are needed, fall back to Picsum with different seeds
   while (fallbacks.length < count) {
     const seed = fallbacks.length + 1;
     fallbacks.push(`${IMAGE_CONFIG.picsum.baseUrl}/${IMAGE_CONFIG.picsum.size}?seed=${seed}`);
@@ -130,7 +128,7 @@ export function generateFallbackImages(
 }
 
 /**
- * Valida se uma URL de imagem é válida
+ * Returns whether an image URL is valid.
  */
 export function isValidImageUrl(url: string): boolean {
   if (!url || typeof url !== "string") return false;
@@ -149,14 +147,14 @@ export function isValidImageUrl(url: string): boolean {
 }
 
 /**
- * Filtra URLs de imagem válidas de um array
+ * Filters valid image URLs from an array.
  */
 export function filterValidImages(images: string[]): string[] {
   return images.filter(isValidImageUrl);
 }
 
 /**
- * Combina imagens originais com fallbacks
+ * Combines original images with fallbacks.
  */
 export function combineImagesWithFallbacks(
   originalImages: string[],
@@ -180,7 +178,7 @@ export function combineImagesWithFallbacks(
 }
 
 /**
- * Gera URL otimizada do Unsplash
+ * Generates an optimized Unsplash URL.
  */
 export function optimizeUnsplashUrl(
   url: string,
@@ -189,13 +187,13 @@ export function optimizeUnsplashUrl(
 ): string {
   if (!url.includes("unsplash.com")) return url;
 
-  // Remove parâmetros existentes e adiciona novos
+  // Strip existing parameters and add new ones
   const baseUrl = url.split("?")[0];
   return `${baseUrl}?${IMAGE_CONFIG.unsplash.defaultParams}&w=${width}&h=${height}`;
 }
 
 /**
- * Hook para gerenciar carregamento de imagens
+ * Hook to manage image loading.
  */
 export function useImageLoader() {
   const loadImage = (src: string): Promise<boolean> => {
@@ -222,7 +220,7 @@ export function useImageLoader() {
 }
 
 /**
- * Configuração de lazy loading para imagens
+ * Lazy loading configuration for images.
  */
 export const IMAGE_LAZY_CONFIG = {
   rootMargin: "50px",

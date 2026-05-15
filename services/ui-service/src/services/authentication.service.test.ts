@@ -63,7 +63,7 @@ describe("AuthenticationService", () => {
         status: 401,
       });
 
-      await expect(authenticationService.login(mockLoginUser)).rejects.toThrow("Erro no login");
+      await expect(authenticationService.login(mockLoginUser)).rejects.toThrow("Login failed");
     });
 
     it("should notify auth status listeners on successful login", async () => {
@@ -123,7 +123,7 @@ describe("AuthenticationService", () => {
       });
 
       await expect(authenticationService.logout(mockToken.refreshToken)).rejects.toThrow(
-        "Erro no logout"
+        "Logout failed"
       );
     });
 
@@ -189,7 +189,7 @@ describe("AuthenticationService", () => {
       });
 
       await expect(authenticationService.register(mockRegisterUser)).rejects.toThrow(
-        "Erro no registro"
+        "Registration failed"
       );
     });
 
@@ -323,7 +323,7 @@ describe("AuthenticationService", () => {
       });
 
       await expect(authenticationService.getUsersByPage(1, 10)).rejects.toThrow(
-        "Erro ao buscar usuários paginados"
+        "Failed to fetch paginated users"
       );
     });
   });

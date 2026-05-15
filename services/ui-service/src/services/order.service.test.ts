@@ -6,7 +6,7 @@ const token = { accessToken: "token-123" };
 
 const product: Product = {
   _id: "p1",
-  name: "Ração",
+  name: "Pet Food",
   price: 50,
   rating: 4.5,
   quantity: 10,
@@ -55,7 +55,7 @@ describe("orderService", () => {
       body: JSON.stringify([
         {
           product_id: "p1",
-          name: "Ração",
+          name: "Pet Food",
           quantity: 2,
           price: 50,
         },
@@ -65,7 +65,7 @@ describe("orderService", () => {
   });
 
   it("throws when creating an order without an auth token", async () => {
-    await expect(orderService.createOrder(cartItems)).rejects.toThrow("Usuário não autenticado");
+    await expect(orderService.createOrder(cartItems)).rejects.toThrow("User not authenticated");
   });
 
   it("fetches paginated user orders", async () => {
@@ -101,7 +101,7 @@ describe("orderService", () => {
       json: vi.fn(),
     } as any);
 
-    await expect(orderService.getUserOrderById("order-1")).rejects.toThrow("Erro ao buscar pedido");
+    await expect(orderService.getUserOrderById("order-1")).rejects.toThrow("Failed to fetch order");
     expect(fetch).toHaveBeenCalledWith("/api/me/orders/order-1", {
       headers: {
         Authorization: `Bearer ${token.accessToken}`,

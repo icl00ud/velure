@@ -7,13 +7,13 @@ import { useCategories } from "@/hooks/use-products";
 import { designSystemStyles } from "@/styles/design-system";
 
 const categoryConfig: Record<string, { name: string; icon: React.ReactNode; emoji: string }> = {
-  dogs: { name: "Cães", icon: <Dog className="h-8 w-8" />, emoji: "🐕" },
-  cats: { name: "Gatos", icon: <Cat className="h-8 w-8" />, emoji: "🐈" },
-  birds: { name: "Pássaros", icon: <Bird className="h-8 w-8" />, emoji: "🐦" },
-  fish: { name: "Peixes", icon: <Fish className="h-8 w-8" />, emoji: "🐟" },
-  "small-pets": { name: "Pets Pequenos", icon: <Rabbit className="h-8 w-8" />, emoji: "🐹" },
-  reptiles: { name: "Répteis", icon: null, emoji: "🦎" },
-  rabbits: { name: "Coelhos", icon: <Rabbit className="h-8 w-8" />, emoji: "🐰" },
+  dogs: { name: "Dogs", icon: <Dog className="h-8 w-8" />, emoji: "🐕" },
+  cats: { name: "Cats", icon: <Cat className="h-8 w-8" />, emoji: "🐈" },
+  birds: { name: "Birds", icon: <Bird className="h-8 w-8" />, emoji: "🐦" },
+  fish: { name: "Fish", icon: <Fish className="h-8 w-8" />, emoji: "🐟" },
+  "small-pets": { name: "Small Pets", icon: <Rabbit className="h-8 w-8" />, emoji: "🐹" },
+  reptiles: { name: "Reptiles", icon: null, emoji: "🦎" },
+  rabbits: { name: "Rabbits", icon: <Rabbit className="h-8 w-8" />, emoji: "🐰" },
 };
 
 const Index = () => {
@@ -71,15 +71,15 @@ const Index = () => {
                 </div>
 
                 <h1 className="font-display text-6xl lg:text-8xl font-bold text-[#1B4332] mb-6 leading-[0.95] text-shadow-warm">
-                  Tudo que seu
-                  <span className="block text-[#52B788] italic">pet precisa</span>
+                  Everything your
+                  <span className="block text-[#52B788] italic">pet needs</span>
                 </h1>
 
                 <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mb-8" />
 
                 <p className="font-body text-xl text-[#2D6A4F] mb-10 leading-relaxed max-w-lg">
-                  De ração premium a camas aconchegantes, brinquedos a cuidados de saúde. Cuidamos
-                  de cada detalhe para a felicidade dos seus companheiros.
+                  From premium food to cozy beds, toys to health care. We take care of every
+                  detail so your companions stay happy.
                 </p>
 
                 <div className="flex flex-wrap gap-4">
@@ -88,7 +88,7 @@ const Index = () => {
                       type="button"
                       className="btn-primary-custom font-body px-10 py-4 rounded-full text-white font-semibold text-lg"
                     >
-                      Explorar Produtos
+                      Browse Products
                     </button>
                   </Link>
                   <Link to="/contact">
@@ -96,7 +96,7 @@ const Index = () => {
                       type="button"
                       className="font-body px-10 py-4 rounded-full border-3 border-[#1B4332] text-[#1B4332] font-semibold text-lg hover:bg-[#1B4332] hover:text-white transition-all duration-300"
                     >
-                      Fale Conosco
+                      Contact Us
                     </button>
                   </Link>
                 </div>
@@ -108,7 +108,7 @@ const Index = () => {
                 style={{ animationDelay: "0.2s" }}
               >
                 <div className="relative h-full rounded-3xl overflow-hidden shadow-2xl transform lg:rotate-2">
-                  <img src={heroImage} alt="Pets felizes" className="w-full h-full object-cover" />
+                  <img src={heroImage} alt="Happy pets" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1B4332]/30 to-transparent" />
                 </div>
 
@@ -126,10 +126,10 @@ const Index = () => {
             {/* Section Header */}
             <div className="max-w-3xl mb-20 observe-animation">
               <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
-                Por Que Escolher Velure
+                Why choose Velure
               </span>
               <h2 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-6 leading-tight">
-                Parceiros no cuidado com pets
+                Partners in pet care
               </h2>
               <div className="w-16 h-1 bg-[#52B788]" />
             </div>
@@ -139,32 +139,32 @@ const Index = () => {
               {[
                 {
                   icon: Heart,
-                  title: "Qualidade Premium",
+                  title: "Premium Quality",
                   description:
-                    "Apenas os melhores produtos de marcas confiáveis para seus pets amados",
+                    "Only the best products from trusted brands for your beloved pets",
                   color: "#52B788",
                   delay: "0s",
                 },
                 {
                   icon: Shield,
-                  title: "Saúde Garantida",
+                  title: "Health Guaranteed",
                   description:
-                    "Todos os produtos são aprovados por veterinários e vêm com garantias",
+                    "Every product is vet-approved and comes with a guarantee",
                   color: "#95D5B2",
                   delay: "0.1s",
                 },
                 {
                   icon: Truck,
-                  title: "Entrega Rápida",
+                  title: "Fast Delivery",
                   description:
-                    "Frete grátis em pedidos acima de R$ 250. Entrega no mesmo dia disponível",
+                    "Free shipping on orders above $50. Same-day delivery available.",
                   color: "#A7C957",
                   delay: "0.2s",
                 },
                 {
                   icon: Users,
-                  title: "Suporte Especializado",
-                  description: "Nossos especialistas em cuidados com pets estão aqui para ajudá-lo",
+                  title: "Expert Support",
+                  description: "Our pet-care specialists are here to help you",
                   color: "#52B788",
                   delay: "0.3s",
                 },
@@ -212,13 +212,13 @@ const Index = () => {
             {/* Section Header */}
             <div className="text-center mb-20 observe-animation">
               <span className="font-body text-[#95D5B2] font-semibold text-sm tracking-widest uppercase mb-4 block">
-                Categorias
+                Categories
               </span>
               <h2 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-6">
-                Compre por pet
+                Shop by pet
               </h2>
               <p className="font-body text-xl text-[#2D6A4F] max-w-2xl mx-auto">
-                Encontre tudo que seu pet específico precisa
+                Find everything your specific pet needs
               </p>
             </div>
 
@@ -226,7 +226,7 @@ const Index = () => {
               <div className="flex justify-center items-center py-20">
                 <Loader2 className="h-12 w-12 animate-spin text-[#52B788]" />
                 <span className="ml-4 font-body text-[#2D6A4F] text-lg">
-                  Carregando categorias...
+                  Loading categories...
                 </span>
               </div>
             ) : (
@@ -287,18 +287,17 @@ const Index = () => {
             <div className="max-w-4xl mx-auto text-center observe-animation">
               <div className="inline-block mb-6 px-6 py-2 bg-white/10 backdrop-blur-sm rounded-full">
                 <span className="font-body text-white/90 text-sm font-medium tracking-wider uppercase">
-                  Junte-se a Nós
+                  Join Us
                 </span>
               </div>
 
               <h2 className="font-display text-5xl lg:text-7xl font-bold text-white mb-8 leading-tight text-shadow-warm">
-                Pronto para mimar
-                <span className="block text-[#A7C957] italic">seu pet?</span>
+                Ready to spoil
+                <span className="block text-[#A7C957] italic">your pet?</span>
               </h2>
 
               <p className="font-body text-xl text-white/80 mb-12 leading-relaxed max-w-2xl mx-auto">
-                Junte-se a milhares de tutores felizes que confiam em nós para a felicidade e saúde
-                de seus pets
+                Join thousands of happy owners who trust us with their pets' happiness and health.
               </p>
 
               <Link to="/products">
@@ -306,16 +305,16 @@ const Index = () => {
                   type="button"
                   className="font-body px-12 py-5 rounded-full bg-white text-[#1B4332] font-bold text-lg shadow-2xl hover:scale-105 hover:shadow-[#A7C957]/50 transition-all duration-300"
                 >
-                  Começar a Comprar
+                  Start Shopping
                 </button>
               </Link>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-8 mt-20 max-w-3xl mx-auto">
                 {[
-                  { number: "10k+", label: "Tutores Felizes" },
-                  { number: "500+", label: "Produtos" },
-                  { number: "98%", label: "Satisfação" },
+                  { number: "10k+", label: "Happy Owners" },
+                  { number: "500+", label: "Products" },
+                  { number: "98%", label: "Satisfaction" },
                 ].map((stat, index) => (
                   <div
                     key={stat.label}

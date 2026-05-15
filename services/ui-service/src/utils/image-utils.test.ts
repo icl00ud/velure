@@ -14,35 +14,35 @@ import {
 describe("image-utils", () => {
   describe("detectAnimalType", () => {
     it("should detect dog products", () => {
-      expect(detectAnimalType("Ração para cães")).toBe("dogs");
       expect(detectAnimalType("Dog food")).toBe("dogs");
-      expect(detectAnimalType("Brinquedo para cachorro")).toBe("dogs");
+      expect(detectAnimalType("Puppy toy")).toBe("dogs");
+      expect(detectAnimalType("Canine treats")).toBe("dogs");
     });
 
     it("should detect cat products", () => {
-      expect(detectAnimalType("Ração para gatos")).toBe("cats");
+      expect(detectAnimalType("Cat food")).toBe("cats");
       expect(detectAnimalType("Cat toy")).toBe("cats");
-      expect(detectAnimalType("Arranhador felino")).toBe("cats");
+      expect(detectAnimalType("Feline scratcher")).toBe("cats");
     });
 
     it("should detect bird products", () => {
-      expect(detectAnimalType("Gaiola para pássaro")).toBe("birds");
+      expect(detectAnimalType("Bird cage")).toBe("birds");
       expect(detectAnimalType("Bird food")).toBe("birds");
-      expect(detectAnimalType("Comida para canário")).toBe("birds");
+      expect(detectAnimalType("Canary feed")).toBe("birds");
     });
 
     it("should detect fish products", () => {
-      expect(detectAnimalType("Aquário para peixe")).toBe("fish");
+      expect(detectAnimalType("Aquarium kit")).toBe("fish");
       expect(detectAnimalType("Fish tank")).toBe("fish");
     });
 
     it("should detect hamster products", () => {
-      expect(detectAnimalType("Gaiola para hamster")).toBe("hamsters");
+      expect(detectAnimalType("Hamster cage")).toBe("hamsters");
     });
 
     it("should detect rabbit products", () => {
-      expect(detectAnimalType("Comida para coelho")).toBe("rabbits");
-      expect(detectAnimalType("Rabbit cage")).toBe("rabbits");
+      expect(detectAnimalType("Rabbit food")).toBe("rabbits");
+      expect(detectAnimalType("Bunny hutch")).toBe("rabbits");
     });
 
     it("should return default for unknown animals", () => {
@@ -52,12 +52,12 @@ describe("image-utils", () => {
 
   describe("getProductIcon", () => {
     it("should return icon for known category", () => {
-      expect(getProductIcon("Any product", "Alimentação")).toBe(CATEGORY_ICONS.Alimentação);
-      expect(getProductIcon("Any product", "Brinquedos")).toBe(CATEGORY_ICONS.Brinquedos);
+      expect(getProductIcon("Any product", "Food")).toBe(CATEGORY_ICONS.Food);
+      expect(getProductIcon("Any product", "Toys")).toBe(CATEGORY_ICONS.Toys);
     });
 
     it("should return icon based on animal type if category unknown", () => {
-      expect(getProductIcon("Ração para cães")).toBe(ANIMAL_ICONS.dogs);
+      expect(getProductIcon("Dog food")).toBe(ANIMAL_ICONS.dogs);
       expect(getProductIcon("Cat food")).toBe(ANIMAL_ICONS.cats);
     });
 
@@ -68,13 +68,13 @@ describe("image-utils", () => {
 
   describe("generateFallbackImages", () => {
     it("should generate the requested number of fallback images", () => {
-      const result = generateFallbackImages("Test Product", "Alimentação", 3);
+      const result = generateFallbackImages("Test Product", "Food", 3);
       expect(result).toHaveLength(3);
     });
 
     it("should include category in placeholder URLs", () => {
-      const result = generateFallbackImages("Test Product", "Brinquedos", 2);
-      expect(result[0]).toContain("Brinquedos");
+      const result = generateFallbackImages("Test Product", "Toys", 2);
+      expect(result[0]).toContain("Toys");
     });
 
     it("should default to Pet category if none provided", () => {

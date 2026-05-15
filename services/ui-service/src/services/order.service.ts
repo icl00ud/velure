@@ -22,7 +22,7 @@ class OrderService {
   async createOrder(cartItems: CartItem[]): Promise<CreateOrderResponse> {
     const tokenString = localStorage.getItem("token");
     if (!tokenString) {
-      throw new Error("Usuário não autenticado");
+      throw new Error("User not authenticated");
     }
 
     const token = JSON.parse(tokenString);
@@ -44,8 +44,8 @@ class OrderService {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: "Erro ao criar pedido" }));
-      throw new Error(error.error || "Erro ao criar pedido");
+      const error = await response.json().catch(() => ({ error: "Failed to create order" }));
+      throw new Error(error.error || "Failed to create order");
     }
 
     return response.json();
@@ -54,7 +54,7 @@ class OrderService {
   async getUserOrders(page: number = 1, pageSize: number = 10): Promise<any> {
     const tokenString = localStorage.getItem("token");
     if (!tokenString) {
-      throw new Error("Usuário não autenticado");
+      throw new Error("User not authenticated");
     }
 
     const token = JSON.parse(tokenString);
@@ -66,7 +66,7 @@ class OrderService {
     });
 
     if (!response.ok) {
-      throw new Error("Erro ao buscar pedidos do usuário");
+      throw new Error("Failed to fetch user orders");
     }
 
     return response.json();
@@ -75,7 +75,7 @@ class OrderService {
   async getUserOrderById(orderId: string): Promise<Order> {
     const tokenString = localStorage.getItem("token");
     if (!tokenString) {
-      throw new Error("Usuário não autenticado");
+      throw new Error("User not authenticated");
     }
 
     const token = JSON.parse(tokenString);
@@ -87,7 +87,7 @@ class OrderService {
     });
 
     if (!response.ok) {
-      throw new Error("Erro ao buscar pedido");
+      throw new Error("Failed to fetch order");
     }
 
     return response.json();
@@ -100,7 +100,7 @@ class OrderService {
   ): () => void {
     const tokenString = localStorage.getItem("token");
     if (!tokenString) {
-      throw new Error("Usuário não autenticado");
+      throw new Error("User not authenticated");
     }
 
     const token = JSON.parse(tokenString);
@@ -120,12 +120,12 @@ class OrderService {
         });
 
         if (!response.ok) {
-          throw new Error("Falha ao conectar ao stream de status");
+          throw new Error("Failed to connect to the status stream");
         }
 
         const reader = response.body?.getReader();
         if (!reader) {
-          throw new Error("Stream não suportado");
+          throw new Error("Stream not supported");
         }
 
         const decoder = new TextDecoder();

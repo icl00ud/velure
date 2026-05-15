@@ -20,8 +20,8 @@ interface ProductImageWithFallbackProps {
 }
 
 /**
- * Componente de imagem com fallback automático para produtos
- * Tenta múltiplas URLs antes de mostrar um fallback
+ * Image component with automatic fallback for products.
+ * Tries multiple URLs before showing a fallback icon.
  */
 const ProductImage: React.FC<ProductImageProps> = ({
   src,
@@ -87,7 +87,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
 };
 
 /**
- * Componente avançado que tenta múltiplas imagens antes do fallback
+ * Advanced component that tries multiple images before falling back.
  */
 const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
   images,
@@ -98,30 +98,29 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [allImagesFailed, setAllImagesFailed] = useState(false);
 
-  // Determinar o ícone baseado no tipo de produto
+  // Pick the icon based on the product name
   const getProductIcon = (productName: string): string => {
     const name = productName.toLowerCase();
 
     if (
-      name.includes("cão") ||
-      name.includes("cães") ||
       name.includes("dog") ||
-      name.includes("cachorro")
+      name.includes("puppy") ||
+      name.includes("canine")
     ) {
       return "🐕";
-    } else if (name.includes("gato") || name.includes("cat") || name.includes("felino")) {
+    } else if (name.includes("cat") || name.includes("kitten") || name.includes("feline")) {
       return "🐱";
-    } else if (name.includes("pássaro") || name.includes("bird") || name.includes("canário")) {
+    } else if (name.includes("bird") || name.includes("canary") || name.includes("parrot")) {
       return "🐦";
-    } else if (name.includes("peixe") || name.includes("fish") || name.includes("aquário")) {
+    } else if (name.includes("fish") || name.includes("aquarium")) {
       return "🐟";
     } else if (name.includes("hamster")) {
       return "🐹";
-    } else if (name.includes("coelho") || name.includes("rabbit")) {
+    } else if (name.includes("rabbit") || name.includes("bunny")) {
       return "🐰";
     }
 
-    return "🐕"; // Padrão para cães
+    return "🐕"; // default to dogs
   };
 
   const iconToUse = getProductIcon(alt) || fallbackIcon;
@@ -137,12 +136,12 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
   };
 
   const handleImageLoad = () => {
-    // Imagem carregou com sucesso, não fazer nada
+    // Image loaded successfully — nothing to do
   };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Reset state when the image list changes.
   useEffect(() => {
-    // Reset quando as imagens mudam
+    // Reset when the image list changes
     setCurrentImageIndex(0);
     setAllImagesFailed(false);
   }, [images]);
@@ -178,7 +177,7 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
 };
 
 /**
- * Hook para gerenciar carregamento de imagens com cache
+ * Hook that preloads and caches images.
  */
 const useImagePreloader = (images: string[]) => {
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
@@ -203,7 +202,7 @@ const useImagePreloader = (images: string[]) => {
       });
     };
 
-    // Precarregar todas as imagens
+    // Preload every image
     Promise.all(images.map(preloadImage));
   }, [images]);
 
@@ -216,7 +215,7 @@ const useImagePreloader = (images: string[]) => {
 };
 
 /**
- * Componente de galeria de imagens do produto
+ * Product image gallery component.
  */
 interface ProductImageGalleryProps {
   images: string[];
@@ -232,7 +231,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   const [selectedImage, setSelectedImage] = useState(0);
   const { hasFailed } = useImagePreloader(images);
 
-  // Filtrar imagens que falharam
+  // Filter out images that failed to load
   const validImages = images.filter((_, index) => !hasFailed(images[index]) && index < 3);
 
   if (validImages.length === 0) {
@@ -241,7 +240,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
 
   return (
     <div className={cn("space-y-2", className)}>
-      {/* Imagem principal */}
+      {/* Main image */}
       <div className="aspect-square">
         <ProductImageWithFallback
           images={[validImages[selectedImage]]}
@@ -266,7 +265,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
             >
               <ProductImageWithFallback
                 images={[image]}
-                alt={`${productName} - Imagem ${index + 1}`}
+                alt={`${productName} - Image ${index + 1}`}
                 className="w-full h-full"
               />
             </button>

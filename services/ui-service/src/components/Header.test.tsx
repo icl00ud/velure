@@ -89,9 +89,9 @@ describe("Header", () => {
         await user.click(categoryDropdown);
 
         await waitFor(() => {
-          expect(screen.getByText("Cães")).toBeTruthy();
-          expect(screen.getByText("Gatos")).toBeTruthy();
-          expect(screen.getByText("Pássaros")).toBeTruthy();
+          expect(screen.getByText("Dogs")).toBeTruthy();
+          expect(screen.getByText("Cats")).toBeTruthy();
+          expect(screen.getByText("Birds")).toBeTruthy();
         });
       }
     });
@@ -371,10 +371,10 @@ describe("Header", () => {
         await user.click(categoryDropdown);
 
         await waitFor(() => {
-          expect(screen.getByText("Cães")).toBeTruthy();
-          expect(screen.getByText("Gatos")).toBeTruthy();
-          expect(screen.getByText("Pets pequenos")).toBeTruthy();
-          expect(screen.getByText("Peixes")).toBeTruthy();
+          expect(screen.getByText("Dogs")).toBeTruthy();
+          expect(screen.getByText("Cats")).toBeTruthy();
+          expect(screen.getByText("Small Pets")).toBeTruthy();
+          expect(screen.getByText("Fish")).toBeTruthy();
         });
       }
     });

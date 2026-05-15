@@ -33,24 +33,24 @@ describe("Contact Page", () => {
     render(<Contact />);
 
     expect(screen.getByTestId("mock-header")).toBeTruthy();
-    expect(screen.getByText("Entre em contato")).toBeTruthy();
-    expect(screen.getByLabelText(/nome/i)).toBeTruthy();
-    expect(screen.getByLabelText(/e-mail/i)).toBeTruthy();
-    expect(screen.getByLabelText(/mensagem/i)).toBeTruthy();
-    expect(screen.getByRole("button", { name: /enviar mensagem/i })).toBeTruthy();
+    expect(screen.getByText("Get in touch")).toBeTruthy();
+    expect(screen.getByLabelText(/name/i)).toBeTruthy();
+    expect(screen.getByLabelText(/email/i)).toBeTruthy();
+    expect(screen.getByLabelText(/message/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /send message/i })).toBeTruthy();
   });
 
   it("should show validation errors for empty fields on submit", async () => {
     const user = userEvent.setup();
     render(<Contact />);
 
-    const submitButton = screen.getByRole("button", { name: /enviar mensagem/i });
+    const submitButton = screen.getByRole("button", { name: /send message/i });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText("Nome deve ter pelo menos 2 caracteres.")).toBeTruthy();
-      expect(screen.getByText("Por favor, insira um email válido.")).toBeTruthy();
-      expect(screen.getByText("A mensagem deve ter pelo menos 10 caracteres.")).toBeTruthy();
+      expect(screen.getByText("Name must be at least 2 characters.")).toBeTruthy();
+      expect(screen.getByText("Please enter a valid email.")).toBeTruthy();
+      expect(screen.getByText("Message must be at least 10 characters.")).toBeTruthy();
     });
   });
 
@@ -58,14 +58,14 @@ describe("Contact Page", () => {
     const user = userEvent.setup();
     render(<Contact />);
 
-    const emailInput = screen.getByLabelText(/e-mail/i);
+    const emailInput = screen.getByLabelText(/email/i);
     await user.type(emailInput, "invalid-email");
 
-    const submitButton = screen.getByRole("button", { name: /enviar mensagem/i });
+    const submitButton = screen.getByRole("button", { name: /send message/i });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText("Por favor, insira um email válido.")).toBeTruthy();
+      expect(screen.getByText("Please enter a valid email.")).toBeTruthy();
     });
   });
 
@@ -74,15 +74,15 @@ describe("Contact Page", () => {
     render(<Contact />);
 
     // Fill form with valid data
-    await user.type(screen.getByLabelText(/nome/i), "John Doe");
-    await user.type(screen.getByLabelText(/e-mail/i), "john@example.com");
-    await user.type(screen.getByLabelText(/mensagem/i), "This is a test message content.");
+    await user.type(screen.getByLabelText(/name/i), "John Doe");
+    await user.type(screen.getByLabelText(/email/i), "john@example.com");
+    await user.type(screen.getByLabelText(/message/i), "This is a test message content.");
 
-    const submitButton = screen.getByRole("button", { name: /enviar mensagem/i });
+    const submitButton = screen.getByRole("button", { name: /send message/i });
     await user.click(submitButton);
 
     await waitFor(() => {
-      const expectedSubject = encodeURIComponent("Novo contato via Site Velure");
+      const expectedSubject = encodeURIComponent("New contact from Velure site");
       expect(window.location.href).toContain(
         `mailto:israelschroederm@gmail.com?subject=${expectedSubject}`
       );
@@ -90,8 +90,8 @@ describe("Contact Page", () => {
     });
 
     expect(mockToast).toHaveBeenCalledWith({
-      title: "Mensagem preparada!",
-      description: "Seu cliente de email será aberto para enviar a mensagem.",
+      title: "Message ready!",
+      description: "Your email client will open to send the message.",
     });
   });
 });

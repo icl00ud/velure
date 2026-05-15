@@ -112,32 +112,32 @@ const ProductList = () => {
           <nav className={`mb-8 ${isVisible ? "page-enter active" : "page-enter"}`}>
             <div className="flex items-center space-x-2 text-sm font-body text-[#2D6A4F]">
               <Link to="/" className="hover:text-[#52B788] transition-colors">
-                Início
+                Home
               </Link>
               <span>/</span>
-              <span className="text-[#1B4332] font-semibold">Todos os produtos</span>
+              <span className="text-[#1B4332] font-semibold">All products</span>
             </div>
           </nav>
 
           {/* Header Section */}
           <div className={`mb-12 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
             <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
-              Catálogo Completo
+              Full catalog
             </span>
             <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-4">
-              Todos os produtos
+              All products
             </h1>
             <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mb-6" />
             <p className="font-body text-xl text-[#2D6A4F]">
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Carregando produtos...
+                  Loading products...
                 </span>
               ) : (
                 <>
-                  <span className="font-bold text-[#52B788]">{totalCount || 0}</span> produtos
-                  disponíveis para seu pet
+                  <span className="font-bold text-[#52B788]">{totalCount || 0}</span> products
+                  available for your pet
                 </>
               )}
             </p>
@@ -151,7 +151,7 @@ const ProductList = () => {
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
                   <Input
-                    placeholder="Buscar produtos..."
+                    placeholder="Search products..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-12 font-body border-slate-200 rounded-xl h-12 focus:border-[#52B788]"
@@ -161,13 +161,13 @@ const ProductList = () => {
                 {/* Category Filter */}
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                   <SelectTrigger className="font-body border-slate-200 rounded-xl h-12">
-                    <SelectValue placeholder="Todas as Categorias" />
+                    <SelectValue placeholder="All categories" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
-                    <SelectItem value="all">Todas as Categorias</SelectItem>
+                    <SelectItem value="all">All categories</SelectItem>
                     {loadingCategories ? (
                       <SelectItem value="loading" disabled>
-                        Carregando...
+                        Loading...
                       </SelectItem>
                     ) : (
                       categories.map((category) => (
@@ -182,13 +182,13 @@ const ProductList = () => {
                 {/* Sort By */}
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="font-body border-slate-200 rounded-xl h-12">
-                    <SelectValue placeholder="Ordenar por" />
+                    <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
-                    <SelectItem value="popularity">Popularidade</SelectItem>
-                    <SelectItem value="price-low">Preço: Menor ao Maior</SelectItem>
-                    <SelectItem value="price-high">Preço: Maior ao Menor</SelectItem>
-                    <SelectItem value="name">Nome</SelectItem>
+                    <SelectItem value="popularity">Popularity</SelectItem>
+                    <SelectItem value="price-low">Price: low to high</SelectItem>
+                    <SelectItem value="price-high">Price: high to low</SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -391,7 +391,7 @@ const ProductList = () => {
                 disabled={page === totalPages}
                 className="font-body border border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
-                Próximo →
+                Next →
               </Button>
             </div>
           )}

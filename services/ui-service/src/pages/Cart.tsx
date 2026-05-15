@@ -47,8 +47,8 @@ const Cart = () => {
   const handleRemoveItem = (productId: string, productName: string) => {
     removeFromCart(productId);
     toast({
-      title: "Item removido",
-      description: `${productName} foi removido do seu carrinho.`,
+      title: "Item removed",
+      description: `${productName} was removed from your cart.`,
     });
   };
 
@@ -58,21 +58,21 @@ const Cart = () => {
       const discount = totalPrice * 0.1;
       setAppliedDiscount(discount);
       toast({
-        title: "Cupom aplicado!",
-        description: `Você economizou R$ ${discount.toFixed(2)} com o código ${code}`,
+        title: "Coupon applied!",
+        description: `You saved $${discount.toFixed(2)} with code ${code}`,
       });
       setPromoCode("");
     } else if (code === "VELURE5") {
       setAppliedDiscount(5.0);
       toast({
-        title: "Cupom aplicado!",
-        description: "Você economizou R$ 5,00 com o código VELURE5",
+        title: "Coupon applied!",
+        description: "You saved $5.00 with code VELURE5",
       });
       setPromoCode("");
     } else {
       toast({
-        title: "Cupom inválido",
-        description: "O código promocional não é válido.",
+        title: "Invalid coupon",
+        description: "That promo code isn't valid.",
         variant: "destructive",
       });
     }
@@ -82,8 +82,8 @@ const Cart = () => {
     const tokenString = localStorage.getItem("token");
     if (!tokenString) {
       toast({
-        title: "Autenticação necessária",
-        description: "Você precisa estar logado para finalizar a compra",
+        title: "Authentication required",
+        description: "You need to be signed in to check out.",
         variant: "destructive",
       });
       navigate("/login");
@@ -95,16 +95,16 @@ const Cart = () => {
       const order = await orderService.createOrder(cartItems);
 
       toast({
-        title: "Pedido criado com sucesso!",
-        description: `Seu pedido #${order.order_id} foi criado. Total: R$ ${order.total.toFixed(2)}`,
+        title: "Order created!",
+        description: `Your order #${order.order_id} has been created. Total: $${order.total.toFixed(2)}`,
       });
 
       clearCart();
       navigate("/orders");
     } catch (error) {
       toast({
-        title: "Erro ao processar pedido",
-        description: error instanceof Error ? error.message : "Tente novamente mais tarde",
+        title: "Failed to process order",
+        description: error instanceof Error ? error.message : "Please try again later",
         variant: "destructive",
       });
     } finally {
@@ -130,15 +130,15 @@ const Cart = () => {
               className="inline-flex items-center font-body text-[#2D6A4F] hover:text-[#52B788] transition-colors mb-6 group"
             >
               <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-              Continuar comprando
+              Continue shopping
             </Link>
             <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-4">
-              Carrinho de compras
+              Shopping cart
             </h1>
             <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mb-6" />
             <p className="font-body text-xl text-[#2D6A4F]">
               <span className="font-bold text-[#52B788]">{cartItems.length}</span>{" "}
-              {cartItems.length === 1 ? "item" : "itens"} no seu carrinho
+              {cartItems.length === 1 ? "item" : "items"} in your cart
             </p>
           </div>
 
@@ -152,17 +152,16 @@ const Cart = () => {
                   </div>
                 </div>
                 <h3 className="font-display text-3xl font-bold text-[#1B4332] mb-4">
-                  Seu carrinho está vazio
+                  Your cart is empty
                 </h3>
                 <p className="font-body text-lg text-[#2D6A4F] mb-8 max-w-md mx-auto">
-                  Parece que você ainda não adicionou nenhum item ao seu carrinho. Explore nossos
-                  produtos!
+                  Looks like you haven't added anything yet. Browse our products!
                 </p>
                 <Button
                   asChild
                   className="btn-primary-custom font-body px-10 py-6 rounded-full text-lg"
                 >
-                  <Link to="/products">Começar a comprar</Link>
+                  <Link to="/products">Start shopping</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -197,12 +196,12 @@ const Cart = () => {
                                 {item.product.name}
                               </Link>
                               <p className="font-body text-sm text-[#2D6A4F] mt-1">
-                                {item.product.brand || "Marca"} •{" "}
-                                {item.product.category || "Categoria"}
+                                {item.product.brand || "Brand"} •{" "}
+                                {item.product.category || "Category"}
                               </p>
                               {item.product.quantity === 0 && (
                                 <p className="font-body text-sm text-red-600 font-semibold mt-2">
-                                  ⚠️ Sem estoque
+                                  ⚠️ Out of stock
                                 </p>
                               )}
                             </div>
@@ -242,10 +241,10 @@ const Cart = () => {
 
                             <div className="text-right">
                               <div className="font-display text-2xl font-bold text-[#52B788]">
-                                R$ {(item.product.price * item.quantity).toFixed(2)}
+                                ${(item.product.price * item.quantity).toFixed(2)}
                               </div>
                               <div className="font-body text-sm text-[#2D6A4F]">
-                                R$ {item.product.price.toFixed(2)} cada
+                                ${item.product.price.toFixed(2)} each
                               </div>
                             </div>
                           </div>
@@ -261,41 +260,41 @@ const Cart = () => {
                 <Card className="shadow-2xl border border-slate-200 rounded-3xl sticky top-24">
                   <CardContent className="p-8">
                     <h3 className="font-display text-2xl font-bold text-[#1B4332] mb-6">
-                      Resumo do pedido
+                      Order summary
                     </h3>
 
                     <div className="space-y-4 font-body">
                       <div className="flex justify-between text-[#2D6A4F]">
                         <span>Subtotal</span>
                         <span className="font-semibold text-[#1B4332]">
-                          R$ {subtotal.toFixed(2)}
+                          ${subtotal.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-[#2D6A4F]">
-                        <span>Frete</span>
+                        <span>Shipping</span>
                         <span className="font-semibold text-[#1B4332]">
                           {shipping === 0 ? (
-                            <span className="text-[#95D5B2] font-bold">Grátis</span>
+                            <span className="text-[#95D5B2] font-bold">Free</span>
                           ) : (
-                            `R$ ${shipping.toFixed(2)}`
+                            `$${shipping.toFixed(2)}`
                           )}
                         </span>
                       </div>
                       <div className="flex justify-between text-[#2D6A4F]">
-                        <span>Impostos</span>
-                        <span className="font-semibold text-[#1B4332]">R$ {tax.toFixed(2)}</span>
+                        <span>Tax</span>
+                        <span className="font-semibold text-[#1B4332]">${tax.toFixed(2)}</span>
                       </div>
                       {appliedDiscount > 0 && (
                         <div className="flex justify-between text-[#95D5B2] font-bold">
-                          <span>Desconto</span>
-                          <span>-R$ {appliedDiscount.toFixed(2)}</span>
+                          <span>Discount</span>
+                          <span>-${appliedDiscount.toFixed(2)}</span>
                         </div>
                       )}
                       <Separator className="bg-[#1B4332]/20" />
                       <div className="flex justify-between text-xl pt-2">
                         <span className="font-display font-bold text-[#1B4332]">Total</span>
                         <span className="font-display font-bold text-[#52B788]">
-                          R$ {total.toFixed(2)}
+                          ${total.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -303,7 +302,7 @@ const Cart = () => {
                     <div className="mt-8 space-y-4">
                       <div className="flex space-x-3">
                         <Input
-                          placeholder="Cupom de desconto"
+                          placeholder="Promo code"
                           value={promoCode}
                           onChange={(e) => setPromoCode(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && applyPromoCode()}
@@ -314,7 +313,7 @@ const Cart = () => {
                           onClick={applyPromoCode}
                           className="font-body border-slate-200 hover:bg-[#1B4332] hover:text-white rounded-xl px-6"
                         >
-                          Aplicar
+                          Apply
                         </Button>
                       </div>
 
@@ -326,10 +325,10 @@ const Cart = () => {
                         {isProcessing ? (
                           <>
                             <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                            Processando...
+                            Processing...
                           </>
                         ) : (
-                          "Finalizar compra"
+                          "Checkout"
                         )}
                       </Button>
                     </div>
@@ -340,7 +339,7 @@ const Cart = () => {
                 <Card className="shadow-lg border border-slate-200 rounded-3xl">
                   <CardContent className="p-6">
                     <h4 className="font-display text-xl font-bold text-[#1B4332] mb-6">
-                      Seus benefícios
+                      Your benefits
                     </h4>
 
                     <div className="space-y-4">
@@ -349,9 +348,9 @@ const Cart = () => {
                           <Truck className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <p className="font-body font-semibold text-[#1B4332]">Frete grátis</p>
+                          <p className="font-body font-semibold text-[#1B4332]">Free shipping</p>
                           <p className="font-body text-sm text-[#2D6A4F]">
-                            Em pedidos acima de R$ 100
+                            On orders above $100
                           </p>
                         </div>
                       </div>
@@ -362,10 +361,10 @@ const Cart = () => {
                         </div>
                         <div>
                           <p className="font-body font-semibold text-[#1B4332]">
-                            Devolução em 30 dias
+                            30-day returns
                           </p>
                           <p className="font-body text-sm text-[#2D6A4F]">
-                            Garantia de dinheiro de volta
+                            Money-back guarantee
                           </p>
                         </div>
                       </div>

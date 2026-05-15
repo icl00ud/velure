@@ -49,7 +49,7 @@ class AuthenticationService {
         this.setLastValidationTime(now);
       }
     } catch (error) {
-      console.error("Erro ao verificar status inicial de autenticação:", error);
+      console.error("Failed to check initial authentication status:", error);
       localStorage.removeItem("token");
       this.notifyAuthStatusChange(false);
       this.clearLastValidationTime();
@@ -80,17 +80,17 @@ class AuthenticationService {
       });
 
       if (!response.ok) {
-        throw new Error("Erro no login");
+        throw new Error("Login failed");
       }
 
       const loginResponse: ILoginResponse = await response.json();
       localStorage.setItem("token", JSON.stringify(loginResponse));
       this.setLastValidationTime(Date.now());
       this.notifyAuthStatusChange(true);
-      console.log("Login realizado com sucesso.");
+      console.log("Login successful.");
       return loginResponse;
     } catch (error) {
-      console.error("Erro no login", error);
+      console.error("Login error", error);
       throw error;
     }
   }
@@ -106,16 +106,16 @@ class AuthenticationService {
       });
 
       if (!response.ok) {
-        throw new Error("Erro no logout");
+        throw new Error("Logout failed");
       }
 
       localStorage.removeItem("token");
       this.clearLastValidationTime();
       this.notifyAuthStatusChange(false);
-      console.log("Logout realizado com sucesso.");
+      console.log("Logout successful.");
       return true;
     } catch (error) {
-      console.error("Erro no logout", error);
+      console.error("Logout error", error);
       throw error;
     }
   }
@@ -131,16 +131,16 @@ class AuthenticationService {
       });
 
       if (!response.ok) {
-        throw new Error("Erro no registro");
+        throw new Error("Registration failed");
       }
 
-      console.log("Registro realizado com sucesso.");
+      console.log("Registration successful.");
 
       await this.login({ email: user.email, password: user.password });
 
       return true;
     } catch (error) {
-      console.error("Erro no registro", error);
+      console.error("Registration error", error);
       throw error;
     }
   }
@@ -159,7 +159,7 @@ class AuthenticationService {
       }
       return isValid;
     } catch (error) {
-      console.error("Erro ao verificar autenticação:", error);
+      console.error("Failed to verify authentication:", error);
       localStorage.removeItem("token");
       return false;
     }
@@ -182,7 +182,7 @@ class AuthenticationService {
       const result = await response.json();
       return result.isValid;
     } catch (error) {
-      console.error("Erro na validação do token", error);
+      console.error("Token validation error", error);
       return false;
     }
   }
@@ -212,7 +212,7 @@ class AuthenticationService {
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error("Erro ao buscar usuários paginados");
+      throw new Error("Failed to fetch paginated users");
     }
 
     return response.json();

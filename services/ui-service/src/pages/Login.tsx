@@ -43,15 +43,15 @@ const Login = () => {
           password: formData.password,
         });
         toast({
-          title: "Bem-vindo de volta!",
-          description: "Você foi autenticado com sucesso.",
+          title: "Welcome back!",
+          description: "You're signed in.",
         });
         navigate(from, { replace: true });
       } else {
         if (formData.password !== formData.confirmPassword) {
           toast({
-            title: "Erro",
-            description: "As senhas não coincidem.",
+            title: "Error",
+            description: "Passwords do not match.",
             variant: "destructive",
           });
           return;
@@ -63,15 +63,15 @@ const Login = () => {
           password: formData.password,
         });
         toast({
-          title: "Conta criada!",
-          description: "Bem-vindo ao Velure!",
+          title: "Account created!",
+          description: "Welcome to Velure!",
         });
         navigate(from, { replace: true });
       }
     } catch (error) {
       toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Ocorreu um erro",
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     }
@@ -107,7 +107,7 @@ const Login = () => {
               </span>
             </Link>
             <p className="font-body text-lg text-[#2D6A4F]">
-              {isLogin ? "Bem-vindo de volta!" : "Junte-se à família Velure"}
+              {isLogin ? "Welcome back!" : "Join the Velure family"}
             </p>
           </div>
 
@@ -117,12 +117,12 @@ const Login = () => {
           >
             <CardHeader className="text-center pt-8">
               <CardTitle className="font-display text-4xl font-bold text-[#1B4332]">
-                {isLogin ? "Entrar" : "Criar conta"}
+                {isLogin ? "Sign in" : "Create account"}
               </CardTitle>
               <CardDescription className="font-body text-base text-[#2D6A4F] mt-3">
                 {isLogin
-                  ? "Digite suas credenciais para acessar sua conta"
-                  : "Cadastre-se para começar a comprar para seus pets"}
+                  ? "Enter your credentials to access your account"
+                  : "Sign up to start shopping for your pets"}
               </CardDescription>
             </CardHeader>
 
@@ -134,7 +134,7 @@ const Login = () => {
                       htmlFor={nameId}
                       className="font-body text-sm font-semibold text-[#1B4332]"
                     >
-                      Nome completo
+                      Full name
                     </label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
@@ -142,7 +142,7 @@ const Login = () => {
                         id={nameId}
                         name="name"
                         type="text"
-                        placeholder="Digite seu nome completo"
+                        placeholder="Enter your full name"
                         value={formData.name}
                         onChange={handleInputChange}
                         required={!isLogin}
@@ -165,7 +165,7 @@ const Login = () => {
                       id={emailId}
                       name="email"
                       type="email"
-                      placeholder="Digite seu e-mail"
+                      placeholder="Enter your email"
                       value={formData.email}
                       onChange={handleInputChange}
                       required
@@ -179,7 +179,7 @@ const Login = () => {
                     htmlFor={passwordId}
                     className="font-body text-sm font-semibold text-[#1B4332]"
                   >
-                    Senha
+                    Password
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
@@ -187,7 +187,7 @@ const Login = () => {
                       id={passwordId}
                       name="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Digite sua senha"
+                      placeholder="Enter your password"
                       value={formData.password}
                       onChange={handleInputChange}
                       required
@@ -215,7 +215,7 @@ const Login = () => {
                       htmlFor={confirmPasswordId}
                       className="font-body text-sm font-semibold text-[#1B4332]"
                     >
-                      Confirmar senha
+                      Confirm password
                     </label>
                     <div className="relative">
                       <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
@@ -223,7 +223,7 @@ const Login = () => {
                         id={confirmPasswordId}
                         name="confirmPassword"
                         type="password"
-                        placeholder="Confirme sua senha"
+                        placeholder="Confirm your password"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
                         required={!isLogin}
@@ -240,13 +240,13 @@ const Login = () => {
                         type="checkbox"
                         className="rounded border-2 border-[#1B4332]/20 text-[#52B788] focus:ring-[#52B788]"
                       />
-                      <span className="text-[#2D6A4F]">Lembrar-me</span>
+                      <span className="text-[#2D6A4F]">Remember me</span>
                     </label>
                     <Link
                       to="/forgot-password"
                       className="text-[#52B788] hover:text-[#40916C] font-semibold transition-colors"
                     >
-                      Esqueceu a senha?
+                      Forgot password?
                     </Link>
                   </div>
                 )}
@@ -316,13 +316,13 @@ const Login = () => {
 
           <div className="text-center mt-8 font-body">
             <p className="text-[#2D6A4F]">
-              {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}{" "}
+              {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
                 className="text-[#52B788] hover:text-[#40916C] font-bold transition-colors"
               >
-                {isLogin ? "Cadastre-se" : "Entre"}
+                {isLogin ? "Sign up" : "Sign in"}
               </button>
             </p>
           </div>
@@ -332,7 +332,7 @@ const Login = () => {
               to="/"
               className="inline-flex items-center font-body text-[#2D6A4F] hover:text-[#52B788] transition-colors font-semibold"
             >
-              ← Voltar ao início
+              ← Back home
             </Link>
           </div>
         </div>

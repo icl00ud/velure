@@ -68,15 +68,15 @@ const ProductCatalog = () => {
     );
   };
 
-  const handleAdicionarToCart = (product: any) => {
+  const handleAddToCart = (product: any) => {
     addToCart(product);
     toast({
-      title: "Adicionado ao carrinho!",
-      description: `${product.name} foi adicionado ao seu carrinho.`,
+      title: "Added to cart!",
+      description: `${product.name} was added to your cart.`,
     });
   };
 
-  const filteredProdutos = products.filter((product) => {
+  const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.brand || "").toLowerCase().includes(searchQuery.toLowerCase());
@@ -88,16 +88,16 @@ const ProductCatalog = () => {
   });
 
   const categoryNames: Record<string, string> = {
-    dogs: "Cães",
-    cats: "Gatos",
-    birds: "Pássaros",
-    fish: "Peixes",
-    "small-pets": "Pets pequenos",
-    reptiles: "Répteis",
-    rabbits: "Coelhos",
+    dogs: "Dogs",
+    cats: "Cats",
+    birds: "Birds",
+    fish: "Fish",
+    "small-pets": "Small Pets",
+    reptiles: "Reptiles",
+    rabbits: "Rabbits",
   };
 
-  const categoryName = category ? categoryNames[category] || category : "Todos os produtos";
+  const categoryName = category ? categoryNames[category] || category : "All products";
 
   return (
     <>
@@ -110,11 +110,11 @@ const ProductCatalog = () => {
           <nav className={`mb-8 ${isVisible ? "page-enter active" : "page-enter"}`}>
             <div className="flex items-center space-x-2 text-sm font-body text-[#2D6A4F]">
               <Link to="/" className="hover:text-[#52B788] transition-colors">
-                Início
+                Home
               </Link>
               <span>/</span>
               <Link to="/products" className="hover:text-[#52B788] transition-colors">
-                Produtos
+                Products
               </Link>
               {category && (
                 <>
@@ -128,22 +128,22 @@ const ProductCatalog = () => {
           {/* Header */}
           <div className={`mb-12 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
             <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
-              {category ? `Categoria: ${categoryName}` : "Catálogo Completo"}
+              {category ? `Category: ${categoryName}` : "Full catalog"}
             </span>
             <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-4">
-              {category ? `Produtos para ${categoryName}` : "Todos os produtos"}
+              {category ? `Products for ${categoryName}` : "All products"}
             </h1>
             <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mb-6" />
             <p className="font-body text-xl text-[#2D6A4F]">
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Carregando produtos...
+                  Loading products...
                 </span>
               ) : (
                 <>
-                  <span className="font-bold text-[#52B788]">{totalCount || 0}</span> produtos
-                  encontrados
+                  <span className="font-bold text-[#52B788]">{totalCount || 0}</span> products
+                  found
                 </>
               )}
             </p>
@@ -158,7 +158,7 @@ const ProductCatalog = () => {
                   <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#2D6A4F]" />
                     <Input
-                      placeholder="Buscar produtos..."
+                      placeholder="Search products..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-12 font-body border-2 border-[#1B4332]/10 rounded-xl focus:border-[#52B788] h-12"
@@ -172,9 +172,9 @@ const ProductCatalog = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
-                      <SelectItem value="all">Todos os produtos</SelectItem>
-                      <SelectItem value="on-sale">Em promoção</SelectItem>
-                      <SelectItem value="in-stock">Em estoque</SelectItem>
+                      <SelectItem value="all">All products</SelectItem>
+                      <SelectItem value="on-sale">On sale</SelectItem>
+                      <SelectItem value="in-stock">In stock</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -184,11 +184,11 @@ const ProductCatalog = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
-                      <SelectItem value="popularity">Mais Popular</SelectItem>
-                      <SelectItem value="price-low">Preço: Menor ao Maior</SelectItem>
-                      <SelectItem value="price-high">Preço: Maior ao Menor</SelectItem>
-                      <SelectItem value="rating">Melhor Avaliado</SelectItem>
-                      <SelectItem value="newest">Mais Recente</SelectItem>
+                      <SelectItem value="popularity">Most popular</SelectItem>
+                      <SelectItem value="price-low">Price: low to high</SelectItem>
+                      <SelectItem value="price-high">Price: high to low</SelectItem>
+                      <SelectItem value="rating">Top rated</SelectItem>
+                      <SelectItem value="newest">Newest</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -235,27 +235,27 @@ const ProductCatalog = () => {
             {loading ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20">
                 <Loader2 className="h-16 w-16 animate-spin text-[#52B788] mb-4" />
-                <p className="font-body text-[#2D6A4F] text-lg">Carregando produtos...</p>
+                <p className="font-body text-[#2D6A4F] text-lg">Loading products...</p>
               </div>
             ) : error ? (
               <div className="col-span-full">
                 <Card className="text-center py-16 rounded-2xl border-2 border-[#1B4332]/10">
                   <CardContent>
                     <h3 className="font-display text-2xl font-bold text-[#1B4332] mb-2">
-                      Erro ao carregar produtos
+                      Failed to load products
                     </h3>
                     <p className="font-body text-[#2D6A4F] mb-6">{error}</p>
                     <Button
                       onClick={() => window.location.reload()}
                       className="btn-primary-custom font-body px-8 py-3 rounded-full"
                     >
-                      Tentar novamente
+                      Try again
                     </Button>
                   </CardContent>
                 </Card>
               </div>
             ) : (
-              filteredProdutos.map((product, index) => (
+              filteredProducts.map((product, index) => (
                 <Card
                   key={product._id}
                   className="product-card observe-animation bg-white shadow-lg hover:shadow-2xl rounded-3xl overflow-hidden"
@@ -295,7 +295,7 @@ const ProductCatalog = () => {
                           {product.quantity === 0 && (
                             <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center">
                               <Badge className="bg-[#1B4332] text-white px-6 py-2 text-base">
-                                Sem Estoque
+                                Out of stock
                               </Badge>
                             </div>
                           )}
@@ -338,11 +338,11 @@ const ProductCatalog = () => {
                           <div className="space-y-3 pt-2">
                             <div className="flex items-baseline gap-2">
                               <span className="font-display text-3xl font-bold text-[#52B788]">
-                                R$ {product.price.toFixed(2)}
+                                ${product.price.toFixed(2)}
                               </span>
                               {product.price > 100 && (
                                 <span className="font-body text-sm text-[#2D6A4F] line-through">
-                                  R$ {(product.price * 1.15).toFixed(2)}
+                                  ${(product.price * 1.15).toFixed(2)}
                                 </span>
                               )}
                             </div>
@@ -350,13 +350,13 @@ const ProductCatalog = () => {
                               <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
                                 <span className="font-body text-xs font-semibold text-orange-600">
-                                  Apenas {product.quantity} em estoque
+                                  Only {product.quantity} left in stock
                                 </span>
                               </div>
                             )}
                             <Button
                               size="lg"
-                              onClick={() => handleAdicionarToCart(product)}
+                              onClick={() => handleAddToCart(product)}
                               disabled={product.quantity === 0}
                               className="w-full btn-primary-custom font-body rounded-full font-semibold"
                             >
@@ -364,9 +364,9 @@ const ProductCatalog = () => {
                               {(() => {
                                 const quantity = getItemQuantity(product._id);
                                 if (quantity > 0) {
-                                  return `No carrinho (${quantity})`;
+                                  return `In cart (${quantity})`;
                                 }
-                                return "Adicionar";
+                                return "Add to cart";
                               })()}
                             </Button>
                           </div>
@@ -426,31 +426,31 @@ const ProductCatalog = () => {
                               </span>
                             </div>
                             {product.quantity === 0 && (
-                              <Badge className="bg-[#1B4332] text-white">Sem estoque</Badge>
+                              <Badge className="bg-[#1B4332] text-white">Out of stock</Badge>
                             )}
                             {product.quantity < 10 && product.quantity > 0 && (
                               <Badge className="border-orange-500 text-orange-600">
-                                Estoque baixo
+                                Low stock
                               </Badge>
                             )}
                           </div>
 
                           <div className="flex items-center justify-between pt-4">
                             <div className="font-display text-3xl font-bold text-[#52B788]">
-                              R$ {product.price.toFixed(2)}
+                              ${product.price.toFixed(2)}
                             </div>
                             <Button
                               className="btn-primary-custom font-body rounded-full px-8"
-                              onClick={() => handleAdicionarToCart(product)}
+                              onClick={() => handleAddToCart(product)}
                               disabled={product.quantity === 0}
                             >
                               <ShoppingCart className="h-4 w-4 mr-2" />
                               {(() => {
                                 const quantity = getItemQuantity(product._id);
                                 if (quantity > 0) {
-                                  return `No carrinho (${quantity})`;
+                                  return `In cart (${quantity})`;
                                 }
-                                return "Adicionar ao carrinho";
+                                return "Add to cart";
                               })()}
                             </Button>
                           </div>
@@ -464,14 +464,14 @@ const ProductCatalog = () => {
           </div>
 
           {/* No Results */}
-          {filteredProdutos.length === 0 && !loading && (
+          {filteredProducts.length === 0 && !loading && (
             <Card className="text-center py-16 rounded-2xl border-2 border-[#1B4332]/10">
               <CardContent>
                 <h3 className="font-display text-3xl font-bold text-[#1B4332] mb-3">
-                  Nenhum produto encontrado
+                  No products found
                 </h3>
                 <p className="font-body text-[#2D6A4F] text-lg mb-8">
-                  Tente ajustar sua busca ou critérios de filtro
+                  Try adjusting your search or filter criteria
                 </p>
                 <Button
                   onClick={() => {
@@ -480,14 +480,14 @@ const ProductCatalog = () => {
                   }}
                   className="btn-primary-custom font-body px-8 py-3 rounded-full"
                 >
-                  Limpar filtros
+                  Clear filters
                 </Button>
               </CardContent>
             </Card>
           )}
 
           {/* Pagination */}
-          {totalPages > 1 && filteredProdutos.length > 0 && (
+          {totalPages > 1 && filteredProducts.length > 0 && (
             <div className="mt-16 flex justify-center items-center gap-3">
               <Button
                 variant="outline"
@@ -495,7 +495,7 @@ const ProductCatalog = () => {
                 disabled={page === 1}
                 className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
-                ← Anterior
+                ← Previous
               </Button>
               <div className="flex items-center gap-2">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -523,7 +523,7 @@ const ProductCatalog = () => {
                 disabled={page === totalPages}
                 className="font-body border-2 border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
-                Próximo →
+                Next →
               </Button>
             </div>
           )}

@@ -51,8 +51,8 @@ const Orders = () => {
     } catch (error) {
       setOrders([]);
       toast({
-        title: "Erro ao carregar pedidos",
-        description: error instanceof Error ? error.message : "Tente novamente mais tarde",
+        title: "Failed to load orders",
+        description: error instanceof Error ? error.message : "Please try again later",
         variant: "destructive",
       });
     } finally {
@@ -70,21 +70,21 @@ const Orders = () => {
         return (
           <Badge className="bg-yellow-100 text-yellow-700 border-2 border-yellow-300 font-body font-semibold px-4 py-1">
             <Clock className="h-4 w-4 mr-2" />
-            Criado
+            Created
           </Badge>
         );
       case "PROCESSING":
         return (
           <Badge className="bg-blue-100 text-blue-700 border-2 border-blue-300 font-body font-semibold px-4 py-1">
             <Package className="h-4 w-4 mr-2" />
-            Processando
+            Processing
           </Badge>
         );
       case "COMPLETED":
         return (
           <Badge className="bg-green-100 text-green-700 border-2 border-green-300 font-body font-semibold px-4 py-1">
             <CheckCircle className="h-4 w-4 mr-2" />
-            Concluído
+            Completed
           </Badge>
         );
       default:
@@ -108,19 +108,19 @@ const Orders = () => {
         <main className="container mx-auto px-4 lg:px-8 py-12">
           <div className={`mb-12 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
             <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
-              Minha Conta
+              My Account
             </span>
             <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-4">
-              Meus Pedidos
+              My Orders
             </h1>
             <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mb-6" />
-            <p className="font-body text-xl text-[#2D6A4F]">Acompanhe o status dos seus pedidos</p>
+            <p className="font-body text-xl text-[#2D6A4F]">Track the status of your orders</p>
           </div>
 
           {isLoading ? (
             <div className="flex flex-col justify-center items-center py-20">
               <Loader2 className="h-16 w-16 animate-spin text-[#52B788] mb-4" />
-              <p className="font-body text-lg text-[#2D6A4F]">Carregando pedidos...</p>
+              <p className="font-body text-lg text-[#2D6A4F]">Loading orders...</p>
             </div>
           ) : !orders || orders.length === 0 ? (
             <Card className="text-center py-20 rounded-3xl border border-slate-200 shadow-2xl">
@@ -132,16 +132,16 @@ const Orders = () => {
                   </div>
                 </div>
                 <h3 className="font-display text-3xl font-bold text-[#1B4332] mb-4">
-                  Nenhum pedido encontrado
+                  No orders found
                 </h3>
                 <p className="font-body text-lg text-[#2D6A4F] mb-8 max-w-md mx-auto">
-                  Você ainda não fez nenhum pedido. Que tal começar a comprar?
+                  You haven't placed any orders yet. How about a little shopping?
                 </p>
                 <Button
                   asChild
                   className="btn-primary-custom font-body px-10 py-6 rounded-full text-lg"
                 >
-                  <Link to="/products">Começar a comprar</Link>
+                  <Link to="/products">Start shopping</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -158,10 +158,10 @@ const Orders = () => {
                       <div className="flex justify-between items-start">
                         <div>
                           <CardTitle className="font-display text-2xl font-bold text-[#1B4332]">
-                            Pedido #{orderId.slice(0, 8)}
+                            Order #{orderId.slice(0, 8)}
                           </CardTitle>
                           <p className="font-body text-sm text-[#2D6A4F] mt-2">
-                            {getOrderDate(order).toLocaleDateString("pt-BR", {
+                            {getOrderDate(order).toLocaleDateString("en-US", {
                               day: "2-digit",
                               month: "long",
                               year: "numeric",
@@ -178,17 +178,17 @@ const Orders = () => {
                         <div className="flex justify-between items-center py-4 px-6 bg-slate-50 rounded-2xl">
                           <span className="font-body text-[#2D6A4F]">
                             {order.items?.length || 0}{" "}
-                            {(order.items?.length || 0) === 1 ? "item" : "itens"}
+                            {(order.items?.length || 0) === 1 ? "item" : "items"}
                           </span>
                           <span className="font-display text-2xl font-bold text-[#52B788]">
-                            R$ {(order.total || 0).toFixed(2)}
+                            ${(order.total || 0).toFixed(2)}
                           </span>
                         </div>
                         <Button
                           asChild
                           className="w-full btn-primary-custom font-body text-lg rounded-full h-14"
                         >
-                          <Link to={`/orders/${orderId}`}>Ver detalhes do pedido</Link>
+                          <Link to={`/orders/${orderId}`}>View order details</Link>
                         </Button>
                       </div>
                     </CardContent>
@@ -206,10 +206,10 @@ const Orders = () => {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 className="font-body border border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
-                ← Anterior
+                ← Previous
               </Button>
               <span className="font-body text-[#2D6A4F] px-4">
-                Página <span className="font-bold text-[#52B788]">{page}</span> de{" "}
+                Page <span className="font-bold text-[#52B788]">{page}</span> of{" "}
                 <span className="font-bold text-[#52B788]">{totalPages}</span>
               </span>
               <Button
@@ -218,7 +218,7 @@ const Orders = () => {
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 className="font-body border border-[#1B4332] hover:bg-[#1B4332] hover:text-white rounded-full px-6"
               >
-                Próxima →
+                Next →
               </Button>
             </div>
           )}

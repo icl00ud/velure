@@ -42,11 +42,11 @@ const NotFound = () => {
           {/* Content */}
           <div className="space-y-6">
             <h2 className="font-display text-4xl lg:text-5xl font-bold text-[#1B4332]">
-              Ops! Página não encontrada
+              Oops! Page not found
             </h2>
             <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mx-auto" />
             <p className="font-body text-xl text-[#2D6A4F] max-w-lg mx-auto">
-              Parece que você se perdeu! A página que você está procurando não existe ou foi movida.
+              Looks like you got lost! The page you're looking for doesn't exist or was moved.
             </p>
           </div>
 
@@ -55,7 +55,7 @@ const NotFound = () => {
             <Button asChild className="btn-primary-custom font-body text-lg rounded-full px-8 py-6">
               <Link to="/">
                 <Home className="h-5 w-5 mr-2" />
-                Voltar ao início
+                Back home
               </Link>
             </Button>
             <Button

@@ -51,13 +51,13 @@ const Header = () => {
 
   const formatCategoryName = (category: string): string => {
     const nameMap: Record<string, string> = {
-      dogs: "Cães",
-      cats: "Gatos",
-      birds: "Pássaros",
-      fish: "Peixes",
-      "small-pets": "Pets pequenos",
-      reptiles: "Répteis",
-      rabbits: "Coelhos",
+      dogs: "Dogs",
+      cats: "Cats",
+      birds: "Birds",
+      fish: "Fish",
+      "small-pets": "Small Pets",
+      reptiles: "Reptiles",
+      rabbits: "Rabbits",
     };
     return nameMap[category.toLowerCase()] || category;
   };

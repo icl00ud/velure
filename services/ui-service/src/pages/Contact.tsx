@@ -21,13 +21,13 @@ import { designSystemStyles } from "@/styles/design-system";
 
 const formSchema = z.object({
   name: z.string().min(2, {
-    message: "Nome deve ter pelo menos 2 caracteres.",
+    message: "Name must be at least 2 characters.",
   }),
   email: z.string().email({
-    message: "Por favor, insira um email válido.",
+    message: "Please enter a valid email.",
   }),
   message: z.string().min(10, {
-    message: "A mensagem deve ter pelo menos 10 caracteres.",
+    message: "Message must be at least 10 characters.",
   }),
 });
 
@@ -67,16 +67,16 @@ const Contact = () => {
   }, []);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const subject = encodeURIComponent("Novo contato via Site Velure");
+    const subject = encodeURIComponent("New contact from Velure site");
     const body = encodeURIComponent(
-      `Nome: ${values.name}\nEmail: ${values.email}\n\nMensagem:\n${values.message}`
+      `Name: ${values.name}\nEmail: ${values.email}\n\nMessage:\n${values.message}`
     );
 
     window.location.href = `mailto:israelschroederm@gmail.com?subject=${subject}&body=${body}`;
 
     toast({
-      title: "Mensagem preparada!",
-      description: "Seu cliente de email será aberto para enviar a mensagem.",
+      title: "Message ready!",
+      description: "Your email client will open to send the message.",
     });
 
     form.reset();
@@ -92,15 +92,14 @@ const Contact = () => {
           <div className="max-w-6xl mx-auto">
             <div className={`text-center mb-16 ${isVisible ? "hero-enter active" : "hero-enter"}`}>
               <span className="font-body text-[#52B788] font-semibold text-sm tracking-widest uppercase mb-4 block">
-                Fale Conosco
+                Contact us
               </span>
               <h1 className="font-display text-5xl lg:text-6xl font-bold text-[#1B4332] mb-6">
-                Entre em contato
+                Get in touch
               </h1>
               <div className="w-20 h-1 bg-gradient-to-r from-[#52B788] to-[#A7C957] mx-auto mb-6" />
               <p className="font-body text-xl text-[#2D6A4F] max-w-2xl mx-auto">
-                Tem dúvidas sobre nossos produtos ou precisa de ajuda com seu pet? Estamos aqui para
-                ajudar!
+                Have questions about our products or need help with your pet? We're here to help!
               </p>
             </div>
 
@@ -109,10 +108,10 @@ const Contact = () => {
               <Card className="shadow-2xl border-2 border-[#1B4332]/10 rounded-3xl observe-animation">
                 <CardHeader className="pt-8 px-8">
                   <CardTitle className="font-display text-3xl font-bold text-[#1B4332]">
-                    Envie-nos uma mensagem
+                    Send us a message
                   </CardTitle>
                   <CardDescription className="font-body text-base text-[#2D6A4F] mt-2">
-                    Preencha o formulário abaixo e retornaremos em breve.
+                    Fill out the form below and we'll get back to you soon.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-8 pb-8">
@@ -124,11 +123,11 @@ const Contact = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="font-body font-semibold text-[#1B4332]">
-                              Nome
+                              Name
                             </FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="Seu nome"
+                                placeholder="Your name"
                                 {...field}
                                 className="font-body border-2 border-[#1B4332]/10 rounded-xl h-12 focus:border-[#52B788]"
                               />
@@ -144,11 +143,11 @@ const Contact = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="font-body font-semibold text-[#1B4332]">
-                              E-mail
+                              Email
                             </FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="seu@email.com"
+                                placeholder="you@email.com"
                                 {...field}
                                 className="font-body border-2 border-[#1B4332]/10 rounded-xl h-12 focus:border-[#52B788]"
                               />
@@ -164,11 +163,11 @@ const Contact = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="font-body font-semibold text-[#1B4332]">
-                              Mensagem
+                              Message
                             </FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="Como podemos ajudar?"
+                                placeholder="How can we help?"
                                 className="resize-none font-body border-2 border-[#1B4332]/10 rounded-xl focus:border-[#52B788]"
                                 rows={5}
                                 {...field}
@@ -183,7 +182,7 @@ const Contact = () => {
                         type="submit"
                         className="w-full btn-primary-custom font-body text-lg font-semibold rounded-full h-14 mt-2"
                       >
-                        Enviar mensagem
+                        Send message
                       </Button>
                     </form>
                   </Form>
@@ -195,15 +194,15 @@ const Contact = () => {
                 {[
                   {
                     icon: MapPin,
-                    title: "Endereço",
-                    content: ["Rua dos Pets, 123", "São Paulo, SP 01234-567"],
+                    title: "Address",
+                    content: ["123 Pet Street", "San Francisco, CA 94105"],
                     color: "from-[#52B788] to-[#40916C]",
                     delay: "0s",
                   },
                   {
                     icon: Phone,
-                    title: "Telefone",
-                    content: ["(11) 1234-5678", "(11) 98765-4321"],
+                    title: "Phone",
+                    content: ["+1 (415) 555-1234", "+1 (415) 555-5678"],
                     color: "from-[#95D5B2] to-[#2D6A4F]",
                     delay: "0.1s",
                   },
@@ -216,11 +215,11 @@ const Contact = () => {
                   },
                   {
                     icon: Clock,
-                    title: "Horário",
+                    title: "Hours",
                     content: [
-                      "Segunda - Sexta: 9h - 20h",
-                      "Sábado: 9h - 18h",
-                      "Domingo: 10h - 17h",
+                      "Monday – Friday: 9am – 8pm",
+                      "Saturday: 9am – 6pm",
+                      "Sunday: 10am – 5pm",
                     ],
                     color: "from-[#52B788] to-[#40916C]",
                     delay: "0.3s",
