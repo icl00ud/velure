@@ -1,5 +1,5 @@
 import { CheckCircle, Clock, Loader2, Package } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
@@ -21,11 +21,7 @@ const Orders = () => {
     setIsVisible(true);
   }, []);
 
-  useEffect(() => {
-    loadOrders();
-  }, [page]);
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     setIsLoading(true);
     try {
       const result = await orderService.getUserOrders(page, pageSize);
@@ -62,7 +58,11 @@ const Orders = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -147,7 +147,7 @@ const Orders = () => {
             </Card>
           ) : (
             <div className="space-y-6">
-              {orders.map((order, index) => {
+              {orders.map((order, _index) => {
                 const orderId = getOrderId(order);
                 return (
                   <Card

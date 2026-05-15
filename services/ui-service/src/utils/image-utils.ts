@@ -107,7 +107,7 @@ export function generateFallbackImages(
   count: number = 3
 ): string[] {
   const fallbacks: string[] = [];
-  const icon = getProductIcon(productName, category);
+  const _icon = getProductIcon(productName, category);
   const encodedText = encodeURIComponent(`${category || "Pet"} Product`);
 
   // Adicionar diferentes variações de placeholder

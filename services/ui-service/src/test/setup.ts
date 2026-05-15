@@ -2,6 +2,37 @@ import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
 import { afterEach, beforeEach, vi } from "vitest";
 
+function createMemoryStorage(): Storage {
+  let store: Record<string, string> = {};
+
+  return {
+    get length() {
+      return Object.keys(store).length;
+    },
+    clear: vi.fn(() => {
+      store = {};
+    }),
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    key: vi.fn((index: number) => Object.keys(store)[index] ?? null),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = String(value);
+    }),
+  };
+}
+
+Object.defineProperty(globalThis, "localStorage", {
+  configurable: true,
+  value: createMemoryStorage(),
+});
+
+Object.defineProperty(globalThis, "sessionStorage", {
+  configurable: true,
+  value: createMemoryStorage(),
+});
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();
@@ -26,7 +57,6 @@ Object.defineProperty(window, "matchMedia", {
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
   disconnect() {}
   observe() {}
   takeRecords() {

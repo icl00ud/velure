@@ -1,6 +1,5 @@
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { authenticationService } from "../services/authentication.service";
 import { cartService } from "../services/cart.service";
 import { productService } from "../services/product.service";
 import { render, screen, waitFor } from "../test/test-utils";

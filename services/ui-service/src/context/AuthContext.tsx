@@ -34,6 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthenticated = useMemo(() => token !== null, [token]);
 
+  const clearTokenStorage = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(VALIDATION_KEY);
+    setToken(null);
+  }, []);
+
   useEffect(() => {
     const loadToken = async () => {
       try {
@@ -69,13 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     loadToken();
-  }, []);
-
-  const clearTokenStorage = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(VALIDATION_KEY);
-    setToken(null);
-  }, []);
+  }, [clearTokenStorage]);
 
   const saveToken = useCallback((newToken: Token) => {
     localStorage.setItem(TOKEN_KEY, JSON.stringify(newToken));
@@ -112,16 +112,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async (): Promise<void> => {
-      setIsLoading(true);
-      try {
-        if (token?.refreshToken) {
-          await fetch(`${configService.authenticationServiceUrl}/sessions/current`, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refreshToken: token.refreshToken }),
-          });
-        }
-      } finally {
+    setIsLoading(true);
+    try {
+      if (token?.refreshToken) {
+        await fetch(`${configService.authenticationServiceUrl}/sessions/current`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken: token.refreshToken }),
+        });
+      }
+    } finally {
       clearTokenStorage();
       setIsLoading(false);
     }

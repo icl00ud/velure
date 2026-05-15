@@ -1,4 +1,4 @@
-import type { CartItem, Product } from "../types/product.types";
+import type { CartItem } from "../types/product.types";
 
 class CartService {
   private cart: CartItem[] = [];
@@ -24,7 +24,9 @@ class CartService {
       ...item,
       product: { ...item.product },
     }));
-    this.cartListeners.forEach((callback) => callback(cartCopy));
+    this.cartListeners.forEach((callback) => {
+      callback(cartCopy);
+    });
   }
 
   addToCart(product: any, quantity: number = 1): void {

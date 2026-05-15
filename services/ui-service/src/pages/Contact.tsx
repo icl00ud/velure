@@ -59,7 +59,9 @@ const Contact = () => {
     );
 
     const elements = document.querySelectorAll(".observe-animation");
-    elements.forEach((element) => observer.observe(element));
+    elements.forEach((element) => {
+      observer.observe(element);
+    });
 
     return () => observer.disconnect();
   }, []);
@@ -223,11 +225,11 @@ const Contact = () => {
                     color: "from-[#52B788] to-[#40916C]",
                     delay: "0.3s",
                   },
-                ].map((item, index) => {
+                ].map((item) => {
                   const Icon = item.icon;
                   return (
                     <Card
-                      key={index}
+                      key={item.title}
                       className="shadow-lg border-2 border-[#1B4332]/10 rounded-3xl card-hover-subtle observe-animation"
                       style={{ animationDelay: item.delay }}
                     >
@@ -243,8 +245,8 @@ const Contact = () => {
                               {item.title}
                             </h3>
                             <div className="font-body text-[#2D6A4F] space-y-1">
-                              {item.content.map((line, i) => (
-                                <p key={i}>{line}</p>
+                              {item.content.map((line) => (
+                                <p key={line}>{line}</p>
                               ))}
                             </div>
                           </div>

@@ -45,6 +45,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
     onLoad?.();
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset state when the image source changes.
   useEffect(() => {
     // Reset states when src changes
     setImageError(false);
@@ -54,6 +55,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
   if (imageError) {
     return (
       <div
+        role="img"
         className={cn(
           "bg-muted rounded-lg flex items-center justify-center text-4xl transition-colors",
           "hover:bg-muted/80",
@@ -92,7 +94,6 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
   alt,
   className,
   fallbackIcon = "🐕",
-  priority = false,
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [allImagesFailed, setAllImagesFailed] = useState(false);
@@ -139,6 +140,7 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
     // Imagem carregou com sucesso, não fazer nada
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset state when the image list changes.
   useEffect(() => {
     // Reset quando as imagens mudam
     setCurrentImageIndex(0);
@@ -148,6 +150,7 @@ const ProductImageWithFallback: React.FC<ProductImageWithFallbackProps> = ({
   if (!images || images.length === 0 || allImagesFailed) {
     return (
       <div
+        role="img"
         className={cn(
           "bg-muted rounded-lg flex items-center justify-center text-4xl transition-colors",
           "hover:bg-muted/80",
@@ -227,7 +230,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   className,
 }) => {
   const [selectedImage, setSelectedImage] = useState(0);
-  const { isLoaded, hasFailed } = useImagePreloader(images);
+  const { hasFailed } = useImagePreloader(images);
 
   // Filtrar imagens que falharam
   const validImages = images.filter((_, index) => !hasFailed(images[index]) && index < 3);
@@ -253,7 +256,8 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
         <div className="flex gap-2">
           {validImages.map((image, index) => (
             <button
-              key={index}
+              key={image}
+              type="button"
               onClick={() => setSelectedImage(index)}
               className={cn(
                 "w-16 h-16 border-2 rounded-lg overflow-hidden transition-colors",

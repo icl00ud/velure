@@ -1,13 +1,21 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { productService } from "../services/product.service";
 import type { Product } from "../types/product.types";
+
+type PaginatedProductsResponse = {
+  products: Product[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -18,11 +26,11 @@ export function useProducts() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   return {
     products,
@@ -37,7 +45,7 @@ export function useProduct(id: string) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
@@ -50,11 +58,11 @@ export function useProduct(id: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchProduct();
-  }, [id]);
+  }, [fetchProduct]);
 
   return {
     product,
@@ -71,11 +79,11 @@ export function useProductsPaginated(page: number = 1, pageSize: number = 10, ca
   const [totalCount, setTotalCount] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(0);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      let response;
+      let response: PaginatedProductsResponse;
       if (category) {
         response = await productService.getProductsByPageAndCategory(page, pageSize, category);
       } else {
@@ -89,11 +97,11 @@ export function useProductsPaginated(page: number = 1, pageSize: number = 10, ca
     } finally {
       setLoading(false);
     }
-  };
+  }, [category, page, pageSize]);
 
   useEffect(() => {
     fetchProducts();
-  }, [page, pageSize, category]);
+  }, [fetchProducts]);
 
   return {
     products,
@@ -110,7 +118,7 @@ export function useCategories() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -121,11 +129,11 @@ export function useCategories() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   return {
     categories,

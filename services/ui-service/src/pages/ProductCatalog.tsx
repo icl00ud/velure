@@ -54,10 +54,12 @@ const ProductCatalog = () => {
     );
 
     const elements = document.querySelectorAll(".observe-animation");
-    elements.forEach((element) => observer.observe(element));
+    elements.forEach((element) => {
+      observer.observe(element);
+    });
 
     return () => observer.disconnect();
-  }, [products]);
+  }, []);
 
   const toggleFavorite = (productId: string) => {
     const numId = parseInt(productId, 10);

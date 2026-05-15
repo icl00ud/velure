@@ -286,7 +286,7 @@ describe("CartService", () => {
       const storedCart = localStorage.getItem("velure_cart");
 
       expect(storedCart).toBeTruthy();
-      const parsed = JSON.parse(storedCart!);
+      const parsed = JSON.parse(storedCart ?? "[]");
       expect(parsed).toHaveLength(1);
       expect(parsed[0].product._id).toBe(mockProduct._id);
       expect(parsed[0].quantity).toBe(2);
@@ -296,7 +296,7 @@ describe("CartService", () => {
       cartService.addToCart(mockProduct, 1);
       cartService.updateQuantity(mockProduct._id, 5);
       const storedCart = localStorage.getItem("velure_cart");
-      const parsed = JSON.parse(storedCart!);
+      const parsed = JSON.parse(storedCart ?? "[]");
 
       expect(parsed[0].quantity).toBe(5);
     });
@@ -306,7 +306,7 @@ describe("CartService", () => {
       cartService.addToCart(mockProduct2, 1);
       cartService.removeFromCart(mockProduct._id);
       const storedCart = localStorage.getItem("velure_cart");
-      const parsed = JSON.parse(storedCart!);
+      const parsed = JSON.parse(storedCart ?? "[]");
 
       expect(parsed).toHaveLength(1);
       expect(parsed[0].product._id).toBe(mockProduct2._id);

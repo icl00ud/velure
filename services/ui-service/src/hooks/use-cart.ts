@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { cartService } from "../services/cart.service";
-import type { CartItem, Product } from "../types/product.types";
+import type { CartItem } from "../types/product.types";
 
 export function useCart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [itemsCount, setItemsCount] = useState<number>(0);
 
-  // Atualizar totais sempre que cartItems mudar
+  // Recalculate totals whenever cart items change.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Cart totals are derived from the cart service after cartItems changes.
   useEffect(() => {
     setTotalPrice(cartService.getTotalPrice());
     setItemsCount(cartService.getCartItemsCount());
@@ -51,21 +52,15 @@ export function useCart() {
     cartService.clearCart();
   }, []);
 
-  const isInCart = useCallback(
-    (productId: string): boolean => {
-      if (!productId) return false;
-      return cartService.isInCart(productId);
-    },
-    [cartItems]
-  );
+  const isInCart = useCallback((productId: string): boolean => {
+    if (!productId) return false;
+    return cartService.isInCart(productId);
+  }, []);
 
-  const getItemQuantity = useCallback(
-    (productId: string): number => {
-      if (!productId) return 0;
-      return cartService.getItemQuantity(productId);
-    },
-    [cartItems]
-  );
+  const getItemQuantity = useCallback((productId: string): number => {
+    if (!productId) return 0;
+    return cartService.getItemQuantity(productId);
+  }, []);
 
   return {
     cartItems,

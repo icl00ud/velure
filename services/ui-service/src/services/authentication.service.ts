@@ -56,11 +56,6 @@ class AuthenticationService {
     }
   }
 
-  private hasToken(): boolean {
-    const tokenString = localStorage.getItem("token");
-    return !!tokenString;
-  }
-
   subscribeToAuthStatus(callback: (status: boolean) => void): () => void {
     this.authStatusListeners.add(callback);
     const tokenString = localStorage.getItem("token");
@@ -69,7 +64,9 @@ class AuthenticationService {
   }
 
   private notifyAuthStatusChange(status: boolean): void {
-    this.authStatusListeners.forEach((callback) => callback(status));
+    this.authStatusListeners.forEach((callback) => {
+      callback(status);
+    });
   }
 
   async login(user: ILoginUser): Promise<ILoginResponse> {
@@ -196,7 +193,7 @@ class AuthenticationService {
 
     try {
       return JSON.parse(tokenString);
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }

@@ -1,5 +1,5 @@
 import { Heart, Loader2, Search, ShoppingCart, Star } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import { ProductImageWithFallback } from "@/components/ProductImage";
@@ -62,11 +62,13 @@ const ProductList = () => {
     if (!observerRef.current || loading) return;
 
     const elements = document.querySelectorAll(".observe-animation:not(.animate-in)");
-    elements.forEach((element) => observerRef.current?.observe(element));
-  }, [products, loading]);
+    elements.forEach((element) => {
+      observerRef.current?.observe(element);
+    });
+  }, [loading]);
 
   const toggleFavorite = (productId: string) => {
-    const numId = parseInt(productId);
+    const numId = parseInt(productId, 10);
     setFavorites((prev) =>
       prev.includes(numId) ? prev.filter((id) => id !== numId) : [...prev, numId]
     );
@@ -94,7 +96,6 @@ const ProductList = () => {
           return b.price - a.price;
         case "name":
           return a.name.localeCompare(b.name);
-        case "popularity":
         default:
           return 0;
       }
@@ -251,14 +252,14 @@ const ProductList = () => {
                           variant="ghost"
                           size="icon"
                           className={`absolute top-3 right-3 rounded-full bg-white/90 backdrop-blur-sm shadow-lg ${
-                            favorites.includes(parseInt(product._id))
+                            favorites.includes(parseInt(product._id, 10))
                               ? "text-red-500 hover:text-red-600"
                               : "text-[#2D6A4F] hover:text-red-500"
                           }`}
                           onClick={() => toggleFavorite(product._id)}
                         >
                           <Heart
-                            className={`h-5 w-5 ${favorites.includes(parseInt(product._id)) ? "fill-current" : ""}`}
+                            className={`h-5 w-5 ${favorites.includes(parseInt(product._id, 10)) ? "fill-current" : ""}`}
                           />
                         </Button>
                         {product.price > 100 && (

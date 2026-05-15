@@ -70,6 +70,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 
   return (
     <style
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: Recharts theme CSS is generated from controlled chart configuration.
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(

@@ -396,9 +396,9 @@ describe("useAuth", () => {
   it("should maintain function references across rerenders", () => {
     const { result, rerender } = renderHook(() => useAuth());
 
-    const initialLogin = result.current.login;
-    const initialLogout = result.current.logout;
-    const initialRegister = result.current.register;
+    const _initialLogin = result.current.login;
+    const _initialLogout = result.current.logout;
+    const _initialRegister = result.current.register;
 
     rerender();
 

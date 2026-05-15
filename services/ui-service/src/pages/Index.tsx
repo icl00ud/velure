@@ -3,8 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/petshop-hero.png";
 import Header from "@/components/Header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCategories } from "@/hooks/use-products";
 import { designSystemStyles } from "@/styles/design-system";
 
@@ -40,10 +38,12 @@ const Index = () => {
     );
 
     const features = document.querySelectorAll(".observe-animation");
-    features.forEach((feature) => observer.observe(feature));
+    features.forEach((feature) => {
+      observer.observe(feature);
+    });
 
     return () => observer.disconnect();
-  }, [categories]);
+  }, []);
 
   return (
     <>
@@ -84,12 +84,18 @@ const Index = () => {
 
                 <div className="flex flex-wrap gap-4">
                   <Link to="/products">
-                    <button className="btn-primary-custom font-body px-10 py-4 rounded-full text-white font-semibold text-lg">
+                    <button
+                      type="button"
+                      className="btn-primary-custom font-body px-10 py-4 rounded-full text-white font-semibold text-lg"
+                    >
                       Explorar Produtos
                     </button>
                   </Link>
                   <Link to="/contact">
-                    <button className="font-body px-10 py-4 rounded-full border-3 border-[#1B4332] text-[#1B4332] font-semibold text-lg hover:bg-[#1B4332] hover:text-white transition-all duration-300">
+                    <button
+                      type="button"
+                      className="font-body px-10 py-4 rounded-full border-3 border-[#1B4332] text-[#1B4332] font-semibold text-lg hover:bg-[#1B4332] hover:text-white transition-all duration-300"
+                    >
                       Fale Conosco
                     </button>
                   </Link>
@@ -162,11 +168,11 @@ const Index = () => {
                   color: "#52B788",
                   delay: "0.3s",
                 },
-              ].map((feature, index) => {
+              ].map((feature) => {
                 const Icon = feature.icon;
                 return (
                   <div
-                    key={index}
+                    key={feature.title}
                     className="observe-animation card-hover"
                     style={{ animationDelay: feature.delay }}
                   >
@@ -296,7 +302,10 @@ const Index = () => {
               </p>
 
               <Link to="/products">
-                <button className="font-body px-12 py-5 rounded-full bg-white text-[#1B4332] font-bold text-lg shadow-2xl hover:scale-105 hover:shadow-[#A7C957]/50 transition-all duration-300">
+                <button
+                  type="button"
+                  className="font-body px-12 py-5 rounded-full bg-white text-[#1B4332] font-bold text-lg shadow-2xl hover:scale-105 hover:shadow-[#A7C957]/50 transition-all duration-300"
+                >
                   Começar a Comprar
                 </button>
               </Link>
@@ -309,7 +318,7 @@ const Index = () => {
                   { number: "98%", label: "Satisfação" },
                 ].map((stat, index) => (
                   <div
-                    key={index}
+                    key={stat.label}
                     className="text-center observe-animation"
                     style={{ animationDelay: `${index * 0.1}s` }}
                   >

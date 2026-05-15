@@ -317,7 +317,9 @@ export const useScrollAnimation = (callback?: () => void) => {
     );
 
     const elements = document.querySelectorAll(".observe-animation");
-    elements.forEach((element) => observerRef.current?.observe(element));
+    elements.forEach((element) => {
+      observerRef.current?.observe(element);
+    });
 
     return () => {
       if (observerRef.current) {

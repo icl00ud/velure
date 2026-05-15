@@ -36,8 +36,10 @@ const Cart = () => {
       { threshold: 0.1 }
     );
 
-    const elements = document.querySelectorAll(".observe-animation");
-    elements.forEach((element) => observer.observe(element));
+    const elements = document.querySelectorAll(".observe-animation:not(.animate-in)");
+    elements.forEach((element) => {
+      observer.observe(element);
+    });
 
     return () => observer.disconnect();
   }, [cartItems]);
@@ -168,7 +170,7 @@ const Cart = () => {
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Cart Items */}
               <div className="lg:col-span-2 space-y-6">
-                  {cartItems.map((item, index) => (
+                {cartItems.map((item, index) => (
                   <Card
                     key={item.product._id}
                     className="shadow-lg border border-slate-200 rounded-3xl card-hover-subtle observe-animation"

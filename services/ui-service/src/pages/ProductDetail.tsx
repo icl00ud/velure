@@ -167,7 +167,7 @@ const ProductDetail = () => {
                   {product.images.slice(0, 4).map((image, index) => (
                     <button
                       type="button"
-                      key={`image-${image}-${index}`}
+                      key={image}
                       onClick={() => setSelectedImage(index)}
                       className={`aspect-square bg-white rounded-2xl overflow-hidden border transition-all duration-300 hover:scale-105 ${
                         selectedImage === index
@@ -378,11 +378,11 @@ const ProductDetail = () => {
                     description: "Confiável por profissionais",
                     color: "from-[#52B788] to-[#40916C]",
                   },
-                ].map((benefit, index) => {
+                ].map((benefit) => {
                   const Icon = benefit.icon;
                   return (
                     <div
-                      key={index}
+                      key={benefit.title}
                       className="flex items-start space-x-4 bg-white rounded-2xl p-4 border border-slate-200"
                     >
                       <div

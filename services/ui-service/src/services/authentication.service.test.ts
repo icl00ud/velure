@@ -46,8 +46,9 @@ describe("AuthenticationService", () => {
       const result = await authenticationService.login(mockLoginUser);
 
       expect(result).toEqual(mockResponse);
-      expect(localStorage.getItem("token")).toBeTruthy();
-      const storedToken = JSON.parse(localStorage.getItem("token")!);
+      const tokenValue = localStorage.getItem("token");
+      expect(tokenValue).toBeTruthy();
+      const storedToken = JSON.parse(tokenValue ?? "{}");
       expect(storedToken.accessToken).toBe(mockToken.accessToken);
       expect(storedToken.refreshToken).toBe(mockToken.refreshToken);
       expect(global.fetch).toHaveBeenCalledWith(
@@ -209,8 +210,9 @@ describe("AuthenticationService", () => {
 
       await authenticationService.register(mockRegisterUser);
 
-      expect(localStorage.getItem("token")).toBeTruthy();
-      const storedToken = JSON.parse(localStorage.getItem("token")!);
+      const tokenValue = localStorage.getItem("token");
+      expect(tokenValue).toBeTruthy();
+      const storedToken = JSON.parse(tokenValue ?? "{}");
       expect(storedToken.accessToken).toBe(mockToken.accessToken);
     });
   });
@@ -410,7 +412,7 @@ describe("AuthenticationService", () => {
         json: async () => ({ isValid: true }),
       });
 
-      const callback = vi.fn();
+      const _callback = vi.fn();
       // This will trigger checkInitialAuthStatus
       await new Promise((resolve) => setTimeout(resolve, 10));
 

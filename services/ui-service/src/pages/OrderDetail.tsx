@@ -1,5 +1,5 @@
 import { ArrowLeft, Check, CheckCircle, Clock, Loader2, Package, Truck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
@@ -47,21 +47,7 @@ const OrderDetail = () => {
     setIsVisible(true);
   }, []);
 
-  useEffect(() => {
-    if (!id) return;
-
-    loadOrder();
-
-    const cleanup = orderService.createOrderStatusStream(
-      id,
-      (updatedOrder) => setOrder(updatedOrder),
-      (error) => console.error("SSE connection error:", error)
-    );
-
-    return cleanup;
-  }, [id]);
-
-  const loadOrder = async () => {
+  const loadOrder = useCallback(async () => {
     if (!id) return;
 
     setIsLoading(true);
@@ -77,7 +63,21 @@ const OrderDetail = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    loadOrder();
+
+    const cleanup = orderService.createOrderStatusStream(
+      id,
+      (updatedOrder) => setOrder(updatedOrder),
+      (error) => console.error("SSE connection error:", error)
+    );
+
+    return cleanup;
+  }, [id, loadOrder]);
 
   const getStatusBadge = (status: string) => {
     const baseClasses = "font-medium px-4 py-2 text-sm rounded-full";
@@ -99,9 +99,17 @@ const OrderDetail = () => {
         );
       case "COMPLETED":
         return (
-          <Badge className={`${baseClasses} bg-emerald-100 text-emerald-700 border border-emerald-200`}>
+          <Badge
+            className={`${baseClasses} bg-emerald-100 text-emerald-700 border border-emerald-200`}
+          >
             <CheckCircle className="h-4 w-4 mr-2" />
             Concluído
+          </Badge>
+        );
+      case "FAILED":
+        return (
+          <Badge className={`${baseClasses} bg-red-100 text-red-700 border border-red-200`}>
+            Falhou
           </Badge>
         );
       default:
@@ -154,13 +162,14 @@ const OrderDetail = () => {
             <Card className="text-center py-16 rounded-2xl border border-slate-200">
               <CardContent>
                 <Package className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-800 mb-2">
-                  Pedido não encontrado
-                </h3>
+                <h3 className="text-xl font-semibold text-slate-800 mb-2">Pedido não encontrado</h3>
                 <p className="text-slate-500 mb-8">
                   O pedido que você está procurando não existe ou foi removido.
                 </p>
-                <Button asChild className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8">
+                <Button
+                  asChild
+                  className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8"
+                >
                   <Link to="/orders">Voltar para meus pedidos</Link>
                 </Button>
               </CardContent>
@@ -240,60 +249,78 @@ const OrderDetail = () => {
                     <div className="grid grid-cols-3 gap-4">
                       {/* Step 1: Created */}
                       <div className="text-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 border-2 ${
-                          isStepComplete(order.status, "CREATED")
-                            ? "bg-emerald-500 border-emerald-500"
-                            : "bg-white border-slate-300"
-                        }`}>
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 border-2 ${
+                            isStepComplete(order.status, "CREATED")
+                              ? "bg-emerald-500 border-emerald-500"
+                              : "bg-white border-slate-300"
+                          }`}
+                        >
                           {isStepComplete(order.status, "CREATED") ? (
                             <Check className="h-5 w-5 text-white" />
                           ) : (
                             <span className="text-sm text-slate-400">1</span>
                           )}
                         </div>
-                        <p className={`text-sm font-medium ${
-                          isStepComplete(order.status, "CREATED") ? "text-slate-900" : "text-slate-400"
-                        }`}>
+                        <p
+                          className={`text-sm font-medium ${
+                            isStepComplete(order.status, "CREATED")
+                              ? "text-slate-900"
+                              : "text-slate-400"
+                          }`}
+                        >
                           Criado
                         </p>
                       </div>
 
                       {/* Step 2: Processing */}
                       <div className="text-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 border-2 ${
-                          isStepComplete(order.status, "PROCESSING")
-                            ? "bg-emerald-500 border-emerald-500"
-                            : "bg-white border-slate-300"
-                        }`}>
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 border-2 ${
+                            isStepComplete(order.status, "PROCESSING")
+                              ? "bg-emerald-500 border-emerald-500"
+                              : "bg-white border-slate-300"
+                          }`}
+                        >
                           {isStepComplete(order.status, "PROCESSING") ? (
                             <Check className="h-5 w-5 text-white" />
                           ) : (
                             <span className="text-sm text-slate-400">2</span>
                           )}
                         </div>
-                        <p className={`text-sm font-medium ${
-                          isStepComplete(order.status, "PROCESSING") ? "text-slate-900" : "text-slate-400"
-                        }`}>
+                        <p
+                          className={`text-sm font-medium ${
+                            isStepComplete(order.status, "PROCESSING")
+                              ? "text-slate-900"
+                              : "text-slate-400"
+                          }`}
+                        >
                           Processando
                         </p>
                       </div>
 
                       {/* Step 3: Completed */}
                       <div className="text-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 border-2 ${
-                          isStepComplete(order.status, "COMPLETED")
-                            ? "bg-emerald-500 border-emerald-500"
-                            : "bg-white border-slate-300"
-                        }`}>
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 border-2 ${
+                            isStepComplete(order.status, "COMPLETED")
+                              ? "bg-emerald-500 border-emerald-500"
+                              : "bg-white border-slate-300"
+                          }`}
+                        >
                           {isStepComplete(order.status, "COMPLETED") ? (
                             <Check className="h-5 w-5 text-white" />
                           ) : (
                             <span className="text-sm text-slate-400">3</span>
                           )}
                         </div>
-                        <p className={`text-sm font-medium ${
-                          isStepComplete(order.status, "COMPLETED") ? "text-slate-900" : "text-slate-400"
-                        }`}>
+                        <p
+                          className={`text-sm font-medium ${
+                            isStepComplete(order.status, "COMPLETED")
+                              ? "text-slate-900"
+                              : "text-slate-400"
+                          }`}
+                        >
                           Concluído
                         </p>
                       </div>
@@ -312,27 +339,24 @@ const OrderDetail = () => {
                 <CardContent>
                   <div className="space-y-1">
                     {order.items?.map((item, index) => (
-                      <div key={index}>
+                      <div key={`${item.name}-${item.price}`}>
                         <div className="item-row flex justify-between items-center py-4 px-3 -mx-3 rounded-lg">
                           <div>
                             <p className="font-medium text-slate-900">{item.name}</p>
                             <p className="text-sm text-slate-500 mt-0.5">
-                              {item.quantity} {item.quantity > 1 ? "unidades" : "unidade"} × R$ {item.price.toFixed(2)}
+                              {item.quantity} {item.quantity > 1 ? "unidades" : "unidade"} × R${" "}
+                              {(item.price ?? 0).toFixed(2)}
                             </p>
                           </div>
                           <p className="font-semibold text-slate-900">
-                            R$ {(item.price * item.quantity).toFixed(2)}
+                            R$ {((item.price ?? 0) * (item.quantity ?? 0)).toFixed(2)}
                           </p>
                         </div>
                         {index < (order.items?.length || 0) - 1 && (
                           <Separator className="bg-slate-100" />
                         )}
                       </div>
-                    )) || (
-                      <p className="text-slate-500 text-center py-8">
-                        Nenhum item encontrado
-                      </p>
-                    )}
+                    )) || <p className="text-slate-500 text-center py-8">Nenhum item encontrado</p>}
                   </div>
                 </CardContent>
               </Card>
@@ -351,7 +375,7 @@ const OrderDetail = () => {
                     <div className="flex justify-between py-2">
                       <span className="text-slate-500">Subtotal</span>
                       <span className="font-medium text-slate-900">
-                        R$ {order.total.toFixed(2)}
+                        R$ {(order.total ?? 0).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between py-2">
@@ -362,7 +386,7 @@ const OrderDetail = () => {
                     <div className="flex justify-between items-baseline pt-2">
                       <span className="font-semibold text-slate-900">Total</span>
                       <span className="text-2xl font-bold text-slate-900">
-                        R$ {order.total.toFixed(2)}
+                        R$ {(order.total ?? 0).toFixed(2)}
                       </span>
                     </div>
                   </div>
