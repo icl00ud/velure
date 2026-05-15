@@ -1,9 +1,5 @@
 {
-	email admin@velure.local
-
-	local_certs
-
-	auto_https disable_redirects
+	auto_https off
 
 	log {
 		output file /var/log/caddy/access.log {
@@ -15,7 +11,7 @@
 	}
 }
 
-velure.local {
+:80 {
 	log {
 		output file /var/log/caddy/velure.log {
 			roll_size 50mb
@@ -25,15 +21,12 @@ velure.local {
 	}
 
 	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "SAMEORIGIN"
 		X-XSS-Protection "1; mode=block"
 		Referrer-Policy "strict-origin-when-cross-origin"
-
 		Permissions-Policy "geolocation=(), microphone=(), camera=()"
-
-		Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; img-src 'self' https: data: blob: unsplash.com *.unsplash.com;"
+		Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: data: blob:; img-src 'self' https: http: data: blob: unsplash.com *.unsplash.com;"
 		-Server
 		-X-Powered-By
 	}
@@ -110,11 +103,6 @@ velure.local {
 
 	handle /* {
 		reverse_proxy ui-service:8080 {
-			health_uri /health
-			health_interval 30s
-			health_timeout 5s
-			health_status 2xx
-
 			header_up X-Real-IP {remote_host}
 		}
 	}
