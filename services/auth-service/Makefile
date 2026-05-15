@@ -20,10 +20,10 @@ deps: ## Download dependencies
 	go mod tidy
 
 docker-build: ## Build Docker image
-	docker build -t velure-auth-service .
+	docker build -t velure/auth-service .
 
 docker-run: ## Run Docker container
-	docker run -p 3020:3020 --env-file .env velure-auth-service
+	docker run -p 3020:3020 --env-file .env velure/auth-service
 
 migrate-up: ## Run database migrations up
 	migrate -path ./migrations -database "$(POSTGRES_URL)" up
@@ -40,23 +40,23 @@ benchmark: ## Run benchmarks
 
 load-test: ## Run load tests with k6
 	@echo "Starting load tests..."
-	k6 run --vus 100 --duration 30s k6/performance-test.js
+	k6 run --vus 100 --duration 30s ../../tests/load/auth-service/performance-test.js
 
 performance-test: ## Run comprehensive performance tests
 	@echo "Running comprehensive performance tests..."
-	k6 run k6/performance-test.js
+	k6 run ../../tests/load/auth-service/performance-test.js
 
 perf-custom: ## Run custom performance test (VUS=100 DURATION=30s)
 	@echo "Running custom performance test..."
-	k6 run --vus $(VUS) --duration $(DURATION) k6/performance-test.js
+	k6 run --vus $(VUS) --duration $(DURATION) ../../tests/load/auth-service/performance-test.js
 
 spike-test: ## Run spike test
 	@echo "Running spike test..."
-	k6 run --vus 500 --duration 1m k6/performance-test.js
+	k6 run --vus 500 --duration 1m ../../tests/load/auth-service/performance-test.js
 
 stress-test: ## Run stress test
 	@echo "Running stress test..."
-	k6 run --vus 1000 --duration 5m k6/performance-test.js
+	k6 run --vus 1000 --duration 5m ../../tests/load/auth-service/performance-test.js
 
 profile-cpu: ## Profile CPU usage
 	@echo "Running CPU profiling..."
@@ -74,7 +74,7 @@ docker-run-optimized: ## Run Docker container with performance tuning
 		-e ENABLE_TOKEN_CACHE=true \
 		-e TOKEN_CACHE_TTL=300 \
 		-e BCRYPT_COST=10 \
-		velure-auth-service
+		velure/auth-service
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
