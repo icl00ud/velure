@@ -18,8 +18,13 @@ The **Auth Service** is responsible for user authentication and authorization wi
 
 ## Key Endpoints
 
-- `POST /api/auth/register`: Registers a new user.
-- `POST /api/auth/login`: Authenticates a user and returns a JWT.
+- `POST /api/users`: Registers a new user.
+- `GET /api/users`: Lists users (paginated).
+- `GET /api/users/:id`: Retrieves a user by ID.
+- `GET /api/users/email/:email`: Retrieves a user by email.
+- `POST /api/sessions`: Authenticates a user and returns a JWT.
+- `DELETE /api/sessions/current`: Logs out the current session (invalidates token).
+- `POST /api/tokens/introspect`: Validates a JWT and returns its claims.
 
 ## Architecture & Conventions
 

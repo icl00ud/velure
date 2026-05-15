@@ -99,20 +99,17 @@ Go services use multi-stage Docker builds (golang:alpine → alpine). UI uses Bu
 
 ### API Routes (through Caddy reverse proxy)
 
-- Frontend: `https://velure.local`
-- Auth API: `https://velure.local/api/auth/*`
-- Product API: `https://velure.local/api/product/*`
-- Order API: `https://velure.local/api/order/*`
+- Frontend: `http://localhost`
+- Auth API: `http://localhost/api/users/*`, `http://localhost/api/sessions/*`
+- Product API: `http://localhost/api/products/*`
+- Order API: `http://localhost/api/orders/*`
 
 ## Critical Notes
 
 ### Access Pattern (IMPORTANT)
-**Always use:** `https://velure.local` — **Never use:** Direct container URLs
+**Always use:** `http://localhost` — **Never use:** Direct container URLs
 
-Accessing services directly bypasses Caddy routing and causes 405 errors. Requires `/etc/hosts` entry:
-```bash
-echo "127.0.0.1 velure.local" | sudo tee -a /etc/hosts
-```
+Accessing services directly bypasses Caddy routing and causes 405 errors.
 
 ### Service Dependencies
 - Infrastructure must start before services (handled by `make local-up`)
@@ -120,9 +117,8 @@ echo "127.0.0.1 velure.local" | sudo tee -a /etc/hosts
 - process-order-service requires product-service for inventory checks via HTTP
 
 ### Common Issues
-1. **Port conflicts:** Check ports 80, 443, 5432, 27017, 5672, 6379
-2. **Self-signed certs:** Accept browser security warning on first access
-3. **Direct container access:** Always proxy through Caddy
+1. **Port conflicts:** Check ports 80, 5432, 27017, 5672, 6379
+2. **Direct container access:** Always proxy through Caddy
 
 ### Conventions
 - **Commits:** Follow [Conventional Commits](https://www.conventionalcommits.org/) (e.g., `feat:`, `fix:`, `refactor:`)

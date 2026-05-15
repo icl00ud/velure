@@ -27,6 +27,7 @@ The **UI Service** is the frontend application for the Velure platform, providin
 ## Key Routes
 
 - `/`: Home page
+- `/contact`: Contact page
 - `/login`: User authentication
 - `/products`: Complete product catalog
 - `/products/:category`: Category-specific products
