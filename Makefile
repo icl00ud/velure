@@ -3,9 +3,8 @@
 
 GO_MODULES := $(shell find services -mindepth 2 -maxdepth 2 -name go.mod -exec dirname {} \; | sort)
 UI_DIR := services/ui-service
-DOCS_DIR := docs-site
 
-.PHONY: help local-up local-down local-dev local-dev-down cloud-up cloud-down cloud-urls docs-up docs-down test docs-build lint check
+.PHONY: help local-up local-down local-dev local-dev-down cloud-up cloud-down cloud-urls test lint check
 
 # Default target
 help: ## Show available commands
@@ -17,7 +16,6 @@ help: ## Show available commands
 	@echo ""
 	@echo "Quick Start:"
 	@echo "  make local-up     # Start the local stack"
-	@echo "  make docs-up      # Start the documentation site"
 	@echo "  make check        # Run validation checks"
 	@echo ""
 
@@ -28,13 +26,9 @@ help: ## Show available commands
 local-up: ## Start the full local stack (infrastructure, services, monitoring)
 	@echo "Starting the full local environment..."
 	@echo ""
-	@echo "Creating Docker networks..."
-	@docker network create local_auth 2>/dev/null || echo "  local_auth already exists"
-	@docker network create local_order 2>/dev/null || echo "  local_order already exists"
-	@docker network create local_frontend 2>/dev/null || echo "  local_frontend already exists"
-	@echo ""
 	@echo "Starting infrastructure, services, and monitoring..."
-	cd infrastructure/local && docker-compose -f docker-compose.yaml -f docker-compose.monitoring.yaml up -d
+	cd infrastructure/local && docker-compose -f docker-compose.yaml up -d
+	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml up -d
 	@echo ""
 	@echo "Waiting 20 seconds for startup..."
 	@sleep 20
@@ -59,7 +53,8 @@ local-down: ## Stop the local stack and remove containers and volumes
 	@echo "Stopping the local environment..."
 	@echo ""
 	@echo "Stopping containers..."
-	cd infrastructure/local && docker-compose -f docker-compose.yaml -f docker-compose.monitoring.yaml down -v --remove-orphans
+	cd infrastructure/local && docker-compose -f docker-compose.monitoring.yaml down -v --remove-orphans || true
+	cd infrastructure/local && docker-compose -f docker-compose.yaml down -v --remove-orphans
 	@echo ""
 	@echo "Pruning unused Docker resources..."
 	docker system prune -f --volumes
@@ -75,17 +70,20 @@ local-down: ## Stop the local stack and remove containers and volumes
 local-dev: ## Start stack with hot-reload (Air for Go services, Vite HMR for UI)
 	@echo "Starting local dev environment with hot-reload..."
 	@echo ""
-	@echo "Creating Docker networks..."
-	@docker network create local_auth 2>/dev/null || echo "  local_auth already exists"
-	@docker network create local_order 2>/dev/null || echo "  local_order already exists"
-	@docker network create local_frontend 2>/dev/null || echo "  local_frontend already exists"
-	@echo ""
 	@echo "Building dev images and starting services..."
 	@echo "Note: First run builds dev images (~1-2 min). Subsequent starts are faster."
 	cd infrastructure/local && docker-compose \
 		-f docker-compose.yaml \
 		-f docker-compose.dev.yaml \
 		up --build -d
+	@echo ""
+	@echo "Seeding MongoDB (idempotent — skips if products exist)..."
+	@bash -c 'for i in $$(seq 1 30); do \
+		docker exec mongodb mongosh --quiet -u velure_user -p velure_password --authenticationDatabase admin --eval "db.runCommand({ping:1})" >/dev/null 2>&1 && break; \
+		sleep 1; \
+	done'
+	@docker cp services/product-service/mongo-init.js mongodb:/tmp/seed.js
+	@docker exec mongodb mongosh --quiet -u velure_user -p velure_password --authenticationDatabase admin --eval "load('/tmp/seed.js')" | tail -5 || echo "Seed failed (non-fatal)"
 	@echo ""
 	@echo "Dev environment is ready."
 	@echo ""
@@ -156,8 +154,8 @@ cloud-up: ## Provision the full AWS stack (Terraform, Kubernetes, monitoring)
 	@echo ""
 	@echo "Estimated time: about 10 minutes"
 	@echo ""
-	chmod +x scripts/deploy-eks.sh
-	./scripts/deploy-eks.sh
+	chmod +x infrastructure/scripts/deploy-eks.sh
+	./infrastructure/scripts/deploy-eks.sh
 	@echo ""
 	@echo "Cloud deployment completed."
 	@echo ""
@@ -232,20 +230,6 @@ cloud-urls: ## Show AWS access URLs for the application and observability tools
 	@echo ""
 
 # -----------------------------------------------------------------------------
-# Documentation
-# -----------------------------------------------------------------------------
-
-docs-up: ## Start the documentation site locally with Docker on port 3000
-	@echo "Building and starting the documentation site in Docker..."
-	cd docs-site && docker compose up -d --build
-	@echo "Documentation site: http://localhost:3000"
-
-docs-down: ## Stop the documentation site Docker containers
-	@echo "Stopping the documentation site..."
-	cd docs-site && docker compose down
-	@echo "Documentation site stopped."
-
-# -----------------------------------------------------------------------------
 # Validation
 # -----------------------------------------------------------------------------
 
@@ -263,15 +247,7 @@ test: ## Run Go service tests and UI tests when available
 		echo "Skipping UI tests; $(UI_DIR)/package.json was not found."; \
 	fi
 
-docs-build: ## Build the documentation site
-	@if [ -f "$(DOCS_DIR)/package.json" ]; then \
-		echo "Building documentation site..."; \
-		(cd "$(DOCS_DIR)" && npm run build); \
-	else \
-		echo "Skipping docs build; $(DOCS_DIR)/package.json was not found."; \
-	fi
-
-check: ## Run formatting, typecheck, test, and docs build validation
+check: ## Run formatting, vet, and tests
 	@echo "Checking Go formatting..."
 	@unformatted=$$(find services -name '*.go' -exec gofmt -l {} +); \
 	if [ -n "$$unformatted" ]; then \
@@ -285,16 +261,15 @@ check: ## Run formatting, typecheck, test, and docs build validation
 		echo "==> $$dir"; \
 		(cd "$$dir" && go vet ./...); \
 	done
-	@if [ -f "$(DOCS_DIR)/package.json" ]; then \
-		echo "Running documentation typecheck..."; \
-		(cd "$(DOCS_DIR)" && npm run typecheck --if-present); \
-	else \
-		echo "Skipping documentation typecheck; $(DOCS_DIR)/package.json was not found."; \
-	fi
 	@$(MAKE) test
-	@$(MAKE) docs-build
 
-lint: ## Run repository lint checks that may require a dedicated cleanup pass
+lint: ## Run lint checks (Go vet + UI lint)
+	@echo "Running Go vet..."
+	@set -e; \
+	for dir in $(GO_MODULES); do \
+		echo "==> $$dir"; \
+		(cd "$$dir" && go vet ./...); \
+	done
 	@if [ -f "$(UI_DIR)/package.json" ]; then \
 		echo "Running UI lint..."; \
 		(cd "$(UI_DIR)" && npm run lint --if-present); \

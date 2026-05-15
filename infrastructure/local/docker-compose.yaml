@@ -7,11 +7,9 @@ services:
     container_name: caddy-proxy
     restart: always
     ports:
-      - "80:80"      # HTTP
-      - "443:443"    # HTTPS
-      - "443:443/udp" # HTTP/3
+      - "80:80"
     volumes:
-      - ../../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
       - caddy_logs:/var/log/caddy
@@ -62,8 +60,8 @@ services:
 
   auth-service:
     build:
-      context: ../../services/auth-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/auth-service/Dockerfile
     container_name: ${AUTH_SERVICE_HOST:-auth-service}
     restart: always
     environment:
@@ -141,8 +139,8 @@ services:
 
   publish-order-service:
     build:
-      context: ../../services/publish-order-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/publish-order-service/Dockerfile
     container_name: ${PUBLISH_ORDER_SERVICE_HOST}
     restart: always
     environment:
@@ -169,8 +167,8 @@ services:
 
   process-order-service:
     build:
-      context: ../../services/process-order-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/process-order-service/Dockerfile
     container_name: ${PROCESS_ORDER_SERVICE_HOST}
     restart: always
     environment:
@@ -238,8 +236,8 @@ services:
 
   product-service:
     build:
-      context: ../../services/product-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/product-service/Dockerfile
     container_name: ${PRODUCT_SERVICE_HOST}
     restart: always
     environment:
@@ -276,10 +274,10 @@ services:
   # -------------------------
   ui-service:
     build:
-      context: ../../services/ui-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: services/ui-service/Dockerfile
       args:
-        VITE_PRODUCT_SERVICE_URL: /api/product
+        VITE_PRODUCT_SERVICE_URL: /api/products
         VITE_AUTHENTICATION_SERVICE_URL: /api/auth
         VITE_ORDER_SERVICE_URL: /api/order
     container_name: ${UI_SERVICE_HOST}
@@ -311,8 +309,11 @@ volumes:
 
 networks:
   local_auth:
+    name: local_auth
     driver: bridge
   order:
+    name: local_order
     driver: bridge
   frontend:
+    name: local_frontend
     driver: bridge
