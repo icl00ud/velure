@@ -50,3 +50,74 @@ The order transitions through the following states:
 3. **COMPLETED / FAILED**: The terminal states. Once the `process-order-service` finishes its operations, it publishes a final event back to RabbitMQ. The `publish-order-service` consumes this, updates the local database, and pushes the final state to the frontend via SSE.
 
 This decoupled design ensures that if the processing or product services are temporarily unavailable, orders are not lost—they remain safely queued in RabbitMQ until they can be processed.
+
+## High-Level Architecture
+
+The diagram below shows the runtime topology: client traffic enters through Caddy, services own private data stores, RabbitMQ brokers async work, and every consumer queue is paired with a Dead Letter Queue (DLQ) so poison messages are quarantined instead of looping forever.
+
+```mermaid
+flowchart LR
+    Browser([Browser / SPA])
+
+    subgraph Edge
+        Caddy[Caddy<br/>Reverse Proxy]
+    end
+
+    subgraph Services
+        UI[ui-service<br/>React + Vite]
+        Auth[auth-service<br/>Go + Gin]
+        Product[product-service<br/>Go + Fiber]
+        Publish[publish-order-service<br/>Go + net/http<br/>+ SSE]
+        Process[process-order-service<br/>Go + net/http]
+    end
+
+    subgraph Data
+        AuthDB[(PostgreSQL<br/>auth)]
+        Redis[(Redis<br/>token cache)]
+        Mongo[(MongoDB<br/>products)]
+        OrderDB[(PostgreSQL<br/>orders)]
+    end
+
+    subgraph Broker[RabbitMQ]
+        Ex{{exchange<br/>orders topic}}
+        QProc[[process-order-queue]]
+        QPub[[publish-order-status-updates]]
+        DlxA{{orders.dlx fanout}}
+        DlxB{{publish.dlx fanout}}
+        DlqA[[process-order-queue.dlq]]
+        DlqB[[publish-order-status-updates.dlq]]
+    end
+
+    Browser <--> Caddy
+    Caddy --> UI
+    Caddy --> Auth
+    Caddy --> Product
+    Caddy --> Publish
+
+    Auth --- AuthDB
+    Auth --- Redis
+    Product --- Mongo
+    Publish --- OrderDB
+
+    Publish -- "order.created" --> Ex
+    Process -- "order.processing<br/>order.completed<br/>order.failed" --> Ex
+
+    Ex -- "order.created" --> QProc
+    Ex -- "order.processing/completed/failed" --> QPub
+
+    QProc --> Process
+    QPub --> Publish
+    Process -- "HTTP inventory check" --> Product
+
+    QProc -. "nack no-requeue<br/>(poison / max retries)" .-> DlxA --> DlqA
+    QPub  -. "nack no-requeue<br/>(poison / max retries)" .-> DlxB --> DlqB
+
+    Publish == "SSE status stream" ==> Browser
+```
+
+### Reading the diagram
+
+- **Synchronous path:** Browser → Caddy → service. Caddy is the single ingress; never hit container ports directly.
+- **Async path:** `publish-order-service` writes the `order.created` event to the `orders` topic exchange. `process-order-service` consumes it from `process-order-queue`, calls `product-service` for inventory, then republishes a status event. `publish-order-service` consumes that status from `publish-order-status-updates` and pushes it to the browser via SSE.
+- **DLQ pattern:** Each consumer queue has `x-dead-letter-exchange` set. Permanent errors, parse failures and messages exceeding `maxRetries` are `Nack(false, false)` → routed to the per-stream DLX (`orders.dlx`, `publish.dlx`) → land in the matching DLQ for inspection/replay instead of looping back into the main queue.
+- **State isolation:** Each service owns its own data store; cross-service queries happen over HTTP (`process → product`), never via shared schemas.

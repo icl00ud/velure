@@ -71,6 +71,24 @@ rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare qu
 echo "[bootstrap] Creating binding between exchange 'orders' and queue 'process-order-queue'..."
 rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare binding source=orders destination=process-order-queue routing_key=order.created
 
+echo "[bootstrap] Declaring Dead Letter Exchange 'publish.dlx'..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare exchange name=publish.dlx type=fanout durable=true
+
+echo "[bootstrap] Declaring Dead Letter Queue 'publish-order-status-updates.dlq'..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare queue name=publish-order-status-updates.dlq durable=true
+
+echo "[bootstrap] Binding publish DLQ to 'publish.dlx'..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare binding source=publish.dlx destination=publish-order-status-updates.dlq
+
+echo "[bootstrap] Declaring queue 'publish-order-status-updates' with DLX..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare queue name=publish-order-status-updates durable=true \
+  arguments='{"x-dead-letter-exchange":"publish.dlx","x-max-length":10000}'
+
+echo "[bootstrap] Binding 'publish-order-status-updates' to exchange 'orders' for status routing keys..."
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare binding source=orders destination=publish-order-status-updates routing_key=order.processing
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare binding source=orders destination=publish-order-status-updates routing_key=order.completed
+rabbitmqadmin -u "$ADMIN_RABBITMQ_USER" -p "$ADMIN_RABBITMQ_PASSWORD" declare binding source=orders destination=publish-order-status-updates routing_key=order.failed
+
 echo "[bootstrap] RabbitMQ infrastructure configured successfully!"
 
 echo "[bootstrap] Done. Waiting on RabbitMQ (pid=$RABBIT_PID)."

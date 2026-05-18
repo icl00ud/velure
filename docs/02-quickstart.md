@@ -1,7 +1,3 @@
----
-sidebar_position: 2
----
-
 # Quickstart
 
 Get Velure up and running locally.

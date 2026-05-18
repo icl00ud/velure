@@ -11,6 +11,11 @@ import (
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
 )
 
+const (
+	dlxExchange = "publish.dlx"
+	maxRetries  = 3
+)
+
 type EventHandler func(ctx context.Context, evt model.Event) error
 
 type Consumer interface {
@@ -85,7 +90,10 @@ func NewRabbitMQConsumer(amqpURL, exchange, queueName string, handler EventHandl
 		return nil, fmt.Errorf("declare exchange: %w", err)
 	}
 
-	q, err := ch.QueueDeclare(queueName, true, false, false, false, nil)
+	q, err := ch.QueueDeclare(queueName, true, false, false, false, amqp091.Table{
+		"x-dead-letter-exchange": dlxExchange,
+		"x-max-length":           int32(10000),
+	})
 	if err != nil {
 		ch.Close()
 		conn.Close()
@@ -160,15 +168,44 @@ func (r *rabbitConsumer) worker(ctx context.Context, id int, msgs <-chan amqp091
 			}
 
 			if err := r.processMessage(ctx, msg); err != nil {
-				r.logger.Error("message processing failed",
-					logger.Int("worker_id", id),
-					logger.Err(err))
-				msg.Nack(false, true)
+				retryCount := getRetryCount(msg.Headers)
+				if retryCount >= maxRetries {
+					r.logger.Error("max retries exceeded - sending to DLQ",
+						logger.Int("worker_id", id),
+						logger.Int64("retry_count", retryCount),
+						logger.Err(err))
+					msg.Nack(false, false)
+				} else {
+					r.logger.Warn("transient error - requeueing for retry",
+						logger.Int("worker_id", id),
+						logger.Int64("retry_count", retryCount),
+						logger.Err(err))
+					msg.Nack(false, true)
+				}
 			} else {
 				msg.Ack(false)
 			}
 		}
 	}
+}
+
+func getRetryCount(headers amqp091.Table) int64 {
+	if headers == nil {
+		return 0
+	}
+	xDeath, ok := headers["x-death"].([]any)
+	if !ok || len(xDeath) == 0 {
+		return 0
+	}
+	death, ok := xDeath[0].(amqp091.Table)
+	if !ok {
+		return 0
+	}
+	count, ok := death["count"].(int64)
+	if !ok {
+		return 0
+	}
+	return count
 }
 
 func (r *rabbitConsumer) processMessage(ctx context.Context, msg amqp091.Delivery) error {
