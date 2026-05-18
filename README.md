@@ -87,19 +87,6 @@ make local-down
 - Microservice documentation: [`docs/microservices`](./docs/microservices)
 - Kubernetes monitoring stack: [`infrastructure/kubernetes/monitoring/README.md`](./infrastructure/kubernetes/monitoring/README.md)
 - Terraform AWS infrastructure: [`infrastructure/terraform/README.md`](./infrastructure/terraform/README.md)
-- Docusaurus documentation site: [`docs-site/README.md`](./docs-site/README.md)
-
-Run the documentation portal locally:
-
-```bash
-make docs-up
-```
-
-Then open `http://localhost:3000`. Stop it with:
-
-```bash
-make docs-down
-```
 
 ## Testing and Quality
 
@@ -122,7 +109,6 @@ Additional quality assets include SonarCloud project configuration, k6 load-test
 ```text
 .
 |-- docs/                    # Source Markdown documentation
-|-- docs-site/               # Docusaurus documentation portal
 |-- infrastructure/
 |   |-- kubernetes/          # Helm charts, manifests, monitoring assets
 |   |-- local/               # Docker Compose local environment
