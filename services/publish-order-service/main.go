@@ -18,10 +18,11 @@ import (
 	"github.com/icl00ud/velure/services/publish-order-service/internal/database"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/handler"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/middleware"
-	"github.com/icl00ud/velure/services/publish-order-service/internal/publisher"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/outbox"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/publisher"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/repository"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/service"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/supervisor"
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -45,6 +46,8 @@ type appDeps struct {
 	newConsumer   func(string, string, string, consumer.EventHandler, int, *logger.Logger) (consumer.Consumer, error)
 	newLogger     func() *logger.Logger
 	newHTTPServer func(config.Config, http.Handler) server
+	newOutboxRepo func(*sql.DB) outbox.Repository
+	newListener   func(dsn string, log *logger.Logger) *outbox.Listener
 }
 
 var depsFactory = defaultDeps
@@ -71,6 +74,10 @@ func defaultDeps() appDeps {
 				WriteTimeout: 10 * time.Second,
 				IdleTimeout:  120 * time.Second,
 			}
+		},
+		newOutboxRepo: outbox.NewPostgresRepository,
+		newListener: func(dsn string, log *logger.Logger) *outbox.Listener {
+			return outbox.NewListener(dsn, "outbox_new", log)
 		},
 	}
 }
@@ -133,7 +140,11 @@ func run(parentCtx context.Context, deps appDeps) error {
 	if dbRepo, ok := repo.(dbProvider); ok {
 		outboxDB = dbRepo.DB()
 	}
-	outboxRepo := outbox.NewPostgresRepository(outboxDB)
+	newOutboxRepo := deps.newOutboxRepo
+	if newOutboxRepo == nil {
+		newOutboxRepo = outbox.NewPostgresRepository
+	}
+	outboxRepo := newOutboxRepo(outboxDB)
 	svc := service.NewOrderService(repo, outboxRepo, outboxDB, service.NewPricingCalculator())
 	oh := handler.NewOrderHandler(svc)
 
@@ -180,6 +191,8 @@ func run(parentCtx context.Context, deps appDeps) error {
 	log.Info("Starting HTTP server", logger.String("port", cfg.Port))
 	srv := deps.newHTTPServer(cfg, mux)
 
+	notifyCh := make(chan struct{}, 1)
+
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
@@ -194,6 +207,30 @@ func run(parentCtx context.Context, deps appDeps) error {
 		log.Info("Consumer starting", logger.String("queue", cfg.Queue), logger.Int("workers", cfg.Workers))
 		return cons.Start(ctx)
 	})
+
+	// Outbox listener: subscribes to Postgres NOTIFY outbox_new and forwards wake signals.
+	if deps.newListener != nil {
+		g.Go(func() error {
+			return supervisor.Run(ctx, func(ctx context.Context) error {
+				return deps.newListener(cfg.PostgresURL, log).Start(ctx, notifyCh)
+			}, supervisor.Budget{MaxRestarts: 3, Window: time.Minute})
+		})
+	}
+
+	// Outbox relay: drains the outbox to RabbitMQ.
+	if deps.newOutboxRepo != nil {
+		g.Go(func() error {
+			return supervisor.Run(ctx, func(ctx context.Context) error {
+				r := outbox.NewRelay(outboxRepo, pub,
+					outbox.WithInterval(10*time.Second),
+					outbox.WithBatchSize(50),
+					outbox.WithLogger(log),
+					outbox.WithNotifyChannel(notifyCh),
+				)
+				return r.Start(ctx)
+			}, supervisor.Budget{MaxRestarts: 3, Window: time.Minute})
+		})
+	}
 
 	g.Go(func() error {
 		<-ctx.Done()
