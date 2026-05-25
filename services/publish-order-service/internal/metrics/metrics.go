@@ -133,4 +133,42 @@ var (
 		},
 		[]string{"service", "method", "path"},
 	)
+
+	// Outbox relay metrics
+	OutboxRelayPublished = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "outbox_relay_published_total",
+			Help: "Outbox events published to RabbitMQ, by result.",
+		},
+		[]string{"result"}, // result: success, failure
+	)
+
+	OutboxRelayErrors = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "outbox_relay_errors_total",
+			Help: "Outbox relay error count (DB or broker failures during batch).",
+		},
+	)
+
+	OutboxRelayBatchDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "outbox_relay_batch_duration_seconds",
+			Help:    "Duration of a single outbox relay batch (fetch + publish + mark).",
+			Buckets: prometheus.DefBuckets,
+		},
+	)
+
+	OutboxEventsPending = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "outbox_events_pending",
+			Help: "Number of outbox events with published_at IS NULL.",
+		},
+	)
+
+	OutboxListenerReconnects = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "outbox_listener_reconnects_total",
+			Help: "Count of LISTEN/NOTIFY listener reconnections.",
+		},
+	)
 )
