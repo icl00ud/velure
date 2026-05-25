@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -56,7 +57,7 @@ func (s *OrderService) Create(ctx context.Context, userID string, items []model.
 		if err := s.repo.SaveTx(ctx, tx, o); err != nil {
 			return err
 		}
-		payload, err := jsonMarshal(o)
+		payload, err := json.Marshal(o)
 		if err != nil {
 			return err
 		}
@@ -85,7 +86,7 @@ func (s *OrderService) UpdateStatus(ctx context.Context, id, status string) (mod
 		if err := s.repo.SaveTx(ctx, tx, o); err != nil {
 			return err
 		}
-		payload, err := jsonMarshal(o)
+		payload, err := json.Marshal(o)
 		if err != nil {
 			return err
 		}
