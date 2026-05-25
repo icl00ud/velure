@@ -13,13 +13,24 @@ import (
 
 // Mock consumer for testing
 type mockConsumer struct {
-	consumeFunc func(ctx context.Context, handler func(model.Event) error) error
+	consumeFunc func(ctx context.Context, handler func(string, model.Event) error) error
 }
 
-func (m *mockConsumer) Consume(ctx context.Context, handler func(model.Event) error) error {
+func (m *mockConsumer) Consume(ctx context.Context, handler func(string, model.Event) error) error {
 	if m.consumeFunc != nil {
 		return m.consumeFunc(ctx, handler)
 	}
+	return nil
+}
+
+// mockIdempotencyChecker is a no-op checker (always first seen).
+type mockIdempotencyChecker struct{}
+
+func (m *mockIdempotencyChecker) FirstSeen(_ context.Context, _ string) (bool, error) {
+	return true, nil
+}
+
+func (m *mockIdempotencyChecker) Forget(_ context.Context, _ string) error {
 	return nil
 }
 
@@ -62,7 +73,7 @@ func TestNewOrderConsumer(t *testing.T) {
 	svc := &mockPaymentService{}
 	logger := logger.NewNop()
 
-	oc := NewOrderConsumer(consumer, svc, 5, logger)
+	oc := NewOrderConsumer(consumer, svc, nil, 5, logger)
 
 	if oc == nil {
 		t.Fatal("expected non-nil order consumer")
@@ -97,13 +108,13 @@ func TestOrderConsumer_Start_OrderCreatedEvent(t *testing.T) {
 
 	// Create consumer that immediately calls handler with test event
 	consumer := &mockConsumer{
-		consumeFunc: func(ctx context.Context, handler func(model.Event) error) error {
+		consumeFunc: func(ctx context.Context, handler func(string, model.Event) error) error {
 			// Call handler with test event
-			return handler(evt)
+			return handler("evt-1", evt)
 		},
 	}
 
-	oc := NewOrderConsumer(consumer, svc, 1, logger)
+	oc := NewOrderConsumer(consumer, svc, &mockIdempotencyChecker{}, 1, logger)
 
 	// Start consumer in a goroutine
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -143,12 +154,12 @@ func TestOrderConsumer_Start_NonOrderCreatedEvent(t *testing.T) {
 	}
 
 	consumer := &mockConsumer{
-		consumeFunc: func(ctx context.Context, handler func(model.Event) error) error {
-			return handler(evt)
+		consumeFunc: func(ctx context.Context, handler func(string, model.Event) error) error {
+			return handler("evt-2", evt)
 		},
 	}
 
-	oc := NewOrderConsumer(consumer, svc, 1, logger)
+	oc := NewOrderConsumer(consumer, svc, &mockIdempotencyChecker{}, 1, logger)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
@@ -176,12 +187,12 @@ func TestOrderConsumer_Start_InvalidPayload(t *testing.T) {
 	}
 
 	consumer := &mockConsumer{
-		consumeFunc: func(ctx context.Context, handler func(model.Event) error) error {
-			return handler(evt)
+		consumeFunc: func(ctx context.Context, handler func(string, model.Event) error) error {
+			return handler("evt-3", evt)
 		},
 	}
 
-	oc := NewOrderConsumer(consumer, svc, 1, logger)
+	oc := NewOrderConsumer(consumer, svc, &mockIdempotencyChecker{}, 1, logger)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
@@ -225,12 +236,12 @@ func TestOrderConsumer_Start_ProcessFails(t *testing.T) {
 	}
 
 	consumer := &mockConsumer{
-		consumeFunc: func(ctx context.Context, handler func(model.Event) error) error {
-			return handler(evt)
+		consumeFunc: func(ctx context.Context, handler func(string, model.Event) error) error {
+			return handler("evt-4", evt)
 		},
 	}
 
-	oc := NewOrderConsumer(consumer, svc, 1, logger)
+	oc := NewOrderConsumer(consumer, svc, &mockIdempotencyChecker{}, 1, logger)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
@@ -252,14 +263,14 @@ func TestOrderConsumer_Start_MultipleWorkers(t *testing.T) {
 	logger := logger.NewNop()
 
 	consumer := &mockConsumer{
-		consumeFunc: func(ctx context.Context, handler func(model.Event) error) error {
+		consumeFunc: func(ctx context.Context, handler func(string, model.Event) error) error {
 			// Wait for context to be done
 			<-ctx.Done()
 			return nil
 		},
 	}
 
-	oc := NewOrderConsumer(consumer, svc, 10, logger)
+	oc := NewOrderConsumer(consumer, svc, nil, 10, logger)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()

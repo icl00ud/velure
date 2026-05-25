@@ -14,11 +14,13 @@ import (
 	"github.com/icl00ud/velure/services/process-order-service/internal/client"
 	"github.com/icl00ud/velure/services/process-order-service/internal/config"
 	"github.com/icl00ud/velure/services/process-order-service/internal/handler"
+	"github.com/icl00ud/velure/services/process-order-service/internal/idempotency"
 	"github.com/icl00ud/velure/services/process-order-service/internal/queue"
 	"github.com/icl00ud/velure/services/process-order-service/internal/service"
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -83,7 +85,19 @@ func run(ctx context.Context, log *logger.Logger) error {
 	productClient := client.NewProductClient(productServiceURL)
 
 	paySvc := service.NewPaymentService(publisher, productClient)
-	oc := handler.NewOrderConsumer(consumer, paySvc, cfg.Workers, log)
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     cfg.RedisAddr,
+		Password: cfg.RedisPassword,
+		DB:       cfg.RedisDB,
+	})
+	defer rdb.Close()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Warn("redis ping failed; idempotency will fail-open", logger.Err(err))
+	}
+	checker := idempotency.NewChecker(rdb, 24*time.Hour)
+
+	oc := handler.NewOrderConsumer(consumer, paySvc, checker, cfg.Workers, log)
 
 	g, ctx := errgroup.WithContext(ctx)
 	// health server

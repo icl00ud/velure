@@ -13,12 +13,16 @@ func TestLoad_Success(t *testing.T) {
 	os.Setenv("RABBITMQ_ORDER_QUEUE", "orders")
 	os.Setenv("ORDER_EXCHANGE", "order-exchange")
 	os.Setenv("WORKERS", "50")
+	os.Setenv("REDIS_HOST", "redis")
+	os.Setenv("REDIS_PORT", "6379")
 	defer func() {
 		os.Unsetenv("PROCESS_ORDER_SERVICE_APP_PORT")
 		os.Unsetenv("PROCESS_RABBITMQ_URL")
 		os.Unsetenv("RABBITMQ_ORDER_QUEUE")
 		os.Unsetenv("ORDER_EXCHANGE")
 		os.Unsetenv("WORKERS")
+		os.Unsetenv("REDIS_HOST")
+		os.Unsetenv("REDIS_PORT")
 	}()
 
 	cfg, err := Load()
@@ -41,6 +45,9 @@ func TestLoad_Success(t *testing.T) {
 	if cfg.Workers != 50 {
 		t.Errorf("expected Workers 50, got %d", cfg.Workers)
 	}
+	if cfg.RedisAddr != "redis:6379" {
+		t.Errorf("expected RedisAddr redis:6379, got %s", cfg.RedisAddr)
+	}
 }
 
 func TestLoad_DefaultWorkers(t *testing.T) {
@@ -49,11 +56,13 @@ func TestLoad_DefaultWorkers(t *testing.T) {
 	os.Setenv("PROCESS_RABBITMQ_URL", "amqp://localhost")
 	os.Setenv("RABBITMQ_ORDER_QUEUE", "orders")
 	os.Setenv("ORDER_EXCHANGE", "order-exchange")
+	os.Setenv("REDIS_HOST", "redis")
 	defer func() {
 		os.Unsetenv("PROCESS_ORDER_SERVICE_APP_PORT")
 		os.Unsetenv("PROCESS_RABBITMQ_URL")
 		os.Unsetenv("RABBITMQ_ORDER_QUEUE")
 		os.Unsetenv("ORDER_EXCHANGE")
+		os.Unsetenv("REDIS_HOST")
 	}()
 
 	cfg, err := Load()
@@ -72,12 +81,14 @@ func TestLoad_InvalidWorkers(t *testing.T) {
 	os.Setenv("PROCESS_RABBITMQ_URL", "amqp://localhost")
 	os.Setenv("RABBITMQ_ORDER_QUEUE", "orders")
 	os.Setenv("ORDER_EXCHANGE", "order-exchange")
+	os.Setenv("REDIS_HOST", "redis")
 	os.Setenv("WORKERS", "invalid")
 	defer func() {
 		os.Unsetenv("PROCESS_ORDER_SERVICE_APP_PORT")
 		os.Unsetenv("PROCESS_RABBITMQ_URL")
 		os.Unsetenv("RABBITMQ_ORDER_QUEUE")
 		os.Unsetenv("ORDER_EXCHANGE")
+		os.Unsetenv("REDIS_HOST")
 		os.Unsetenv("WORKERS")
 	}()
 
@@ -160,18 +171,68 @@ func TestLoad_EmptyValues(t *testing.T) {
 	}
 }
 
+func TestLoad_InvalidRedisDB(t *testing.T) {
+	os.Setenv("PROCESS_ORDER_SERVICE_APP_PORT", "8081")
+	os.Setenv("PROCESS_RABBITMQ_URL", "amqp://localhost")
+	os.Setenv("RABBITMQ_ORDER_QUEUE", "orders")
+	os.Setenv("ORDER_EXCHANGE", "order-exchange")
+	os.Setenv("REDIS_HOST", "redis")
+	os.Setenv("REDIS_DB", "notanumber")
+	defer func() {
+		os.Unsetenv("PROCESS_ORDER_SERVICE_APP_PORT")
+		os.Unsetenv("PROCESS_RABBITMQ_URL")
+		os.Unsetenv("RABBITMQ_ORDER_QUEUE")
+		os.Unsetenv("ORDER_EXCHANGE")
+		os.Unsetenv("REDIS_HOST")
+		os.Unsetenv("REDIS_DB")
+	}()
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected error for invalid REDIS_DB, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid REDIS_DB") {
+		t.Errorf("expected error to mention invalid REDIS_DB, got: %v", err)
+	}
+}
+
+func TestLoad_RedisDefaultPort(t *testing.T) {
+	os.Setenv("PROCESS_ORDER_SERVICE_APP_PORT", "8081")
+	os.Setenv("PROCESS_RABBITMQ_URL", "amqp://localhost")
+	os.Setenv("RABBITMQ_ORDER_QUEUE", "orders")
+	os.Setenv("ORDER_EXCHANGE", "order-exchange")
+	os.Setenv("REDIS_HOST", "redis")
+	defer func() {
+		os.Unsetenv("PROCESS_ORDER_SERVICE_APP_PORT")
+		os.Unsetenv("PROCESS_RABBITMQ_URL")
+		os.Unsetenv("RABBITMQ_ORDER_QUEUE")
+		os.Unsetenv("ORDER_EXCHANGE")
+		os.Unsetenv("REDIS_HOST")
+	}()
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.RedisAddr != "redis:6379" {
+		t.Errorf("expected default port redis:6379, got %s", cfg.RedisAddr)
+	}
+}
+
 func TestLoad_WorkersWhitespace(t *testing.T) {
 	// Workers with only whitespace should default
 	os.Setenv("PROCESS_ORDER_SERVICE_APP_PORT", "8081")
 	os.Setenv("PROCESS_RABBITMQ_URL", "amqp://localhost")
 	os.Setenv("RABBITMQ_ORDER_QUEUE", "orders")
 	os.Setenv("ORDER_EXCHANGE", "order-exchange")
+	os.Setenv("REDIS_HOST", "redis")
 	os.Setenv("WORKERS", "   ")
 	defer func() {
 		os.Unsetenv("PROCESS_ORDER_SERVICE_APP_PORT")
 		os.Unsetenv("PROCESS_RABBITMQ_URL")
 		os.Unsetenv("RABBITMQ_ORDER_QUEUE")
 		os.Unsetenv("ORDER_EXCHANGE")
+		os.Unsetenv("REDIS_HOST")
 		os.Unsetenv("WORKERS")
 	}()
 

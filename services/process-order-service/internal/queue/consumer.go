@@ -2,6 +2,8 @@ package queue
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 
@@ -14,7 +16,7 @@ import (
 const maxRetries = 3
 
 type Consumer interface {
-	Consume(ctx context.Context, handler func(model.Event) error) error
+	Consume(ctx context.Context, handler func(eventID string, evt model.Event) error) error
 	Close() error
 }
 
@@ -81,7 +83,7 @@ func getRetryCount(headers amqp091.Table) int64 {
 	return count
 }
 
-func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(model.Event) error) error {
+func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(eventID string, evt model.Event) error) error {
 	msgs, err := r.channel.Consume(r.queue, "", false, false, false, false, nil)
 	if err != nil {
 		return err
@@ -98,6 +100,7 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(model.Event
 
 			// Contagem de retries da mensagem
 			retryCount := getRetryCount(d.Headers)
+			eventID := extractEventID(d)
 
 			var evt model.Event
 			if err := json.Unmarshal(d.Body, &evt); err != nil {
@@ -113,7 +116,7 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(model.Event
 				logger.String("event_type", evt.Type),
 				logger.Int64("retry_count", retryCount))
 
-			if err := handler(evt); err != nil {
+			if err := handler(eventID, evt); err != nil {
 				// Check whether this is a permanent error
 				var permErr *client.PermanentError
 				if errors.As(err, &permErr) {
@@ -153,6 +156,20 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(model.Event
 				logger.Int64("retry_count", retryCount))
 		}
 	}
+}
+
+func extractEventID(d amqp091.Delivery) string {
+	if d.Headers != nil {
+		if v, ok := d.Headers["event_id"].(string); ok && v != "" {
+			return v
+		}
+	}
+	if d.MessageId != "" {
+		return d.MessageId
+	}
+	// Deterministic fallback: same body → same id, dedup still works.
+	h := sha256.Sum256(d.Body)
+	return hex.EncodeToString(h[:8])
 }
 
 func (r *rabbitMQConsumer) Close() error {

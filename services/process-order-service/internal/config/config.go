@@ -13,6 +13,9 @@ type Config struct {
 	OrderQueue    string
 	OrderExchange string
 	Workers       int
+	RedisAddr     string
+	RedisPassword string
+	RedisDB       int
 }
 
 func Load() (Config, error) {
@@ -41,6 +44,24 @@ func Load() (Config, error) {
 		c.OrderExchange = v
 	} else {
 		missing = append(missing, "ORDER_EXCHANGE")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("REDIS_HOST")); v != "" {
+		port := strings.TrimSpace(os.Getenv("REDIS_PORT"))
+		if port == "" {
+			port = "6379"
+		}
+		c.RedisAddr = v + ":" + port
+	} else {
+		missing = append(missing, "REDIS_HOST")
+	}
+	c.RedisPassword = os.Getenv("REDIS_PASSWORD")
+	if v := strings.TrimSpace(os.Getenv("REDIS_DB")); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return c, fmt.Errorf("invalid REDIS_DB: %w", err)
+		}
+		c.RedisDB = n
 	}
 
 	if v := strings.TrimSpace(os.Getenv("WORKERS")); v != "" {

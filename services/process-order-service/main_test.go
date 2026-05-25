@@ -87,6 +87,8 @@ func TestRun_StartsAndStopsWithStubbedDependencies(t *testing.T) {
 	t.Setenv("RABBITMQ_ORDER_QUEUE", "orders")
 	t.Setenv("ORDER_EXCHANGE", "orders")
 	t.Setenv("WORKERS", "1")
+	t.Setenv("REDIS_HOST", "localhost")
+	t.Setenv("REDIS_PORT", "6379")
 
 	consumerChannel := &testChannel{}
 	publisherChannel := &testChannel{}
@@ -132,6 +134,8 @@ func TestMain_ExitsOnSignal(t *testing.T) {
 	t.Setenv("RABBITMQ_ORDER_QUEUE", "orders")
 	t.Setenv("ORDER_EXCHANGE", "orders")
 	t.Setenv("WORKERS", "1")
+	t.Setenv("REDIS_HOST", "localhost")
+	t.Setenv("REDIS_PORT", "6379")
 
 	consumerChannel := &testChannel{}
 	publisherChannel := &testChannel{}
