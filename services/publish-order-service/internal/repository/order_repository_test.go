@@ -466,3 +466,34 @@ func TestPostgresOrderRepository_GetOrdersByUserID_CountError(t *testing.T) {
 		t.Errorf("unmet expectations: %v", err)
 	}
 }
+
+func TestSaveTx_UsesProvidedTransaction(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO TBLOrders")).
+		WithArgs("order-1", "user-1", sqlmock.AnyArg(), 100.0, "CREATED", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	tx, _ := db.BeginTx(context.Background(), nil)
+	repo := &PostgresOrderRepository{db: db}
+	err = repo.SaveTx(context.Background(), tx, model.Order{
+		ID: "order-1", UserID: "user-1", Total: 100.0, Status: "CREATED",
+		Items: []model.CartItem{{ProductID: "p1", Quantity: 1}},
+		CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("SaveTx: %v", err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
