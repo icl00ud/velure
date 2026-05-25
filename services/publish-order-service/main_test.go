@@ -28,7 +28,7 @@ func TestRegisterRoutes_CanonicalOnly(t *testing.T) {
 	const jwtSecret = "test-secret"
 
 	svc := &routingStubService{}
-	oh := handler.NewOrderHandler(svc, &stubPublisher{})
+	oh := handler.NewOrderHandler(svc)
 	sse := handler.NewSSEHandler(svc)
 
 	mux := http.NewServeMux()

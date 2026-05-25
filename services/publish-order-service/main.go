@@ -135,7 +135,7 @@ func run(parentCtx context.Context, deps appDeps) error {
 	}
 	outboxRepo := outbox.NewPostgresRepository(outboxDB)
 	svc := service.NewOrderService(repo, outboxRepo, outboxDB, service.NewPricingCalculator())
-	oh := handler.NewOrderHandler(svc, pub)
+	oh := handler.NewOrderHandler(svc)
 
 	sseHandler := handler.NewSSEHandler(svc)
 	eventHandler := handler.NewEventHandler(svc, log)
