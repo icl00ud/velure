@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"testing"
@@ -25,6 +26,10 @@ func (m *mockOrderRepository) Save(ctx context.Context, order model.Order) error
 		return m.saveFunc(ctx, order)
 	}
 	return nil
+}
+
+func (m *mockOrderRepository) SaveTx(ctx context.Context, _ *sql.Tx, order model.Order) error {
+	return m.Save(ctx, order)
 }
 
 func (m *mockOrderRepository) Find(ctx context.Context, id string) (model.Order, error) {

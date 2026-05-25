@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
@@ -18,6 +19,10 @@ type recordingRepo struct {
 func (r *recordingRepo) Save(ctx context.Context, order model.Order) error {
 	r.saved = append(r.saved, order)
 	return nil
+}
+
+func (r *recordingRepo) SaveTx(ctx context.Context, _ *sql.Tx, order model.Order) error {
+	return r.Save(ctx, order)
 }
 
 func (r *recordingRepo) Find(ctx context.Context, id string) (model.Order, error) {

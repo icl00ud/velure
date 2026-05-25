@@ -309,6 +309,8 @@ type stubRepository struct {
 
 func (s *stubRepository) Save(context.Context, model.Order) error { return nil }
 
+func (s *stubRepository) SaveTx(context.Context, *sql.Tx, model.Order) error { return nil }
+
 func (s *stubRepository) Find(context.Context, string) (model.Order, error) {
 	return model.Order{}, nil
 }
@@ -340,6 +342,8 @@ type stubPublisher struct {
 }
 
 func (s *stubPublisher) Publish(model.Event) error { return nil }
+
+func (s *stubPublisher) PublishWithConfirm(context.Context, model.OutboxEvent) error { return nil }
 
 func (s *stubPublisher) Close() error {
 	s.closed = true

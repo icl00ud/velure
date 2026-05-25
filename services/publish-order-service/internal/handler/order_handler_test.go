@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -29,6 +30,10 @@ type fakeRepo struct {
 func (f *fakeRepo) Save(ctx context.Context, o model.Order) error {
 	f.savedOrders = append(f.savedOrders, o)
 	return f.saveErr
+}
+
+func (f *fakeRepo) SaveTx(ctx context.Context, _ *sql.Tx, o model.Order) error {
+	return f.Save(ctx, o)
 }
 
 func (f *fakeRepo) Find(ctx context.Context, id string) (model.Order, error) {
