@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"github.com/icl00ud/velure/services/process-order-service/internal/client"
+	"github.com/icl00ud/velure/services/process-order-service/internal/metrics"
 	"github.com/icl00ud/velure/services/process-order-service/internal/model"
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/rabbitmq/amqp091-go"
@@ -167,7 +168,9 @@ func extractEventID(d amqp091.Delivery) string {
 	if d.MessageId != "" {
 		return d.MessageId
 	}
-	// Deterministic fallback: same body → same id, dedup still works.
+	// Neither header nor envelope id present — flag and fall back to a
+	// deterministic hash of the body so dedup still works.
+	metrics.MessagesMissingEventID.Inc()
 	h := sha256.Sum256(d.Body)
 	return hex.EncodeToString(h[:8])
 }
