@@ -11,10 +11,47 @@ import (
 	"testing"
 	"time"
 
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/middleware"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/service"
 )
+
+// fakeOutboxRepository is a no-op outbox used in handler tests.
+type fakeOutboxRepository struct{}
+
+func (f *fakeOutboxRepository) SaveTx(_ context.Context, _ *sql.Tx, _ model.OutboxEvent) error {
+	return nil
+}
+
+func (f *fakeOutboxRepository) FetchUnpublished(_ context.Context, _ int) (*sql.Tx, []model.OutboxEvent, error) {
+	return nil, nil, nil
+}
+
+func (f *fakeOutboxRepository) MarkPublished(_ context.Context, _ *sql.Tx, _ []string) error {
+	return nil
+}
+
+// newPermissiveDB returns a sqlmock *sql.DB that accepts Begin+Commit and
+// Begin+Rollback without strict expectations. Used by handler tests that
+// exercise Create/UpdateStatus but aren't testing the tx itself.
+func newPermissiveDB(t *testing.T) *sql.DB {
+	t.Helper()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	mock.MatchExpectationsInOrder(false)
+	// Pre-register enough Begin/Commit/Rollback expectations for handler tests
+	// that may call Create or UpdateStatus multiple times.
+	for i := 0; i < 5; i++ {
+		mock.ExpectBegin()
+		mock.ExpectCommit()
+		mock.ExpectRollback()
+	}
+	t.Cleanup(func() { db.Close() })
+	return db
+}
 
 type fakeRepo struct {
 	saveErr        error
@@ -90,8 +127,9 @@ func (f *fakePublisher) Publish(evt model.Event) error {
 	return f.err
 }
 
-func newTestHandler(repo *fakeRepo, pub *fakePublisher, pricingValue float64) *OrderHandler {
-	svc := service.NewOrderService(repo, fakePricing{value: pricingValue})
+func newTestHandler(t *testing.T, repo *fakeRepo, pub *fakePublisher, pricingValue float64) *OrderHandler {
+	db := newPermissiveDB(t)
+	svc := service.NewOrderService(repo, &fakeOutboxRepository{}, db, fakePricing{value: pricingValue})
 	return NewOrderHandler(svc, pub)
 }
 
@@ -102,7 +140,7 @@ func withUser(ctx context.Context) context.Context {
 func TestCreateOrder_Success(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 42.0)
+	h := newTestHandler(t, repo, pub, 42.0)
 
 	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"items":[{"product_id":"p1","quantity":2,"price":10}]}`))
 	req = req.WithContext(withUser(req.Context()))
@@ -141,7 +179,7 @@ func TestCreateOrder_Success(t *testing.T) {
 func TestCreateOrder_MissingUser(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 10)
+	h := newTestHandler(t, repo, pub, 10)
 
 	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`[]`))
 	w := httptest.NewRecorder()
@@ -156,7 +194,7 @@ func TestCreateOrder_MissingUser(t *testing.T) {
 func TestCreateOrder_InvalidPayload(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 10)
+	h := newTestHandler(t, repo, pub, 10)
 
 	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`invalid`))
 	req = req.WithContext(withUser(req.Context()))
@@ -172,7 +210,7 @@ func TestCreateOrder_InvalidPayload(t *testing.T) {
 func TestCreateOrder_ServiceError(t *testing.T) {
 	repo := &fakeRepo{saveErr: errors.New("db down")}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 10)
+	h := newTestHandler(t, repo, pub, 10)
 
 	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"items":[{"product_id":"p1","quantity":1,"price":1}]}`))
 	req = req.WithContext(withUser(req.Context()))
@@ -191,7 +229,7 @@ func TestCreateOrder_ServiceError(t *testing.T) {
 func TestCreateOrder_PublishErrorStillReturnsCreated(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{err: errors.New("publish failed")}
-	h := newTestHandler(repo, pub, 5)
+	h := newTestHandler(t, repo, pub, 5)
 
 	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"items":[{"product_id":"p1","quantity":1,"price":2}]}`))
 	req = req.WithContext(withUser(req.Context()))
@@ -213,7 +251,7 @@ func TestUpdateStatus_PublishesEvent(t *testing.T) {
 		foundOrder: model.Order{ID: "order-1", UserID: "user-123", Status: model.StatusCreated, UpdatedAt: now},
 	}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`{"order_id":"order-1","status":"PROCESSING"}`))
 	w := httptest.NewRecorder()
@@ -240,7 +278,7 @@ func TestUpdateStatus_PublishesEvent(t *testing.T) {
 func TestCreateOrder_PublishFailureLogsButReturnsCreated(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{err: errors.New("publish failed")}
-	h := newTestHandler(repo, pub, 10)
+	h := newTestHandler(t, repo, pub, 10)
 
 	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"items":[{"product_id":"p1","quantity":1,"price":2}]}`))
 	req = req.WithContext(withUser(req.Context()))
@@ -259,7 +297,7 @@ func TestCreateOrder_PublishFailureLogsButReturnsCreated(t *testing.T) {
 func TestCreateOrder_NoItemsReturnsBadRequest(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"items":[]}`))
 	req = req.WithContext(withUser(req.Context()))
@@ -275,7 +313,7 @@ func TestCreateOrder_NoItemsReturnsBadRequest(t *testing.T) {
 func TestCreateOrder_InvalidItem(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodPost, "/orders", strings.NewReader(`{"items":[{"product_id":"","quantity":0,"price":1}]}`))
 	req = req.WithContext(withUser(req.Context()))
@@ -296,7 +334,7 @@ func TestUpdateStatus_PublishError(t *testing.T) {
 	pub := &fakePublisher{
 		err: errors.New("publish fail"),
 	}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`{"order_id":"order-2","status":"COMPLETED"}`))
 	w := httptest.NewRecorder()
@@ -311,7 +349,7 @@ func TestUpdateStatus_PublishError(t *testing.T) {
 func TestUpdateStatus_InvalidPayload(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`not-json`))
 	w := httptest.NewRecorder()
@@ -326,7 +364,7 @@ func TestUpdateStatus_InvalidPayload(t *testing.T) {
 func TestUpdateStatus_FindError(t *testing.T) {
 	repo := &fakeRepo{findErr: errors.New("not found")}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`{"order_id":"order-1","status":"PROCESSING"}`))
 	w := httptest.NewRecorder()
@@ -344,7 +382,7 @@ func TestUpdateStatus_FindError(t *testing.T) {
 func TestGetUserOrderByID_ValidatesInput(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/order", nil)
 	req = req.WithContext(withUser(req.Context()))
@@ -360,7 +398,7 @@ func TestGetUserOrderByID_ValidatesInput(t *testing.T) {
 func TestGetUserOrderByID_Unauthorized(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/order?id=order-123", nil)
 	w := httptest.NewRecorder()
@@ -375,7 +413,7 @@ func TestGetUserOrderByID_Unauthorized(t *testing.T) {
 func TestGetUserOrderByID_NotFound(t *testing.T) {
 	repo := &fakeRepo{findByUserErr: errors.New("missing")}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/order?id=order-123", nil)
 	req = req.WithContext(withUser(req.Context()))
@@ -391,7 +429,7 @@ func TestGetUserOrderByID_NotFound(t *testing.T) {
 func TestGetUserOrders_Unauthorized(t *testing.T) {
 	repo := &fakeRepo{}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/orders", nil)
 	w := httptest.NewRecorder()
@@ -406,7 +444,7 @@ func TestGetUserOrders_Unauthorized(t *testing.T) {
 func TestGetUserOrders_RepoError(t *testing.T) {
 	repo := &fakeRepo{getPageUserErr: errors.New("db issue")}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/user/orders", nil)
 	req = req.WithContext(withUser(req.Context()))
@@ -430,7 +468,7 @@ func TestGetOrdersByPage_Success(t *testing.T) {
 		},
 	}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/orders?page=1&pageSize=10", nil)
 	w := httptest.NewRecorder()
@@ -452,7 +490,7 @@ func TestGetOrdersByPage_Success(t *testing.T) {
 func TestGetOrdersByPage_Error(t *testing.T) {
 	repo := &fakeRepo{getPageErr: errors.New("db down")}
 	pub := &fakePublisher{}
-	h := newTestHandler(repo, pub, 0)
+	h := newTestHandler(t, repo, pub, 0)
 
 	req := httptest.NewRequest(http.MethodGet, "/orders?page=1&pageSize=10", nil)
 	w := httptest.NewRecorder()

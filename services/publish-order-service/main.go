@@ -19,6 +19,7 @@ import (
 	"github.com/icl00ud/velure/services/publish-order-service/internal/handler"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/middleware"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/publisher"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/outbox"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/repository"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/service"
 	"github.com/icl00ud/velure/shared/logger"
@@ -128,7 +129,12 @@ func run(parentCtx context.Context, deps appDeps) error {
 	log.Info("RabbitMQ publisher initialized")
 
 	log.Info("Initializing services")
-	svc := service.NewOrderService(repo, service.NewPricingCalculator())
+	var outboxDB *sql.DB
+	if dbRepo, ok := repo.(dbProvider); ok {
+		outboxDB = dbRepo.DB()
+	}
+	outboxRepo := outbox.NewPostgresRepository(outboxDB)
+	svc := service.NewOrderService(repo, outboxRepo, outboxDB, service.NewPricingCalculator())
 	oh := handler.NewOrderHandler(svc, pub)
 
 	sseHandler := handler.NewSSEHandler(svc)

@@ -5,10 +5,37 @@ import (
 	"database/sql"
 	"testing"
 
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/service"
 	"github.com/icl00ud/velure/shared/logger"
 )
+
+// newEventPermissiveDB is a permissive sqlmock db for event handler tests.
+func newEventPermissiveDB(t *testing.T) *sql.DB {
+	t.Helper()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	mock.MatchExpectationsInOrder(false)
+	for i := 0; i < 5; i++ {
+		mock.ExpectBegin()
+		mock.ExpectCommit()
+		mock.ExpectRollback()
+	}
+	t.Cleanup(func() { db.Close() })
+	return db
+}
+
+// noopOutbox is a no-op outbox.Repository for event handler tests.
+type noopOutbox struct{}
+
+func (n *noopOutbox) SaveTx(_ context.Context, _ *sql.Tx, _ model.OutboxEvent) error { return nil }
+func (n *noopOutbox) FetchUnpublished(_ context.Context, _ int) (*sql.Tx, []model.OutboxEvent, error) {
+	return nil, nil, nil
+}
+func (n *noopOutbox) MarkPublished(_ context.Context, _ *sql.Tx, _ []string) error { return nil }
 
 type recordingRepo struct {
 	findOrder model.Order
@@ -60,7 +87,7 @@ func (fixedPricing) Calculate(items []model.CartItem) float64 { return 0 }
 
 func TestHandleEvent_UpdatesStatusAndNotifiesSSE(t *testing.T) {
 	repo := &recordingRepo{findOrder: model.Order{UserID: "user-1", Status: model.StatusCreated}}
-	svc := service.NewOrderService(repo, fixedPricing{})
+	svc := service.NewOrderService(repo, &noopOutbox{}, newEventPermissiveDB(t), fixedPricing{})
 	h := NewEventHandler(svc, logger.NewNop())
 
 	sse := NewSSEHandler(svc)
@@ -92,7 +119,7 @@ func TestHandleEvent_UpdatesStatusAndNotifiesSSE(t *testing.T) {
 
 func TestHandleEvent_ReturnsErrorOnEmptyPayloadID(t *testing.T) {
 	repo := &recordingRepo{findOrder: model.Order{UserID: "user-1"}}
-	svc := service.NewOrderService(repo, fixedPricing{})
+	svc := service.NewOrderService(repo, &noopOutbox{}, newEventPermissiveDB(t), fixedPricing{})
 	h := NewEventHandler(svc, logger.NewNop())
 
 	err := h.HandleEvent(context.Background(), model.Event{
@@ -106,7 +133,7 @@ func TestHandleEvent_ReturnsErrorOnEmptyPayloadID(t *testing.T) {
 
 func TestHandleOrderProcessing_ValidPayload(t *testing.T) {
 	repo := &recordingRepo{findOrder: model.Order{UserID: "user-1"}}
-	svc := service.NewOrderService(repo, fixedPricing{})
+	svc := service.NewOrderService(repo, &noopOutbox{}, newEventPermissiveDB(t), fixedPricing{})
 	h := NewEventHandler(svc, logger.NewNop())
 
 	if err := h.handleOrderProcessing(context.Background(), []byte(`{"id":"order-42"}`)); err != nil {
@@ -119,7 +146,7 @@ func TestHandleOrderProcessing_ValidPayload(t *testing.T) {
 
 func TestHandleOrderProcessing_InvalidJSON(t *testing.T) {
 	repo := &recordingRepo{findOrder: model.Order{}}
-	svc := service.NewOrderService(repo, fixedPricing{})
+	svc := service.NewOrderService(repo, &noopOutbox{}, newEventPermissiveDB(t), fixedPricing{})
 	h := NewEventHandler(svc, logger.NewNop())
 
 	if err := h.handleOrderProcessing(context.Background(), []byte(`{invalid`)); err == nil {
@@ -129,7 +156,7 @@ func TestHandleOrderProcessing_InvalidJSON(t *testing.T) {
 
 func TestHandleOrderCompleted_UsesOrderIDField(t *testing.T) {
 	repo := &recordingRepo{findOrder: model.Order{UserID: "user-1"}}
-	svc := service.NewOrderService(repo, fixedPricing{})
+	svc := service.NewOrderService(repo, &noopOutbox{}, newEventPermissiveDB(t), fixedPricing{})
 	h := NewEventHandler(svc, logger.NewNop())
 
 	if err := h.handleOrderCompleted(context.Background(), []byte(`{"order_id":"abc-123"}`)); err != nil {

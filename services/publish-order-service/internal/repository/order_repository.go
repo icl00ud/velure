@@ -29,6 +29,12 @@ func (r *PostgresOrderRepository) DB() *sql.DB {
 	return r.db
 }
 
+// NewOrderRepositoryFromDB constructs a repository from an existing *sql.DB.
+// Useful in tests where a sqlmock db is already opened.
+func NewOrderRepositoryFromDB(db *sql.DB) *PostgresOrderRepository {
+	return &PostgresOrderRepository{db: db}
+}
+
 func NewOrderRepository(dsn string) (OrderRepository, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
