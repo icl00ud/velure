@@ -138,4 +138,18 @@ var (
 		},
 		[]string{"type"}, // type: payment, inventory, product_service, rabbitmq, internal
 	)
+
+	// Idempotency metrics
+	DuplicatesSkipped = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "process_order_duplicates_skipped_total",
+		Help: "Messages dropped because their event_id was already processed.",
+	})
+	IdempotencyCheckFailed = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "process_order_idempotency_check_failed_total",
+		Help: "Redis idempotency check errors (fail-open processed anyway).",
+	})
+	MessagesMissingEventID = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "process_order_messages_missing_event_id_total",
+		Help: "Messages whose event_id could not be extracted from headers or envelope.",
+	})
 )

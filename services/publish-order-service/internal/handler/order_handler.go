@@ -8,22 +8,16 @@ import (
 
 	"github.com/icl00ud/velure/services/publish-order-service/internal/metrics"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/middleware"
-	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/service"
 	"github.com/icl00ud/velure/shared/logger"
 )
 
-type Publisher interface {
-	Publish(evt model.Event) error
-}
-
 type OrderHandler struct {
 	svc OrderService
-	pub Publisher
 }
 
-func NewOrderHandler(svc OrderService, pub Publisher) *OrderHandler {
-	return &OrderHandler{svc: svc, pub: pub}
+func NewOrderHandler(svc OrderService) *OrderHandler {
+	return &OrderHandler{svc: svc}
 }
 
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
@@ -65,15 +59,6 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	metrics.OrderCreationDuration.Observe(time.Since(start).Seconds())
 	metrics.OrderTotalValue.Observe(float64(o.Total))
 	metrics.OrderItemsCount.Observe(float64(len(o.Items)))
-
-	evt := model.Event{Type: model.OrderCreated, Payload: mustMarshal(o)}
-	if err := h.pub.Publish(evt); err != nil {
-		logger.Error("publish event failed", logger.Err(err))
-		metrics.Errors.WithLabelValues("rabbitmq").Inc()
-		metrics.OrdersPublished.WithLabelValues("failure").Inc()
-	} else {
-		metrics.OrdersPublished.WithLabelValues("success").Inc()
-	}
 
 	metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", "201").Inc()
 	metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
@@ -147,11 +132,6 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	evt := model.Event{Type: dto.Status, Payload: mustMarshal(o)}
-	if err := h.pub.Publish(evt); err != nil {
-		logger.Error("publish event failed", logger.Err(err))
-	}
-
 	writeJSON(w, http.StatusOK, response{
 		"order_id": o.ID,
 		"status":   o.Status,
@@ -172,7 +152,3 @@ func (h *OrderHandler) GetOrdersByPage(w http.ResponseWriter, r *http.Request) {
 	writeJSONData(w, http.StatusOK, result)
 }
 
-func mustMarshal(v interface{}) json.RawMessage {
-	b, _ := json.Marshal(v)
-	return b
-}

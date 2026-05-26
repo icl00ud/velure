@@ -12,30 +12,52 @@ import (
 	"github.com/icl00ud/velure/services/process-order-service/internal/service"
 )
 
+// IdempotencyChecker gates duplicate event processing via Redis SET NX EX.
+type IdempotencyChecker interface {
+	FirstSeen(ctx context.Context, eventID string) (bool, error)
+	Forget(ctx context.Context, eventID string) error
+}
+
 type OrderConsumer struct {
 	consumer queue.Consumer
 	svc      service.PaymentService
+	idem     IdempotencyChecker
 	workers  int
 	logger   *logger.Logger
 }
 
-func NewOrderConsumer(c queue.Consumer, svc service.PaymentService, workers int, log *logger.Logger) *OrderConsumer {
+func NewOrderConsumer(c queue.Consumer, svc service.PaymentService, idem IdempotencyChecker, workers int, log *logger.Logger) *OrderConsumer {
 	return &OrderConsumer{
 		consumer: c,
 		svc:      svc,
+		idem:     idem,
 		workers:  workers,
 		logger:   log,
 	}
 }
 
 func (oc *OrderConsumer) Start(ctx context.Context) error {
-	handler := func(evt model.Event) error {
+	handler := func(eventID string, evt model.Event) error {
 		metrics.MessagesConsumed.Inc()
+
+		// Idempotency gate (fail-open on Redis errors).
+		if oc.idem != nil && eventID != "" {
+			firstSeen, err := oc.idem.FirstSeen(context.Background(), eventID)
+			if err != nil {
+				oc.logger.Error("idempotency check failed, processing anyway", logger.Err(err))
+				metrics.IdempotencyCheckFailed.Inc()
+			} else if !firstSeen {
+				metrics.DuplicatesSkipped.Inc()
+				metrics.MessagesAcknowledged.WithLabelValues("ack").Inc()
+				return nil // ack and skip
+			}
+		}
 
 		if evt.Type != model.OrderCreated {
 			metrics.MessagesAcknowledged.WithLabelValues("ack").Inc()
 			return nil
 		}
+
 		var p struct {
 			ID    string           `json:"id"`
 			Items []model.CartItem `json:"items"`
@@ -44,12 +66,18 @@ func (oc *OrderConsumer) Start(ctx context.Context) error {
 		if err := json.Unmarshal(evt.Payload, &p); err != nil {
 			metrics.MessageProcessingErrors.Inc()
 			metrics.MessagesAcknowledged.WithLabelValues("nack").Inc()
+			if oc.idem != nil && eventID != "" {
+				_ = oc.idem.Forget(context.Background(), eventID)
+			}
 			return err
 		}
 
 		if err := oc.svc.Process(p.ID, p.Items, int(p.Total)); err != nil {
 			metrics.MessageProcessingErrors.Inc()
 			metrics.MessagesAcknowledged.WithLabelValues("nack").Inc()
+			if oc.idem != nil && eventID != "" {
+				_ = oc.idem.Forget(context.Background(), eventID)
+			}
 			return err
 		}
 

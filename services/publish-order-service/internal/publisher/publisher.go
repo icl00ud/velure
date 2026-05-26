@@ -1,9 +1,11 @@
 package publisher
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
 	"github.com/icl00ud/velure/shared/logger"
@@ -12,19 +14,22 @@ import (
 
 type Publisher interface {
 	Publish(evt model.Event) error
+	PublishWithConfirm(ctx context.Context, evt model.OutboxEvent) error
 	Close() error
 }
 
 type rabbitMQPublisher struct {
-	amqpURL   string
-	conn      amqpPublisherConn
-	ch        amqpPublisherChannel
-	exchange  string
-	logger    *logger.Logger
-	closed    bool
-	mu        sync.Mutex
-	dialFn    func(string) (amqpPublisherConn, error)
-	connectFn func() error
+	amqpURL        string
+	conn           amqpPublisherConn
+	ch             amqpPublisherChannel
+	exchange       string
+	logger         *logger.Logger
+	closed         bool
+	mu             sync.Mutex
+	dialFn         func(string) (amqpPublisherConn, error)
+	connectFn      func() error
+	confirmTimeout time.Duration
+	confirms       chan amqp091.Confirmation
 }
 
 type amqpPublisherConn interface {
@@ -34,7 +39,10 @@ type amqpPublisherConn interface {
 
 type amqpPublisherChannel interface {
 	Publish(exchange, key string, mandatory, immediate bool, msg amqp091.Publishing) error
+	PublishWithContext(ctx context.Context, exchange, key string, mandatory, immediate bool, msg amqp091.Publishing) error
 	ExchangeDeclare(name, kind string, durable, autoDelete, internal, noWait bool, args amqp091.Table) error
+	Confirm(noWait bool) error
+	NotifyPublish(confirm chan amqp091.Confirmation) chan amqp091.Confirmation
 	Close() error
 }
 
@@ -54,10 +62,11 @@ func NewRabbitMQPublisher(amqpURL string, exchange string, log *logger.Logger) (
 
 func newRabbitMQPublisher(amqpURL string, exchange string, log *logger.Logger, dialFn func(string) (amqpPublisherConn, error)) (Publisher, error) {
 	p := &rabbitMQPublisher{
-		amqpURL:  amqpURL,
-		exchange: exchange,
-		logger:   log,
-		dialFn:   dialFn,
+		amqpURL:        amqpURL,
+		exchange:       exchange,
+		logger:         log,
+		dialFn:         dialFn,
+		confirmTimeout: 5 * time.Second,
 	}
 	p.connectFn = p.connect
 
@@ -128,6 +137,13 @@ func (r *rabbitMQPublisher) connect() error {
 	}
 	r.logger.Info("Exchange declared", logger.String("exchange", r.exchange))
 
+	if err := ch.Confirm(false); err != nil {
+		ch.Close()
+		conn.Close()
+		return fmt.Errorf("enable confirms: %w", err)
+	}
+	r.confirms = ch.NotifyPublish(make(chan amqp091.Confirmation, 1))
+
 	r.conn = conn
 	r.ch = ch
 	return nil
@@ -178,6 +194,55 @@ func (r *rabbitMQPublisher) Publish(evt model.Event) error {
 
 	r.logger.Info("event published", logger.String("exchange", r.exchange), logger.String("routingKey", evt.Type), logger.Int("body_size", len(body)))
 	return nil
+}
+
+func (r *rabbitMQPublisher) PublishWithConfirm(ctx context.Context, evt model.OutboxEvent) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.closed {
+		return fmt.Errorf("publisher is closed")
+	}
+	if r.ch == nil {
+		return amqp091.ErrClosed
+	}
+
+	timeout := r.confirmTimeout
+	if timeout == 0 {
+		timeout = 5 * time.Second
+	}
+
+	err := r.ch.PublishWithContext(ctx,
+		r.exchange,
+		evt.EventType,
+		false, false,
+		amqp091.Publishing{
+			ContentType: "application/json",
+			Body:        []byte(evt.Payload),
+			Headers: amqp091.Table{
+				"event_id": evt.ID,
+			},
+			MessageId: evt.ID,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("publish with confirm: %w", err)
+	}
+
+	select {
+	case c, ok := <-r.confirms:
+		if !ok {
+			return fmt.Errorf("confirm channel closed")
+		}
+		if !c.Ack {
+			return fmt.Errorf("broker nacked delivery tag %d", c.DeliveryTag)
+		}
+		return nil
+	case <-time.After(timeout):
+		return fmt.Errorf("confirm timeout after %s", timeout)
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 func (r *rabbitMQPublisher) Close() error {

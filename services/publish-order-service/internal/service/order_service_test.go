@@ -2,11 +2,15 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"testing"
 
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/outbox"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/repository"
 )
 
 // Mock repository for testing
@@ -25,6 +29,10 @@ func (m *mockOrderRepository) Save(ctx context.Context, order model.Order) error
 		return m.saveFunc(ctx, order)
 	}
 	return nil
+}
+
+func (m *mockOrderRepository) SaveTx(ctx context.Context, _ *sql.Tx, order model.Order) error {
+	return m.Save(ctx, order)
 }
 
 func (m *mockOrderRepository) Find(ctx context.Context, id string) (model.Order, error) {
@@ -69,6 +77,23 @@ func (m *mockOrderRepository) GetOrdersCountByUserID(ctx context.Context, userID
 	return 0, nil
 }
 
+// mockOutboxRepository is a no-op outbox for tests that use mockOrderRepository.
+type mockOutboxRepository struct {
+	saveTxErr error
+}
+
+func (m *mockOutboxRepository) SaveTx(_ context.Context, _ *sql.Tx, _ model.OutboxEvent) error {
+	return m.saveTxErr
+}
+
+func (m *mockOutboxRepository) FetchUnpublished(_ context.Context, _ int) (*sql.Tx, []model.OutboxEvent, error) {
+	return nil, nil, nil
+}
+
+func (m *mockOutboxRepository) MarkPublished(_ context.Context, _ *sql.Tx, _ []string) error {
+	return nil
+}
+
 // Mock pricing calculator
 type mockPricingCalculator struct {
 	calculateFunc func(items []model.CartItem) float64
@@ -81,10 +106,22 @@ func (m *mockPricingCalculator) Calculate(items []model.CartItem) float64 {
 	return 0.0
 }
 
+// newMockDB returns a sqlmock db pre-configured with Begin+Commit expectations,
+// used by tests that exercise Create/UpdateStatus via mockOrderRepository (which
+// intercepts SaveTx before any SQL is executed on the tx).
+func newMockDBWithTx(t *testing.T) (*sql.DB, sqlmock.Sqlmock) {
+	t.Helper()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	return db, mock
+}
+
 func TestNewOrderService(t *testing.T) {
 	repo := &mockOrderRepository{}
 	pc := &mockPricingCalculator{}
-	svc := NewOrderService(repo, pc)
+	svc := NewOrderService(repo, nil, nil, pc)
 
 	if svc == nil {
 		t.Fatal("expected non-nil order service")
@@ -164,8 +201,23 @@ func TestOrderService_Create(t *testing.T) {
 					return tt.pricing
 				},
 			}
-			svc := NewOrderService(repo, pc)
 
+			// Validation errors are returned before BeginTx; success/save-error paths need a tx.
+			needsTx := tt.expectedErr == nil || tt.saveErr != nil
+			var db *sql.DB
+			var mock sqlmock.Sqlmock
+			if needsTx {
+				db, mock = newMockDBWithTx(t)
+				defer db.Close()
+				mock.ExpectBegin()
+				if tt.saveErr != nil {
+					mock.ExpectRollback()
+				} else {
+					mock.ExpectCommit()
+				}
+			}
+
+			svc := NewOrderService(repo, &mockOutboxRepository{}, db, pc)
 			order, err := svc.Create(context.Background(), tt.userID, tt.items)
 
 			if tt.expectedErr != nil {
@@ -189,6 +241,12 @@ func TestOrderService_Create(t *testing.T) {
 				}
 				if order.ID == "" {
 					t.Error("expected non-empty order ID")
+				}
+			}
+
+			if mock != nil {
+				if err := mock.ExpectationsWereMet(); err != nil {
+					t.Errorf("sqlmock expectations: %v", err)
 				}
 			}
 		})
@@ -248,8 +306,21 @@ func TestOrderService_UpdateStatus(t *testing.T) {
 				},
 			}
 			pc := &mockPricingCalculator{}
-			svc := NewOrderService(repo, pc)
 
+			db, mock, err := sqlmock.New()
+			if err != nil {
+				t.Fatalf("sqlmock.New: %v", err)
+			}
+			defer db.Close()
+
+			mock.ExpectBegin()
+			if tt.expectedErr != nil {
+				mock.ExpectRollback()
+			} else {
+				mock.ExpectCommit()
+			}
+
+			svc := NewOrderService(repo, &mockOutboxRepository{}, db, pc)
 			order, err := svc.UpdateStatus(context.Background(), tt.orderID, tt.newStatus)
 
 			if tt.expectedErr != nil {
@@ -265,6 +336,10 @@ func TestOrderService_UpdateStatus(t *testing.T) {
 				if order.Status != tt.newStatus {
 					t.Errorf("expected status %s, got %s", tt.newStatus, order.Status)
 				}
+			}
+
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("sqlmock expectations: %v", err)
 			}
 		})
 	}
@@ -287,7 +362,7 @@ func TestOrderService_GetOrdersByPage(t *testing.T) {
 		},
 	}
 	pc := &mockPricingCalculator{}
-	svc := NewOrderService(repo, pc)
+	svc := NewOrderService(repo, nil, nil, pc)
 
 	result, err := svc.GetOrdersByPage(context.Background(), 1, 10)
 	if err != nil {
@@ -314,7 +389,7 @@ func TestOrderService_GetOrdersByUserID(t *testing.T) {
 		},
 	}
 	pc := &mockPricingCalculator{}
-	svc := NewOrderService(repo, pc)
+	svc := NewOrderService(repo, nil, nil, pc)
 
 	result, err := svc.GetOrdersByUserID(context.Background(), "user123", 1, 10)
 	if err != nil {
@@ -341,7 +416,7 @@ func TestOrderService_GetOrderByID(t *testing.T) {
 		},
 	}
 	pc := &mockPricingCalculator{}
-	svc := NewOrderService(repo, pc)
+	svc := NewOrderService(repo, nil, nil, pc)
 
 	order, err := svc.GetOrderByID(context.Background(), "user123", "order123")
 	if err != nil {
@@ -349,5 +424,65 @@ func TestOrderService_GetOrderByID(t *testing.T) {
 	}
 	if order.ID != expectedOrder.ID {
 		t.Errorf("expected order ID %s, got %s", expectedOrder.ID, order.ID)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Atomic outbox tests — use real repository impls over sqlmock db.
+// ---------------------------------------------------------------------------
+
+func TestOrderService_Create_PersistsOrderAndOutboxAtomically(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`INSERT INTO TBLOrders`).
+		WithArgs(sqlmock.AnyArg(), "user-1", sqlmock.AnyArg(), float64(0), "CREATED", sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(`INSERT INTO outbox_events`).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), model.OrderCreated, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	repo := repository.NewOrderRepositoryFromDB(db)
+	outboxRepo := outbox.NewPostgresRepository(db)
+	svc := NewOrderService(repo, outboxRepo, db, NewPricingCalculator())
+
+	_, err = svc.Create(context.Background(), "user-1", []model.CartItem{{ProductID: "p1", Quantity: 1}})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestOrderService_Create_RollsBackOnOutboxFailure(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`INSERT INTO TBLOrders`).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(`INSERT INTO outbox_events`).
+		WillReturnError(errors.New("outbox down"))
+	mock.ExpectRollback()
+
+	repo := repository.NewOrderRepositoryFromDB(db)
+	outboxRepo := outbox.NewPostgresRepository(db)
+	svc := NewOrderService(repo, outboxRepo, db, NewPricingCalculator())
+
+	_, err = svc.Create(context.Background(), "user-1", []model.CartItem{{ProductID: "p1", Quantity: 1}})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
 	}
 }

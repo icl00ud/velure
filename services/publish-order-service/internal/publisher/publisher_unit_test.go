@@ -1,9 +1,11 @@
 package publisher
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
 	"github.com/icl00ud/velure/shared/logger"
@@ -54,23 +56,40 @@ func TestDialPublisher_UsesDialer(t *testing.T) {
 }
 
 type fakePubChannel struct {
-	publishErr error
-	published  int
-	closed     bool
-	declared   int
-	name       string
-	closeErr   error
-	declareErr error
+	publishErr        error
+	publishWithCtxErr error
+	confirmErr        error
+	published         int
+	closed            bool
+	declared          int
+	name              string
+	closeErr          error
+	declareErr        error
+	confirms          chan amqp091.Confirmation
+	capturedHeaders   amqp091.Table
 }
 
 func (f *fakePubChannel) Publish(exchange, key string, mandatory, immediate bool, msg amqp091.Publishing) error {
 	f.published++
 	return f.publishErr
 }
+func (f *fakePubChannel) PublishWithContext(ctx context.Context, exchange, key string, mandatory, immediate bool, msg amqp091.Publishing) error {
+	f.capturedHeaders = msg.Headers
+	return f.publishWithCtxErr
+}
 func (f *fakePubChannel) ExchangeDeclare(name, kind string, durable, autoDelete, internal, noWait bool, args amqp091.Table) error {
 	f.declared++
 	f.name = name
 	return f.declareErr
+}
+func (f *fakePubChannel) Confirm(noWait bool) error {
+	return f.confirmErr
+}
+func (f *fakePubChannel) NotifyPublish(confirm chan amqp091.Confirmation) chan amqp091.Confirmation {
+	if f.confirms == nil {
+		f.confirms = confirm
+	}
+	return f.confirms
 }
 func (f *fakePubChannel) Close() error {
 	f.closed = true
@@ -383,5 +402,89 @@ func TestClose_ReturnsConnectionError(t *testing.T) {
 	}
 	if !ch.closed || !conn.closed {
 		t.Fatal("expected resources to be closed even on error")
+	}
+}
+
+// newTestPublisherWithConfirms builds a rabbitMQPublisher wired to a fakePubChannel
+// with a buffered confirms channel already returned by NotifyPublish.
+func newTestPublisherWithConfirms(t *testing.T, ch *fakePubChannel, confirmTimeout time.Duration) *rabbitMQPublisher {
+	t.Helper()
+	confirmsCh := make(chan amqp091.Confirmation, 1)
+	ch.confirms = confirmsCh
+
+	p := &rabbitMQPublisher{
+		amqpURL:        "amqp://fake",
+		exchange:       "orders",
+		logger:         logger.NewNop(),
+		confirmTimeout: confirmTimeout,
+		ch:             ch,
+		confirms:       confirmsCh,
+	}
+	p.connectFn = func() error { return nil }
+	return p
+}
+
+func TestPublishWithConfirm_WaitsForAck(t *testing.T) {
+	ch := &fakePubChannel{}
+	p := newTestPublisherWithConfirms(t, ch, 5*time.Second)
+
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		p.confirms <- amqp091.Confirmation{Ack: true, DeliveryTag: 1}
+	}()
+
+	evt := model.OutboxEvent{
+		ID:        "evt-1",
+		EventType: "order.created",
+		Payload:   []byte(`{}`),
+	}
+
+	err := p.PublishWithConfirm(context.Background(), evt)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if ch.capturedHeaders == nil {
+		t.Fatal("expected headers to be captured")
+	}
+	if ch.capturedHeaders["event_id"] != "evt-1" {
+		t.Errorf("expected event_id header = evt-1, got %v", ch.capturedHeaders["event_id"])
+	}
+}
+
+func TestPublishWithConfirm_NackErrors(t *testing.T) {
+	ch := &fakePubChannel{}
+	p := newTestPublisherWithConfirms(t, ch, 5*time.Second)
+
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		p.confirms <- amqp091.Confirmation{Ack: false, DeliveryTag: 1}
+	}()
+
+	evt := model.OutboxEvent{
+		ID:        "evt-2",
+		EventType: "order.created",
+		Payload:   []byte(`{}`),
+	}
+
+	err := p.PublishWithConfirm(context.Background(), evt)
+	if err == nil {
+		t.Fatal("expected error for nack, got nil")
+	}
+}
+
+func TestPublishWithConfirm_TimeoutErrors(t *testing.T) {
+	ch := &fakePubChannel{}
+	p := newTestPublisherWithConfirms(t, ch, 50*time.Millisecond)
+	// confirms chan is never sent on — timeout should trigger
+
+	evt := model.OutboxEvent{
+		ID:        "evt-3",
+		EventType: "order.created",
+		Payload:   []byte(`{}`),
+	}
+
+	err := p.PublishWithConfirm(context.Background(), evt)
+	if err == nil {
+		t.Fatal("expected timeout error, got nil")
 	}
 }

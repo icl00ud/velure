@@ -99,7 +99,7 @@ func TestRabbitMQConsumer_ConsumeSuccess(t *testing.T) {
 		logger:  logger.NewNop(),
 	}
 
-	if err := c.Consume(context.Background(), func(evt model.Event) error { return nil }); err != nil {
+	if err := c.Consume(context.Background(), func(_ string, evt model.Event) error { return nil }); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !acker.acked {
@@ -121,7 +121,7 @@ func TestRabbitMQConsumer_ConsumeHandlerErrorRequeues(t *testing.T) {
 		logger:  logger.NewNop(),
 	}
 
-	err := c.Consume(context.Background(), func(evt model.Event) error { return errors.New("temp") })
+	err := c.Consume(context.Background(), func(_ string, evt model.Event) error { return errors.New("temp") })
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -147,7 +147,7 @@ func TestRabbitMQConsumer_InvalidJSON(t *testing.T) {
 		logger:  logger.NewNop(),
 	}
 
-	err := c.Consume(context.Background(), func(evt model.Event) error { return nil })
+	err := c.Consume(context.Background(), func(_ string, evt model.Event) error { return nil })
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -168,7 +168,7 @@ func TestRabbitMQConsumer_ContextCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	start := time.Now()
-	err := c.Consume(ctx, func(evt model.Event) error { return nil })
+	err := c.Consume(ctx, func(_ string, evt model.Event) error { return nil })
 	if err == nil {
 		t.Fatal("expected context error")
 	}
@@ -191,7 +191,7 @@ func TestRabbitMQConsumer_PermanentErrorSendsToDLQ(t *testing.T) {
 		logger:  logger.NewNop(),
 	}
 
-	err := c.Consume(context.Background(), func(evt model.Event) error {
+	err := c.Consume(context.Background(), func(_ string, evt model.Event) error {
 		return &client.PermanentError{Message: "nope", StatusCode: 404}
 	})
 	if err != nil {
@@ -222,12 +222,56 @@ func TestRabbitMQConsumer_MaxRetriesSendsToDLQ(t *testing.T) {
 		logger:  logger.NewNop(),
 	}
 
-	err := c.Consume(context.Background(), func(evt model.Event) error { return errors.New("temporary") })
+	err := c.Consume(context.Background(), func(_ string, evt model.Event) error { return errors.New("temporary") })
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !acker.nacked || acker.requeue {
 		t.Fatal("expected nack without requeue when max retries reached")
+	}
+}
+
+func TestConsume_ExtractsEventIDFromHeader(t *testing.T) {
+	acker := &stubAcker{}
+	deliveries := make(chan amqp091.Delivery, 1)
+	deliveries <- amqp091.Delivery{
+		Body:         []byte(`{"type":"order.created","payload":{}}`),
+		Acknowledger: acker,
+		Headers:      amqp091.Table{"event_id": "evt-xyz"},
+	}
+	close(deliveries)
+
+	ch := &stubChannel{deliveries: deliveries}
+	c := &rabbitMQConsumer{
+		conn:    &stubConn{},
+		channel: ch,
+		queue:   "q",
+		logger:  logger.NewNop(),
+	}
+
+	var capturedEventID string
+	if err := c.Consume(context.Background(), func(eventID string, evt model.Event) error {
+		capturedEventID = eventID
+		return nil
+	}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedEventID != "evt-xyz" {
+		t.Fatalf("expected event_id evt-xyz, got %q", capturedEventID)
+	}
+}
+
+func TestExtractEventID_FallsBackToMessageIdThenHash(t *testing.T) {
+	d1 := amqp091.Delivery{MessageId: "msg-1"}
+	if id := extractEventID(d1); id != "msg-1" {
+		t.Fatalf("got %q", id)
+	}
+	d2 := amqp091.Delivery{Body: []byte("hello")}
+	if id := extractEventID(d2); id == "" {
+		t.Fatal("expected fallback hash, got empty")
+	}
+	if extractEventID(d2) != extractEventID(amqp091.Delivery{Body: []byte("hello")}) {
+		t.Fatal("hash should be deterministic")
 	}
 }
 

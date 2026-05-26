@@ -12,6 +12,7 @@ import (
 
 type OrderRepository interface {
 	Save(ctx context.Context, order model.Order) error
+	SaveTx(ctx context.Context, tx *sql.Tx, order model.Order) error
 	Find(ctx context.Context, id string) (model.Order, error)
 	FindByUserID(ctx context.Context, userID, orderID string) (model.Order, error)
 	GetOrdersByPage(ctx context.Context, page, pageSize int) (*model.PaginatedOrdersResponse, error)
@@ -26,6 +27,12 @@ type PostgresOrderRepository struct {
 
 func (r *PostgresOrderRepository) DB() *sql.DB {
 	return r.db
+}
+
+// NewOrderRepositoryFromDB constructs a repository from an existing *sql.DB.
+// Useful in tests where a sqlmock db is already opened.
+func NewOrderRepositoryFromDB(db *sql.DB) *PostgresOrderRepository {
+	return &PostgresOrderRepository{db: db}
 }
 
 func NewOrderRepository(dsn string) (OrderRepository, error) {
@@ -77,6 +84,27 @@ func (r *PostgresOrderRepository) Save(ctx context.Context, o model.Order) error
 	); err != nil {
 		logger.Error("order save failed", logger.Err(err))
 	}
+	return err
+}
+
+func (r *PostgresOrderRepository) SaveTx(ctx context.Context, tx *sql.Tx, o model.Order) error {
+	data, err := json.Marshal(o.Items)
+	if err != nil {
+		return err
+	}
+	const q = `
+        INSERT INTO TBLOrders(id, user_id, items, total, status, created_at, updated_at)
+        VALUES($1,$2,$3,$4,$5,$6,$7)
+        ON CONFLICT(id) DO UPDATE
+          SET user_id    = EXCLUDED.user_id,
+              items      = EXCLUDED.items,
+              total      = EXCLUDED.total,
+              status     = EXCLUDED.status,
+              updated_at = EXCLUDED.updated_at;
+    `
+	_, err = tx.ExecContext(ctx, q,
+		o.ID, o.UserID, data, o.Total, o.Status, o.CreatedAt, o.UpdatedAt,
+	)
 	return err
 }
 
