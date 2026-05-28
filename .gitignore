@@ -155,7 +155,7 @@ infrastructure/terraform/*.tfstate
 infrastructure/terraform/*.tfstate.*
 infrastructure/terraform/*.tfstate.backup
 infrastructure/terraform/.terraform/
-infrastructure/terraform/.terraform.lock.hcl
+# .terraform.lock.hcl SHOULD be committed for reproducible provider versions
 infrastructure/terraform/terraform.tfvars
 infrastructure/terraform/secrets.auto.tfvars
 infrastructure/terraform/override.tf

@@ -54,22 +54,13 @@ resource "aws_security_group" "rds" {
   description = "Security group for RDS PostgreSQL instances"
   vpc_id      = var.vpc_id
 
-  # Permite apenas dos EKS nodes
+  # Permite apenas dos EKS nodes (pods saem pela ENI do node, mesmo SG)
   ingress {
     description     = "Allow PostgreSQL from EKS nodes"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
     security_groups = [aws_security_group.eks_node.id]
-  }
-
-  # Permite PostgreSQL de todo o VPC (para pods EKS)
-  ingress {
-    description = "Allow PostgreSQL from VPC CIDR"
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
   }
 
   # Permite todo tráfego de saída (para updates, patches)
@@ -163,15 +154,6 @@ resource "aws_security_group" "amazonmq" {
     to_port         = 443
     protocol        = "tcp"
     security_groups = [aws_security_group.eks_node.id]
-  }
-
-  # Permite AMQP de todo o VPC (para pods EKS)
-  ingress {
-    description = "Allow AMQP from VPC CIDR"
-    from_port   = 5671
-    to_port     = 5671
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
   }
 
   # Permite todo tráfego de saída

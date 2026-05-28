@@ -1,6 +1,6 @@
-# DB Subnet Group (requires at least 2 subnets in different AZs)
-# Since we use a single AZ, we create a second subnet in the same AZ.
-# Not ideal for production, but it saves costs.
+# DB Subnet Group (requires at least 2 subnets in different AZs).
+# subnet_ids spans both private subnets (primary + secondary AZ); the instance
+# itself is pinned to a single AZ via var.availability_zone to save costs.
 
 resource "aws_db_subnet_group" "main" {
   name       = "${var.identifier}-subnet-group"
@@ -90,7 +90,7 @@ resource "aws_db_instance" "main" {
   delete_automated_backups = true
   skip_final_snapshot      = true
 
-  enabled_cloudwatch_logs_exports = []
+  enabled_cloudwatch_logs_exports = ["postgresql"]
   monitoring_interval             = 0 # Desabilitar enhanced monitoring para economizar
 
   # Performance Insights (desabilitado para economizar)

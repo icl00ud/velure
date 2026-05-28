@@ -17,9 +17,11 @@ vpc_cidr           = "10.0.0.0/16"
 public_subnet_cidr = "10.0.1.0/24"
 private_subnet_cidr = "10.0.10.0/24"
 
-# Used to create a second private subnet in the same AZ (RDS requirement).
-# Add more subnets here if you want to scale out later.
-private_subnet_secondary_cidr = "10.0.11.0/24"
+# Secondary subnets in a 2nd AZ. Required for ALB (public) and RDS subnet group (private).
+# Each CIDR must be unique — do NOT reuse the public secondary range below.
+availability_zone_secondary   = "us-east-1b"
+public_subnet_secondary_cidr  = "10.0.11.0/24"
+private_subnet_secondary_cidr = "10.0.12.0/24"
 
 # ===========================
 # EKS Configuration
@@ -36,8 +38,8 @@ node_min_size     = 1
 node_desired_size = 2
 node_max_size     = 2
 
-# To save even more, consider Spot Instances:
-# node_capacity_type = "SPOT"  # ~70% cheaper, but can be reclaimed at any time
+# NOTE: capacity type is hardcoded to ON_DEMAND in modules/eks/main.tf.
+# To use Spot, change capacity_type there (no tfvars knob exists yet).
 
 # ===========================
 # RDS Configuration (shared between Auth and Orders)
@@ -50,7 +52,7 @@ rds_engine_version    = "17.4"          # PostgreSQL 17.4
 # RDS Auth Service
 # ===========================
 rds_auth_db_name   = "velure_auth"
-rds_auth_username  = "postgres"
+rds_auth_username  = "velure_admin"
 
 # 🔐 IMPORTANT: change this password!
 # Use a password manager to generate a strong one.
@@ -62,7 +64,7 @@ rds_auth_password = "CHANGE_ME_AUTH_PASSWORD_HERE"
 # (shared between publish-order and process-order)
 # ===========================
 rds_orders_db_name   = "velure_orders"
-rds_orders_username  = "postgres"
+rds_orders_username  = "velure_admin"
 
 # 🔐 IMPORTANT: change this password!
 rds_orders_password = "CHANGE_ME_ORDERS_PASSWORD_HERE"
@@ -77,6 +79,23 @@ rabbitmq_admin_username = "admin"
 
 # 🔐 IMPORTANT: change this password!
 rabbitmq_admin_password = "CHANGE_ME_RABBITMQ_PASSWORD_HERE"
+
+# ===========================
+# JWT Secrets (REQUIRED — no defaults)
+# ===========================
+# 🔐 Generate with: openssl rand -base64 48
+jwt_secret         = "CHANGE_ME_JWT_SECRET_HERE"
+jwt_refresh_secret = "CHANGE_ME_JWT_REFRESH_SECRET_HERE"
+
+# ===========================
+# MongoDB Atlas (REQUIRED — no default)
+# ===========================
+mongodb_connection_string = "mongodb+srv://USER:PASS@cluster.mongodb.net/product_service?retryWrites=true&w=majority"
+
+# ===========================
+# Domain (Route53)
+# ===========================
+domain_name = "velure.app.br"
 
 # ===========================
 # Common Tags
@@ -107,10 +126,11 @@ tags = {
 #    - 20GB storage
 #    - With two instances, only one will fall under the free tier.
 #
-# 3. SINGLE AZ:
-#    - This setup uses only one Availability Zone.
-#    - Not recommended for real production.
-#    - Saves ~$64/month in NAT Gateways.
+# 3. AZ LAYOUT:
+#    - Subnets span 2 AZs (required by ALB + RDS subnet group),
+#      but workloads/NAT/RDS instance run in a single AZ to cut cost.
+#    - Single NAT Gateway saves ~$32/month vs one-per-AZ.
+#    - Not full multi-AZ HA — fine for a learning project, not real prod.
 #
 # 4. SECURITY:
 #    - Never commit this file with real passwords.

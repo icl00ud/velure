@@ -3,7 +3,7 @@
 *.tfstate.*
 *.tfstate.backup
 .terraform/
-.terraform.lock.hcl
+# .terraform.lock.hcl SHOULD be committed for reproducible provider versions
 terraform.tfvars
 override.tf
 override.tf.json

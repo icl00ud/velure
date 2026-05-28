@@ -3,6 +3,9 @@ resource "aws_secretsmanager_secret" "rds_auth" {
   name        = "${var.project_name}/${var.environment}/rds-auth"
   description = "RDS credentials for auth service"
 
+  # Allow immediate re-creation on cloud-down/cloud-up cycles (no 30d recovery window)
+  recovery_window_in_days = 0
+
   tags = merge(
     var.tags,
     {
@@ -28,6 +31,8 @@ resource "aws_secretsmanager_secret_version" "rds_auth" {
 resource "aws_secretsmanager_secret" "rds_orders" {
   name        = "${var.project_name}/${var.environment}/rds-orders"
   description = "RDS credentials for orders services"
+
+  recovery_window_in_days = 0
 
   tags = merge(
     var.tags,
@@ -55,6 +60,8 @@ resource "aws_secretsmanager_secret" "rabbitmq" {
   name        = "${var.project_name}/${var.environment}/rabbitmq"
   description = "RabbitMQ credentials for messaging"
 
+  recovery_window_in_days = 0
+
   tags = merge(
     var.tags,
     {
@@ -80,6 +87,8 @@ resource "aws_secretsmanager_secret" "jwt" {
   name        = "${var.project_name}/${var.environment}/jwt"
   description = "JWT secrets for authentication"
 
+  recovery_window_in_days = 0
+
   tags = merge(
     var.tags,
     {
@@ -101,6 +110,8 @@ resource "aws_secretsmanager_secret_version" "jwt" {
 resource "aws_secretsmanager_secret" "mongodb" {
   name        = "${var.project_name}/${var.environment}/mongodb"
   description = "MongoDB Atlas connection string"
+
+  recovery_window_in_days = 0
 
   tags = merge(
     var.tags,

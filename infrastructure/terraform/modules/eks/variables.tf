@@ -59,3 +59,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "public_access_cidrs" {
+  description = "CIDRs allowed to reach the EKS public API endpoint. Restrict to admin IPs in production."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+variable "enabled_cluster_log_types" {
+  description = "EKS control plane log types to ship to CloudWatch"
+  type        = list(string)
+  default     = ["api", "audit", "authenticator"]
+}

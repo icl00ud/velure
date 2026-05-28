@@ -1,14 +1,3 @@
-# Data source para AMI do EKS
-data "aws_ami" "eks_node" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amazon-eks-node-${var.cluster_version}-v*"]
-  }
-}
-
 # IAM Role para EKS Cluster
 resource "aws_iam_role" "cluster" {
   name = "${var.project_name}-${var.environment}-eks-cluster-role"
@@ -47,11 +36,12 @@ resource "aws_eks_cluster" "main" {
   vpc_config {
     subnet_ids              = concat(var.private_subnet_ids, var.public_subnet_ids)
     endpoint_private_access = true
-    endpoint_public_access  = true          # Required for kubectl access
-    public_access_cidrs     = ["0.0.0.0/0"] # Restrict in production
+    endpoint_public_access  = true # Required for kubectl access
+    # Restrict to known admin IPs via var.public_access_cidrs (default 0.0.0.0/0)
+    public_access_cidrs = var.public_access_cidrs
   }
 
-  enabled_cluster_log_types = []
+  enabled_cluster_log_types = var.enabled_cluster_log_types
 
   tags = var.tags
 
@@ -95,12 +85,6 @@ resource "aws_iam_role_policy_attachment" "node_amazon_ec2_container_registry_re
   role       = aws_iam_role.node.name
 }
 
-# Política adicional para permitir EBS CSI Driver
-resource "aws_iam_role_policy_attachment" "node_amazon_ebs_csi_driver" {
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
-  role       = aws_iam_role.node.name
-}
-
 # EKS Node Group
 resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
@@ -131,8 +115,7 @@ resource "aws_eks_node_group" "main" {
   depends_on = [
     aws_iam_role_policy_attachment.node_amazon_eks_worker_node_policy,
     aws_iam_role_policy_attachment.node_amazon_eks_cni_policy,
-    aws_iam_role_policy_attachment.node_amazon_ec2_container_registry_read_only,
-    aws_iam_role_policy_attachment.node_amazon_ebs_csi_driver
+    aws_iam_role_policy_attachment.node_amazon_ec2_container_registry_read_only
   ]
 
   lifecycle {

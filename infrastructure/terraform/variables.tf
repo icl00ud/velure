@@ -11,9 +11,9 @@ variable "project_name" {
 }
 
 variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "Environment name (dev, staging, production)"
   type        = string
-  default     = "prod"
+  default     = "production"
 }
 
 variable "availability_zone" {
@@ -202,7 +202,7 @@ variable "tags" {
     Project     = "velure"
     ManagedBy   = "terraform"
     CostCenter  = "personal-project"
-    Environment = "prod"
+    Environment = "production"
   }
 }
 
