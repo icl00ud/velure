@@ -223,7 +223,7 @@ export default function () {
   sleep(2); // User browsing products
 
   // Step 4: Create order with random products
-  // Endpoint: POST /api/order/create-order
+  // Endpoint: POST /api/orders
   // Response format: { order_id: "uuid", total: 123.45, status: "CREATED" }
   const orderItems = selectRandomProducts(products, 1, 3);
   const orderPayload = JSON.stringify({ items: orderItems });
@@ -237,7 +237,7 @@ export default function () {
   };
 
   const orderRes = http.post(
-    `${BASE_URL}/api/order/create-order`,
+    `${BASE_URL}/api/orders`,
     orderPayload,
     orderParams,
   );

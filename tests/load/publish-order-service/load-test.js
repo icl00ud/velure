@@ -9,7 +9,7 @@ export let options = {
 
 export default function () {
   const counter = __ITER + 1;
-  const url = "http://localhost:3030/create-order";
+  const url = "http://localhost:3030/api/orders";
   const payload = JSON.stringify({
     items: [
       {
