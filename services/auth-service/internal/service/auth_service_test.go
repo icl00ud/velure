@@ -958,9 +958,9 @@ func TestAuthService_UpdateOrCreateSessionAsync(t *testing.T) {
 			return nil
 		})
 
-	session, err := service.updateOrCreateSessionAsync(1)
+	session, err := service.updateOrCreateSession(1)
 	if err != nil {
-		t.Fatalf("updateOrCreateSessionAsync() error = %v", err)
+		t.Fatalf("updateOrCreateSession() error = %v", err)
 	}
 	if session.ID != 99 {
 		t.Fatalf("expected session ID to be set, got %d", session.ID)
@@ -1264,4 +1264,133 @@ func generateTestToken(t *testing.T, secret string, userID uint, expiresAt time.
 		t.Fatalf("Failed to generate test token: %v", err)
 	}
 	return tokenString
+}
+
+func TestLogin_StaleCachedPasswordFallsBackToDatabase(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+	cfg.Performance.TokenCacheTTL = 120
+
+	mockRedis := miniredis.RunT(t)
+	redisClient := redis.NewClient(&redis.Options{Addr: mockRedis.Addr()})
+	defer redisClient.Close()
+
+	oldHash, _ := bcrypt.GenerateFromPassword([]byte("old-password"), bcrypt.MinCost)
+	newHash, _ := bcrypt.GenerateFromPassword([]byte("new-password"), bcrypt.MinCost)
+
+	// Seed cache with the stale (old) password hash.
+	staleEntry, _ := json.Marshal(map[string]interface{}{
+		"id":       42,
+		"email":    "stale@test.com",
+		"password": string(oldHash),
+	})
+	mockRedis.Set("user:email:stale@test.com", string(staleEntry))
+
+	// DB has the new hash: a stale cache must not lock the user out.
+	mockUserRepo.EXPECT().
+		GetByEmail("stale@test.com").
+		Return(&models.User{ID: 42, Email: "stale@test.com", Password: string(newHash)}, nil)
+
+	mockSessionRepo.EXPECT().
+		GetByUserID(uint(42)).
+		Return(nil, gorm.ErrRecordNotFound)
+	mockSessionRepo.EXPECT().
+		Create(gomock.Any()).
+		Return(nil)
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, redisClient)
+
+	resp, err := service.Login(models.LoginRequest{Email: "stale@test.com", Password: "new-password"})
+	if err != nil {
+		t.Fatalf("expected login to succeed via DB fallback, got %v", err)
+	}
+	if resp.AccessToken == "" {
+		t.Fatal("expected access token")
+	}
+}
+
+func TestLogin_WrongPasswordStillFailsWithCacheFallback(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+
+	mockRedis := miniredis.RunT(t)
+	redisClient := redis.NewClient(&redis.Options{Addr: mockRedis.Addr()})
+	defer redisClient.Close()
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte("right-password"), bcrypt.MinCost)
+	entry, _ := json.Marshal(map[string]interface{}{
+		"id":       42,
+		"email":    "wrong@test.com",
+		"password": string(hash),
+	})
+	mockRedis.Set("user:email:wrong@test.com", string(entry))
+
+	// Fallback hits the DB once; it returns the same hash, so login still fails.
+	mockUserRepo.EXPECT().
+		GetByEmail("wrong@test.com").
+		Return(&models.User{ID: 42, Email: "wrong@test.com", Password: string(hash)}, nil)
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, redisClient)
+
+	_, err := service.Login(models.LoginRequest{Email: "wrong@test.com", Password: "bad-password"})
+	if err == nil || err.Error() != "invalid credentials" {
+		t.Fatalf("expected invalid credentials, got %v", err)
+	}
+}
+
+func TestLogin_TokenExpiryComesFromConfig(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepositoryInterface(ctrl)
+	mockSessionRepo := mocks.NewMockSessionRepositoryInterface(ctrl)
+	mockPasswordResetRepo := mocks.NewMockPasswordResetRepositoryInterface(ctrl)
+	cfg := testutil.CreateTestConfig()
+	cfg.JWT.ExpiresIn = "2h"
+	cfg.JWT.RefreshExpiresIn = "2d"
+
+	hash, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.MinCost)
+	mockUserRepo.EXPECT().
+		GetByEmail("expiry@test.com").
+		Return(&models.User{ID: 7, Email: "expiry@test.com", Password: string(hash)}, nil)
+	mockSessionRepo.EXPECT().
+		GetByUserID(uint(7)).
+		Return(nil, gorm.ErrRecordNotFound)
+	mockSessionRepo.EXPECT().
+		Create(gomock.Any()).
+		Return(nil)
+
+	service := NewAuthService(mockUserRepo, mockSessionRepo, mockPasswordResetRepo, cfg, nil)
+
+	resp, err := service.Login(models.LoginRequest{Email: "expiry@test.com", Password: "password123"})
+	if err != nil {
+		t.Fatalf("login failed: %v", err)
+	}
+
+	assertTokenLifetime := func(tokenStr, secret string, want time.Duration) {
+		t.Helper()
+		claims := &jwt.RegisteredClaims{}
+		if _, err := jwt.ParseWithClaims(tokenStr, claims, func(*jwt.Token) (interface{}, error) {
+			return []byte(secret), nil
+		}); err != nil {
+			t.Fatalf("parse token: %v", err)
+		}
+		got := claims.ExpiresAt.Sub(claims.IssuedAt.Time)
+		if got != want {
+			t.Fatalf("expected token lifetime %v, got %v", want, got)
+		}
+	}
+
+	assertTokenLifetime(resp.AccessToken, cfg.JWT.Secret, 2*time.Hour)
+	assertTokenLifetime(resp.RefreshToken, cfg.JWT.Secret+cfg.JWT.RefreshSecret, 48*time.Hour)
 }

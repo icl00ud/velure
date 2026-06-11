@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -118,26 +119,9 @@ func (s *AuthService) CreateUser(req models.CreateUserRequest) (*models.Registra
 
 	// Cache the freshly-registered user to speed up the first login.
 	// Note: userCacheEntry is used to include the password in cache (json:"-" omits it from json.Marshal).
-	if s.redis != nil {
-		ctx := context.Background()
-		cacheEntry := userCacheEntry{
-			ID:        user.ID,
-			Name:      user.Name,
-			Email:     user.Email,
-			Password:  user.Password,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-		}
-		if userJSON, err := json.Marshal(cacheEntry); err == nil {
-			cacheTTL := time.Duration(s.config.Performance.TokenCacheTTL) * time.Second
-			s.redis.Set(ctx, fmt.Sprintf("user:email:%s", user.Email), userJSON, cacheTTL)
-			s.redis.Set(ctx, fmt.Sprintf("user:id:%d", user.ID), userJSON, cacheTTL)
-		}
-	}
+	s.cacheUser(context.Background(), user)
 
-	// PERFORMANCE: count metrics removed — they should be gathered by a periodic job
-	// to avoid hammering the DB with COUNT queries during traffic spikes.
-	// TODO: implement a cronjob that refreshes total_users and active_sessions every 30s.
+	// User/session count metrics are refreshed by the 30s background sync in main.
 
 	metrics.RegistrationAttempts.WithLabelValues("success").Inc()
 
@@ -165,12 +149,14 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 
 	// Try Redis cache first for user lookup
 	var user *models.User
+	fromCache := false
 	if s.redis != nil {
 		cachedJSON, err := s.redis.Get(ctx, cacheKey).Result()
 		if err == nil {
 			var cachedEntry userCacheEntry
 			if json.Unmarshal([]byte(cachedJSON), &cachedEntry) == nil && cachedEntry.Password != "" {
 				metrics.CacheHits.Inc()
+				fromCache = true
 				user = &models.User{
 					ID:        cachedEntry.ID,
 					Name:      cachedEntry.Name,
@@ -200,25 +186,34 @@ func (s *AuthService) Login(req models.LoginRequest) (*models.LoginResponse, err
 		}
 
 		// Cache user in Redis for future logins
-		if s.redis != nil {
-			cacheEntry := userCacheEntry{
-				ID:        user.ID,
-				Name:      user.Name,
-				Email:     user.Email,
-				Password:  user.Password,
-				CreatedAt: user.CreatedAt,
-				UpdatedAt: user.UpdatedAt,
-			}
-			if userJSON, err := json.Marshal(cacheEntry); err == nil {
-				s.redis.Set(ctx, cacheKey, userJSON, time.Duration(s.config.Performance.TokenCacheTTL)*time.Second)
-			}
-		}
+		s.cacheUser(ctx, user)
 	}
 
 	// Check password com worker pool
-	s.bcryptWorkerPool <- struct{}{} // acquire worker
-	passwordErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
-	<-s.bcryptWorkerPool // release worker
+	passwordErr := s.comparePassword(user.Password, req.Password)
+
+	// A cached hash can be stale (password changed after it was cached).
+	// On mismatch, drop the cache entry, re-read the user from the DB and
+	// compare again so a stale cache never locks the user out.
+	if passwordErr != nil && fromCache {
+		s.invalidateUserCache(ctx, user)
+
+		freshUser, err := s.userRepo.GetByEmail(req.Email)
+		if err != nil {
+			status = "failure"
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, errors.New("invalid credentials")
+			}
+			metrics.Errors.WithLabelValues("database").Inc()
+			return nil, fmt.Errorf("error getting user: %w", err)
+		}
+
+		user = freshUser
+		passwordErr = s.comparePassword(user.Password, req.Password)
+		if passwordErr == nil {
+			s.cacheUser(ctx, user)
+		}
+	}
 
 	if passwordErr != nil {
 		status = "failure"
@@ -499,10 +494,11 @@ func (s *AuthService) generateAccessToken(userID uint) (string, error) {
 		metrics.TokenGenerationDuration.Observe(time.Since(start).Seconds())
 	}()
 
+	now := time.Now()
 	claims := jwt.RegisteredClaims{
 		Subject:   strconv.FormatUint(uint64(userID), 10),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		ExpiresAt: jwt.NewNumericDate(now.Add(parseExpiry(s.config.JWT.ExpiresIn, time.Hour))),
+		IssuedAt:  jwt.NewNumericDate(now),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -514,15 +510,76 @@ func (s *AuthService) generateAccessToken(userID uint) (string, error) {
 }
 
 func (s *AuthService) generateRefreshToken(userID uint) (string, error) {
+	now := time.Now()
 	claims := jwt.RegisteredClaims{
 		Subject:   strconv.FormatUint(uint64(userID), 10),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		ExpiresAt: jwt.NewNumericDate(now.Add(parseExpiry(s.config.JWT.RefreshExpiresIn, 7*24*time.Hour))),
+		IssuedAt:  jwt.NewNumericDate(now),
 	}
 
 	secret := s.config.JWT.Secret + s.config.JWT.RefreshSecret
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))
+}
+
+// parseExpiry parses durations like "1h", "30m" and the day shorthand "7d"
+// (which time.ParseDuration does not support). Invalid or empty values fall
+// back to the given default.
+func parseExpiry(value string, fallback time.Duration) time.Duration {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fallback
+	}
+	if strings.HasSuffix(value, "d") {
+		if days, err := strconv.Atoi(strings.TrimSuffix(value, "d")); err == nil && days > 0 {
+			return time.Duration(days) * 24 * time.Hour
+		}
+		return fallback
+	}
+	if d, err := time.ParseDuration(value); err == nil && d > 0 {
+		return d
+	}
+	return fallback
+}
+
+// comparePassword runs the bcrypt comparison through the worker pool to bound
+// concurrent hashing work.
+func (s *AuthService) comparePassword(hash, password string) error {
+	s.bcryptWorkerPool <- struct{}{} // acquire worker
+	defer func() { <-s.bcryptWorkerPool }()
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+}
+
+// cacheUser stores the user (including its password hash, needed for login
+// comparison) under both email and id keys.
+func (s *AuthService) cacheUser(ctx context.Context, user *models.User) {
+	if s.redis == nil {
+		return
+	}
+	cacheEntry := userCacheEntry{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		Password:  user.Password,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
+	userJSON, err := json.Marshal(cacheEntry)
+	if err != nil {
+		return
+	}
+	cacheTTL := time.Duration(s.config.Performance.TokenCacheTTL) * time.Second
+	s.redis.Set(ctx, "user:email:"+user.Email, userJSON, cacheTTL)
+	s.redis.Set(ctx, fmt.Sprintf("user:id:%d", user.ID), userJSON, cacheTTL)
+}
+
+// invalidateUserCache removes both cache keys for the user. Must be called by
+// any flow that mutates user data (password change, profile update, delete).
+func (s *AuthService) invalidateUserCache(ctx context.Context, user *models.User) {
+	if s.redis == nil {
+		return
+	}
+	s.redis.Del(ctx, "user:email:"+user.Email, fmt.Sprintf("user:id:%d", user.ID))
 }
 
 // hashPasswordOptimized usa bcrypt com cost ajustável
@@ -534,13 +591,6 @@ func (s *AuthService) hashPasswordOptimized(password string) ([]byte, error) {
 		cost = bcrypt.DefaultCost
 	}
 	return bcrypt.GenerateFromPassword([]byte(password), cost)
-}
-
-// updateOrCreateSessionAsync is the DEPRECATED async variant — use updateOrCreateSession.
-// Kept for compatibility, but it forwards to the synchronous version (line 294).
-// PERFORMANCE: async overhead removed — JWT signing is fast (~1ms) and does not justify goroutines.
-func (s *AuthService) updateOrCreateSessionAsync(userID uint) (*models.Session, error) {
-	return s.updateOrCreateSession(userID)
 }
 
 func (s *AuthService) SyncActiveSessionsMetric(ctx context.Context) {
