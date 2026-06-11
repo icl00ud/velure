@@ -66,12 +66,16 @@ type RegistrationResponse struct {
 	RefreshToken string    `json:"refreshToken"`
 }
 
+// ValidateTokenRequest carries the token to introspect. Optional in the body:
+// when omitted the handler falls back to the access_token httpOnly cookie.
 type ValidateTokenRequest struct {
-	AccessToken string `json:"token" binding:"required"`
+	AccessToken string `json:"token"`
 }
 
+// LogoutRequest carries the refresh token. Optional in the body: when omitted
+// the handler falls back to the refresh_token httpOnly cookie.
 type LogoutRequest struct {
-	RefreshToken string `json:"refreshToken" binding:"required"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 type ValidateTokenResponse struct {

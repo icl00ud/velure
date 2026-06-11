@@ -790,3 +790,137 @@ func TestAuthHandler_Logout_MissingToken(t *testing.T) {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
+
+func TestAuthHandler_InternalErrorsNotLeaked(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockService := mocks.NewMockAuthServiceInterface(ctrl)
+	handler := NewAuthHandler(mockService)
+
+	mockService.EXPECT().
+		Login(gomock.Any()).
+		Return(nil, errors.New(`pq: connection refused host=10.0.0.9 user=postgres`))
+
+	router := setupTestRouter()
+	router.POST("/login", handler.Login)
+
+	body, _ := json.Marshal(models.LoginRequest{Email: "a@b.com", Password: "secret123"})
+	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
+	if bytes.Contains(w.Body.Bytes(), []byte("10.0.0.9")) {
+		t.Fatalf("internal error leaked to client: %s", w.Body.String())
+	}
+}
+
+func TestAuthHandler_LoginSetsHTTPOnlyCookies(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockService := mocks.NewMockAuthServiceInterface(ctrl)
+	handler := NewAuthHandler(mockService)
+
+	mockService.EXPECT().
+		Login(gomock.Any()).
+		Return(&models.LoginResponse{AccessToken: "acc-123", RefreshToken: "ref-456"}, nil)
+
+	router := setupTestRouter()
+	router.POST("/sessions", handler.Login)
+
+	body, _ := json.Marshal(models.LoginRequest{Email: "a@b.com", Password: "secret123"})
+	req := httptest.NewRequest(http.MethodPost, "/sessions", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	cookies := w.Result().Cookies()
+	var access, refresh *http.Cookie
+	for _, c := range cookies {
+		switch c.Name {
+		case "access_token":
+			access = c
+		case "refresh_token":
+			refresh = c
+		}
+	}
+	if access == nil || access.Value != "acc-123" || !access.HttpOnly {
+		t.Fatalf("expected httpOnly access_token cookie, got %+v", access)
+	}
+	if refresh == nil || refresh.Value != "ref-456" || !refresh.HttpOnly {
+		t.Fatalf("expected httpOnly refresh_token cookie, got %+v", refresh)
+	}
+}
+
+func TestAuthHandler_LogoutClearsCookiesAndReadsRefreshFromCookie(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockService := mocks.NewMockAuthServiceInterface(ctrl)
+	handler := NewAuthHandler(mockService)
+
+	mockService.EXPECT().Logout("ref-456").Return(nil)
+
+	router := setupTestRouter()
+	router.DELETE("/sessions/current", handler.Logout)
+
+	req := httptest.NewRequest(http.MethodDelete, "/sessions/current", nil)
+	req.AddCookie(&http.Cookie{Name: "refresh_token", Value: "ref-456"})
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	for _, c := range w.Result().Cookies() {
+		if (c.Name == "access_token" || c.Name == "refresh_token") && c.MaxAge != -1 {
+			t.Fatalf("expected cookie %s cleared (MaxAge -1), got %d", c.Name, c.MaxAge)
+		}
+	}
+}
+
+func TestAuthHandler_ValidateTokenFallsBackToCookie(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockService := mocks.NewMockAuthServiceInterface(ctrl)
+	handler := NewAuthHandler(mockService)
+
+	mockService.EXPECT().
+		ValidateAccessToken("acc-123").
+		Return(&models.User{ID: 1}, nil)
+
+	router := setupTestRouter()
+	router.POST("/tokens/introspect", handler.ValidateToken)
+
+	req := httptest.NewRequest(http.MethodPost, "/tokens/introspect", bytes.NewReader([]byte(`{}`)))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{Name: "access_token", Value: "acc-123"})
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp models.ValidateTokenResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if !resp.IsValid {
+		t.Fatal("expected token from cookie to validate")
+	}
+}
