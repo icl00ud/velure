@@ -73,3 +73,10 @@ metrics:
     scrapeTimeout: 10s
     labels:
       prometheus: kube-prometheus
+
+# OTLP gRPC collector for distributed tracing (e.g. Jaeger). Empty disables.
+otelExporterEndpoint: ""
+
+# Stripe test-mode key, delivered via Kubernetes Secret. Empty = simulated processor.
+stripe:
+  secretName: ""

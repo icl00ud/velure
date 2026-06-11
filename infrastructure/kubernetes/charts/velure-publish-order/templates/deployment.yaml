@@ -46,6 +46,15 @@ spec:
                 secretKeyRef:
                   name: order-jwt
                   key: secret
+            {{- if .Values.redis.addr }}
+            # Cross-replica SSE update bus; required when running >1 replica.
+            - name: REDIS_ADDR
+              value: "{{ .Values.redis.addr }}"
+            {{- end }}
+            {{- if .Values.otelExporterEndpoint }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "{{ .Values.otelExporterEndpoint }}"
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /health

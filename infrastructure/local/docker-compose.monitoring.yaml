@@ -130,6 +130,30 @@ services:
           memory: 128M
 
   # -------------------------
+  # Jaeger - Distributed Tracing (OTLP gRPC on 4317)
+  # -------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    container_name: velure-jaeger
+    restart: always
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686" # UI
+      - "4317:4317"   # OTLP gRPC
+    networks:
+      - monitoring
+      - order
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # -------------------------
   # Loki - Log Aggregation
   # -------------------------
   loki:

@@ -42,6 +42,13 @@ autoscaling:
   targetMemoryUtilizationPercentage: 65
 order:
   exchange: orders
+redis:
+  # Cross-replica SSE update bus (host:port). Required when replicaCount > 1
+  # or the HPA can scale beyond one replica, otherwise SSE clients connected
+  # to one replica miss updates consumed by another.
+  addr: "velure-datastores-redis-master.datastores.svc.cluster.local:6379"
+# OTLP gRPC collector for distributed tracing (e.g. Jaeger). Empty disables.
+otelExporterEndpoint: ""
 livenessProbe:
   httpGet:
     path: /health

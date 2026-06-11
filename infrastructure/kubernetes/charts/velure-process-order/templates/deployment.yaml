@@ -29,6 +29,17 @@ spec:
           env:
             - name: PROCESS_ORDER_SERVICE_APP_PORT
               value: "{{ .Values.service.port }}"
+            {{- if .Values.otelExporterEndpoint }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "{{ .Values.otelExporterEndpoint }}"
+            {{- end }}
+            {{- if .Values.stripe.secretName }}
+            - name: STRIPE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.stripe.secretName }}
+                  key: apiKey
+            {{- end }}
             - name: ORDER_EXCHANGE
               value: "{{ .Values.order.exchange }}"
             - name: RABBITMQ_ORDER_QUEUE

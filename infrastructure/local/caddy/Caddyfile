@@ -23,7 +23,6 @@
 	header {
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "SAMEORIGIN"
-		X-XSS-Protection "1; mode=block"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "geolocation=(), microphone=(), camera=()"
 		Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: http: data: blob:; img-src 'self' https: http: data: blob: unsplash.com *.unsplash.com;"
@@ -31,16 +30,9 @@
 		-X-Powered-By
 	}
 
-	@options {
-		method OPTIONS
-	}
-	handle @options {
-		header Access-Control-Allow-Origin "*"
-		header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-		header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
-		header Access-Control-Max-Age "3600"
-		respond 204
-	}
+	# CORS (including OPTIONS preflight) is handled by each service against
+	# CORS_ALLOWED_ORIGINS — the proxy must not inject wildcard headers, since
+	# Access-Control-Allow-Origin "*" combined with credentials is invalid.
 
 	handle /health {
 		header Content-Type "application/json"
@@ -55,8 +47,6 @@
 			health_timeout 5s
 			health_status 2xx
 			header_up X-Real-IP {remote_host}
-			header_down Access-Control-Allow-Origin "*"
-			header_down Access-Control-Allow-Credentials "true"
 			transport http {
 				dial_timeout 10s
 				response_header_timeout 60s
@@ -74,8 +64,6 @@
 			health_timeout 5s
 			health_status 2xx
 			header_up X-Real-IP {remote_host}
-			header_down Access-Control-Allow-Origin "*"
-			header_down Access-Control-Allow-Credentials "true"
 			header_down Cache-Control "public, max-age=300"
 		}
 	}
@@ -89,8 +77,6 @@
 			health_status 2xx
 			flush_interval -1
 			header_up X-Real-IP {remote_host}
-			header_down Access-Control-Allow-Origin "*"
-			header_down Access-Control-Allow-Credentials "true"
 			header_down Cache-Control "no-cache"
 			header_down X-Accel-Buffering "no"
 			transport http {
