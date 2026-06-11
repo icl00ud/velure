@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/telemetry"
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/rabbitmq/amqp091-go"
 )
@@ -212,6 +213,14 @@ func (r *rabbitMQPublisher) PublishWithConfirm(ctx context.Context, evt model.Ou
 		timeout = 5 * time.Second
 	}
 
+	headers := amqp091.Table{
+		"event_id": evt.ID,
+	}
+	// Propagate the trace context to consumers via AMQP headers.
+	for k, v := range telemetry.InjectMap(ctx) {
+		headers[k] = v
+	}
+
 	err := r.ch.PublishWithContext(ctx,
 		r.exchange,
 		evt.EventType,
@@ -219,10 +228,8 @@ func (r *rabbitMQPublisher) PublishWithConfirm(ctx context.Context, evt model.Ou
 		amqp091.Publishing{
 			ContentType: "application/json",
 			Body:        []byte(evt.Payload),
-			Headers: amqp091.Table{
-				"event_id": evt.ID,
-			},
-			MessageId: evt.ID,
+			Headers:     headers,
+			MessageId:   evt.ID,
 		},
 	)
 	if err != nil {

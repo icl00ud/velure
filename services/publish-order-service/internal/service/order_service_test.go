@@ -5,9 +5,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/outbox"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/repository"
@@ -443,7 +447,7 @@ func TestOrderService_Create_PersistsOrderAndOutboxAtomically(t *testing.T) {
 		WithArgs(sqlmock.AnyArg(), "user-1", sqlmock.AnyArg(), float64(0), "CREATED", sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec(`INSERT INTO outbox_events`).
-		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), model.OrderCreated, sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), model.OrderCreated, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
@@ -485,4 +489,59 @@ func TestOrderService_Create_RollsBackOnOutboxFailure(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestOrderService_Create_CapturesTraceContextInOutbox(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	defer db.Close()
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`INSERT INTO TBLOrders`).WillReturnResult(sqlmock.NewResult(0, 1))
+	// traceparent format: 00-<32 hex>-<16 hex>-<2 hex flags>
+	mock.ExpectExec(`INSERT INTO outbox_events`).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), model.OrderCreated, sqlmock.AnyArg(), sqlmock.AnyArg(),
+			sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	repo := repository.NewOrderRepositoryFromDB(db)
+	rec := &recordingOutbox{inner: outbox.NewPostgresRepository(db)}
+	svc := NewOrderService(repo, rec, db, NewPricingCalculator())
+
+	// Build a context with an active recording span.
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	tp := sdktrace.NewTracerProvider()
+	defer tp.Shutdown(context.Background())
+	ctx, span := tp.Tracer("test").Start(context.Background(), "create-order")
+	defer span.End()
+
+	if _, err := svc.Create(ctx, "user-1", []model.CartItem{{ProductID: "p1", Quantity: 1}}); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	want := "00-" + span.SpanContext().TraceID().String()
+	if rec.lastEvent.TraceContext == "" || !strings.HasPrefix(rec.lastEvent.TraceContext, want) {
+		t.Fatalf("expected outbox TraceContext to carry trace id %s, got %q", want, rec.lastEvent.TraceContext)
+	}
+}
+
+type recordingOutbox struct {
+	inner     outbox.Repository
+	lastEvent model.OutboxEvent
+}
+
+func (r *recordingOutbox) SaveTx(ctx context.Context, tx *sql.Tx, evt model.OutboxEvent) error {
+	r.lastEvent = evt
+	return r.inner.SaveTx(ctx, tx, evt)
+}
+
+func (r *recordingOutbox) FetchUnpublished(ctx context.Context, limit int) (*sql.Tx, []model.OutboxEvent, error) {
+	return r.inner.FetchUnpublished(ctx, limit)
+}
+
+func (r *recordingOutbox) MarkPublished(ctx context.Context, tx *sql.Tx, ids []string) error {
+	return r.inner.MarkPublished(ctx, tx, ids)
 }

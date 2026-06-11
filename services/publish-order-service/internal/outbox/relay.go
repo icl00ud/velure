@@ -5,8 +5,13 @@ import (
 	"database/sql"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/icl00ud/velure/services/publish-order-service/internal/metrics"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/telemetry"
 	"github.com/icl00ud/velure/shared/logger"
 )
 
@@ -85,9 +90,21 @@ func (r *Relay) processBatch(ctx context.Context) error {
 		return nil
 	}
 
+	tracer := otel.Tracer("outbox-relay")
 	ids := make([]string, 0, len(events))
 	for _, evt := range events {
-		if err := r.publisher.PublishWithConfirm(ctx, evt); err != nil {
+		// Resume the trace of the request that wrote the event, so the AMQP
+		// publish shows up as a child of the original HTTP span.
+		evtCtx := telemetry.WithTraceparent(ctx, evt.TraceContext)
+		evtCtx, span := tracer.Start(evtCtx, "outbox.publish",
+			trace.WithSpanKind(trace.SpanKindProducer),
+			trace.WithAttributes(
+				attribute.String("messaging.destination.name", evt.EventType),
+				attribute.String("velure.aggregate_id", evt.AggregateID),
+			))
+		err := r.publisher.PublishWithConfirm(evtCtx, evt)
+		span.End()
+		if err != nil {
 			_ = r.rollback(tx)
 			metrics.OutboxRelayPublished.WithLabelValues("failure").Inc()
 			metrics.OutboxRelayErrors.Inc()

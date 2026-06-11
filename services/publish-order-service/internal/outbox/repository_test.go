@@ -17,7 +17,7 @@ func TestSaveTx_InsertsRow(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`INSERT INTO outbox_events`).
-		WithArgs("evt-1", "order-1", "order.created", []byte(`{"id":"order-1"}`), sqlmock.AnyArg()).
+		WithArgs("evt-1", "order-1", "order.created", []byte(`{"id":"order-1"}`), sqlmock.AnyArg(), sqlmock.AnyArg()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -41,9 +41,9 @@ func TestFetchUnpublished_ReturnsPendingEvents(t *testing.T) {
 	defer db.Close()
 
 	now := time.Now()
-	rows := sqlmock.NewRows([]string{"id", "aggregate_id", "event_type", "payload", "created_at"}).
-		AddRow("evt-1", "order-1", "order.created", []byte(`{}`), now).
-		AddRow("evt-2", "order-2", "order.created", []byte(`{}`), now)
+	rows := sqlmock.NewRows([]string{"id", "aggregate_id", "event_type", "payload", "created_at", "trace_context"}).
+		AddRow("evt-1", "order-1", "order.created", []byte(`{}`), now, "").
+		AddRow("evt-2", "order-2", "order.created", []byte(`{}`), now, "")
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(`SELECT .* FROM outbox_events .* FOR UPDATE SKIP LOCKED`).
@@ -96,3 +96,30 @@ func TestMarkPublished_NoOpOnEmpty(t *testing.T) {
 }
 
 var _ = sqlmock.NewResult // compile check that sqlmock is imported
+
+// Multi-replica deployments must keep per-aggregate ordering: the fetch query
+// claims whole aggregates via advisory xact locks so two relays never split
+// events of the same order between them.
+func TestFetchUnpublished_ClaimsWholeAggregates(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil { t.Fatal(err) }
+	defer db.Close()
+
+	now := time.Now()
+	rows := sqlmock.NewRows([]string{"id", "aggregate_id", "event_type", "payload", "created_at", "trace_context"}).
+		AddRow("evt-1", "order-1", "order.created", []byte(`{}`), now, "")
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(`SELECT .* FROM outbox_events .*pg_try_advisory_xact_lock\(hashtext\(aggregate_id\)\).*`).
+		WithArgs(50).
+		WillReturnRows(rows)
+
+	repo := NewPostgresRepository(db)
+	tx, events, err := repo.FetchUnpublished(context.Background(), 50)
+	if err != nil { t.Fatalf("FetchUnpublished: %v", err) }
+	defer tx.Rollback()
+
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
+}

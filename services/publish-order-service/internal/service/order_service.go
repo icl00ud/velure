@@ -12,6 +12,7 @@ import (
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/outbox"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/repository"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/telemetry"
 )
 
 var ErrNoItems = errors.New("no items in the cart")
@@ -62,11 +63,12 @@ func (s *OrderService) Create(ctx context.Context, userID string, items []model.
 			return err
 		}
 		return s.outbox.SaveTx(ctx, tx, model.OutboxEvent{
-			ID:          uuid.NewString(),
-			AggregateID: o.ID,
-			EventType:   model.OrderCreated,
-			Payload:     payload,
-			CreatedAt:   now,
+			ID:           uuid.NewString(),
+			AggregateID:  o.ID,
+			EventType:    model.OrderCreated,
+			Payload:      payload,
+			CreatedAt:    now,
+			TraceContext: telemetry.Traceparent(ctx),
 		})
 	}); err != nil {
 		return model.Order{}, err
@@ -91,11 +93,12 @@ func (s *OrderService) UpdateStatus(ctx context.Context, id, status string) (mod
 			return err
 		}
 		if err := s.outbox.SaveTx(ctx, tx, model.OutboxEvent{
-			ID:          uuid.NewString(),
-			AggregateID: o.ID,
-			EventType:   status,
-			Payload:     payload,
-			CreatedAt:   o.UpdatedAt,
+			ID:           uuid.NewString(),
+			AggregateID:  o.ID,
+			EventType:    status,
+			Payload:      payload,
+			CreatedAt:    o.UpdatedAt,
+			TraceContext: telemetry.Traceparent(ctx),
 		}); err != nil {
 			return err
 		}

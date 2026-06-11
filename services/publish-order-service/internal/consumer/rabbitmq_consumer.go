@@ -7,8 +7,11 @@ import (
 
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/rabbitmq/amqp091-go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/icl00ud/velure/services/publish-order-service/internal/model"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/telemetry"
 )
 
 const (
@@ -189,6 +192,18 @@ func (r *rabbitConsumer) worker(ctx context.Context, id int, msgs <-chan amqp091
 	}
 }
 
+// headersToMap converts string-valued AMQP headers (where the W3C trace
+// context travels) into the map form the OTel propagator understands.
+func headersToMap(headers amqp091.Table) map[string]string {
+	m := make(map[string]string, len(headers))
+	for k, v := range headers {
+		if s, ok := v.(string); ok {
+			m[k] = s
+		}
+	}
+	return m
+}
+
 func getRetryCount(headers amqp091.Table) int64 {
 	if headers == nil {
 		return 0
@@ -214,6 +229,12 @@ func (r *rabbitConsumer) processMessage(ctx context.Context, msg amqp091.Deliver
 		r.logger.Error("failed to unmarshal event", logger.Err(err))
 		return err
 	}
+
+	// Continue the trace propagated by the producer through AMQP headers.
+	ctx = telemetry.ExtractMap(ctx, headersToMap(msg.Headers))
+	ctx, span := otel.Tracer("status-consumer").Start(ctx, "consume "+evt.Type,
+		trace.WithSpanKind(trace.SpanKindConsumer))
+	defer span.End()
 
 	r.logger.Info("processing event",
 		logger.String("type", evt.Type),
