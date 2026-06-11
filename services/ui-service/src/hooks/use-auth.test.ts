@@ -25,8 +25,10 @@ describe("useAuth", () => {
   };
 
   beforeEach(() => {
-    localStorage.clear();
     vi.clearAllMocks();
+    // The service is a singleton whose auth status survives between tests;
+    // reset it to the logged-out baseline each time.
+    (authenticationService as any).authStatus = false;
   });
 
   it("should initialize with unauthenticated state", async () => {
@@ -40,8 +42,9 @@ describe("useAuth", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it("should initialize with authenticated state if token exists", async () => {
-    localStorage.setItem("token", JSON.stringify(mockToken));
+  it("should initialize as authenticated when the session cookie is valid", async () => {
+    // Last known status derived from the httpOnly session cookie.
+    (authenticationService as any).authStatus = true;
 
     const { result } = renderHook(() => useAuth());
 
@@ -149,8 +152,8 @@ describe("useAuth", () => {
 
   describe("logout", () => {
     it("should logout successfully", async () => {
-      // Setup: login first
-      localStorage.setItem("token", JSON.stringify(mockToken));
+      // Setup: session cookie valid (last known status true).
+      (authenticationService as any).authStatus = true;
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
@@ -175,7 +178,7 @@ describe("useAuth", () => {
     });
 
     it("should set loading state during logout", async () => {
-      localStorage.setItem("token", JSON.stringify(mockToken));
+      (authenticationService as any).authStatus = true;
 
       (global.fetch as any).mockImplementation(
         () =>
@@ -226,7 +229,7 @@ describe("useAuth", () => {
     });
 
     it("should handle logout errors gracefully", async () => {
-      localStorage.setItem("token", JSON.stringify(mockToken));
+      (authenticationService as any).authStatus = true;
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,

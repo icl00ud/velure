@@ -2,7 +2,9 @@ import { vi } from "vitest";
 import type { CartItem, Product } from "../types/product.types";
 import { orderService } from "./order.service";
 
-const token = { accessToken: "token-123" };
+// Authentication travels in the httpOnly access_token cookie, sent
+// automatically on same-origin fetches — no Authorization header and no
+// localStorage involved.
 
 const product: Product = {
   _id: "p1",
@@ -26,13 +28,10 @@ const cartItems: CartItem[] = [
 
 describe("orderService", () => {
   beforeEach(() => {
-    localStorage.clear();
     vi.restoreAllMocks();
   });
 
-  it("creates an order with token and formatted payload", async () => {
-    localStorage.setItem("token", JSON.stringify(token));
-
+  it("creates an order with formatted payload", async () => {
     const response = {
       order_id: "order-1",
       total: 100,
@@ -50,7 +49,6 @@ describe("orderService", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token.accessToken}`,
       },
       body: JSON.stringify([
         {
@@ -64,13 +62,16 @@ describe("orderService", () => {
     expect(result).toEqual(response);
   });
 
-  it("throws when creating an order without an auth token", async () => {
-    await expect(orderService.createOrder(cartItems)).rejects.toThrow("User not authenticated");
+  it("surfaces the server error when an unauthenticated order is rejected", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      json: vi.fn().mockResolvedValue({ error: "unauthorized" }),
+    } as any);
+
+    await expect(orderService.createOrder(cartItems)).rejects.toThrow("unauthorized");
   });
 
   it("fetches paginated user orders", async () => {
-    localStorage.setItem("token", JSON.stringify(token));
-
     const ordersResponse = {
       orders: [],
       totalCount: 0,
@@ -86,32 +87,21 @@ describe("orderService", () => {
 
     const result = await orderService.getUserOrders(2, 5);
 
-    expect(fetch).toHaveBeenCalledWith("/api/me/orders?page=2&pageSize=5", {
-      headers: {
-        Authorization: `Bearer ${token.accessToken}`,
-      },
-    });
+    expect(fetch).toHaveBeenCalledWith("/api/me/orders?page=2&pageSize=5");
     expect(result).toEqual(ordersResponse);
   });
 
   it("throws when fetching order details fails", async () => {
-    localStorage.setItem("token", JSON.stringify(token));
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       json: vi.fn(),
     } as any);
 
     await expect(orderService.getUserOrderById("order-1")).rejects.toThrow("Failed to fetch order");
-    expect(fetch).toHaveBeenCalledWith("/api/me/orders/order-1", {
-      headers: {
-        Authorization: `Bearer ${token.accessToken}`,
-      },
-    });
+    expect(fetch).toHaveBeenCalledWith("/api/me/orders/order-1");
   });
 
-  it("creates an SSE stream using fetch with auth header", () => {
-    localStorage.setItem("token", JSON.stringify(token));
-
+  it("creates an SSE stream relying on the session cookie", () => {
     const mockReader = {
       read: vi.fn().mockResolvedValue({ done: true, value: undefined }),
     };
@@ -132,50 +122,9 @@ describe("orderService", () => {
       expect.objectContaining({
         method: "GET",
         headers: expect.objectContaining({
-          Authorization: `Bearer ${token.accessToken}`,
           Accept: "text/event-stream",
         }),
       })
     );
-  });
-
-  it("throws when updating order status fails", async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      json: vi.fn(),
-    } as any);
-
-    await expect(orderService.updateOrderStatus("order-1", "shipped")).rejects.toThrow(
-      "Erro ao atualizar status do pedido"
-    );
-    expect(fetch).toHaveBeenCalledWith("/api/orders/order-1/status", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        status: "shipped",
-      }),
-    });
-  });
-
-  it("retrieves orders by page", async () => {
-    const pagedOrders = {
-      orders: [{ id: "order-1" }],
-      totalCount: 1,
-      page: 1,
-      pageSize: 10,
-      totalPages: 1,
-    };
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(pagedOrders),
-    } as any);
-
-    const result = await orderService.getOrdersByPage(1, 10);
-
-    expect(fetch).toHaveBeenCalledWith("/api/orders?page=1&pageSize=10");
-    expect(result).toEqual(pagedOrders);
   });
 });

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "@/hooks/use-toast";
+import { authenticationService } from "@/services/authentication.service";
 import { orderService } from "@/services/order.service";
 import { designSystemStyles } from "@/styles/design-system";
 
@@ -79,8 +80,7 @@ const Cart = () => {
   };
 
   const handleCheckout = async () => {
-    const tokenString = localStorage.getItem("token");
-    if (!tokenString) {
+    if (!(await authenticationService.isAuthenticated())) {
       toast({
         title: "Authentication required",
         description: "You need to be signed in to check out.",
@@ -266,9 +266,7 @@ const Cart = () => {
                     <div className="space-y-4 font-body">
                       <div className="flex justify-between text-[#2D6A4F]">
                         <span>Subtotal</span>
-                        <span className="font-semibold text-[#1B4332]">
-                          ${subtotal.toFixed(2)}
-                        </span>
+                        <span className="font-semibold text-[#1B4332]">${subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-[#2D6A4F]">
                         <span>Shipping</span>
@@ -349,9 +347,7 @@ const Cart = () => {
                         </div>
                         <div>
                           <p className="font-body font-semibold text-[#1B4332]">Free shipping</p>
-                          <p className="font-body text-sm text-[#2D6A4F]">
-                            On orders above $100
-                          </p>
+                          <p className="font-body text-sm text-[#2D6A4F]">On orders above $100</p>
                         </div>
                       </div>
 
@@ -360,12 +356,8 @@ const Cart = () => {
                           <Shield className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <p className="font-body font-semibold text-[#1B4332]">
-                            30-day returns
-                          </p>
-                          <p className="font-body text-sm text-[#2D6A4F]">
-                            Money-back guarantee
-                          </p>
+                          <p className="font-body font-semibold text-[#1B4332]">30-day returns</p>
+                          <p className="font-body text-sm text-[#2D6A4F]">Money-back guarantee</p>
                         </div>
                       </div>
                     </div>

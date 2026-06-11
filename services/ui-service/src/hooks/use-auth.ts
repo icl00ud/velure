@@ -29,10 +29,8 @@ export function useAuth() {
   const logout = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      const token = authenticationService.getStoredToken();
-      if (token) {
-        await authenticationService.logout(token.refreshToken);
-      }
+      // The session is identified by the refresh_token httpOnly cookie.
+      await authenticationService.logout();
     } finally {
       setIsLoading(false);
     }

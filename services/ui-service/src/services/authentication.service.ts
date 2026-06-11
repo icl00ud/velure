@@ -1,69 +1,35 @@
-import type { ILoginResponse, ILoginUser, IRegisterUser, Token } from "../types/user.types";
+import type { ILoginResponse, ILoginUser, IRegisterUser } from "../types/user.types";
 import { configService } from "./config.service";
 
+// Authentication lives in httpOnly cookies set by the auth-service: login
+// sets access_token/refresh_token cookies, every same-origin fetch sends them
+// automatically, and JavaScript (including XSS payloads) cannot read them.
+// Nothing about the session is persisted in localStorage anymore; the auth
+// status is derived by introspecting the cookie against the server.
 class AuthenticationService {
   private authStatusListeners: Set<(status: boolean) => void> = new Set();
-  private validationCacheDuration: number = 5 * 60 * 1000;
+  private authStatus: boolean | null = null;
 
   constructor() {
     this.checkInitialAuthStatus();
   }
 
-  private getLastValidationTime(): number {
-    const stored = localStorage.getItem("lastValidation");
-    return stored ? parseInt(stored, 10) : 0;
-  }
-
-  private setLastValidationTime(time: number): void {
-    localStorage.setItem("lastValidation", time.toString());
-  }
-
-  private clearLastValidationTime(): void {
-    localStorage.removeItem("lastValidation");
-  }
-
   private async checkInitialAuthStatus(): Promise<void> {
-    const tokenString = localStorage.getItem("token");
-    if (!tokenString) {
-      this.notifyAuthStatusChange(false);
-      return;
-    }
-
-    try {
-      const token: Token = JSON.parse(tokenString);
-
-      const now = Date.now();
-      const lastValidation = this.getLastValidationTime();
-
-      if (lastValidation > 0 && now - lastValidation < this.validationCacheDuration) {
-        this.notifyAuthStatusChange(true);
-        return;
-      }
-
-      const isValid = await this.validateToken(token);
-      this.notifyAuthStatusChange(isValid);
-      if (!isValid) {
-        localStorage.removeItem("token");
-        this.clearLastValidationTime();
-      } else {
-        this.setLastValidationTime(now);
-      }
-    } catch (error) {
-      console.error("Failed to check initial authentication status:", error);
-      localStorage.removeItem("token");
-      this.notifyAuthStatusChange(false);
-      this.clearLastValidationTime();
-    }
+    const isValid = await this.validateSession();
+    this.authStatus = isValid;
+    this.notifyAuthStatusChange(isValid);
   }
 
   subscribeToAuthStatus(callback: (status: boolean) => void): () => void {
     this.authStatusListeners.add(callback);
-    const tokenString = localStorage.getItem("token");
-    callback(!!tokenString);
+    if (this.authStatus !== null) {
+      callback(this.authStatus);
+    }
     return () => this.authStatusListeners.delete(callback);
   }
 
   private notifyAuthStatusChange(status: boolean): void {
+    this.authStatus = status;
     this.authStatusListeners.forEach((callback) => {
       callback(status);
     });
@@ -84,10 +50,7 @@ class AuthenticationService {
       }
 
       const loginResponse: ILoginResponse = await response.json();
-      localStorage.setItem("token", JSON.stringify(loginResponse));
-      this.setLastValidationTime(Date.now());
       this.notifyAuthStatusChange(true);
-      console.log("Login successful.");
       return loginResponse;
     } catch (error) {
       console.error("Login error", error);
@@ -95,24 +58,19 @@ class AuthenticationService {
     }
   }
 
-  async logout(refreshToken: string): Promise<boolean> {
+  async logout(): Promise<boolean> {
     try {
+      // The refresh_token cookie identifies the session; the server clears
+      // both auth cookies in the response.
       const response = await fetch(`${configService.authenticationServiceUrl}/sessions/current`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ refreshToken }),
       });
 
       if (!response.ok) {
         throw new Error("Logout failed");
       }
 
-      localStorage.removeItem("token");
-      this.clearLastValidationTime();
       this.notifyAuthStatusChange(false);
-      console.log("Logout successful.");
       return true;
     } catch (error) {
       console.error("Logout error", error);
@@ -134,8 +92,6 @@ class AuthenticationService {
         throw new Error("Registration failed");
       }
 
-      console.log("Registration successful.");
-
       await this.login({ email: user.email, password: user.password });
 
       return true;
@@ -146,33 +102,21 @@ class AuthenticationService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    const tokenString = localStorage.getItem("token");
-    if (!tokenString) {
-      return false;
-    }
-
-    try {
-      const token: Token = JSON.parse(tokenString);
-      const isValid = await this.validateToken(token);
-      if (!isValid) {
-        localStorage.removeItem("token");
-      }
-      return isValid;
-    } catch (error) {
-      console.error("Failed to verify authentication:", error);
-      localStorage.removeItem("token");
-      return false;
-    }
+    const isValid = await this.validateSession();
+    this.notifyAuthStatusChange(isValid);
+    return isValid;
   }
 
-  private async validateToken(token: Token): Promise<boolean> {
+  // validateSession introspects the httpOnly access_token cookie: the body is
+  // empty and the server reads the token from the cookie.
+  private async validateSession(): Promise<boolean> {
     try {
       const response = await fetch(`${configService.authenticationServiceUrl}/tokens/introspect`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token: token.accessToken }),
+        body: JSON.stringify({}),
       });
 
       if (!response.ok) {
@@ -182,19 +126,8 @@ class AuthenticationService {
       const result = await response.json();
       return result.isValid;
     } catch (error) {
-      console.error("Token validation error", error);
+      console.error("Session validation error", error);
       return false;
-    }
-  }
-
-  getStoredToken(): Token | null {
-    const tokenString = localStorage.getItem("token");
-    if (!tokenString) return null;
-
-    try {
-      return JSON.parse(tokenString);
-    } catch (_error) {
-      return null;
     }
   }
 

@@ -1,5 +1,6 @@
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { authenticationService } from "../services/authentication.service";
 import { cartService } from "../services/cart.service";
 import { productService } from "../services/product.service";
 import { render, screen, waitFor } from "../test/test-utils";
@@ -17,7 +18,9 @@ global.fetch = vi.fn();
 
 describe("Header", () => {
   beforeEach(() => {
-    localStorage.clear();
+    // Auth status is a singleton derived from the httpOnly session cookie;
+    // reset to logged-out between tests.
+    (authenticationService as any).authStatus = false;
     cartService.clearCart();
     vi.clearAllMocks();
     (productService.getCategories as any).mockResolvedValue([]);
@@ -194,11 +197,7 @@ describe("Header", () => {
     });
 
     it("should show user menu when authenticated", async () => {
-      const mockToken = {
-        accessToken: "mock-token",
-        refreshToken: "mock-refresh",
-      };
-      localStorage.setItem("token", JSON.stringify(mockToken));
+      (authenticationService as any).authStatus = true;
 
       render(<Header />);
 
@@ -212,11 +211,7 @@ describe("Header", () => {
     });
 
     it("should show My Orders option when authenticated", async () => {
-      const mockToken = {
-        accessToken: "mock-token",
-        refreshToken: "mock-refresh",
-      };
-      localStorage.setItem("token", JSON.stringify(mockToken));
+      (authenticationService as any).authStatus = true;
 
       const user = userEvent.setup();
       render(<Header />);
@@ -240,11 +235,7 @@ describe("Header", () => {
     });
 
     it("should handle logout", async () => {
-      const mockToken = {
-        accessToken: "mock-token",
-        refreshToken: "mock-refresh",
-      };
-      localStorage.setItem("token", JSON.stringify(mockToken));
+      (authenticationService as any).authStatus = true;
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
@@ -274,13 +265,10 @@ describe("Header", () => {
 
         await waitFor(
           () => {
+            // The refresh_token httpOnly cookie identifies the session.
             expect(global.fetch).toHaveBeenCalledWith(
               expect.stringContaining("/api/sessions/current"),
-              expect.objectContaining({
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ refreshToken: "mock-refresh" }),
-              })
+              expect.objectContaining({ method: "DELETE" })
             );
           },
           { timeout: 2000 }
@@ -290,11 +278,7 @@ describe("Header", () => {
 
     it("should handle logout errors gracefully", async () => {
       const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      const mockToken = {
-        accessToken: "mock-token",
-        refreshToken: "mock-refresh",
-      };
-      localStorage.setItem("token", JSON.stringify(mockToken));
+      (authenticationService as any).authStatus = true;
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,

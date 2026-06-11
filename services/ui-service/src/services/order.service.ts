@@ -19,14 +19,10 @@ export interface CreateOrderResponse {
 class OrderService {
   private readonly apiBase = environment.ORDER_SERVICE_URL.replace(/\/orders?$/, "");
 
+  // Authentication: the auth-service sets an httpOnly access_token cookie at
+  // login, and same-origin fetches send it automatically — no Authorization
+  // header or localStorage needed (and XSS cannot read the cookie).
   async createOrder(cartItems: CartItem[]): Promise<CreateOrderResponse> {
-    const tokenString = localStorage.getItem("token");
-    if (!tokenString) {
-      throw new Error("User not authenticated");
-    }
-
-    const token = JSON.parse(tokenString);
-
     const items = cartItems.map((item) => ({
       product_id: item.product._id,
       name: item.product.name,
@@ -38,7 +34,6 @@ class OrderService {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token.accessToken}`,
       },
       body: JSON.stringify(items),
     });
@@ -52,18 +47,8 @@ class OrderService {
   }
 
   async getUserOrders(page: number = 1, pageSize: number = 10): Promise<any> {
-    const tokenString = localStorage.getItem("token");
-    if (!tokenString) {
-      throw new Error("User not authenticated");
-    }
-
-    const token = JSON.parse(tokenString);
     const url = `${this.apiBase}/me/orders?page=${page}&pageSize=${pageSize}`;
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token.accessToken}`,
-      },
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error("Failed to fetch user orders");
@@ -73,18 +58,8 @@ class OrderService {
   }
 
   async getUserOrderById(orderId: string): Promise<Order> {
-    const tokenString = localStorage.getItem("token");
-    if (!tokenString) {
-      throw new Error("User not authenticated");
-    }
-
-    const token = JSON.parse(tokenString);
     const url = `${this.apiBase}/me/orders/${orderId}`;
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token.accessToken}`,
-      },
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error("Failed to fetch order");
@@ -98,12 +73,6 @@ class OrderService {
     onMessage: (order: Order) => void,
     onError?: (error: Event) => void
   ): () => void {
-    const tokenString = localStorage.getItem("token");
-    if (!tokenString) {
-      throw new Error("User not authenticated");
-    }
-
-    const token = JSON.parse(tokenString);
     const url = `${this.apiBase}/me/orders/${orderId}/events`;
 
     const abortController = new AbortController();
@@ -113,7 +82,6 @@ class OrderService {
         const response = await fetch(url, {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token.accessToken}`,
             Accept: "text/event-stream",
           },
           signal: abortController.signal,
@@ -158,42 +126,6 @@ class OrderService {
     connectSSE();
 
     return () => abortController.abort();
-  }
-
-  async updateOrderStatus(orderId: string, status: string): Promise<void> {
-    const response = await fetch(`${this.apiBase}/orders/${orderId}/status`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        status: status,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Erro ao atualizar status do pedido");
-    }
-  }
-
-  async getOrdersByPage(
-    page: number,
-    pageSize: number
-  ): Promise<{
-    orders: Order[];
-    totalCount: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
-  }> {
-    const url = `${this.apiBase}/orders?page=${page}&pageSize=${pageSize}`;
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error("Erro ao buscar pedidos paginados");
-    }
-
-    return response.json();
   }
 }
 

@@ -23,109 +23,72 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const TOKEN_KEY = "token";
-const VALIDATION_KEY = "lastValidation";
-const VALIDATION_CACHE_DURATION = 5 * 60 * 1000;
-
+// Authentication lives in httpOnly cookies set by the auth-service: login
+// sets access_token/refresh_token cookies, every same-origin fetch sends them
+// automatically, and JavaScript (including XSS payloads) cannot read them.
+// The token kept in React state is in-memory only and never persisted.
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<Token | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 
-  const isAuthenticated = useMemo(() => token !== null, [token]);
-
-  const clearTokenStorage = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(VALIDATION_KEY);
-    setToken(null);
-  }, []);
-
   useEffect(() => {
-    const loadToken = async () => {
+    const restoreSession = async () => {
       try {
-        const storedToken = localStorage.getItem(TOKEN_KEY);
-        if (!storedToken) {
-          setIsInitializing(false);
-          return;
-        }
-
-        const parsedToken: Token = JSON.parse(storedToken);
-
-        const lastValidation = localStorage.getItem(VALIDATION_KEY);
-        const now = Date.now();
-
-        if (lastValidation && now - parseInt(lastValidation, 10) < VALIDATION_CACHE_DURATION) {
-          setToken(parsedToken);
-          setIsInitializing(false);
-          return;
-        }
-
-        const isValid = await validateTokenWithServer(parsedToken.accessToken);
-        if (isValid) {
-          setToken(parsedToken);
-          localStorage.setItem(VALIDATION_KEY, now.toString());
-        } else {
-          clearTokenStorage();
-        }
+        // Introspect with an empty body: the server validates the
+        // access_token cookie sent along with the request.
+        setIsAuthenticated(await validateSessionWithServer());
       } catch {
-        clearTokenStorage();
+        setIsAuthenticated(false);
       } finally {
         setIsInitializing(false);
       }
     };
 
-    loadToken();
-  }, [clearTokenStorage]);
-
-  const saveToken = useCallback((newToken: Token) => {
-    localStorage.setItem(TOKEN_KEY, JSON.stringify(newToken));
-    localStorage.setItem(VALIDATION_KEY, Date.now().toString());
-    setToken(newToken);
+    restoreSession();
   }, []);
 
   const getAccessToken = useCallback(() => {
     return token?.accessToken ?? null;
   }, [token]);
 
-  const login = useCallback(
-    async (user: ILoginUser): Promise<ILoginResponse> => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`${configService.authenticationServiceUrl}/sessions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(user),
-        });
+  const login = useCallback(async (user: ILoginUser): Promise<ILoginResponse> => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${configService.authenticationServiceUrl}/sessions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(user),
+      });
 
-        if (!response.ok) {
-          throw new Error("Erro no login");
-        }
-
-        const loginResponse: ILoginResponse = await response.json();
-        saveToken(loginResponse);
-        return loginResponse;
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error("Erro no login");
       }
-    },
-    [saveToken]
-  );
+
+      const loginResponse: ILoginResponse = await response.json();
+      setToken(loginResponse);
+      setIsAuthenticated(true);
+      return loginResponse;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const logout = useCallback(async (): Promise<void> => {
     setIsLoading(true);
     try {
-      if (token?.refreshToken) {
-        await fetch(`${configService.authenticationServiceUrl}/sessions/current`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refreshToken: token.refreshToken }),
-        });
-      }
+      // The refresh_token cookie identifies the session; the server clears
+      // both auth cookies in the response.
+      await fetch(`${configService.authenticationServiceUrl}/sessions/current`, {
+        method: "DELETE",
+      });
     } finally {
-      clearTokenStorage();
+      setToken(null);
+      setIsAuthenticated(false);
       setIsLoading(false);
     }
-  }, [token, clearTokenStorage]);
+  }, []);
 
   const register = useCallback(
     async (user: IRegisterUser): Promise<boolean> => {
@@ -175,12 +138,12 @@ export function useAuthContext() {
   return context;
 }
 
-async function validateTokenWithServer(accessToken: string): Promise<boolean> {
+async function validateSessionWithServer(): Promise<boolean> {
   try {
     const response = await fetch(`${configService.authenticationServiceUrl}/tokens/introspect`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: accessToken }),
+      body: JSON.stringify({}),
     });
 
     if (!response.ok) return false;
