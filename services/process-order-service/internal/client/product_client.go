@@ -2,10 +2,13 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type PermanentError struct {
@@ -27,7 +30,7 @@ func (e *TransientError) Error() string {
 }
 
 type ProductClient interface {
-	UpdateQuantity(productID string, quantityChange int) error
+	UpdateQuantity(ctx context.Context, productID string, quantityChange int) error
 }
 
 type productClient struct {
@@ -40,6 +43,8 @@ func NewProductClient(baseURL string) ProductClient {
 		baseURL: baseURL,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
+			// Propagates the W3C trace context and records a client span per call.
+			Transport: otelhttp.NewTransport(http.DefaultTransport),
 		},
 	}
 }
@@ -48,7 +53,7 @@ type UpdateQuantityRequest struct {
 	QuantityChange int `json:"quantity_change"`
 }
 
-func (c *productClient) UpdateQuantity(productID string, quantityChange int) error {
+func (c *productClient) UpdateQuantity(ctx context.Context, productID string, quantityChange int) error {
 	req := UpdateQuantityRequest{
 		QuantityChange: quantityChange,
 	}
@@ -58,7 +63,7 @@ func (c *productClient) UpdateQuantity(productID string, quantityChange int) err
 		return fmt.Errorf("marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequest("PATCH", c.baseURL+"/api/products/"+productID+"/inventory", bytes.NewBuffer(body))
+	httpReq, err := http.NewRequestWithContext(ctx, "PATCH", c.baseURL+"/api/products/"+productID+"/inventory", bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}

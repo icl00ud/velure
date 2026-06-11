@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -71,7 +72,7 @@ func TestRabbitPublisher_PublishSuccess(t *testing.T) {
 	}
 
 	evt := model.Event{Type: "order.created", Payload: []byte(`{"id":"1"}`)}
-	if err := pub.Publish(evt); err != nil {
+	if err := pub.Publish(context.Background(), evt); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !ch.published {
@@ -93,7 +94,7 @@ func TestRabbitPublisher_PublishError(t *testing.T) {
 		logger:   logger.NewNop(),
 	}
 
-	err := pub.Publish(model.Event{Type: "order.created", Payload: []byte(`{}`)})
+	err := pub.Publish(context.Background(), model.Event{Type: "order.created", Payload: []byte(`{}`)})
 	if err == nil {
 		t.Fatal("expected error from publish")
 	}

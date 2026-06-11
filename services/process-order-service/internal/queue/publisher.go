@@ -1,16 +1,18 @@
 package queue
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/icl00ud/velure/services/process-order-service/internal/model"
+	"github.com/icl00ud/velure/services/process-order-service/internal/telemetry"
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/rabbitmq/amqp091-go"
 )
 
 type Publisher interface {
-	Publish(evt model.Event) error
+	Publish(ctx context.Context, evt model.Event) error
 	Close() error
 }
 
@@ -41,16 +43,21 @@ func NewRabbitPublisher(amqpURL, exchange string, log *logger.Logger) (Publisher
 	return &rabbitPublisher{conn: conn, channel: ch, exchange: exchange, logger: log}, nil
 }
 
-func (r *rabbitPublisher) Publish(evt model.Event) error {
+func (r *rabbitPublisher) Publish(ctx context.Context, evt model.Event) error {
 	body, err := json.Marshal(evt)
 	if err != nil {
 		return err
+	}
+	// Propagate the trace context to downstream consumers via AMQP headers.
+	headers := amqp091.Table{}
+	for k, v := range telemetry.InjectMap(ctx) {
+		headers[k] = v
 	}
 	err = r.channel.Publish(
 		r.exchange,
 		evt.Type,
 		false, false,
-		amqp091.Publishing{ContentType: "application/json", Body: body},
+		amqp091.Publishing{ContentType: "application/json", Body: body, Headers: headers},
 	)
 	if err != nil {
 		r.logger.Error("publish failed", logger.Err(err), logger.String("exchange", r.exchange), logger.String("event_type", evt.Type))

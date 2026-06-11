@@ -10,14 +10,29 @@ import (
 	"github.com/icl00ud/velure/services/process-order-service/internal/client"
 	"github.com/icl00ud/velure/services/process-order-service/internal/metrics"
 	"github.com/icl00ud/velure/services/process-order-service/internal/model"
+	"github.com/icl00ud/velure/services/process-order-service/internal/telemetry"
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/rabbitmq/amqp091-go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
+
+// headersToMap converts string-valued AMQP headers (where the W3C trace
+// context travels) into the map form the OTel propagator understands.
+func headersToMap(headers amqp091.Table) map[string]string {
+	m := make(map[string]string, len(headers))
+	for k, v := range headers {
+		if s, ok := v.(string); ok {
+			m[k] = s
+		}
+	}
+	return m
+}
 
 const maxRetries = 3
 
 type Consumer interface {
-	Consume(ctx context.Context, handler func(eventID string, evt model.Event) error) error
+	Consume(ctx context.Context, handler func(ctx context.Context, eventID string, evt model.Event) error) error
 	Close() error
 }
 
@@ -84,7 +99,7 @@ func getRetryCount(headers amqp091.Table) int64 {
 	return count
 }
 
-func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(eventID string, evt model.Event) error) error {
+func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(ctx context.Context, eventID string, evt model.Event) error) error {
 	msgs, err := r.channel.Consume(r.queue, "", false, false, false, false, nil)
 	if err != nil {
 		return err
@@ -117,7 +132,14 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(eventID str
 				logger.String("event_type", evt.Type),
 				logger.Int64("retry_count", retryCount))
 
-			if err := handler(eventID, evt); err != nil {
+			// Continue the trace propagated through AMQP headers.
+			msgCtx := telemetry.ExtractMap(ctx, headersToMap(d.Headers))
+			msgCtx, span := otel.Tracer("order-consumer").Start(msgCtx, "consume "+evt.Type,
+				trace.WithSpanKind(trace.SpanKindConsumer))
+
+			err := handler(msgCtx, eventID, evt)
+			span.End()
+			if err != nil {
 				// Check whether this is a permanent error
 				var permErr *client.PermanentError
 				if errors.As(err, &permErr) {

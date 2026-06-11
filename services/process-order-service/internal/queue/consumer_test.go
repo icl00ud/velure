@@ -99,7 +99,7 @@ func TestRabbitMQConsumer_ConsumeSuccess(t *testing.T) {
 		logger:  logger.NewNop(),
 	}
 
-	if err := c.Consume(context.Background(), func(_ string, evt model.Event) error { return nil }); err != nil {
+	if err := c.Consume(context.Background(), func(_ context.Context, _ string, evt model.Event) error { return nil }); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !acker.acked {
@@ -121,7 +121,7 @@ func TestRabbitMQConsumer_ConsumeHandlerErrorRequeues(t *testing.T) {
 		logger:  logger.NewNop(),
 	}
 
-	err := c.Consume(context.Background(), func(_ string, evt model.Event) error { return errors.New("temp") })
+	err := c.Consume(context.Background(), func(_ context.Context, _ string, evt model.Event) error { return errors.New("temp") })
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -147,7 +147,7 @@ func TestRabbitMQConsumer_InvalidJSON(t *testing.T) {
 		logger:  logger.NewNop(),
 	}
 
-	err := c.Consume(context.Background(), func(_ string, evt model.Event) error { return nil })
+	err := c.Consume(context.Background(), func(_ context.Context, _ string, evt model.Event) error { return nil })
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -168,7 +168,7 @@ func TestRabbitMQConsumer_ContextCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	start := time.Now()
-	err := c.Consume(ctx, func(_ string, evt model.Event) error { return nil })
+	err := c.Consume(ctx, func(_ context.Context, _ string, evt model.Event) error { return nil })
 	if err == nil {
 		t.Fatal("expected context error")
 	}
@@ -191,7 +191,7 @@ func TestRabbitMQConsumer_PermanentErrorSendsToDLQ(t *testing.T) {
 		logger:  logger.NewNop(),
 	}
 
-	err := c.Consume(context.Background(), func(_ string, evt model.Event) error {
+	err := c.Consume(context.Background(), func(_ context.Context, _ string, evt model.Event) error {
 		return &client.PermanentError{Message: "nope", StatusCode: 404}
 	})
 	if err != nil {
@@ -222,7 +222,7 @@ func TestRabbitMQConsumer_MaxRetriesSendsToDLQ(t *testing.T) {
 		logger:  logger.NewNop(),
 	}
 
-	err := c.Consume(context.Background(), func(_ string, evt model.Event) error { return errors.New("temporary") })
+	err := c.Consume(context.Background(), func(_ context.Context, _ string, evt model.Event) error { return errors.New("temporary") })
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -250,7 +250,7 @@ func TestConsume_ExtractsEventIDFromHeader(t *testing.T) {
 	}
 
 	var capturedEventID string
-	if err := c.Consume(context.Background(), func(eventID string, evt model.Event) error {
+	if err := c.Consume(context.Background(), func(_ context.Context, eventID string, evt model.Event) error {
 		capturedEventID = eventID
 		return nil
 	}); err != nil {

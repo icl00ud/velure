@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -48,7 +49,7 @@ func TestProductClient_UpdateQuantity_Success(t *testing.T) {
 	defer server.Close()
 
 	client := NewProductClient(server.URL)
-	err := client.UpdateQuantity("product123", -2)
+	err := client.UpdateQuantity(context.Background(), "product123", -2)
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -63,7 +64,7 @@ func TestProductClient_UpdateQuantity_ErrorResponse(t *testing.T) {
 	defer server.Close()
 
 	client := NewProductClient(server.URL)
-	err := client.UpdateQuantity("product123", -10)
+	err := client.UpdateQuantity(context.Background(), "product123", -10)
 
 	if err == nil {
 		t.Error("expected error, got nil")
@@ -81,7 +82,7 @@ func TestProductClient_UpdateQuantity_NonJSONError(t *testing.T) {
 	defer server.Close()
 
 	client := NewProductClient(server.URL)
-	err := client.UpdateQuantity("product123", -2)
+	err := client.UpdateQuantity(context.Background(), "product123", -2)
 
 	if err == nil {
 		t.Error("expected error, got nil")
@@ -93,7 +94,7 @@ func TestProductClient_UpdateQuantity_NonJSONError(t *testing.T) {
 
 func TestProductClient_UpdateQuantity_InvalidURL(t *testing.T) {
 	client := NewProductClient("http://invalid-url-that-does-not-exist.local:99999")
-	err := client.UpdateQuantity("product123", -2)
+	err := client.UpdateQuantity(context.Background(), "product123", -2)
 
 	if err == nil {
 		t.Error("expected error, got nil")
@@ -107,7 +108,7 @@ func TestProductClient_UpdateQuantity_Timeout(t *testing.T) {
 	defer server.Close()
 
 	client := NewProductClient(server.URL)
-	err := client.UpdateQuantity("product123", -2)
+	err := client.UpdateQuantity(context.Background(), "product123", -2)
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -122,7 +123,7 @@ func TestProductClient_UpdateQuantity_PositiveChange(t *testing.T) {
 	defer server.Close()
 
 	client := NewProductClient(server.URL)
-	err := client.UpdateQuantity("product456", 5)
+	err := client.UpdateQuantity(context.Background(), "product456", 5)
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -137,7 +138,7 @@ func TestProductClient_UpdateQuantity_TooManyRequests(t *testing.T) {
 	defer server.Close()
 
 	client := NewProductClient(server.URL)
-	err := client.UpdateQuantity("product789", -1)
+	err := client.UpdateQuantity(context.Background(), "product789", -1)
 	if err == nil {
 		t.Fatal("expected transient error")
 	}
@@ -153,7 +154,7 @@ func TestProductClient_UpdateQuantity_UnexpectedStatusDefaultsToPermanent(t *tes
 	defer server.Close()
 
 	client := NewProductClient(server.URL)
-	err := client.UpdateQuantity("product123", -1)
+	err := client.UpdateQuantity(context.Background(), "product123", -1)
 	if err == nil {
 		t.Fatal("expected error")
 	}

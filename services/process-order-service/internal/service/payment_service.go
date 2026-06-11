@@ -2,71 +2,122 @@ package service
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/big"
 	"sync"
 	"time"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/icl00ud/velure/services/process-order-service/internal/client"
 	"github.com/icl00ud/velure/services/process-order-service/internal/metrics"
 	"github.com/icl00ud/velure/services/process-order-service/internal/model"
+	"github.com/icl00ud/velure/services/process-order-service/internal/payment"
 	"github.com/icl00ud/velure/services/process-order-service/internal/queue"
+	"github.com/icl00ud/velure/shared/logger"
 )
 
 type PaymentService interface {
-	Process(orderID string, items []model.CartItem, amount int) error
+	Process(ctx context.Context, orderID string, items []model.CartItem, amount int) error
 }
 
 type paymentService struct {
 	pub           queue.Publisher
 	productClient client.ProductClient
+	processor     payment.Processor
 }
 
-func NewPaymentService(pub queue.Publisher, productClient client.ProductClient) PaymentService {
+func NewPaymentService(pub queue.Publisher, productClient client.ProductClient, processor payment.Processor) PaymentService {
 	return &paymentService{
 		pub:           pub,
 		productClient: productClient,
+		processor:     processor,
 	}
 }
 
-func (s *paymentService) Process(orderID string, items []model.CartItem, amount int) error {
+// Process deducts stock, charges the payment and publishes status events.
+// Invariant: when Process fails after deducting stock (error return or
+// permanent failure), every successful deduction is compensated so a retry —
+// which re-runs the whole flow — never double-deducts inventory.
+func (s *paymentService) Process(ctx context.Context, orderID string, items []model.CartItem, amount int) error {
+	ctx, span := otel.Tracer("process-order").Start(ctx, "order.process",
+		trace.WithAttributes(attribute.String("velure.order_id", orderID)))
+	defer span.End()
+
 	start := time.Now()
 
 	// Step 1: Deduct stock for all items in PARALLEL
-	shouldContinue, err := s.deductStockParallel(orderID, items, start)
-	if err != nil {
-		return err
-	}
-	if !shouldContinue {
-		// Permanent error occurred, failure event already published, stop processing
-		return nil
+	deducted, firstErr, failedItem := s.deductStockParallel(ctx, items)
+	if firstErr != nil {
+		s.compensateStock(ctx, orderID, deducted)
+		metrics.OrdersProcessed.WithLabelValues("failure").Inc()
+		metrics.OrderProcessingDuration.Observe(time.Since(start).Seconds())
+
+		// Permanent errors (e.g. product not found) are not retryable:
+		// publish the failure event and ack the message.
+		var permErr *client.PermanentError
+		if errors.As(firstErr, &permErr) {
+			failEvt := model.Event{
+				Type: model.OrderFailed,
+				Payload: mustJSON(struct {
+					ID      string `json:"id"`
+					OrderID string `json:"order_id"`
+					Reason  string `json:"reason"`
+				}{ID: orderID, OrderID: orderID, Reason: firstErr.Error()}),
+			}
+			if pubErr := s.pub.Publish(ctx, failEvt); pubErr != nil {
+				return fmt.Errorf("deduct stock failed: %w; publish failure failed: %v", firstErr, pubErr)
+			}
+			return nil
+		}
+
+		return fmt.Errorf("deduct stock for product %s: %w", failedItem.ProductID, firstErr)
 	}
 
 	// Step 2: Publish processing event
 	procEvt := model.Event{
 		Type: model.OrderProcessing,
-		Payload: func() json.RawMessage {
-			m := struct{ ID string }{ID: orderID}
-			b, _ := json.Marshal(m)
-			return json.RawMessage(b)
-		}(),
+		Payload: mustJSON(struct {
+			ID string
+		}{ID: orderID}),
 	}
-	if err := s.pub.Publish(procEvt); err != nil {
+	if err := s.pub.Publish(ctx, procEvt); err != nil {
+		s.compensateStock(ctx, orderID, items)
 		return fmt.Errorf("publish processing: %w", err)
 	}
 
-	// Step 3: Simulate payment processing (2-4 seconds) - NON-BLOCKING
+	// Step 3: Charge the payment (Stripe test mode, or the simulated
+	// processor when no API key is configured). The order ID doubles as the
+	// idempotency key, so retries cannot double-charge.
 	metrics.PaymentAttempts.WithLabelValues("initiated").Inc()
 	paymentStart := time.Now()
 
-	if err := s.simulatePaymentProcessing(); err != nil {
+	if err := s.processor.Charge(ctx, orderID, int64(amount)); err != nil {
+		s.compensateStock(ctx, orderID, items)
 		metrics.PaymentAttempts.WithLabelValues("failure").Inc()
 		metrics.OrdersProcessed.WithLabelValues("failure").Inc()
 		metrics.OrderProcessingDuration.Observe(time.Since(start).Seconds())
-		return err
+
+		// Declined payments are final: fail the order and ack the message.
+		var payErr *payment.PermanentError
+		if errors.As(err, &payErr) {
+			failEvt := model.Event{
+				Type: model.OrderFailed,
+				Payload: mustJSON(struct {
+					ID      string `json:"id"`
+					OrderID string `json:"order_id"`
+					Reason  string `json:"reason"`
+				}{ID: orderID, OrderID: orderID, Reason: payErr.Reason}),
+			}
+			if pubErr := s.pub.Publish(ctx, failEvt); pubErr != nil {
+				return fmt.Errorf("payment failed: %w; publish failure failed: %v", err, pubErr)
+			}
+			return nil
+		}
+		return fmt.Errorf("charge payment: %w", err)
 	}
 
 	metrics.PaymentProcessingDuration.Observe(time.Since(paymentStart).Seconds())
@@ -76,18 +127,17 @@ func (s *paymentService) Process(orderID string, items []model.CartItem, amount 
 	// Step 4: Publish completed event
 	compEvt := model.Event{
 		Type: model.OrderCompleted,
-		Payload: func() json.RawMessage {
-			p := struct {
-				ID        string    `json:"id"`
-				OrderID   string    `json:"order_id"`
-				Amount    int       `json:"amount"`
-				Processed time.Time `json:"processed_at"`
-			}{ID: orderID, OrderID: orderID, Amount: amount, Processed: time.Now()}
-			b, _ := json.Marshal(p)
-			return json.RawMessage(b)
-		}(),
+		Payload: mustJSON(struct {
+			ID        string    `json:"id"`
+			OrderID   string    `json:"order_id"`
+			Amount    int       `json:"amount"`
+			Processed time.Time `json:"processed_at"`
+		}{ID: orderID, OrderID: orderID, Amount: amount, Processed: time.Now()}),
 	}
-	if err := s.pub.Publish(compEvt); err != nil {
+	if err := s.pub.Publish(ctx, compEvt); err != nil {
+		// Error return leads to a retry that re-runs the whole flow, so the
+		// stock from this attempt has to be handed back first.
+		s.compensateStock(ctx, orderID, items)
 		metrics.OrdersProcessed.WithLabelValues("failure").Inc()
 		metrics.OrderProcessingDuration.Observe(time.Since(start).Seconds())
 		return fmt.Errorf("publish completed: %w", err)
@@ -98,9 +148,15 @@ func (s *paymentService) Process(orderID string, items []model.CartItem, amount 
 	return nil
 }
 
-// deductStockParallel processes all inventory updates concurrently
-// Returns (shouldContinue, error) where shouldContinue=false means permanent failure was handled
-func (s *paymentService) deductStockParallel(orderID string, items []model.CartItem, start time.Time) (bool, error) {
+func mustJSON(v any) json.RawMessage {
+	b, _ := json.Marshal(v)
+	return json.RawMessage(b)
+}
+
+// deductStockParallel processes all inventory updates concurrently.
+// Returns the items whose deduction succeeded, the first error encountered
+// and the item it belongs to.
+func (s *paymentService) deductStockParallel(ctx context.Context, items []model.CartItem) ([]model.CartItem, error, model.CartItem) {
 	type result struct {
 		item model.CartItem
 		err  error
@@ -117,7 +173,7 @@ func (s *paymentService) deductStockParallel(orderID string, items []model.CartI
 			metrics.InventoryChecks.WithLabelValues("available").Inc()
 			checkStart := time.Now()
 
-			err := s.productClient.UpdateQuantity(item.ProductID, -item.Quantity)
+			err := s.productClient.UpdateQuantity(ctx, item.ProductID, -item.Quantity)
 			metrics.InventoryCheckDuration.Observe(time.Since(checkStart).Seconds())
 
 			if err != nil {
@@ -128,73 +184,40 @@ func (s *paymentService) deductStockParallel(orderID string, items []model.CartI
 		}(item)
 	}
 
-	// Close results channel when all goroutines complete
 	go func() {
 		wg.Wait()
 		close(results)
 	}()
 
-	// Collect results and check for errors
+	deducted := make([]model.CartItem, 0, len(items))
 	var firstErr error
 	var failedItem model.CartItem
 	for r := range results {
-		if r.err != nil && firstErr == nil {
-			firstErr = r.err
-			failedItem = r.item
+		if r.err != nil {
+			if firstErr == nil {
+				firstErr = r.err
+				failedItem = r.item
+			}
+			continue
 		}
+		deducted = append(deducted, r.item)
 	}
 
-	if firstErr != nil {
-		metrics.OrdersProcessed.WithLabelValues("failure").Inc()
-		metrics.OrderProcessingDuration.Observe(time.Since(start).Seconds())
-
-		// Check if it's a permanent error (e.g. product not found)
-		var permErr *client.PermanentError
-		if errors.As(firstErr, &permErr) {
-			// Publish failure event
-			failEvt := model.Event{
-				Type: model.OrderFailed,
-				Payload: func() json.RawMessage {
-					p := struct {
-						ID      string `json:"id"`
-						OrderID string `json:"order_id"`
-						Reason  string `json:"reason"`
-					}{ID: orderID, OrderID: orderID, Reason: firstErr.Error()}
-					b, _ := json.Marshal(p)
-					return json.RawMessage(b)
-				}(),
-			}
-			if pubErr := s.pub.Publish(failEvt); pubErr != nil {
-				return false, fmt.Errorf("deduct stock failed: %w; publish failure failed: %v", firstErr, pubErr)
-			}
-			// Permanent error handled, don't continue processing but no error to return
-			return false, nil
-		}
-
-		return false, fmt.Errorf("deduct stock for product %s: %w", failedItem.ProductID, firstErr)
-	}
-
-	return true, nil
+	return deducted, firstErr, failedItem
 }
 
-// simulatePaymentProcessing simulates payment with context-aware waiting
-func (s *paymentService) simulatePaymentProcessing() error {
-	randomDuration, err := rand.Int(rand.Reader, big.NewInt(3))
-	if err != nil {
-		return fmt.Errorf("generate random duration: %w", err)
-	}
-
-	sleepTime := time.Duration(randomDuration.Int64()+2) * time.Second
-
-	// Use select with timer instead of blocking Sleep
-	// This allows the goroutine to be interrupted if needed
-	ctx, cancel := context.WithTimeout(context.Background(), sleepTime+time.Second)
-	defer cancel()
-
-	select {
-	case <-time.After(sleepTime):
-		return nil
-	case <-ctx.Done():
-		return nil
+// compensateStock re-adds quantities that were successfully deducted in a
+// failed processing attempt. Compensation failures are logged but not
+// propagated — there is no further recovery at this layer.
+func (s *paymentService) compensateStock(ctx context.Context, orderID string, items []model.CartItem) {
+	for _, item := range items {
+		if err := s.productClient.UpdateQuantity(ctx, item.ProductID, item.Quantity); err != nil {
+			metrics.InventoryChecks.WithLabelValues("error").Inc()
+			logger.Error("stock compensation failed — manual reconciliation needed",
+				logger.String("order_id", orderID),
+				logger.String("product_id", item.ProductID),
+				logger.Int("quantity", item.Quantity),
+				logger.Err(err))
+		}
 	}
 }

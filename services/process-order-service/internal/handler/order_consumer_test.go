@@ -13,10 +13,10 @@ import (
 
 // Mock consumer for testing
 type mockConsumer struct {
-	consumeFunc func(ctx context.Context, handler func(string, model.Event) error) error
+	consumeFunc func(ctx context.Context, handler func(context.Context, string, model.Event) error) error
 }
 
-func (m *mockConsumer) Consume(ctx context.Context, handler func(string, model.Event) error) error {
+func (m *mockConsumer) Consume(ctx context.Context, handler func(context.Context, string, model.Event) error) error {
 	if m.consumeFunc != nil {
 		return m.consumeFunc(ctx, handler)
 	}
@@ -48,7 +48,7 @@ type mockPaymentService struct {
 	}
 }
 
-func (m *mockPaymentService) Process(orderID string, items []model.CartItem, amount int) error {
+func (m *mockPaymentService) Process(_ context.Context, orderID string, items []model.CartItem, amount int) error {
 	if m.calls == nil {
 		m.calls = []struct {
 			orderID string
@@ -108,9 +108,9 @@ func TestOrderConsumer_Start_OrderCreatedEvent(t *testing.T) {
 
 	// Create consumer that immediately calls handler with test event
 	consumer := &mockConsumer{
-		consumeFunc: func(ctx context.Context, handler func(string, model.Event) error) error {
+		consumeFunc: func(ctx context.Context, handler func(context.Context, string, model.Event) error) error {
 			// Call handler with test event
-			return handler("evt-1", evt)
+			return handler(ctx, "evt-1", evt)
 		},
 	}
 
@@ -154,8 +154,8 @@ func TestOrderConsumer_Start_NonOrderCreatedEvent(t *testing.T) {
 	}
 
 	consumer := &mockConsumer{
-		consumeFunc: func(ctx context.Context, handler func(string, model.Event) error) error {
-			return handler("evt-2", evt)
+		consumeFunc: func(ctx context.Context, handler func(context.Context, string, model.Event) error) error {
+			return handler(ctx, "evt-2", evt)
 		},
 	}
 
@@ -187,8 +187,8 @@ func TestOrderConsumer_Start_InvalidPayload(t *testing.T) {
 	}
 
 	consumer := &mockConsumer{
-		consumeFunc: func(ctx context.Context, handler func(string, model.Event) error) error {
-			return handler("evt-3", evt)
+		consumeFunc: func(ctx context.Context, handler func(context.Context, string, model.Event) error) error {
+			return handler(ctx, "evt-3", evt)
 		},
 	}
 
@@ -236,8 +236,8 @@ func TestOrderConsumer_Start_ProcessFails(t *testing.T) {
 	}
 
 	consumer := &mockConsumer{
-		consumeFunc: func(ctx context.Context, handler func(string, model.Event) error) error {
-			return handler("evt-4", evt)
+		consumeFunc: func(ctx context.Context, handler func(context.Context, string, model.Event) error) error {
+			return handler(ctx, "evt-4", evt)
 		},
 	}
 
@@ -263,7 +263,7 @@ func TestOrderConsumer_Start_MultipleWorkers(t *testing.T) {
 	logger := logger.NewNop()
 
 	consumer := &mockConsumer{
-		consumeFunc: func(ctx context.Context, handler func(string, model.Event) error) error {
+		consumeFunc: func(ctx context.Context, handler func(context.Context, string, model.Event) error) error {
 			// Wait for context to be done
 			<-ctx.Done()
 			return nil

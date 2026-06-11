@@ -37,12 +37,12 @@ func NewOrderConsumer(c queue.Consumer, svc service.PaymentService, idem Idempot
 }
 
 func (oc *OrderConsumer) Start(ctx context.Context) error {
-	handler := func(eventID string, evt model.Event) error {
+	handler := func(ctx context.Context, eventID string, evt model.Event) error {
 		metrics.MessagesConsumed.Inc()
 
 		// Idempotency gate (fail-open on Redis errors).
 		if oc.idem != nil && eventID != "" {
-			firstSeen, err := oc.idem.FirstSeen(context.Background(), eventID)
+			firstSeen, err := oc.idem.FirstSeen(ctx, eventID)
 			if err != nil {
 				oc.logger.Error("idempotency check failed, processing anyway", logger.Err(err))
 				metrics.IdempotencyCheckFailed.Inc()
@@ -67,16 +67,16 @@ func (oc *OrderConsumer) Start(ctx context.Context) error {
 			metrics.MessageProcessingErrors.Inc()
 			metrics.MessagesAcknowledged.WithLabelValues("nack").Inc()
 			if oc.idem != nil && eventID != "" {
-				_ = oc.idem.Forget(context.Background(), eventID)
+				_ = oc.idem.Forget(ctx, eventID)
 			}
 			return err
 		}
 
-		if err := oc.svc.Process(p.ID, p.Items, int(p.Total)); err != nil {
+		if err := oc.svc.Process(ctx, p.ID, p.Items, int(p.Total)); err != nil {
 			metrics.MessageProcessingErrors.Inc()
 			metrics.MessagesAcknowledged.WithLabelValues("nack").Inc()
 			if oc.idem != nil && eventID != "" {
-				_ = oc.idem.Forget(context.Background(), eventID)
+				_ = oc.idem.Forget(ctx, eventID)
 			}
 			return err
 		}
