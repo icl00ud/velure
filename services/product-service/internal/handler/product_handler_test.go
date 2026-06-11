@@ -371,3 +371,22 @@ func TestUpdateProduct_NotImplemented(t *testing.T) {
 	assert.NoError(t, readErr)
 	assert.Contains(t, string(body), "product update is not implemented yet")
 }
+
+func TestGetProductById_InternalErrorNotLeaked(t *testing.T) {
+	mockService := new(MockProductService)
+	mockService.On("GetProductById", mock.Anything, "123").
+		Return((*models.ProductResponse)(nil), errors.New("mongo: connection refused at 10.0.0.5"))
+
+	handler := NewProductHandler(mockService)
+	app := fiber.New()
+	app.Get("/products/id/:id", handler.GetProductById)
+
+	req := httptest.NewRequest("GET", "/products/id/123", nil)
+	resp, err := app.Test(req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, fiber.StatusInternalServerError, resp.StatusCode)
+
+	body, _ := io.ReadAll(resp.Body)
+	assert.NotContains(t, string(body), "10.0.0.5", "internal error details must not leak to clients")
+}

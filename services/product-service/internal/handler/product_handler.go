@@ -9,6 +9,7 @@ import (
 	"github.com/icl00ud/velure/services/product-service/internal/service"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/icl00ud/velure/shared/logger"
 )
 
 type ProductHandler struct {
@@ -16,6 +17,13 @@ type ProductHandler struct {
 }
 
 const maxPageSize = 100
+
+// internalError logs the real cause and returns a generic 500 so datastore
+// details never reach the client.
+func internalError(err error) error {
+	logger.Error("internal error", logger.Err(err))
+	return fiber.NewError(fiber.StatusInternalServerError, "internal error")
+}
 
 func NewProductHandler(service services.ProductService) *ProductHandler {
 	return &ProductHandler{
@@ -34,7 +42,7 @@ func (h *ProductHandler) GetProductById(c *fiber.Ctx) error {
 		if err.Error() == "product not found" {
 			return fiber.NewError(fiber.StatusNotFound, err.Error())
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return internalError(err)
 	}
 	return c.JSON(product)
 }
@@ -48,7 +56,7 @@ func (h *ProductHandler) GetProducts(c *fiber.Ctx) error {
 	if name != "" {
 		products, err := h.service.GetProductsByName(c.Context(), name)
 		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			return internalError(err)
 		}
 		return c.JSON(products)
 	}
@@ -67,7 +75,7 @@ func (h *ProductHandler) GetProducts(c *fiber.Ctx) error {
 
 		products, err := h.service.GetAllProducts(c.Context())
 		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+			return internalError(err)
 		}
 		return c.JSON(products)
 	}
@@ -103,7 +111,7 @@ func (h *ProductHandler) GetProducts(c *fiber.Ctx) error {
 	}
 	if err != nil {
 		metrics.Errors.WithLabelValues("database").Inc()
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return internalError(err)
 	}
 
 	metrics.ProductOperationDuration.WithLabelValues("list").Observe(time.Since(opStart).Seconds())
@@ -115,7 +123,7 @@ func (h *ProductHandler) GetProducts(c *fiber.Ctx) error {
 func (h *ProductHandler) GetProductsCount(c *fiber.Ctx) error {
 	count, err := h.service.GetProductsCount(c.Context())
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return internalError(err)
 	}
 	return c.JSON(count)
 }
@@ -123,7 +131,7 @@ func (h *ProductHandler) GetProductsCount(c *fiber.Ctx) error {
 func (h *ProductHandler) GetCategories(c *fiber.Ctx) error {
 	categories, err := h.service.GetCategories(c.Context())
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return internalError(err)
 	}
 	return c.JSON(categories)
 }
@@ -136,7 +144,7 @@ func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 
 	product, err := h.service.CreateProduct(c.Context(), req)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return internalError(err)
 	}
 	return c.Status(fiber.StatusCreated).JSON(product)
 }
@@ -148,7 +156,7 @@ func (h *ProductHandler) DeleteProductById(c *fiber.Ctx) error {
 	}
 
 	if err := h.service.DeleteProductById(c.Context(), id); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		return internalError(err)
 	}
 	return c.SendStatus(fiber.StatusNoContent)
 }
