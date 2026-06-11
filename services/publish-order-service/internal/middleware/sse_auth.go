@@ -36,6 +36,14 @@ func SSEAuth(jwtSecret string) func(http.Handler) http.Handler {
 				tokenString = r.URL.Query().Get("token")
 			}
 
+			// Finally the httpOnly cookie — EventSource sends cookies on
+			// same-origin requests, so this is the preferred SPA path.
+			if tokenString == "" {
+				if cookie, err := r.Cookie("access_token"); err == nil {
+					tokenString = cookie.Value
+				}
+			}
+
 			if tokenString == "" {
 				logger.Warn("missing authorization token")
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)

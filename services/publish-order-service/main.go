@@ -23,10 +23,13 @@ import (
 	"github.com/icl00ud/velure/services/publish-order-service/internal/repository"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/service"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/supervisor"
+	"github.com/icl00ud/velure/services/publish-order-service/internal/telemetry"
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type dbProvider interface {
@@ -110,6 +113,16 @@ func run(parentCtx context.Context, deps appDeps) error {
 	ctx, cancel := signal.NotifyContext(parentCtx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	otelShutdown, err := telemetry.Init(ctx, "publish-order-service")
+	if err != nil {
+		log.Warn("telemetry init failed, continuing without tracing", logger.Err(err))
+	}
+	defer func() {
+		shutdownCtx, c := context.WithTimeout(context.Background(), 5*time.Second)
+		defer c()
+		_ = otelShutdown(shutdownCtx)
+	}()
+
 	log.Info("Connecting to PostgreSQL")
 	repo, err := deps.newRepo(cfg.PostgresURL)
 	if err != nil {
@@ -149,6 +162,12 @@ func run(parentCtx context.Context, deps appDeps) error {
 	oh := handler.NewOrderHandler(svc)
 
 	sseHandler := handler.NewSSEHandler(svc)
+	if cfg.RedisAddr != "" {
+		log.Info("Enabling cross-replica SSE bus", logger.String("redis_addr", cfg.RedisAddr))
+		redisClient := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
+		defer redisClient.Close()
+		sseHandler.AttachBus(handler.NewRedisOrderBus(redisClient))
+	}
 	eventHandler := handler.NewEventHandler(svc, log)
 	eventHandler.SetSSEHandler(sseHandler)
 
@@ -189,11 +208,16 @@ func run(parentCtx context.Context, deps appDeps) error {
 	})
 
 	log.Info("Starting HTTP server", logger.String("port", cfg.Port))
-	srv := deps.newHTTPServer(cfg, mux)
+	srv := deps.newHTTPServer(cfg, otelhttp.NewHandler(mux, "publish-order-service"))
 
 	notifyCh := make(chan struct{}, 1)
 
 	g, ctx := errgroup.WithContext(ctx)
+
+	// Cross-replica SSE updates: forward bus messages into the local registry.
+	if err := sseHandler.StartBus(ctx); err != nil {
+		return fmt.Errorf("sse bus subscribe failed: %w", err)
+	}
 
 	g.Go(func() error {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -256,18 +280,14 @@ func registerRoutes(
 	sseAuthMiddleware func(http.Handler) http.Handler,
 ) {
 	createOrder := middleware.CORS(middleware.Logging(middleware.Timeout(5 * time.Second)(authMiddleware(http.HandlerFunc(oh.CreateOrder)))))
-	updateStatus := middleware.CORS(middleware.Logging(middleware.Timeout(5 * time.Second)(http.HandlerFunc(oh.UpdateStatus))))
-	listOrders := middleware.CORS(middleware.Logging(middleware.Timeout(3 * time.Second)(http.HandlerFunc(oh.GetOrdersByPage))))
 	userOrders := middleware.CORS(middleware.Logging(middleware.Timeout(3 * time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrders)))))
 	userOrderByID := middleware.CORS(middleware.Logging(middleware.Timeout(3 * time.Second)(authMiddleware(http.HandlerFunc(oh.GetUserOrderByID)))))
 	orderEvents := middleware.CORS(middleware.Logging(sseAuthMiddleware(http.HandlerFunc(sseHandler.StreamOrderStatus))))
 
 	mux.Handle("POST /api/orders", createOrder)
-	mux.Handle("GET /api/orders", listOrders)
 	mux.Handle("GET /api/me/orders", userOrders)
 	mux.Handle("GET /api/me/orders/{id}", withPathIDQuery("id", userOrderByID))
 	mux.Handle("GET /api/me/orders/{id}/events", withPathIDQuery("id", orderEvents))
-	mux.Handle("PATCH /api/orders/{id}/status", withPathIDQuery("id", updateStatus))
 }
 
 func withPathIDQuery(param string, next http.Handler) http.Handler {

@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/icl00ud/velure/services/publish-order-service/internal/middleware"
@@ -201,6 +200,9 @@ func TestCreateOrder_ServiceError(t *testing.T) {
 	if w.Code != http.StatusInternalServerError {
 		t.Fatalf("expected 500, got %d", w.Code)
 	}
+	if strings.Contains(w.Body.String(), "db down") {
+		t.Fatalf("internal error leaked to client: %s", w.Body.String())
+	}
 }
 
 func TestCreateOrder_OutboxWrittenReturnsCreated(t *testing.T) {
@@ -215,29 +217,6 @@ func TestCreateOrder_OutboxWrittenReturnsCreated(t *testing.T) {
 
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected status 201 after outbox write, got %d", w.Code)
-	}
-}
-
-func TestUpdateStatus_UpdatesStatusAndResponds(t *testing.T) {
-	now := time.Now()
-	repo := &fakeRepo{
-		foundOrder: model.Order{ID: "order-1", UserID: "user-123", Status: model.StatusCreated, UpdatedAt: now},
-	}
-	h := newTestHandler(t, repo, 0)
-
-	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`{"order_id":"order-1","status":"PROCESSING"}`))
-	w := httptest.NewRecorder()
-
-	h.UpdateStatus(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-	if len(repo.savedOrders) != 1 {
-		t.Fatalf("expected Save called once, got %d", len(repo.savedOrders))
-	}
-	if repo.savedOrders[0].Status != "PROCESSING" {
-		t.Fatalf("expected status updated to PROCESSING, got %s", repo.savedOrders[0].Status)
 	}
 }
 
@@ -283,51 +262,6 @@ func TestCreateOrder_InvalidItem(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for invalid item, got %d", w.Code)
-	}
-}
-
-func TestUpdateStatus_ReturnsOK(t *testing.T) {
-	now := time.Now()
-	repo := &fakeRepo{
-		foundOrder: model.Order{ID: "order-2", UserID: "user-123", Status: model.StatusCreated, UpdatedAt: now},
-	}
-	h := newTestHandler(t, repo, 0)
-
-	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`{"order_id":"order-2","status":"COMPLETED"}`))
-	w := httptest.NewRecorder()
-
-	h.UpdateStatus(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-}
-
-func TestUpdateStatus_InvalidPayload(t *testing.T) {
-	repo := &fakeRepo{}
-	h := newTestHandler(t, repo, 0)
-
-	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`not-json`))
-	w := httptest.NewRecorder()
-
-	h.UpdateStatus(w, req)
-
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400 for invalid payload, got %d", w.Code)
-	}
-}
-
-func TestUpdateStatus_FindError(t *testing.T) {
-	repo := &fakeRepo{findErr: errors.New("not found")}
-	h := newTestHandler(t, repo, 0)
-
-	req := httptest.NewRequest(http.MethodPost, "/update-order-status", strings.NewReader(`{"order_id":"order-1","status":"PROCESSING"}`))
-	w := httptest.NewRecorder()
-
-	h.UpdateStatus(w, req)
-
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("expected 500 when find fails, got %d", w.Code)
 	}
 }
 
@@ -404,45 +338,3 @@ func TestGetUserOrders_RepoError(t *testing.T) {
 	}
 }
 
-func TestGetOrdersByPage_Success(t *testing.T) {
-	repo := &fakeRepo{
-		paginated: &model.PaginatedOrdersResponse{
-			Orders:     []model.Order{{ID: "o1"}, {ID: "o2"}},
-			TotalCount: 2,
-			Page:       1,
-			PageSize:   10,
-			TotalPages: 1,
-		},
-	}
-	h := newTestHandler(t, repo, 0)
-
-	req := httptest.NewRequest(http.MethodGet, "/orders?page=1&pageSize=10", nil)
-	w := httptest.NewRecorder()
-
-	h.GetOrdersByPage(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
-	}
-	var resp model.PaginatedOrdersResponse
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("failed to parse response: %v", err)
-	}
-	if len(resp.Orders) != 2 {
-		t.Fatalf("expected 2 orders, got %d", len(resp.Orders))
-	}
-}
-
-func TestGetOrdersByPage_Error(t *testing.T) {
-	repo := &fakeRepo{getPageErr: errors.New("db down")}
-	h := newTestHandler(t, repo, 0)
-
-	req := httptest.NewRequest(http.MethodGet, "/orders?page=1&pageSize=10", nil)
-	w := httptest.NewRecorder()
-
-	h.GetOrdersByPage(w, req)
-
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("expected 500 on repo error, got %d", w.Code)
-	}
-}

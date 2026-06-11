@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -20,14 +19,20 @@ func NewOrderHandler(svc OrderService) *OrderHandler {
 	return &OrderHandler{svc: svc}
 }
 
+// trackCreateOrder records the request metrics for POST /orders once per
+// request, regardless of which branch responded.
+func trackCreateOrder(status string, start time.Time) {
+	metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", status).Inc()
+	metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
+}
+
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	userID := middleware.GetUserID(r.Context())
 	if userID == "" {
 		logger.Warn("missing user_id in context")
-		metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", "401").Inc()
-		metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
+		trackCreateOrder("401", start)
 		writeJSON(w, http.StatusUnauthorized, response{"error": "unauthorized"})
 		return
 	}
@@ -35,8 +40,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	items, err := parseCreateOrder(r.Body)
 	if err != nil {
 		logger.Warn("invalid payload", logger.Err(err))
-		metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", "400").Inc()
-		metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
+		trackCreateOrder("400", start)
 		writeJSON(w, http.StatusBadRequest, response{"error": "invalid payload"})
 		return
 	}
@@ -44,14 +48,17 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	o, err := h.svc.Create(r.Context(), userID, items)
 	if err != nil {
 		code := http.StatusInternalServerError
+		// Validation errors are safe to echo back; anything else stays generic
+		// so internals (SQL, broker state) never reach the client.
+		msg := "internal error"
 		if errors.Is(err, service.ErrNoItems) || errors.Is(err, service.ErrInvalidItem) {
 			code = http.StatusBadRequest
+			msg = err.Error()
 		}
 		logger.Error("create order failed", logger.Err(err))
 		metrics.OrdersCreated.WithLabelValues("failure").Inc()
-		metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", http.StatusText(code)).Inc()
-		metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
-		writeJSON(w, code, response{"error": err.Error()})
+		trackCreateOrder(http.StatusText(code), start)
+		writeJSON(w, code, response{"error": msg})
 		return
 	}
 
@@ -60,8 +67,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	metrics.OrderTotalValue.Observe(float64(o.Total))
 	metrics.OrderItemsCount.Observe(float64(len(o.Items)))
 
-	metrics.HTTPRequests.WithLabelValues("publish-order-service", "POST", "/orders", "201").Inc()
-	metrics.HTTPRequestDuration.WithLabelValues("publish-order-service", "POST", "/orders").Observe(time.Since(start).Seconds())
+	trackCreateOrder("201", start)
 	writeJSON(w, http.StatusCreated, response{
 		"order_id": o.ID,
 		"total":    o.Total,
@@ -114,41 +120,4 @@ func (h *OrderHandler) GetUserOrderByID(w http.ResponseWriter, r *http.Request) 
 	writeJSONData(w, http.StatusOK, order)
 }
 
-func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
-	var dto struct {
-		OrderID string `json:"order_id"`
-		Status  string `json:"status"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
-		logger.Warn("invalid payload", logger.Err(err))
-		writeJSON(w, http.StatusBadRequest, response{"error": "invalid payload"})
-		return
-	}
-
-	o, err := h.svc.UpdateStatus(r.Context(), dto.OrderID, dto.Status)
-	if err != nil {
-		logger.Error("update status failed", logger.Err(err))
-		writeJSON(w, http.StatusInternalServerError, response{"error": "internal error"})
-		return
-	}
-
-	writeJSON(w, http.StatusOK, response{
-		"order_id": o.ID,
-		"status":   o.Status,
-		"updated":  o.UpdatedAt,
-	})
-}
-
-func (h *OrderHandler) GetOrdersByPage(w http.ResponseWriter, r *http.Request) {
-	page, pageSize := parsePagination(r)
-
-	result, err := h.svc.GetOrdersByPage(r.Context(), page, pageSize)
-	if err != nil {
-		logger.Error("get orders by page failed", logger.Err(err))
-		writeJSON(w, http.StatusInternalServerError, response{"error": "internal error"})
-		return
-	}
-
-	writeJSONData(w, http.StatusOK, result)
-}
 

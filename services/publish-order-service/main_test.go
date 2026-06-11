@@ -50,7 +50,7 @@ func TestRegisterRoutes_CanonicalOnly(t *testing.T) {
 		{name: "root create route removed", method: http.MethodPost, target: "/orders", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusNotFound},
 		{name: "canonical create requires auth", method: http.MethodPost, target: "/api/orders", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusUnauthorized},
 		{name: "root list route removed", method: http.MethodGet, target: "/orders", wantStatusCode: http.StatusNotFound},
-		{name: "canonical list orders", method: http.MethodGet, target: "/api/orders", wantStatusCode: http.StatusOK},
+		{name: "unauthenticated global list removed", method: http.MethodGet, target: "/api/orders", wantStatusCode: http.StatusMethodNotAllowed},
 		{name: "root me orders route removed", method: http.MethodGet, target: "/me/orders", wantStatusCode: http.StatusNotFound},
 		{name: "canonical me orders requires auth", method: http.MethodGet, target: "/api/me/orders", wantStatusCode: http.StatusUnauthorized},
 		{name: "root me order by id route removed", method: http.MethodGet, target: "/me/orders/order-123", authHeader: "Bearer " + authToken, wantStatusCode: http.StatusNotFound},
@@ -58,7 +58,7 @@ func TestRegisterRoutes_CanonicalOnly(t *testing.T) {
 		{name: "root events route removed", method: http.MethodGet, target: "/me/orders/order-789/events?token=" + authToken, wantStatusCode: http.StatusNotFound},
 		{name: "canonical events injects query", method: http.MethodGet, target: "/api/me/orders/order-890/events?token=" + authToken, wantStatusCode: http.StatusOK, wantLastID: "order-890"},
 		{name: "root patch update route removed", method: http.MethodPatch, target: "/orders/order-123/status", body: `{"order_id":"order-123","status":"COMPLETED"}`, wantStatusCode: http.StatusNotFound},
-		{name: "canonical patch update", method: http.MethodPatch, target: "/api/orders/order-456/status", body: `{"order_id":"order-456","status":"FAILED"}`, wantStatusCode: http.StatusOK},
+		{name: "unauthenticated patch update removed", method: http.MethodPatch, target: "/api/orders/order-456/status", body: `{"order_id":"order-456","status":"FAILED"}`, wantStatusCode: http.StatusNotFound},
 		{name: "legacy api order namespace removed", method: http.MethodPost, target: "/api/order/create-order", body: `[{"product_id":"p1","quantity":1}]`, wantStatusCode: http.StatusNotFound},
 	}
 
@@ -114,10 +114,6 @@ func (s *routingStubService) Create(_ context.Context, userID string, items []mo
 
 func (s *routingStubService) UpdateStatus(_ context.Context, id, status string) (model.Order, error) {
 	return model.Order{ID: id, Status: status}, nil
-}
-
-func (s *routingStubService) GetOrdersByPage(_ context.Context, page, pageSize int) (*model.PaginatedOrdersResponse, error) {
-	return &model.PaginatedOrdersResponse{Orders: []model.Order{}, Page: page, PageSize: pageSize, TotalPages: 1}, nil
 }
 
 func (s *routingStubService) GetOrdersByUserID(_ context.Context, userID string, page, pageSize int) (*model.PaginatedOrdersResponse, error) {

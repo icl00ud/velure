@@ -23,21 +23,26 @@ func Auth(jwtSecret string) func(http.Handler) http.Handler {
 				return
 			}
 
-			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
-				logger.Warn("missing authorization header")
+			// Authorization header first; httpOnly cookie as fallback (the
+			// SPA authenticates via cookies set by the auth-service).
+			var tokenString string
+			if authHeader := r.Header.Get("Authorization"); authHeader != "" {
+				parts := strings.Split(authHeader, " ")
+				if len(parts) != 2 || parts[0] != "Bearer" {
+					logger.Warn("invalid authorization header format")
+					http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+					return
+				}
+				tokenString = parts[1]
+			} else if cookie, err := r.Cookie("access_token"); err == nil {
+				tokenString = cookie.Value
+			}
+
+			if tokenString == "" {
+				logger.Warn("missing credentials (no authorization header or access_token cookie)")
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
-
-			parts := strings.Split(authHeader, " ")
-			if len(parts) != 2 || parts[0] != "Bearer" {
-				logger.Warn("invalid authorization header format")
-				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
-				return
-			}
-
-			tokenString := parts[1]
 			claims := &jwt.RegisteredClaims{}
 
 			token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
