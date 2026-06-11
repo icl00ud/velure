@@ -221,13 +221,20 @@ func (r *rabbitMQPublisher) PublishWithConfirm(ctx context.Context, evt model.Ou
 		headers[k] = v
 	}
 
-	err := r.ch.PublishWithContext(ctx,
+	// Consumers expect the {"type","payload"} envelope; the outbox row only
+	// stores the bare aggregate payload.
+	body, err := json.Marshal(model.Event{Type: evt.EventType, Payload: evt.Payload})
+	if err != nil {
+		return fmt.Errorf("marshal event envelope: %w", err)
+	}
+
+	err = r.ch.PublishWithContext(ctx,
 		r.exchange,
 		evt.EventType,
 		false, false,
 		amqp091.Publishing{
 			ContentType: "application/json",
-			Body:        []byte(evt.Payload),
+			Body:        body,
 			Headers:     headers,
 			MessageId:   evt.ID,
 		},
