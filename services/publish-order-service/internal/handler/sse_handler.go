@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 type SSEHandler struct {
 	svc      OrderService
 	registry *SSERegistry
+	bus      OrderUpdateBus
 }
 
 func NewSSEHandler(svc OrderService) *SSEHandler {
@@ -23,6 +25,23 @@ func NewSSEHandler(svc OrderService) *SSEHandler {
 		svc:      svc,
 		registry: NewSSERegistry(),
 	}
+}
+
+// AttachBus wires a cross-replica update bus. Must be called before StartBus
+// and before the handler starts serving.
+func (h *SSEHandler) AttachBus(bus OrderUpdateBus) {
+	h.bus = bus
+}
+
+// StartBus subscribes to the bus and forwards remote updates to the local
+// registry. No-op when no bus is attached.
+func (h *SSEHandler) StartBus(ctx context.Context) error {
+	if h.bus == nil {
+		return nil
+	}
+	return h.bus.Subscribe(ctx, func(order model.Order) {
+		h.registry.Broadcast(order.ID, order)
+	})
 }
 
 func (h *SSEHandler) StreamOrderStatus(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +76,6 @@ func (h *SSEHandler) StreamOrderStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	events := make(chan model.Order, 10)
 	h.registry.Register(orderID, events)
@@ -109,7 +127,18 @@ func (h *SSEHandler) StreamOrderStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// NotifyOrderUpdate distributes an order update to SSE subscribers. With a
+// bus attached the update goes through Redis (and comes back to the local
+// registry via the subscription, together with every other replica); without
+// one it is broadcast locally.
 func (h *SSEHandler) NotifyOrderUpdate(order model.Order) {
+	if h.bus != nil {
+		if err := h.bus.Publish(context.Background(), order); err != nil {
+			logger.Error("bus publish failed, falling back to local broadcast", logger.Err(err))
+			h.registry.Broadcast(order.ID, order)
+		}
+		return
+	}
 	h.registry.Broadcast(order.ID, order)
 }
 

@@ -15,6 +15,9 @@ type Config struct {
 	Queue       string
 	Workers     int
 	JWTSecret   string
+	// RedisAddr enables the cross-replica SSE update bus when set (host:port).
+	// Empty means single-replica mode: updates are broadcast in-process only.
+	RedisAddr string
 }
 
 func Load() (Config, error) {
@@ -56,6 +59,10 @@ func Load() (Config, error) {
 		if w, err := strconv.Atoi(v); err == nil && w > 0 {
 			c.Workers = w
 		}
+	}
+
+	if v, ok := os.LookupEnv("REDIS_ADDR"); ok && strings.TrimSpace(v) != "" {
+		c.RedisAddr = strings.TrimSpace(v)
 	}
 
 	if v, ok := os.LookupEnv("JWT_SECRET"); ok && strings.TrimSpace(v) != "" {
