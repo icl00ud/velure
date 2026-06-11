@@ -37,13 +37,9 @@ func Init(ctx context.Context, serviceName string) (func(context.Context) error,
 		return func(context.Context) error { return nil }, err
 	}
 
-	res, err := sdkresource.Merge(sdkresource.Default(), sdkresource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceName(serviceName),
-	))
-	if err != nil {
-		return func(context.Context) error { return nil }, err
-	}
+	// Schemaless avoids "conflicting Schema URL" errors when the semconv
+	// package version diverges from the SDK's default resource schema.
+	res := sdkresource.NewSchemaless(semconv.ServiceName(serviceName))
 
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exporter),
