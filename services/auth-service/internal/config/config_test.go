@@ -174,3 +174,38 @@ func TestLoad_WithInvalidNumericValues(t *testing.T) {
 		t.Errorf("Expected Session.ExpiresIn 0 (from invalid string), got %d", cfg.Session.ExpiresIn)
 	}
 }
+
+func TestValidate_ProductionRejectsDefaultSecrets(t *testing.T) {
+	os.Clearenv()
+	os.Setenv("ENVIRONMENT", "production")
+
+	cfg := Load()
+
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected Validate() to fail in production with default secrets")
+	}
+}
+
+func TestValidate_ProductionAcceptsExplicitSecrets(t *testing.T) {
+	os.Clearenv()
+	os.Setenv("ENVIRONMENT", "production")
+	os.Setenv("JWT_SECRET", "a-real-secret")
+	os.Setenv("JWT_REFRESH_TOKEN_SECRET", "another-real-secret")
+	os.Setenv("SESSION_SECRET", "session-real-secret")
+
+	cfg := Load()
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("expected Validate() to pass with explicit secrets, got %v", err)
+	}
+}
+
+func TestValidate_DevelopmentAllowsDefaults(t *testing.T) {
+	os.Clearenv()
+
+	cfg := Load()
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("expected Validate() to pass in development, got %v", err)
+	}
+}

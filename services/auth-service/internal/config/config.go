@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 )
@@ -94,6 +95,34 @@ func Load() *Config {
 			EnableCache:   enableCache,
 		},
 	}
+}
+
+// defaultSecrets are the placeholder values baked into Load. They are fine for
+// local development but must never reach production.
+var defaultSecrets = map[string]string{
+	"JWT_SECRET":               "your-secret-key",
+	"JWT_REFRESH_TOKEN_SECRET": "your-refresh-secret",
+	"SESSION_SECRET":           "session-secret",
+}
+
+// Validate rejects configurations that are unsafe to run in production:
+// any JWT/session secret left empty or at its development default.
+func (c *Config) Validate() error {
+	if c.Environment != "production" {
+		return nil
+	}
+
+	checks := map[string]string{
+		"JWT_SECRET":               c.JWT.Secret,
+		"JWT_REFRESH_TOKEN_SECRET": c.JWT.RefreshSecret,
+		"SESSION_SECRET":           c.Session.Secret,
+	}
+	for name, value := range checks {
+		if value == "" || value == defaultSecrets[name] {
+			return fmt.Errorf("config: %s must be set to a non-default value in production", name)
+		}
+	}
+	return nil
 }
 
 func getEnv(key, defaultValue string) string {

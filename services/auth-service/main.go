@@ -40,6 +40,9 @@ func run(log *logger.Logger) error {
 
 	log.Info("Loading configuration")
 	cfg := config.Load()
+	if err := cfg.Validate(); err != nil {
+		return fmt.Errorf("invalid configuration: %w", err)
+	}
 	log.Info("Configuration loaded",
 		logger.String("db_host", cfg.Database.Host),
 		logger.Int("db_port", cfg.Database.Port),
