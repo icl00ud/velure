@@ -133,11 +133,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(publish_order_published_total{status=\"success\"})",
+          "expr": "sum(publish_order_created_total{status=\"success\"})",
           "refId": "A"
         }
       ],
-      "title": "Total Orders Published",
+      "title": "Total Orders Created",
       "type": "stat"
     },
     {
@@ -610,12 +610,11 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rate(publish_order_published_total{status=\"success\"}[5m]))",
-          "legendFormat": "Orders Published",
+          "expr": "sum(rate(publish_order_created_total{status=\"success\"}[5m]))",
           "refId": "A"
         }
       ],
-      "title": "Orders Published Rate",
+      "title": "Orders Created Rate",
       "type": "timeseries"
     },
     {
@@ -701,11 +700,20 @@
             "uid": "prometheus"
           },
           "expr": "publish_order_sse_connections",
-          "legendFormat": "Active SSE Connections",
+          "legendFormat": "open connections",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(publish_order_sse_messages_sent_total[5m]))",
+          "legendFormat": "messages sent/s",
+          "refId": "B"
         }
       ],
-      "title": "SSE Connections",
+      "title": "SSE Connections & Messages",
       "type": "timeseries"
     },
     {
@@ -798,7 +806,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rabbitmq_queue_messages_ready{queue=~\"(process-order-queue|publish-order-status-updates)\"}) or vector(0)",
+          "expr": "rabbitmq_detailed_queue_messages_ready{queue=~\"(process-order-queue|publish-order-status-updates|process-order-queue.dlq|publish-order-status-updates.dlq)\"}",
           "legendFormat": "{{queue}}",
           "refId": "A"
         }
@@ -1014,6 +1022,6 @@
   "timezone": "",
   "title": "Publish Order Service",
   "uid": "velure-publish-order-service",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

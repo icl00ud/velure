@@ -89,6 +89,18 @@ scrape_configs:
           service: 'rabbitmq'
           team: 'infrastructure'
 
+  # RabbitMQ per-queue metrics (the aggregated /metrics endpoint has no
+  # queue label; the detailed endpoint exposes rabbitmq_detailed_* series)
+  - job_name: 'rabbitmq-detailed'
+    metrics_path: '/metrics/detailed'
+    params:
+      family: ['queue_coarse_metrics', 'queue_consumer_count']
+    static_configs:
+      - targets: ['rabbitmq:15692']
+        labels:
+          service: 'rabbitmq'
+          team: 'infrastructure'
+
   # Node Exporter - Host metrics
   - job_name: 'node-exporter'
     static_configs:

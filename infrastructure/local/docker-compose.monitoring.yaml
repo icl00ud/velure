@@ -241,11 +241,12 @@ services:
       - '--mongodb.direct-connect=true'
       - '--discovering-mode'
       - '--compatible-mode'
+      - '--collect-all'
     ports:
       - "9216:9216"
     networks:
       - monitoring
-      - frontend
+      - order
     deploy:
       resources:
         limits:

@@ -24,3 +24,11 @@ datasources:
     editable: true
     jsonData:
       maxLines: 1000
+
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    uid: jaeger
+    url: http://velure-jaeger:16686
+    isDefault: false
+    editable: true

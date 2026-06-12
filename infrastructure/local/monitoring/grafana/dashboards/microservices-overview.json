@@ -497,7 +497,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(rabbitmq_queue_messages_ready{queue=~\"(process-order-queue|publish-order-status-updates)\"}) or vector(0)",
+          "expr": "sum(rabbitmq_detailed_queue_messages_ready{queue=~\"(process-order-queue|publish-order-status-updates|process-order-queue.dlq|publish-order-status-updates.dlq)\"}) or vector(0)",
           "refId": "A"
         }
       ],
@@ -587,7 +587,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (service) (rate(http_requests_total{service=~\"auth-service|product-service|publish-order-service|process-order-service\"}[5m]))",
+          "expr": "sum by (service) (rate(auth_http_requests_total[5m]) or rate(product_http_requests_total[5m]) or rate(http_requests_total{service=\"publish-order-service\"}[5m]))",
           "legendFormat": "{{service}}",
           "refId": "A"
         }
@@ -686,8 +686,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{service=~\"auth-service|product-service|publish-order-service|process-order-service\"}[5m])) by (le, service))",
-          "legendFormat": "{{service}} p99",
+          "expr": "histogram_quantile(0.99, sum by (le, service) (rate(auth_http_request_duration_seconds_bucket[5m]) or rate(product_http_request_duration_seconds_bucket[5m]) or rate(http_request_duration_seconds_bucket{service=\"publish-order-service\"}[5m])))",
+          "legendFormat": "p99 {{service}}",
           "refId": "A"
         },
         {
@@ -695,8 +695,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=~\"auth-service|product-service|publish-order-service|process-order-service\"}[5m])) by (le, service))",
-          "legendFormat": "{{service}} p95",
+          "expr": "histogram_quantile(0.95, sum by (le, service) (rate(auth_http_request_duration_seconds_bucket[5m]) or rate(product_http_request_duration_seconds_bucket[5m]) or rate(http_request_duration_seconds_bucket{service=\"publish-order-service\"}[5m])))",
+          "legendFormat": "p95 {{service}}",
           "refId": "B"
         }
       ],
@@ -796,7 +796,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(100 * (sum(rate(http_requests_total{service=~\"auth-service|product-service|publish-order-service|process-order-service\",status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total{service=~\"auth-service|product-service|publish-order-service|process-order-service\"}[5m])) by (service))) or vector(0)",
+          "expr": "(100 * (sum by (service) (rate(auth_http_requests_total{status=~\"5..\"}[5m]) or rate(product_http_requests_total{status=~\"5..\"}[5m]) or rate(http_requests_total{service=\"publish-order-service\",status=~\"5..\"}[5m]))) / (sum by (service) (rate(auth_http_requests_total[5m]) or rate(product_http_requests_total[5m]) or rate(http_requests_total{service=\"publish-order-service\"}[5m])))) or vector(0)",
           "legendFormat": "{{service}}",
           "refId": "A"
         }
@@ -1087,7 +1087,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rabbitmq_queue_messages_ready{queue=~\"(process-order-queue|publish-order-status-updates)\"}",
+          "expr": "rabbitmq_detailed_queue_messages_ready{queue=~\"(process-order-queue|publish-order-status-updates|process-order-queue.dlq|publish-order-status-updates.dlq)\"}",
           "legendFormat": "{{queue}}",
           "refId": "A"
         }
@@ -1115,6 +1115,6 @@
   "timezone": "",
   "title": "Velure - Microservices Overview",
   "uid": "velure-microservices-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
