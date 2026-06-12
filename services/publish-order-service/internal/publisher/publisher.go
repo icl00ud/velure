@@ -228,19 +228,34 @@ func (r *rabbitMQPublisher) PublishWithConfirm(ctx context.Context, evt model.Ou
 		return fmt.Errorf("marshal event envelope: %w", err)
 	}
 
-	err = r.ch.PublishWithContext(ctx,
-		r.exchange,
-		evt.EventType,
-		false, false,
-		amqp091.Publishing{
-			ContentType: "application/json",
-			Body:        body,
-			Headers:     headers,
-			MessageId:   evt.ID,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("publish with confirm: %w", err)
+	publishFunc := func() error {
+		if r.ch == nil {
+			return amqp091.ErrClosed
+		}
+		return r.ch.PublishWithContext(ctx,
+			r.exchange,
+			evt.EventType,
+			false, false,
+			amqp091.Publishing{
+				ContentType: "application/json",
+				Body:        body,
+				Headers:     headers,
+				MessageId:   evt.ID,
+			},
+		)
+	}
+
+	// A dead channel (e.g. broker restart) is permanent for this process —
+	// the relay never redials on its own, so retry once on a fresh connection.
+	if err = publishFunc(); err != nil {
+		r.logger.Warn("publish with confirm failed, attempting reconnect", logger.Err(err))
+		if recErr := r.connectFn(); recErr != nil {
+			r.logger.Error("reconnect failed", logger.Err(recErr))
+			return fmt.Errorf("publish with confirm: %w", err)
+		}
+		if err = publishFunc(); err != nil {
+			return fmt.Errorf("publish with confirm: %w", err)
+		}
 	}
 
 	select {
