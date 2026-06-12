@@ -18,6 +18,13 @@ type fakeRepo struct {
 	fetchErr       error
 	markErr        error
 	pendingBatches [][]model.OutboxEvent
+	pendingCount   int64
+}
+
+func (f *fakeRepo) CountPending(ctx context.Context) (int64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.pendingCount, nil
 }
 
 func (f *fakeRepo) SaveTx(ctx context.Context, tx *sql.Tx, evt model.OutboxEvent) error {

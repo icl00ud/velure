@@ -36,6 +36,7 @@ func (n *noopOutbox) FetchUnpublished(_ context.Context, _ int) (*sql.Tx, []mode
 	return nil, nil, nil
 }
 func (n *noopOutbox) MarkPublished(_ context.Context, _ *sql.Tx, _ []string) error { return nil }
+func (n *noopOutbox) CountPending(_ context.Context) (int64, error)               { return 0, nil }
 
 type recordingRepo struct {
 	findOrder model.Order

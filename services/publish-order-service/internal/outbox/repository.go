@@ -23,6 +23,9 @@ type Repository interface {
 	// MarkPublished sets published_at = now() for the given ids inside tx.
 	// No-op when ids is empty.
 	MarkPublished(ctx context.Context, tx *sql.Tx, ids []string) error
+
+	// CountPending returns the number of events not yet published.
+	CountPending(ctx context.Context) (int64, error)
 }
 
 type postgresRepository struct {
@@ -96,6 +99,16 @@ func (r *postgresRepository) FetchUnpublished(ctx context.Context, limit int) (*
 		return nil, nil, fmt.Errorf("outbox rows: %w", err)
 	}
 	return tx, events, nil
+}
+
+func (r *postgresRepository) CountPending(ctx context.Context) (int64, error) {
+	var n int64
+	err := r.db.QueryRowContext(ctx,
+		`SELECT count(*) FROM outbox_events WHERE published_at IS NULL;`).Scan(&n)
+	if err != nil {
+		return 0, fmt.Errorf("outbox count pending: %w", err)
+	}
+	return n, nil
 }
 
 func (r *postgresRepository) MarkPublished(ctx context.Context, tx *sql.Tx, ids []string) error {

@@ -31,6 +31,8 @@ func (f *fakeOutboxRepository) MarkPublished(_ context.Context, _ *sql.Tx, _ []s
 	return nil
 }
 
+func (f *fakeOutboxRepository) CountPending(_ context.Context) (int64, error) { return 0, nil }
+
 // newPermissiveDB returns a sqlmock *sql.DB that accepts Begin+Commit and
 // Begin+Rollback without strict expectations. Used by handler tests that
 // exercise Create/UpdateStatus but aren't testing the tx itself.

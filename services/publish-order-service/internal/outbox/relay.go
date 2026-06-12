@@ -80,6 +80,13 @@ func (r *Relay) Start(ctx context.Context) error {
 
 func (r *Relay) processBatch(ctx context.Context) error {
 	start := time.Now()
+	// Refresh the gauge even when publishing fails — that is exactly when
+	// pending events accumulate and the panel must show it.
+	defer func() {
+		if n, err := r.repo.CountPending(ctx); err == nil {
+			metrics.OutboxEventsPending.Set(float64(n))
+		}
+	}()
 	tx, events, err := r.repo.FetchUnpublished(ctx, r.batchSize)
 	if err != nil {
 		metrics.OutboxRelayErrors.Inc()

@@ -98,6 +98,8 @@ func (m *mockOutboxRepository) MarkPublished(_ context.Context, _ *sql.Tx, _ []s
 	return nil
 }
 
+func (m *mockOutboxRepository) CountPending(_ context.Context) (int64, error) { return 0, nil }
+
 // Mock pricing calculator
 type mockPricingCalculator struct {
 	calculateFunc func(items []model.CartItem) float64
@@ -544,4 +546,8 @@ func (r *recordingOutbox) FetchUnpublished(ctx context.Context, limit int) (*sql
 
 func (r *recordingOutbox) MarkPublished(ctx context.Context, tx *sql.Tx, ids []string) error {
 	return r.inner.MarkPublished(ctx, tx, ids)
+}
+
+func (r *recordingOutbox) CountPending(ctx context.Context) (int64, error) {
+	return r.inner.CountPending(ctx)
 }
