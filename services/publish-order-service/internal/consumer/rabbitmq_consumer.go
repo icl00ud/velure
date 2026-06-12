@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/rabbitmq/amqp091-go"
@@ -47,6 +49,12 @@ type rabbitConsumer struct {
 	handler EventHandler
 	logger  *logger.Logger
 	workers int
+
+	// reconnect re-establishes a channel after the broker drops the
+	// connection. When nil, Start gives up once the deliveries channel
+	// closes (legacy behavior, used by tests without a broker).
+	reconnect      func(ctx context.Context) (amqpChan, error)
+	reconnectDelay time.Duration
 }
 
 type liveConsumerConn struct {
@@ -76,21 +84,58 @@ var dialRabbitMQ = func(amqpURL string) (amqpConn, error) {
 }
 
 func NewRabbitMQConsumer(amqpURL, exchange, queueName string, handler EventHandler, workers int, log *logger.Logger) (Consumer, error) {
+	conn, ch, q, err := setupConsumerChannel(amqpURL, exchange, queueName)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info("rabbitmq consumer initialized",
+		logger.String("exchange", exchange),
+		logger.String("queue", queueName),
+		logger.Int("workers", workers))
+
+	c := &rabbitConsumer{
+		conn:    conn,
+		channel: ch,
+		queue:   q,
+		handler: handler,
+		logger:  log,
+		workers: workers,
+	}
+	// A broker restart closes the deliveries channel; redial with a full
+	// re-setup so the consumer survives the outage instead of going idle.
+	c.reconnect = func(ctx context.Context) (amqpChan, error) {
+		conn, ch, _, err := setupConsumerChannel(amqpURL, exchange, queueName)
+		if err != nil {
+			return nil, err
+		}
+		if c.conn != nil {
+			_ = c.conn.Close()
+		}
+		c.conn = conn
+		return ch, nil
+	}
+	return c, nil
+}
+
+// setupConsumerChannel dials the broker and declares the exchange, queue,
+// bindings and QoS the status consumer depends on.
+func setupConsumerChannel(amqpURL, exchange, queueName string) (amqpConn, amqpChan, string, error) {
 	conn, err := dialRabbitMQ(amqpURL)
 	if err != nil {
-		return nil, fmt.Errorf("dial rabbitmq: %w", err)
+		return nil, nil, "", fmt.Errorf("dial rabbitmq: %w", err)
 	}
 
 	ch, err := conn.Channel()
 	if err != nil {
 		conn.Close()
-		return nil, fmt.Errorf("open channel: %w", err)
+		return nil, nil, "", fmt.Errorf("open channel: %w", err)
 	}
 
 	if err := ch.ExchangeDeclare(exchange, "topic", true, false, false, false, nil); err != nil {
 		ch.Close()
 		conn.Close()
-		return nil, fmt.Errorf("declare exchange: %w", err)
+		return nil, nil, "", fmt.Errorf("declare exchange: %w", err)
 	}
 
 	q, err := ch.QueueDeclare(queueName, true, false, false, false, amqp091.Table{
@@ -100,60 +145,84 @@ func NewRabbitMQConsumer(amqpURL, exchange, queueName string, handler EventHandl
 	if err != nil {
 		ch.Close()
 		conn.Close()
-		return nil, fmt.Errorf("declare queue: %w", err)
+		return nil, nil, "", fmt.Errorf("declare queue: %w", err)
 	}
 
-	if err := ch.QueueBind(q.Name, "order.processing", exchange, false, nil); err != nil {
-		ch.Close()
-		conn.Close()
-		return nil, fmt.Errorf("bind queue to order.processing: %w", err)
-	}
-
-	if err := ch.QueueBind(q.Name, "order.completed", exchange, false, nil); err != nil {
-		ch.Close()
-		conn.Close()
-		return nil, fmt.Errorf("bind queue to order.completed: %w", err)
-	}
-
-	if err := ch.QueueBind(q.Name, "order.failed", exchange, false, nil); err != nil {
-		ch.Close()
-		conn.Close()
-		return nil, fmt.Errorf("bind queue to order.failed: %w", err)
+	for _, key := range []string{"order.processing", "order.completed", "order.failed"} {
+		if err := ch.QueueBind(q.Name, key, exchange, false, nil); err != nil {
+			ch.Close()
+			conn.Close()
+			return nil, nil, "", fmt.Errorf("bind queue to %s: %w", key, err)
+		}
 	}
 
 	if err := ch.Qos(1, 0, false); err != nil {
 		ch.Close()
 		conn.Close()
-		return nil, fmt.Errorf("set qos: %w", err)
+		return nil, nil, "", fmt.Errorf("set qos: %w", err)
 	}
-
-	log.Info("rabbitmq consumer initialized",
-		logger.String("exchange", exchange),
-		logger.String("queue", queueName),
-		logger.Int("workers", workers))
-
-	return &rabbitConsumer{
-		conn:    conn,
-		channel: ch,
-		queue:   q.Name,
-		handler: handler,
-		logger:  log,
-		workers: workers,
-	}, nil
+	return conn, ch, q.Name, nil
 }
 
 func (r *rabbitConsumer) Start(ctx context.Context) error {
-	msgs, err := r.channel.Consume(r.queue, "", false, false, false, false, nil)
-	if err != nil {
-		return fmt.Errorf("start consuming: %w", err)
-	}
+	for {
+		msgs, err := r.channel.Consume(r.queue, "", false, false, false, false, nil)
+		if err != nil {
+			if r.reconnect == nil {
+				return fmt.Errorf("start consuming: %w", err)
+			}
+			r.logger.Warn("consume failed, reconnecting", logger.Err(err))
+			if err := r.redial(ctx); err != nil {
+				return err
+			}
+			continue
+		}
 
-	for i := 0; i < r.workers; i++ {
-		go r.worker(ctx, i, msgs)
+		var wg sync.WaitGroup
+		for i := 0; i < r.workers; i++ {
+			wg.Add(1)
+			go func(id int) {
+				defer wg.Done()
+				r.worker(ctx, id, msgs)
+			}(i)
+		}
+		// Workers exit either on ctx cancellation or when the broker closes
+		// the deliveries channel; only the latter warrants a reconnect.
+		wg.Wait()
+		if ctx.Err() != nil {
+			return nil
+		}
+		if r.reconnect == nil {
+			return nil
+		}
+		r.logger.Warn("deliveries channel closed, reconnecting")
+		if err := r.redial(ctx); err != nil {
+			return err
+		}
 	}
+}
 
-	<-ctx.Done()
-	return nil
+// redial retries r.reconnect with a fixed delay until it succeeds or the
+// context is cancelled.
+func (r *rabbitConsumer) redial(ctx context.Context) error {
+	delay := r.reconnectDelay
+	if delay == 0 {
+		delay = 5 * time.Second
+	}
+	for {
+		ch, err := r.reconnect(ctx)
+		if err == nil {
+			r.channel = ch
+			r.logger.Info("rabbitmq consumer reconnected")
+			return nil
+		}
+		r.logger.Error("reconnect failed, retrying", logger.Err(err))
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(delay):
+		}
+	}
 }
 
 func (r *rabbitConsumer) worker(ctx context.Context, id int, msgs <-chan amqp091.Delivery) {
