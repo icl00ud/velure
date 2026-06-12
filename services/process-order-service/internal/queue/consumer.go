@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/icl00ud/velure/services/process-order-service/internal/client"
 	"github.com/icl00ud/velure/services/process-order-service/internal/metrics"
@@ -46,6 +47,12 @@ type rabbitMQConsumer struct {
 	channel AMQPChannel
 	queue   string
 	logger  *logger.Logger
+
+	// reconnect re-establishes a channel after the broker drops the
+	// connection. When nil the consumer gives up on a closed deliveries
+	// channel (legacy behavior, used by tests without a broker).
+	reconnect      func(ctx context.Context) (AMQPChannel, error)
+	reconnectDelay time.Duration
 }
 
 func NewRabbitMQConsumer(amqpURL, queueName string, log *logger.Logger) (Consumer, error) {
@@ -100,11 +107,57 @@ func getRetryCount(headers amqp091.Table) int64 {
 }
 
 func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(ctx context.Context, eventID string, evt model.Event) error) error {
-	msgs, err := r.channel.Consume(r.queue, "", false, false, false, false, nil)
-	if err != nil {
-		return err
-	}
+	for {
+		msgs, err := r.channel.Consume(r.queue, "", false, false, false, false, nil)
+		if err != nil {
+			if r.reconnect == nil {
+				return err
+			}
+			r.logger.Warn("consume failed, reconnecting", logger.Err(err))
+			if err := r.redial(ctx); err != nil {
+				return err
+			}
+			continue
+		}
 
+		if err := r.consumeLoop(ctx, msgs, handler); err != nil {
+			return err
+		}
+		// Deliveries channel closed: the broker connection died.
+		if r.reconnect == nil {
+			return nil
+		}
+		r.logger.Warn("deliveries channel closed, reconnecting")
+		if err := r.redial(ctx); err != nil {
+			return err
+		}
+	}
+}
+
+// redial retries r.reconnect with a fixed delay until it succeeds or the
+// context is cancelled.
+func (r *rabbitMQConsumer) redial(ctx context.Context) error {
+	delay := r.reconnectDelay
+	if delay == 0 {
+		delay = 5 * time.Second
+	}
+	for {
+		ch, err := r.reconnect(ctx)
+		if err == nil {
+			r.channel = ch
+			r.logger.Info("rabbitmq consumer reconnected")
+			return nil
+		}
+		r.logger.Error("reconnect failed, retrying", logger.Err(err))
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(delay):
+		}
+	}
+}
+
+func (r *rabbitMQConsumer) consumeLoop(ctx context.Context, msgs <-chan amqp091.Delivery, handler func(ctx context.Context, eventID string, evt model.Event) error) error {
 	for {
 		select {
 		case <-ctx.Done():

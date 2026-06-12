@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/icl00ud/velure/shared/logger"
@@ -8,6 +9,7 @@ import (
 
 type RabbitMQConnection struct {
 	conn   AMQPConnection
+	url    string
 	logger *logger.Logger
 }
 
@@ -18,28 +20,51 @@ func NewRabbitMQConnection(amqpURL string, log *logger.Logger) (*RabbitMQConnect
 	}
 
 	log.Info("rabbitmq connection established")
-	return &RabbitMQConnection{conn: conn, logger: log}, nil
+	return &RabbitMQConnection{conn: conn, url: amqpURL, logger: log}, nil
 }
 
 func (r *RabbitMQConnection) NewConsumer(queueName string) (Consumer, error) {
-	ch, err := r.conn.Channel()
+	ch, err := r.consumerChannel(r.conn, queueName)
 	if err != nil {
 		return nil, err
 	}
 
-	// Não redeclarar a fila aqui - ela é criada pelo bootstrap.sh do RabbitMQ
-	// com argumentos específicos (DLX, etc). Redeclarar causaria PRECONDITION_FAILED.
-	// _, err = ch.QueueDeclare(queueName, true, false, false, false, nil)
+	c := &rabbitMQConsumer{conn: nil, channel: ch, queue: queueName, logger: r.logger}
+	// A broker restart closes the shared connection and the deliveries
+	// channel with it; redial on a dedicated connection so the consumer
+	// survives the outage instead of silently going idle.
+	c.reconnect = func(ctx context.Context) (AMQPChannel, error) {
+		conn, err := amqpDial(r.url)
+		if err != nil {
+			return nil, fmt.Errorf("redial rabbitmq: %w", err)
+		}
+		ch, err := r.consumerChannel(conn, queueName)
+		if err != nil {
+			conn.Close()
+			return nil, err
+		}
+		if c.conn != nil {
+			_ = c.conn.Close()
+		}
+		c.conn = conn
+		return ch, nil
+	}
+	return c, nil
+}
+
+// consumerChannel opens and configures a channel for queue consumption.
+// The queue itself is created by RabbitMQ's bootstrap.sh with specific
+// arguments (DLX, etc); redeclaring it here would fail with
+// PRECONDITION_FAILED.
+func (r *RabbitMQConnection) consumerChannel(conn AMQPConnection, queueName string) (AMQPChannel, error) {
+	ch, err := conn.Channel()
+	if err != nil {
+		return nil, err
+	}
 
 	// Bind queue to exchange with routing key pattern for order events
-	err = ch.QueueBind(
-		queueName, // queue name
-		"order.*", // routing key pattern (matches order.created, order.completed, etc.)
-		"orders",  // exchange name
-		false,     // no-wait
-		nil,       // arguments
-	)
-	if err != nil {
+	// (matches order.created, order.completed, etc.)
+	if err := ch.QueueBind(queueName, "order.*", "orders", false, nil); err != nil {
 		ch.Close()
 		return nil, fmt.Errorf("queue bind: %w", err)
 	}
@@ -48,8 +73,7 @@ func (r *RabbitMQConnection) NewConsumer(queueName string) (Consumer, error) {
 		ch.Close()
 		return nil, err
 	}
-
-	return &rabbitMQConsumer{conn: nil, channel: ch, queue: queueName, logger: r.logger}, nil
+	return ch, nil
 }
 
 func (r *RabbitMQConnection) NewPublisher(exchange string) (Publisher, error) {
