@@ -809,8 +809,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (legacy_op_type) (rate(mongodb_op_counters_total[5m]))",
-          "legendFormat": "{{legacy_op_type}}",
+          "expr": "sum by (type) (rate(mongodb_op_counters_total[5m]))",
+          "legendFormat": "{{type}}",
           "refId": "A"
         }
       ],
