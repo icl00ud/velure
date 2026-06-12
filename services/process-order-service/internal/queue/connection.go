@@ -77,17 +77,43 @@ func (r *RabbitMQConnection) consumerChannel(conn AMQPConnection, queueName stri
 }
 
 func (r *RabbitMQConnection) NewPublisher(exchange string) (Publisher, error) {
-	ch, err := r.conn.Channel()
+	ch, err := r.publisherChannel(r.conn, exchange)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &rabbitPublisher{conn: nil, channel: ch, exchange: exchange, logger: r.logger}
+	// Redial on a dedicated connection so status events survive a broker
+	// restart instead of being silently dropped.
+	p.reconnect = func() (AMQPChannel, error) {
+		conn, err := amqpDial(r.url)
+		if err != nil {
+			return nil, fmt.Errorf("redial rabbitmq: %w", err)
+		}
+		ch, err := r.publisherChannel(conn, exchange)
+		if err != nil {
+			conn.Close()
+			return nil, err
+		}
+		if p.conn != nil {
+			_ = p.conn.Close()
+		}
+		p.conn = conn
+		return ch, nil
+	}
+	return p, nil
+}
+
+func (r *RabbitMQConnection) publisherChannel(conn AMQPConnection, exchange string) (AMQPChannel, error) {
+	ch, err := conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("open channel: %w", err)
 	}
-
 	if err := ch.ExchangeDeclare(exchange, "topic", true, false, false, false, nil); err != nil {
 		ch.Close()
 		return nil, fmt.Errorf("declare exchange: %w", err)
 	}
-
-	return &rabbitPublisher{conn: nil, channel: ch, exchange: exchange, logger: r.logger}, nil
+	return ch, nil
 }
 
 func (r *RabbitMQConnection) Close() error {
