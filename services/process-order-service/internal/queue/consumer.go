@@ -12,23 +12,12 @@ import (
 	"github.com/icl00ud/velure/services/process-order-service/internal/metrics"
 	"github.com/icl00ud/velure/services/process-order-service/internal/model"
 	"github.com/icl00ud/velure/services/process-order-service/internal/telemetry"
+	sharedamqp "github.com/icl00ud/velure/shared/amqp"
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )
-
-// headersToMap converts string-valued AMQP headers (where the W3C trace
-// context travels) into the map form the OTel propagator understands.
-func headersToMap(headers amqp091.Table) map[string]string {
-	m := make(map[string]string, len(headers))
-	for k, v := range headers {
-		if s, ok := v.(string); ok {
-			m[k] = s
-		}
-	}
-	return m
-}
 
 const maxRetries = 3
 
@@ -80,32 +69,6 @@ func NewRabbitMQConsumer(amqpURL, queueName string, log *logger.Logger) (Consume
 	return &rabbitMQConsumer{conn: conn, channel: ch, queue: queueName, logger: log}, nil
 }
 
-// getRetryCount obtém o número de tentativas do header x-death do RabbitMQ
-func getRetryCount(headers amqp091.Table) int64 {
-	if headers == nil {
-		return 0
-	}
-
-	xDeath, ok := headers["x-death"].([]interface{})
-	if !ok || len(xDeath) == 0 {
-		return 0
-	}
-
-	// Pega a primeira entrada de x-death (mais recente)
-	death, ok := xDeath[0].(amqp091.Table)
-	if !ok {
-		return 0
-	}
-
-	// Conta quantas vezes foi rejeitada
-	count, ok := death["count"].(int64)
-	if !ok {
-		return 0
-	}
-
-	return count
-}
-
 func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(ctx context.Context, eventID string, evt model.Event) error) error {
 	for {
 		msgs, err := r.channel.Consume(r.queue, "", false, false, false, false, nil)
@@ -137,24 +100,15 @@ func (r *rabbitMQConsumer) Consume(ctx context.Context, handler func(ctx context
 // redial retries r.reconnect with a fixed delay until it succeeds or the
 // context is cancelled.
 func (r *rabbitMQConsumer) redial(ctx context.Context) error {
-	delay := r.reconnectDelay
-	if delay == 0 {
-		delay = 5 * time.Second
-	}
-	for {
-		ch, err := r.reconnect(ctx)
-		if err == nil {
-			r.channel = ch
-			r.logger.Info("rabbitmq consumer reconnected")
-			return nil
-		}
+	ch, err := sharedamqp.Redial(ctx, r.reconnectDelay, func(err error) {
 		r.logger.Error("reconnect failed, retrying", logger.Err(err))
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(delay):
-		}
+	}, r.reconnect)
+	if err != nil {
+		return err
 	}
+	r.channel = ch
+	r.logger.Info("rabbitmq consumer reconnected")
+	return nil
 }
 
 func (r *rabbitMQConsumer) consumeLoop(ctx context.Context, msgs <-chan amqp091.Delivery, handler func(ctx context.Context, eventID string, evt model.Event) error) error {
@@ -168,7 +122,7 @@ func (r *rabbitMQConsumer) consumeLoop(ctx context.Context, msgs <-chan amqp091.
 			}
 
 			// Contagem de retries da mensagem
-			retryCount := getRetryCount(d.Headers)
+			retryCount := sharedamqp.RetryCount(d.Headers)
 			eventID := extractEventID(d)
 
 			var evt model.Event
@@ -186,7 +140,7 @@ func (r *rabbitMQConsumer) consumeLoop(ctx context.Context, msgs <-chan amqp091.
 				logger.Int64("retry_count", retryCount))
 
 			// Continue the trace propagated through AMQP headers.
-			msgCtx := telemetry.ExtractMap(ctx, headersToMap(d.Headers))
+			msgCtx := telemetry.ExtractMap(ctx, sharedamqp.HeadersToMap(d.Headers))
 			msgCtx, span := otel.Tracer("order-consumer").Start(msgCtx, "consume "+evt.Type,
 				trace.WithSpanKind(trace.SpanKindConsumer))
 

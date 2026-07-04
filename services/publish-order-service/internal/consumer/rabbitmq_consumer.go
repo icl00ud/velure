@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	sharedamqp "github.com/icl00ud/velure/shared/amqp"
 	"github.com/icl00ud/velure/shared/logger"
 	"github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel"
@@ -205,24 +206,15 @@ func (r *rabbitConsumer) Start(ctx context.Context) error {
 // redial retries r.reconnect with a fixed delay until it succeeds or the
 // context is cancelled.
 func (r *rabbitConsumer) redial(ctx context.Context) error {
-	delay := r.reconnectDelay
-	if delay == 0 {
-		delay = 5 * time.Second
-	}
-	for {
-		ch, err := r.reconnect(ctx)
-		if err == nil {
-			r.channel = ch
-			r.logger.Info("rabbitmq consumer reconnected")
-			return nil
-		}
+	ch, err := sharedamqp.Redial(ctx, r.reconnectDelay, func(err error) {
 		r.logger.Error("reconnect failed, retrying", logger.Err(err))
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(delay):
-		}
+	}, r.reconnect)
+	if err != nil {
+		return err
 	}
+	r.channel = ch
+	r.logger.Info("rabbitmq consumer reconnected")
+	return nil
 }
 
 func (r *rabbitConsumer) worker(ctx context.Context, id int, msgs <-chan amqp091.Delivery) {
@@ -240,7 +232,7 @@ func (r *rabbitConsumer) worker(ctx context.Context, id int, msgs <-chan amqp091
 			}
 
 			if err := r.processMessage(ctx, msg); err != nil {
-				retryCount := getRetryCount(msg.Headers)
+				retryCount := sharedamqp.RetryCount(msg.Headers)
 				if retryCount >= maxRetries {
 					r.logger.Error("max retries exceeded - sending to DLQ",
 						logger.Int("worker_id", id),
@@ -261,37 +253,6 @@ func (r *rabbitConsumer) worker(ctx context.Context, id int, msgs <-chan amqp091
 	}
 }
 
-// headersToMap converts string-valued AMQP headers (where the W3C trace
-// context travels) into the map form the OTel propagator understands.
-func headersToMap(headers amqp091.Table) map[string]string {
-	m := make(map[string]string, len(headers))
-	for k, v := range headers {
-		if s, ok := v.(string); ok {
-			m[k] = s
-		}
-	}
-	return m
-}
-
-func getRetryCount(headers amqp091.Table) int64 {
-	if headers == nil {
-		return 0
-	}
-	xDeath, ok := headers["x-death"].([]any)
-	if !ok || len(xDeath) == 0 {
-		return 0
-	}
-	death, ok := xDeath[0].(amqp091.Table)
-	if !ok {
-		return 0
-	}
-	count, ok := death["count"].(int64)
-	if !ok {
-		return 0
-	}
-	return count
-}
-
 func (r *rabbitConsumer) processMessage(ctx context.Context, msg amqp091.Delivery) error {
 	var evt model.Event
 	if err := json.Unmarshal(msg.Body, &evt); err != nil {
@@ -300,7 +261,7 @@ func (r *rabbitConsumer) processMessage(ctx context.Context, msg amqp091.Deliver
 	}
 
 	// Continue the trace propagated by the producer through AMQP headers.
-	ctx = telemetry.ExtractMap(ctx, headersToMap(msg.Headers))
+	ctx = telemetry.ExtractMap(ctx, sharedamqp.HeadersToMap(msg.Headers))
 	ctx, span := otel.Tracer("status-consumer").Start(ctx, "consume "+evt.Type,
 		trace.WithSpanKind(trace.SpanKindConsumer))
 	defer span.End()
